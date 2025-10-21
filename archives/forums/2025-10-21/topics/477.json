@@ -1,0 +1,651 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1332,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2018-05-28T22:19:55.657Z",
+        "cooked": "<p>I need a way to detect application nodes that are alive or dead, in order to schedule and abort work items assigned to each of them.</p>\n<p>My current idea is to have each server periodically update a key that contains the current time + timeout delay, like <code>(...., \"watchdog\", TIMESTAMP, SERVER_ID) = ''</code>.</p>\n<p>When someones sees a key with a timestamp that is in the past with a simple <code>get_range(...0, ...now)</code>, then the corresponding node is declared dead, and all pending tasks for this node will be reassigned/failed.</p>\n<p>I could use the local clock of each servers but I\u2019ve been bitten in the past by server clock that drift by up to dozens of minutes in any direction (Intel NUC with NNTP server blocked in the firewall due to improper configuration). So a server could be in the future and will take too long to be diagnosed as dead. Or it could be in the past and will instantly be declared dead. Or the server that checks for liveness has its clock in the future and will go around killing everyone else instantly in a loop. <img src=\"https://emoji.discourse-cdn.com/twitter/skull_and_crossbones.png?v=5\" title=\":skull_and_crossbones:\" class=\"emoji\" alt=\":skull_and_crossbones:\"></p>\n<p>I would like to have a shared source of time, in order to have a good enough approximation of the watchdog timer delay. I don\u2019t need milliseconds precision, only a way to detect a server that did not update its key after 5 or 10 seconds.</p>\n<p>I though of maybe using VersionStamps as a source of time, but their growth rate may not be constant, and also can be changed in a config file. Also, I can only set a key with the current VersionStamp, not a versionstamp \u201cin 10 seconds\u201d.</p>\n<p>Looking at the system keyspace to find inspiration, I stumbled upon the <code>timekeeper</code> that seems to be keeping a map of read version to system clock time, updated every second. Looking at the code, it looks like it is the current Cluster Controller that uses its clock to maintain a map of readVersion to sysTime, and keeps about 6 month\u2019s worth of keys.</p>\n<p>This would look like a good fit but I have a few questions:</p>\n<ul>\n<li>The timekeeper can be disabled using the  <code>\\xff\\x02/timeKeeper/disable</code> key. What scenario requires it to be disabled? Can I assume that it is running in normal conditions?</li>\n<li>Is this some internal implementation detail that could change at any time? or can this be used by layers?</li>\n<li>Could this be used to approximate the value of a transaction read version in 10 seconds, using the last N samples ?</li>\n</ul>\n<p>Again, don\u2019t need a lot of precision only \u201cit is very likely that this key has not been changed in the last 10 seconds of real time\u201d.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-05-28T22:19:55.657Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 89,
+        "reads": 51,
+        "readers_count": 50,
+        "score": 455.2,
+        "yours": false,
+        "topic_id": 477,
+        "topic_slug": "approximating-a-global-clock-for-a-watchdog-timer-using-versionstamps-readversions-or-the-timekeeper",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/approximating-a-global-clock-for-a-watchdog-timer-using-versionstamps-readversions-or-the-timekeeper/477/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1333,
+        "name": "Ryan Worl",
+        "username": "ryanworl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "created_at": "2018-05-28T23:08:19.229Z",
+        "cooked": "<p>I had a similar question a while back about detecting liveness in a distributed locking scenario which may help.</p>\n<p><a href=\"https://forums.foundationdb.org/t/locking-with-foundationdb/314\">https://forums.foundationdb.org/t/locking-with-foundationdb/314</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-05-28T23:08:19.229Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 48,
+        "readers_count": 47,
+        "score": 19.6,
+        "yours": false,
+        "topic_id": 477,
+        "topic_slug": "approximating-a-global-clock-for-a-watchdog-timer-using-versionstamps-readversions-or-the-timekeeper",
+        "display_username": "Ryan Worl",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/locking-with-foundationdb/314",
+            "internal": true,
+            "reflection": false,
+            "title": "Locking with FoundationDB",
+            "clicks": 67
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 81,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/approximating-a-global-clock-for-a-watchdog-timer-using-versionstamps-readversions-or-the-timekeeper/477/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1332,
+      1333
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2703
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Approximating a global clock for a Watchdog Timer using VersionStamps, ReadVersions or the &ldquo;timekeeper&rdquo;?",
+  "id": 477,
+  "title": "Approximating a global clock for a Watchdog Timer using VersionStamps, ReadVersions or the \"timekeeper\"?",
+  "posts_count": 2,
+  "created_at": "2018-05-28T22:19:55.515Z",
+  "views": 1182,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2018-05-28T23:08:19.229Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "approximating-a-global-clock-for-a-watchdog-timer-using-versionstamps-readversions-or-the-timekeeper",
+  "category_id": 5,
+  "word_count": 489,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_477",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Feature Request: Client API (dis)affirming if key is being watched",
+      "id": 1668,
+      "title": "Feature Request: Client API (dis)affirming if key is being watched",
+      "slug": "feature-request-client-api-dis-affirming-if-key-is-being-watched",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-10-05T18:30:42.324Z",
+      "last_posted_at": "2019-11-04T23:00:56.003Z",
+      "bumped": true,
+      "bumped_at": "2019-11-04T23:00:56.003Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 618,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 556,
+            "username": "jfinity",
+            "name": "Justin C. Moore",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jfinity/{size}/682_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Where do watches register themselves?",
+      "id": 827,
+      "title": "Where do watches register themselves?",
+      "slug": "where-do-watches-register-themselves",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-10-31T13:07:10.136Z",
+      "last_posted_at": "2020-05-07T15:14:06.031Z",
+      "bumped": true,
+      "bumped_at": "2020-05-07T15:14:06.031Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1098,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 388,
+            "username": "amarjeet000",
+            "name": "Amarjeet",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/e19adc/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Performance characteristics of using Watches for Distributed Task Scheduling",
+      "id": 471,
+      "title": "Performance characteristics of using Watches for Distributed Task Scheduling",
+      "slug": "performance-characteristics-of-using-watches-for-distributed-task-scheduling",
+      "posts_count": 28,
+      "reply_count": 13,
+      "highest_post_number": 28,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/0819f4ad7c04fe7d847b2f33824849dc70ee6a0c.png",
+      "created_at": "2018-05-24T13:42:28.764Z",
+      "last_posted_at": "2018-08-16T03:57:50.737Z",
+      "bumped": true,
+      "bumped_at": "2018-08-16T03:57:50.737Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 15,
+      "views": 5180,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 68,
+            "username": "daverosenthal",
+            "name": "Dave Rosenthal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daverosenthal/{size}/51_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdb-zk: rough cut of Zookeeper API layer",
+      "id": 1278,
+      "title": "Fdb-zk: rough cut of Zookeeper API layer",
+      "slug": "fdb-zk-rough-cut-of-zookeeper-api-layer",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-04-03T02:54:03.579Z",
+      "last_posted_at": "2019-04-09T04:13:12.883Z",
+      "bumped": true,
+      "bumped_at": "2019-04-09T04:13:12.883Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 5102,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Detecting cluster availability transitions for long running clients",
+      "id": 365,
+      "title": "Detecting cluster availability transitions for long running clients",
+      "slug": "detecting-cluster-availability-transitions-for-long-running-clients",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-07T08:18:42.873Z",
+      "last_posted_at": "2018-05-08T17:59:06.057Z",
+      "bumped": true,
+      "bumped_at": "2018-05-08T17:59:06.057Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1318,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 81,
+        "username": "ryanworl",
+        "name": "Ryan Worl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 3
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 81,
+      "username": "ryanworl",
+      "name": "Ryan Worl",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/locking-with-foundationdb/314",
+        "title": "Locking with FoundationDB",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 67,
+        "user_id": 81,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

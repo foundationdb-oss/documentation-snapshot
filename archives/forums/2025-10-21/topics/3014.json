@@ -1,0 +1,626 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10270,
+        "name": "David Young",
+        "username": "funkypenguin",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/funkypenguin/{size}/1153_2.png",
+        "created_at": "2021-11-17T00:36:45.048Z",
+        "cooked": "<p>Hi folks,</p>\n<p>I\u2019m trying to get my head around how backup/restore works. I\u2019ve been making non-continuous backups every hour to a blob store, but when I describe these backups, only one of them shows as being <code>restorable=true</code>.</p>\n<p>For example:</p>\n<pre><code class=\"lang-auto\">Partitioned logs: false\nSnapshot:  startVersion=1515130313 (maxLogEnd -0.05 days)  endVersion=1515275376 (maxLogEnd -0.05 days)  totalBytes=8046115  restorable=true  expiredPct=0.00\nSnapshot:  startVersion=2663742809 (maxLogEnd -0.03 days)  endVersion=2663919783 (maxLogEnd -0.03 days)  totalBytes=8046115  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=3246201819 (maxLogEnd -0.03 days)  endVersion=3246322110 (maxLogEnd -0.03 days)  totalBytes=8046115  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=3868135355 (maxLogEnd -0.02 days)  endVersion=3868322202 (maxLogEnd -0.02 days)  totalBytes=8046115  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=5432053553 (maxLogEnd -0.00 days)  endVersion=5432233473 (maxLogEnd -0.00 days)  totalBytes=8090186  restorable=false  expiredPct=0.00\nSnapshotBytes: 40274646\nMinLogBeginVersion:      1515029301 (maxLogEnd -0.05 days)\nContiguousLogEndVersion: 1535029301 (maxLogEnd -0.05 days)\nMaxLogEndVersion:        5451957755 (maxLogEnd -0.00 days)\nMinRestorableVersion:    1515275376 (maxLogEnd -0.05 days)\nMaxRestorableVersion:    1535029300 (maxLogEnd -0.05 days)\n</code></pre>\n<p>Each snapshot was create successively by running <code>fdb backup start -w</code></p>\n<p>Does this output (specifically the <code>MaxRestorableVersion</code> value) mean that I can only restore data from 0.05 days ago, even though I successfully ran backups 0.00 days ago?</p>\n<p>Thanks!<br>\nD</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-11-17T00:36:45.048Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 92,
+        "reads": 37,
+        "readers_count": 36,
+        "score": 477.4,
+        "yours": false,
+        "topic_id": 3014,
+        "topic_slug": "why-are-most-of-my-backup-snapshots-not-restorable",
+        "display_username": "David Young",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 988,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-are-most-of-my-backup-snapshots-not-restorable/3014/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10297,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-11-22T04:04:13.302Z",
+        "cooked": "<p>Your output is from describing a successful backup, right?</p>\n<p>For your unrestorable backups, did you try running describe with <code>--deep</code> ? I found recently that if you run describe before the backup is complete, it caches the metadata (including that is is incomplete and unrestorable) and still continues to report that if you run describe after the backup completes: <a href=\"https://forums.foundationdb.org/t/backups-not-restorable-after-6-3-upgrade/2987/2\" class=\"inline-onebox\">Backups not \"restorable\" after 6.3 upgrade - #2 by amanda</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-11-22T04:04:13.302Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 41.6,
+        "yours": false,
+        "topic_id": 3014,
+        "topic_slug": "why-are-most-of-my-backup-snapshots-not-restorable",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/backups-not-restorable-after-6-3-upgrade/2987/2",
+            "internal": true,
+            "reflection": false,
+            "title": "Backups not \"restorable\" after 6.3 upgrade",
+            "clicks": 8
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-are-most-of-my-backup-snapshots-not-restorable/3014/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 10312,
+        "name": "David Young",
+        "username": "funkypenguin",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/funkypenguin/{size}/1153_2.png",
+        "created_at": "2021-11-23T20:48:38.750Z",
+        "cooked": "<p>Thanks for the reply <a class=\"mention\" href=\"/u/amanda\">@amanda</a> <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=10\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"></p>\n<p>I <strong>believe</strong> the backups I\u2019m describing are successful - each one terminates with <code>Submitted and now waiting for the backup on tag </code>hourly\u2019 to complete.` and an exit code of 0.</p>\n<p>I have tried running the <code>describe</code> command with <code>--deep</code>, but that doesn\u2019t alter the output, in my case.</p>\n<p>Here\u2019s a particularly hard-to-understand example:</p>\n<pre><code class=\"lang-auto\">Restorable: true\nPartitioned logs: false\nSnapshot:  startVersion=4468767014 (maxLogEnd -13.48 days)  endVersion=4468909129 (maxLogEnd -13.48 days)  totalBytes=8046115  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=90867210991 (maxLogEnd -12.48 days)  endVersion=90867365452 (maxLogEnd -12.48 days)  totalBytes=8090186  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=177266876034 (maxLogEnd -11.48 days)  endVersion=177267025078 (maxLogEnd -11.48 days)  totalBytes=8090186  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=263666804747 (maxLogEnd -10.48 days)  endVersion=263666994356 (maxLogEnd -10.48 days)  totalBytes=8090186  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=350066142746 (maxLogEnd -9.48 days)  endVersion=350066234841 (maxLogEnd -9.48 days)  totalBytes=8090186  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=436466713300 (maxLogEnd -8.48 days)  endVersion=436466865175 (maxLogEnd -8.48 days)  totalBytes=8090186  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=522866843097 (maxLogEnd -7.48 days)  endVersion=522866992395 (maxLogEnd -7.48 days)  totalBytes=8090184  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=579035571782 (maxLogEnd -6.83 days)  endVersion=579035725950 (maxLogEnd -6.83 days)  totalBytes=8046445  restorable=true  expiredPct=0.00\nSnapshot:  startVersion=677428989698 (maxLogEnd -5.69 days)  endVersion=677429145026 (maxLogEnd -5.69 days)  totalBytes=8046445  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=775706995886 (maxLogEnd -4.55 days)  endVersion=775707157130 (maxLogEnd -4.55 days)  totalBytes=8046445  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=874122941249 (maxLogEnd -3.41 days)  endVersion=874123126886 (maxLogEnd -3.41 days)  totalBytes=8046445  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=972407903215 (maxLogEnd -2.28 days)  endVersion=972408076382 (maxLogEnd -2.28 days)  totalBytes=8046445  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=1070738028407 (maxLogEnd -1.14 days)  endVersion=1070738189282 (maxLogEnd -1.14 days)  totalBytes=8046445  restorable=false  expiredPct=0.00\nSnapshot:  startVersion=1168992216442 (maxLogEnd -0.00 days)  endVersion=1168992380018 (maxLogEnd -0.00 days)  totalBytes=8046443  restorable=false  expiredPct=0.00\nSnapshotBytes: 112912342\nMinLogBeginVersion:      579035479545 (maxLogEnd -6.83 days)\nContiguousLogEndVersion: 579055479545 (maxLogEnd -6.83 days)\nMaxLogEndVersion:        1169012144667 (maxLogEnd -0.00 days)\nMinRestorableVersion:    579035725950 (maxLogEnd -6.83 days)\nMaxRestorableVersion:    579055479544 (maxLogEnd -6.83 days)\n</code></pre>\n<p>My questions re the above are:</p>\n<ol>\n<li>How is it that the only <code>restorable=true</code> backup is somewhere in the middle of the history?</li>\n<li>Is the issue possibly that my database is not being heavily <strong>used</strong>, (since the <code>totalBytes</code> doesn\u2019t seem to be changing much)</li>\n<li>Surely if <code>MaxLogEndVersion</code> is up-to-date, then preceding backups must have succeeded, but if that\u2019s the case, then why is <code>MaxRestorableVersion</code> so far out-of-date?</li>\n</ol>\n<p>Is there a way to \u201cre-index\u201d or \u201cscan\u201d the backups and refresh the backup metadata?</p>\n<p>I\u2019m on 6.3.16 currently - I\u2019ll try on 6.3.22 today in case\u2026</p>\n<p>D</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-11-23T20:48:38.750Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 21.2,
+        "yours": false,
+        "topic_id": 3014,
+        "topic_slug": "why-are-most-of-my-backup-snapshots-not-restorable",
+        "display_username": "David Young",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 810,
+          "username": "amanda",
+          "name": "Amanda",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 988,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-are-most-of-my-backup-snapshots-not-restorable/3014/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10270,
+      10297,
+      10312
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1435
+    ],
+    [
+      2,
+      1430
+    ],
+    [
+      3,
+      1428
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Why are most of my backup snapshots not &ldquo;restorable&rdquo;?",
+  "id": 3014,
+  "title": "Why are most of my backup snapshots not \"restorable\"?",
+  "posts_count": 3,
+  "created_at": "2021-11-17T00:36:44.983Z",
+  "views": 795,
+  "reply_count": 1,
+  "like_count": 3,
+  "last_posted_at": "2021-11-23T20:48:38.750Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "why-are-most-of-my-backup-snapshots-not-restorable",
+  "category_id": 17,
+  "word_count": 784,
+  "deleted_at": null,
+  "user_id": 988,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3014",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Backups not &ldquo;restorable&rdquo; after 6.3 upgrade",
+      "id": 2987,
+      "title": "Backups not \"restorable\" after 6.3 upgrade",
+      "slug": "backups-not-restorable-after-6-3-upgrade",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-11-03T01:13:18.982Z",
+      "last_posted_at": "2022-09-07T08:21:32.787Z",
+      "bumped": true,
+      "bumped_at": "2022-09-07T08:21:32.787Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 862,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1022,
+            "username": "liyyue",
+            "name": "liyyue",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "About fdbbackup restorable",
+      "id": 3251,
+      "title": "About fdbbackup restorable",
+      "slug": "about-fdbbackup-restorable",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2022-04-06T09:27:31.319Z",
+      "last_posted_at": "2022-04-07T01:20:43.715Z",
+      "bumped": true,
+      "bumped_at": "2022-04-07T01:20:43.715Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings",
+        "operator",
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 517,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1022,
+            "username": "liyyue",
+            "name": "liyyue",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why MaxRestoreableVersion not updates?",
+      "id": 4822,
+      "title": "Why MaxRestoreableVersion not updates?",
+      "slug": "why-maxrestoreableversion-not-updates",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/c/c0dc00cdee2f593877a8f92d777d7ef79a9c82e3_2_1024x232.png",
+      "created_at": "2025-04-01T07:00:51.171Z",
+      "last_posted_at": "2025-04-03T03:51:29.051Z",
+      "bumped": true,
+      "bumped_at": "2025-04-03T03:51:29.051Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 37,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1483,
+            "username": "1412904892",
+            "name": "1412904892",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/1412904892/{size}/1869_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1141,
+            "username": "anleg",
+            "name": "Anleg",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/anleg/{size}/1382_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup describe &ndash;version_timestamp what to expect from the output?",
+      "id": 3190,
+      "title": "Fdbbackup describe --version_timestamp what to expect from the output?",
+      "slug": "fdbbackup-describe-version-timestamp-what-to-expect-from-the-output",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2022-02-22T16:17:44.065Z",
+      "last_posted_at": "2022-02-22T16:17:44.131Z",
+      "bumped": true,
+      "bumped_at": "2022-02-22T16:17:44.131Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 440,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 890,
+            "username": "tangerine",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tangerine/{size}/1084_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup version and snapshot and their relationship to restore",
+      "id": 4112,
+      "title": "Fdbbackup version and snapshot and their relationship to restore",
+      "slug": "fdbbackup-version-and-snapshot-and-their-relationship-to-restore",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2023-08-18T14:46:43.937Z",
+      "last_posted_at": "2025-04-01T06:53:55.615Z",
+      "bumped": true,
+      "bumped_at": "2025-04-01T06:53:55.615Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 225,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 890,
+            "username": "tangerine",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tangerine/{size}/1084_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1483,
+            "username": "1412904892",
+            "name": "1412904892",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/1412904892/{size}/1869_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 988,
+        "username": "funkypenguin",
+        "name": "David Young",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/funkypenguin/{size}/1153_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 810,
+        "username": "amanda",
+        "name": "Amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 988,
+      "username": "funkypenguin",
+      "name": "David Young",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/funkypenguin/{size}/1153_2.png"
+    },
+    "last_poster": {
+      "id": 988,
+      "username": "funkypenguin",
+      "name": "David Young",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/funkypenguin/{size}/1153_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/backups-not-restorable-after-6-3-upgrade/2987/2",
+        "title": "Backups not \"restorable\" after 6.3 upgrade",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 810,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

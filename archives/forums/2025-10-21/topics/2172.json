@@ -1,0 +1,649 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7309,
+        "name": "Meng Xu",
+        "username": "mengxu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+        "created_at": "2020-06-10T19:00:30.117Z",
+        "cooked": "<p>I accidentally forgot to add <code>return Void()</code> in the lamda function in <code>runRYWTransaction </code>, (example blow). It still compiles but cause segmentation fault when it runs.</p>\n<pre><code>wait(runRYWTransaction(cx, [](Reference&lt;ReadYourWritesTransaction&gt; tr) -&gt; Future&lt;Void&gt; {\n\t\t\ttr-&gt;setOption(FDBTransactionOptions::ACCESS_SYSTEM_KEYS);\n\t\t\ttr-&gt;setOption(FDBTransactionOptions::LOCK_AWARE);\n\t\t\ttr-&gt;clear(someKey);\n\t\t\t//return Void();\n\t\t}));\n</code></pre>\n<p>I\u2019m trying to figure out how the segmentation fault happens.<br>\nAfter some digging, I feel this may be caused by \u201cauto-deduction\u201d that compiler implicitly return <code>Future&lt;Void&gt;()</code> for lamda function without explicit return type. Since the default constructor for Future is a null pointer, it has segmentation fault.</p>\n<p>Talking with Jingyu on this and there may be another possible explanation:<br>\nIf there is no return in lamda function, the compiler just points the return to the default location that should host the return value. Since we don\u2019t return anything, that area is invalid.</p>\n<p>My question is:</p>\n<ol>\n<li>Which of the explanation is true?</li>\n<li>Can we make compiling fail in this scenario?</li>\n</ol>\n<p>Note: In GCC, there is a warning on no-return-value for the function. Maybe we just make compiling fail on warnings?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-06-10T19:00:30.117Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 8.2,
+        "yours": false,
+        "topic_id": 2172,
+        "topic_slug": "question-about-runrywtransaction-without-return-in-lamda",
+        "display_username": "Meng Xu",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 337,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/question-about-runrywtransaction-without-return-in-lamda/2172/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 7310,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2020-06-10T20:05:43.259Z",
+        "cooked": "<p>Flowing off the end of a function [\u2026] results in undefined behavior in a value-returning function. That\u2019s how the segfault happens.</p>\n<p>Run cmake with -DUSE_WERROR=ON to make compiling fail on warnings</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-06-10T20:05:43.259Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 23.2,
+        "yours": false,
+        "topic_id": 2172,
+        "topic_slug": "question-about-runrywtransaction-without-return-in-lamda",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/question-about-runrywtransaction-without-return-in-lamda/2172/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7309,
+      7310
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1959
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Question about runRYWTransaction without return in lamda",
+  "id": 2172,
+  "title": "Question about runRYWTransaction without return in lamda",
+  "posts_count": 2,
+  "created_at": "2020-06-10T19:00:30.057Z",
+  "views": 482,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2020-06-10T20:05:43.259Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "question-about-runrywtransaction-without-return-in-lamda",
+  "category_id": 5,
+  "word_count": 216,
+  "deleted_at": null,
+  "user_id": 337,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2172",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "CMake and better IDE support",
+      "id": 334,
+      "title": "CMake and better IDE support",
+      "slug": "cmake-and-better-ide-support",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-05-03T23:09:33.328Z",
+      "last_posted_at": "2018-08-11T00:35:30.260Z",
+      "bumped": true,
+      "bumped_at": "2018-08-11T00:35:30.260Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1711,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "id": 516,
+      "title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "slug": "what-is-the-life-time-of-key-value-and-other-arguments-passed-to-fdb-transaction",
+      "posts_count": 11,
+      "reply_count": 4,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-06-18T18:28:57.904Z",
+      "last_posted_at": "2018-07-17T16:11:21.242Z",
+      "bumped": true,
+      "bumped_at": "2018-07-17T16:11:21.242Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2608,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Destroying futures after &lsquo;fdb_transaction_on_error()&rsquo;",
+      "id": 1307,
+      "title": "Destroying futures after 'fdb_transaction_on_error()'",
+      "slug": "destroying-futures-after-fdb-transaction-on-error",
+      "posts_count": 9,
+      "reply_count": 1,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-04-16T13:33:52.150Z",
+      "last_posted_at": "2019-04-24T18:38:45.358Z",
+      "bumped": true,
+      "bumped_at": "2019-04-24T18:38:45.358Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1428,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Avoiding unnecessary copies from movable futures",
+      "id": 2076,
+      "title": "Avoiding unnecessary copies from movable futures",
+      "slug": "avoiding-unnecessary-copies-from-movable-futures",
+      "posts_count": 26,
+      "reply_count": 15,
+      "highest_post_number": 26,
+      "image_url": null,
+      "created_at": "2020-04-17T16:47:45.488Z",
+      "last_posted_at": "2020-04-24T17:56:15.383Z",
+      "bumped": true,
+      "bumped_at": "2020-04-24T17:56:15.383Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2662,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 362,
+            "username": "trevor.clinkenbeard",
+            "name": "Trevor Clinkenbeard",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9fc29f/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDBDataBase Usage from Java API",
+      "id": 593,
+      "title": "FDBDataBase Usage from Java API",
+      "slug": "fdbdatabase-usage-from-java-api",
+      "posts_count": 10,
+      "reply_count": 4,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-07-27T12:53:36.150Z",
+      "last_posted_at": "2019-02-26T21:36:05.940Z",
+      "bumped": true,
+      "bumped_at": "2019-02-26T21:36:05.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1698,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 14,
+        "username": "andrew.noyes",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 337,
+        "username": "mengxu",
+        "name": "Meng Xu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 337,
+      "username": "mengxu",
+      "name": "Meng Xu",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png"
+    },
+    "last_poster": {
+      "id": 14,
+      "username": "andrew.noyes",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png"
+    }
+  },
+  "bookmarks": []
+}

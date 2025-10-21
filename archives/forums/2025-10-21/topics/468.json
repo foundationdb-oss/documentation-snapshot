@@ -1,0 +1,849 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1280,
+        "name": "Justin Lowery",
+        "username": "umpc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png",
+        "created_at": "2018-05-24T06:34:22.406Z",
+        "cooked": "<p>I noticed that the Go <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb/tuple\" rel=\"nofollow noopener\">tuple</a> package does not support encoding/decoding <code>uint64</code> values.</p>\n<p><a href=\"https://github.com/apple/foundationdb/blob/master/bindings/java/src/main/com/apple/foundationdb/tuple/TupleUtil.java#L395\" rel=\"nofollow noopener\">The Java implementation</a> appears to first decode all integers into <a href=\"https://docs.oracle.com/javase/7/docs/api/java/math/BigInteger.html\" rel=\"nofollow noopener\"><code>BigInteger</code></a>, which supports arbitrary precision, and then converts the value to <code>Long</code> if the value is within range.</p>\n<p><a href=\"https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/tuple/tuple.go#L285\" rel=\"nofollow noopener\">The Go implementation</a> currently decodes all integers to <code>int64</code>, whereas <a href=\"https://golang.org/pkg/math/big/#Int\" rel=\"nofollow noopener\"><code>*big.Int</code></a> from the <code>math/big</code> package would appear to be a better equivalent to use in Go, which might then return the appropriate integer type based on the range of the value, or the result of <code>bigVal.IsInt64()</code>, etc.</p>\n<p>If this were implemented, I imagine that the returned types might be limited to <code>int64</code>, <code>uint64</code>, and <code>*big.Int</code> for simplicity.</p>\n<p>Has this been attempted before in Go with some sort of unexpected results returned, or would this appear to be a decent solution by handling cases similarly to the Java tuple implementation?</p>\n<p>Edit: I submitted <a href=\"https://github.com/apple/foundationdb/pull/408\" rel=\"nofollow noopener\">a PR</a> that adds <code>uint64</code> support.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-05-24T14:12:01.317Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 312,
+        "reads": 34,
+        "readers_count": 33,
+        "score": 1566.8,
+        "yours": false,
+        "topic_id": 468,
+        "topic_slug": "using-unsigned-64-bit-integers-with-the-go-tuple-package",
+        "display_username": "Justin Lowery",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/408",
+            "internal": false,
+            "reflection": false,
+            "clicks": 12
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/master/bindings/java/src/main/com/apple/foundationdb/tuple/TupleUtil.java#L395",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/TupleUtil.java at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://docs.oracle.com/javase/7/docs/api/java/math/BigInteger.html",
+            "internal": false,
+            "reflection": false,
+            "title": "BigInteger (Java Platform SE 7 )",
+            "clicks": 1
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb/tuple",
+            "internal": false,
+            "reflection": false,
+            "title": "tuple - GoDoc",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/tuple/tuple.go#L285",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/tuple.go at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://golang.org/pkg/math/big/#Int",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 230,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/using-unsigned-64-bit-integers-with-the-go-tuple-package/468/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1345,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2018-05-29T17:45:45.892Z",
+        "cooked": "<p>I reviewed your PR, and I think the most relevant comment I had for this space is that there is some concern that because there isn\u2019t any distinction in the type codes between a <code>uint64</code> and an <code>int64</code>, then there has to be some amount of type merging one way or the other (in other words, because of types, the <code>encode</code> composed with <code>decode</code> does not form the identity). We already crossed that Rubicon in the Java bindings, so maybe it\u2019s not such a big deal to cross it with the Go bindings, though.</p>\n<p>I don\u2019t think we\u2019d be opposed to using <code>big.Int</code> from <code>math/big</code> in the Go tuple implementation. The Java bindings didn\u2019t always use big integers (they used Longs), but when they were updated, we just didn\u2019t also update the Go bindings. My main concern would be that, memory and performance wise, using big integers could have more overhead than one might want. (This issue already exists in the Java bindings, and it\u2019s something that we should probably address sooner rather than later.) But handling larger integers in the general case sounds fine to me.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-05-29T17:45:45.892Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 16.0,
+        "yours": false,
+        "topic_id": 468,
+        "topic_slug": "using-unsigned-64-bit-integers-with-the-go-tuple-package",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/using-unsigned-64-bit-integers-with-the-go-tuple-package/468/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1347,
+        "name": "Justin Lowery",
+        "username": "umpc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png",
+        "created_at": "2018-05-29T20:35:07.590Z",
+        "cooked": "<p>I will leave the inline replies on GitHub, though I\u2019ll post my reply to your summary comments here as it\u2019s more discussion-oriented in some ways:</p>\n<blockquote>\n<ol>\n<li>I think this probably needs additional tests. There is a tuple test that was recently added, the <code>tuple_test.go</code> file, that should probably be updated with a <code>uint64</code> example. It would also be great if the bindingtester for go could be made to generate <code>uint64</code> types, but that\u2019s a little hard given that it can\u2019t support negative numbers with 64 bits of information.</li>\n</ol>\n</blockquote>\n<p>I did manually add a test for it in a local stash, though seeing as it appears to expect the test data to be manually verified, I had left this uncommitted until I received some sort of feedback and set aside some time to make sure that the end result does not interfere in any way with the types that I may not be using in my keys.</p>\n<blockquote>\n<ol start=\"2\">\n<li>I think you ran into this (and I had kind of meant to ask this to you on the forums but it slipped my queue), but I\u2019m a little concerned that it doesn\u2019t honor the contract that if I give you <code>x</code> and you tuple pack it and unpack it, I always get <code>x</code> back (in that I could give the tuple encoder a <code>uint64</code> containing, say, the integer 1066, encode, decode, and then I get the <code>int64</code> 1066 back). We already don\u2019t quite honor that contract, so maybe it\u2019s not a huge deal, but it\u2019s something I\u2019m somewhat concerned about.</li>\n</ol>\n</blockquote>\n<p>You are right, I did have to pick a side with this. These changes externally behave similarly to the Java implementation, returning an <code>int64</code> (<code>Long</code>) <a href=\"https://github.com/apple/foundationdb/blob/release-5.1/bindings/java/src/main/com/apple/foundationdb/tuple/TupleUtil.java#L423\" rel=\"noopener nofollow ugc\">when it is in range</a>, preserving the existing behavior regarding <code>int64</code> values.</p>\n<p>At first, I had <code>decodeInt</code> return an <code>int64</code> for only its min value through values of <code>-1</code>, and return <code>uint64</code> for all of the values that the type can represent. In practice, there are <code>int64</code> type assertions in the <code>directory</code> package that cause a panic using this approach.</p>\n<p>I tend to default to using the <code>switch v := v.(type)</code> pattern and specify type cases that I expect, though it is generally reasonable in Go for someone to simply assert an <code>int64</code> type, like in the <code>directory</code> package, so there could also be existing user code that may break due to <code>int64</code> type assertions.</p>\n<p>I considered adding a new type code and updating the bindings. You probably already realize this, though like the first approach in Go, it wouldn\u2019t be backwards compatible, affecting Java users that might attempt to decode existing data.</p>\n<p>So for those reasons, and the way that the Java implementation was already converting <code>BigInteger</code> to <code>Long</code> where possible, I found the current behavior to be the most intuitive.</p>\n<p>I do have to use the <a href=\"https://github.com/umpc/go-fdbgeo/blob/98a5b9a6963a2bf70763f9642222f75c8a0560dd/unpack.go#L30\" rel=\"noopener nofollow ugc\"><code>switch v := v.(type)</code> pattern</a> in situations where the value range spans sections of the multiple <code>int</code> types, though I understand the big picture and why this appears to be a reasonable compromise, so it doesn\u2019t bother me personally, though I can see this as being a con of the current approach.</p>\n<blockquote>\n<p>I don\u2019t think we\u2019d be opposed to using <code>big.Int</code> from <code>math/big</code> in the Go tuple implementation. The Java bindings didn\u2019t always use big integers (they used Longs), but when they were updated, we just didn\u2019t also update the Go bindings. My main concern would be that, memory and performance wise, using big integers could have more overhead than one might want. (This issue already exists in the Java bindings, and it\u2019s something that we should probably address sooner rather than later.) But handling larger integers in the general case sounds fine to me.</p>\n</blockquote>\n<p>I now see that using <code>BigInteger</code> makes more sense in Java, as the 64-bit unsigned <code>Long</code> type is a more-recent addition. If the overhead is enough to be noticeable in the Java implementation, and you might consider deprecating support for <code>BigInteger</code>, in favor of using a byte string for example, it would make sense to me if implementing <code>big.Int</code> were skipped in favor of encouraging the use of byte slices.</p>\n<p>That would of course raise the issue of backwards compatibility, though there might not be nearly as many users who would rely on <code>BigInteger</code> encoding/decoding who require sizes larger than the now current built-in types. That is purely anecdotal, and I am sure a scientist somewhere would disagree, so some sort of data or at least a poll raising the issue of performance costs might be helpful. I am not opinionated here for this reason.</p>\n<p>I am interested if you have any thoughts on other potential approaches after reading my comments. I\u2019ll reply to your inline comments shortly.</p>\n<p>Thanks for quickly reviewing this PR!</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-05-29T20:39:56.933Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 21.0,
+        "yours": false,
+        "topic_id": 468,
+        "topic_slug": "using-unsigned-64-bit-integers-with-the-go-tuple-package",
+        "display_username": "Justin Lowery",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/release-5.1/bindings/java/src/main/com/apple/foundationdb/tuple/TupleUtil.java#L423",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/TupleUtil.java at release-5.1 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/umpc/go-fdbgeo/blob/98a5b9a6963a2bf70763f9642222f75c8a0560dd/unpack.go#L30",
+            "internal": false,
+            "reflection": false,
+            "title": "go-fdbgeo/unpack.go at 98a5b9a6963a2bf70763f9642222f75c8a0560dd \u00b7 umpc/go-fdbgeo \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 8,
+          "username": "alloc",
+          "name": "Alec Grieser",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 230,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/using-unsigned-64-bit-integers-with-the-go-tuple-package/468/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1280,
+      1345,
+      1347
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2708
+    ],
+    [
+      2,
+      2702
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Using unsigned 64-bit integers with the Go tuple package",
+  "id": 468,
+  "title": "Using unsigned 64-bit integers with the Go tuple package",
+  "posts_count": 3,
+  "created_at": "2018-05-24T06:34:22.216Z",
+  "views": 1378,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2018-05-29T20:35:07.590Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "using-unsigned-64-bit-integers-with-the-go-tuple-package",
+  "category_id": 7,
+  "word_count": 1269,
+  "deleted_at": null,
+  "user_id": 230,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_468",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Using the same keys and values across different languages",
+      "id": 2523,
+      "title": "Using the same keys and values across different languages",
+      "slug": "using-the-same-keys-and-values-across-different-languages",
+      "posts_count": 7,
+      "reply_count": 5,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2021-01-21T20:47:58.796Z",
+      "last_posted_at": "2021-01-24T11:40:17.940Z",
+      "bumped": true,
+      "bumped_at": "2021-01-24T11:40:17.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 521,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 551,
+            "username": "falsandtru",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/falsandtru/{size}/546_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Request for feedback: tuple encoding bug",
+      "id": 936,
+      "title": "Request for feedback: tuple encoding bug",
+      "slug": "request-for-feedback-tuple-encoding-bug",
+      "posts_count": 13,
+      "reply_count": 8,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2018-12-04T23:57:04.793Z",
+      "last_posted_at": "2021-01-24T11:53:42.053Z",
+      "bumped": true,
+      "bumped_at": "2021-01-24T11:53:42.053Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 982,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Ranges without explicit end (Go)",
+      "id": 773,
+      "title": "Ranges without explicit end (Go)",
+      "slug": "ranges-without-explicit-end-go",
+      "posts_count": 13,
+      "reply_count": 10,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2018-10-15T21:10:57.504Z",
+      "last_posted_at": "2018-10-25T14:38:53.425Z",
+      "bumped": true,
+      "bumped_at": "2018-10-25T14:38:53.425Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 3281,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 391,
+            "username": "atombender",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/atombender/{size}/688_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 378,
+            "username": "num",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/db5fbb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Impact of encoding on range read performance",
+      "id": 1350,
+      "title": "Impact of encoding on range read performance",
+      "slug": "impact-of-encoding-on-range-read-performance",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-05-06T21:58:48.160Z",
+      "last_posted_at": "2019-05-10T18:34:37.894Z",
+      "bumped": true,
+      "bumped_at": "2019-05-10T18:34:37.894Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1098,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 475,
+            "username": "monsiper",
+            "name": "mehmet onsiper",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/ba9def/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Rust Client API 0.2.0",
+      "id": 386,
+      "title": "Rust Client API 0.2.0",
+      "slug": "rust-client-api-0-2-0",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-05-09T13:57:29.898Z",
+      "last_posted_at": "2018-07-11T18:44:03.478Z",
+      "bumped": true,
+      "bumped_at": "2018-07-11T18:44:03.478Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1358,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 226,
+            "username": "bluejekyll",
+            "name": "Benjamin Fry",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bluejekyll/{size}/195_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 230,
+        "username": "umpc",
+        "name": "Justin Lowery",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 230,
+      "username": "umpc",
+      "name": "Justin Lowery",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png"
+    },
+    "last_poster": {
+      "id": 230,
+      "username": "umpc",
+      "name": "Justin Lowery",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/pull/408",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 12,
+        "user_id": 230,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/master/bindings/java/src/main/com/apple/foundationdb/tuple/TupleUtil.java#L395",
+        "title": "foundationdb/TupleUtil.java at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 230,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://docs.oracle.com/javase/7/docs/api/java/math/BigInteger.html",
+        "title": "BigInteger (Java Platform SE 7 )",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 230,
+        "domain": "docs.oracle.com",
+        "root_domain": "oracle.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/tuple/tuple.go#L285",
+        "title": "foundationdb/tuple.go at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 230,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb/tuple",
+        "title": "tuple - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 230,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

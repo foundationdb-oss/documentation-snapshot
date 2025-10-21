@@ -1,0 +1,578 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4028,
+        "name": "",
+        "username": "atcheung",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/atcheung/{size}/590_2.png",
+        "created_at": "2019-04-25T15:07:25.265Z",
+        "cooked": "<p>Looking for an example for how to properly use options in <code>fdbcli</code> or a (probably simple) explanation for why the following straightforward command results in an error:</p>\n<pre><code class=\"lang-auto\">fdbcli --exec \"option on TIMEOUT 0; getrange \\x00 \\xFF\"\n&gt;&gt;&gt; option on TIMEOUT 0\nOption enabled for all transactions\n&gt;&gt;&gt; getrange \\x00 \\xff\nERROR: Option set with an invalid value (2006)\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-04-25T15:07:52.242Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 65,
+        "reads": 27,
+        "readers_count": 26,
+        "score": 330.4,
+        "yours": false,
+        "topic_id": 1333,
+        "topic_slug": "fdbcli-option-usage-option-on-timeout-0-results-in-error-2006",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/how-to-set-timeout-for-transactios-by-fdbcli/3036/4",
+            "internal": true,
+            "reflection": true,
+            "title": "How to set TIMEOUT for transactios by fdbcli?",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 572,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbcli-option-usage-option-on-timeout-0-results-in-error-2006/1333/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4030,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2019-04-25T21:42:20.934Z",
+        "cooked": "<p>Interesting. What seems to be happening is that options take byte strings as their parameter, and in this case the value \u201c0\u201d is being passed in as a byte string. The option code tries to interpret the byte string as an 8-byte little endian integer and that of course fails.</p>\n<p>It works if you instead try:</p>\n<p><code>option on TIMEOUT \\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00</code></p>\n<p>Of course, that\u2019s a bit awkward. I\u2019m not sure I\u2019ve ever tried to set a numeric option in fdbcli, so I hadn\u2019t really ever considered that it would behave this way.</p>\n<p>For the specific case of setting a timeout, though, we have an option that you can pass in (which is for some reason undocumented) called <code>--timeout</code>, and it only works with <code>--exec</code>. For example:</p>\n<p><code>fdbcli --exec \"getrange \\x00 \\xff\" --timeout 5</code></p>\n<p>The default behavior is to have no timeout, so if you want the value <code>0</code> you don\u2019t need to do anything special.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-04-25T21:42:20.934Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 20.2,
+        "yours": false,
+        "topic_id": 1333,
+        "topic_slug": "fdbcli-option-usage-option-on-timeout-0-results-in-error-2006",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbcli-option-usage-option-on-timeout-0-results-in-error-2006/1333/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4028,
+      4030
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2371
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fdbcli option usage: &ldquo;option on TIMEOUT 0&rdquo; results in error 2006",
+  "id": 1333,
+  "title": "Fdbcli option usage: \"option on TIMEOUT 0\" results in error 2006",
+  "posts_count": 2,
+  "created_at": "2019-04-25T15:07:25.187Z",
+  "views": 654,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2019-04-25T21:42:20.934Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdbcli-option-usage-option-on-timeout-0-results-in-error-2006",
+  "category_id": 7,
+  "word_count": 223,
+  "deleted_at": null,
+  "user_id": 572,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1333",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to set TIMEOUT for transactios by fdbcli?",
+      "id": 3036,
+      "title": "How to set TIMEOUT for transactios by fdbcli?",
+      "slug": "how-to-set-timeout-for-transactios-by-fdbcli",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e70e10b07a1d43a3174f7aaf13ee2e55b645dd85_2_1024x476.png",
+      "created_at": "2021-11-25T08:25:33.812Z",
+      "last_posted_at": "2021-11-25T12:33:14.321Z",
+      "bumped": true,
+      "bumped_at": "2021-11-25T12:33:14.321Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 508,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1034,
+            "username": "ngocanhh",
+            "name": "Ngocanhh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ngocanhh/{size}/1237_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How do timeouts work in the C API?",
+      "id": 1322,
+      "title": "How do timeouts work in the C API?",
+      "slug": "how-do-timeouts-work-in-the-c-api",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-04-20T22:42:23.246Z",
+      "last_posted_at": "2019-04-20T22:59:30.344Z",
+      "bumped": true,
+      "bumped_at": "2019-04-20T22:59:30.344Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 659,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Defaults for transaction timeouts and retries?",
+      "id": 315,
+      "title": "Defaults for transaction timeouts and retries?",
+      "slug": "defaults-for-transaction-timeouts-and-retries",
+      "posts_count": 17,
+      "reply_count": 9,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2018-04-30T18:07:12.420Z",
+      "last_posted_at": "2021-10-08T10:30:15.297Z",
+      "bumped": true,
+      "bumped_at": "2021-10-08T10:30:15.297Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 4922,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 57,
+            "username": "mzamani",
+            "name": "Michael Zamani",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mzamani/{size}/133_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 990,
+            "username": "baiwfg2",
+            "name": "Lewis Chan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Creating new database from command line using `fdbcli &ndash;exec`",
+      "id": 1735,
+      "title": "Creating new database from command line using `fdbcli --exec`",
+      "slug": "creating-new-database-from-command-line-using-fdbcli-exec",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-11-14T18:52:06.236Z",
+      "last_posted_at": "2019-11-14T20:53:04.485Z",
+      "bumped": true,
+      "bumped_at": "2019-11-14T20:53:04.485Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2474,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 660,
+            "username": "kc626",
+            "name": "Kevin Chan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/k/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Golang fdb.MustOpenDefault() does not fail when fdb.cluster content points to invalid host",
+      "id": 715,
+      "title": "Golang fdb.MustOpenDefault() does not fail when fdb.cluster content points to invalid host",
+      "slug": "golang-fdb-mustopendefault-does-not-fail-when-fdb-cluster-content-points-to-invalid-host",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-09-18T20:48:41.791Z",
+      "last_posted_at": "2018-10-30T17:18:03.252Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T17:18:03.252Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1390,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 264,
+            "username": "dkoston",
+            "name": "Dave Koston",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dkoston/{size}/264_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 572,
+        "username": "atcheung",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/atcheung/{size}/590_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 572,
+      "username": "atcheung",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/atcheung/{size}/590_2.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    }
+  },
+  "bookmarks": []
+}

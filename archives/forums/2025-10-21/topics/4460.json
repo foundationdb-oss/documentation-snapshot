@@ -1,0 +1,640 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14021,
+        "name": "Sean",
+        "username": "ssmith",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/958977/{size}.png",
+        "created_at": "2024-05-05T20:10:41.717Z",
+        "cooked": "<p>Can I get some idea as to <em>how</em> deterministic I/O is arranged in a single-thread.</p>\n<p>Flow \u201cis able to conduct a deterministic simulation of an entire FoundationDB cluster within a single-thread!\u201d</p>\n<p>There must be a logical clock, and a way for each I/O component to advance one state at a time depending on the order the single-thread calls actor instances.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-05-05T20:10:41.717Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 21,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 114.8,
+        "yours": false,
+        "topic_id": 4460,
+        "topic_slug": "flow-determinism-logical-time",
+        "display_username": "Sean",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1415,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/flow-determinism-logical-time/4460/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14026,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2024-05-07T08:22:42.525Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"ssmith\" data-post=\"1\" data-topic=\"4460\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/s/958977/48.png\" class=\"avatar\"> ssmith:</div>\n<blockquote>\n<p>Can I get some idea as to <em>how</em> deterministic I/O is arranged in a single-thread.</p>\n</blockquote>\n</aside>\n<p>I am not sure I understand your question correctly, or rather which part of the system you want information about. What you\u2019re asking is a complex, multi-layered question.</p>\n<p>But basically, we use coroutines to run an event driven loop (our default implementation uses a mix of boost asio, kernel AIO, and eio). So outside of simulation a single process can saturate a CPU core while executing many tasks concurrently.</p>\n<p>In simulation, we have a different implementation of the low-level event loop. It:</p>\n<ol>\n<li>implements its own clock source</li>\n<li>uses blocking IO for disk-operations plus a sleep to simulate latency</li>\n<li>uses simple in-memory queues to simulate the network, again with sleep to simulate latency</li>\n</ol>\n<p>Each type of IO implements its own contract to simulate hardware (so network connections can fail or congest, disk IO can corrupt files, disk IO is ordered per disk etc).</p>\n<p>In simulation, all operations are synchronous. Either because they don\u2019t do actual IO (like for the simulated network) or because they are implemented to be synchronous (like for disk IO). So in order to simulate asynchronous operations, we inject semi-random sleeps when executing these operations. A sleep (or <code>delay</code> which is how we call them in flow) just puts a coroutine into a queue.</p>\n<p>The clock is also simulated and works as follows:</p>\n<ol>\n<li>It is initialized to <code>0</code> at startup</li>\n<li>Each coroutine/task in the main queue has a time value associated with it (so when you call <code>co_await delay(1.0);</code> under the covers we put the current coroutine into the task queue and set <code>now() + 1.0</code> as the time field). This main queue is implemented as a simple min-priority queue with <code>time</code> as priority</li>\n<li>The loop will pop the task with the smallest time from the queue, update the time to whatever the time is this task is meant to run at, and execute the task (re-enter the associated coroutine).</li>\n</ol>\n<p>So in pseudo-code, a file-read might be implemented something like this (minus the error handling):</p>\n<pre><code class=\"lang-auto\">if (g_simulator-&gt;getCurrentProcess()-&gt;failedDisk) {\n  co_await Never(); // simulate a failed disk\n}\n// make sure that all operations on a file are ordered and each operation has some\n// latency\ndiskParameters-&gt;nextOperation = std::max(diskParameters-&gt;nextOperation, now());\nauto randomLatency = randomLatency = 10 * deterministicRandom()-&gt;random01() / diskParameters-&gt;iops;\n// don't consume more iops than this disk provides\ndiskParameters-&gt;nextOperation += (1.0 / diskParameters-&gt;iops) + (size / diskParameters-&gt;bandwidth);\n// wait until we can read\nco_await delay(now() - (diskParameters-&gt;nextOperation + randomLatency));\n// this is a synchronous operation and will not consume any (simulated) time\nco_return read(fd, data, length);\n</code></pre>\n<p>One big benefit of this simulated time is that simulated time can pass much more quickly than real time. So we can always saturate a CPU core, even if the system is stuck without making (much) progress.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-05-07T08:22:42.525Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 6,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 59.6,
+        "yours": false,
+        "topic_id": 4460,
+        "topic_slug": "flow-determinism-logical-time",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/flow-determinism-logical-time/4460/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14021,
+      14026
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      534
+    ],
+    [
+      2,
+      533
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Flow &amp; determinism &amp; logical time",
+  "id": 4460,
+  "title": "Flow & determinism & logical time",
+  "posts_count": 2,
+  "created_at": "2024-05-05T20:10:41.660Z",
+  "views": 197,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2024-05-07T08:22:42.525Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "flow-determinism-logical-time",
+  "category_id": 8,
+  "word_count": 560,
+  "deleted_at": null,
+  "user_id": 1415,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4460",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Simulation of disk I/O",
+      "id": 2937,
+      "title": "Simulation of disk I/O",
+      "slug": "simulation-of-disk-i-o",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2021-10-11T06:00:45.013Z",
+      "last_posted_at": "2021-10-11T17:18:46.884Z",
+      "bumped": true,
+      "bumped_at": "2021-10-11T17:18:46.884Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 402,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1011,
+            "username": "Sean",
+            "name": "Sean McCauliff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sean/{size}/1198_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How does Flow handle long operations?",
+      "id": 282,
+      "title": "How does Flow handle long operations?",
+      "slug": "how-does-flow-handle-long-operations",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-04-26T14:05:31.598Z",
+      "last_posted_at": "2018-04-29T13:56:15.683Z",
+      "bumped": true,
+      "bumped_at": "2018-04-29T13:56:15.683Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 16,
+      "views": 1264,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 189,
+            "username": "klnusbaum",
+            "name": "Kurtis Nusbaum",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/klnusbaum/{size}/149_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 190,
+            "username": "itp",
+            "name": "Ian Peters",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/itp/{size}/151_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Systems using simulation testing",
+      "id": 1593,
+      "title": "Systems using simulation testing",
+      "slug": "systems-using-simulation-testing",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-08-26T14:26:03.960Z",
+      "last_posted_at": "2019-08-27T05:37:43.880Z",
+      "bumped": true,
+      "bumped_at": "2019-08-27T05:37:43.880Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1411,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "RocksDB backend",
+      "id": 845,
+      "title": "RocksDB backend",
+      "slug": "rocksdb-backend",
+      "posts_count": 16,
+      "reply_count": 9,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2018-11-05T13:22:47.660Z",
+      "last_posted_at": "2018-11-15T19:24:35.829Z",
+      "bumped": true,
+      "bumped_at": "2018-11-15T19:24:35.829Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 5685,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 328,
+            "username": "yangruifeng",
+            "name": "Yang Ruifeng ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/yangruifeng/{size}/710_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why was Flow developed?",
+      "id": 1711,
+      "title": "Why was Flow developed?",
+      "slug": "why-was-flow-developed",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-11-01T19:26:13.831Z",
+      "last_posted_at": "2019-11-03T17:53:49.300Z",
+      "bumped": true,
+      "bumped_at": "2019-11-03T17:53:49.300Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 3689,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 1415,
+        "username": "ssmith",
+        "name": "Sean",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/958977/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1415,
+      "username": "ssmith",
+      "name": "Sean",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/958977/{size}.png"
+    },
+    "last_poster": {
+      "id": 15,
+      "username": "markus.pilman",
+      "name": "Markus Pilman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+    }
+  },
+  "bookmarks": []
+}

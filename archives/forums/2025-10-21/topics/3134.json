@@ -1,0 +1,466 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10620,
+        "name": "transfitted",
+        "username": "transfitted",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9dc877/{size}.png",
+        "created_at": "2022-01-22T04:41:43.202Z",
+        "cooked": "<p>I have been scratching my head here trying to figure out what the problem is for quite a long time now, any kind of help would be amazing.</p>\n<p>I\u2019ve been trying to setup the <a href=\"https://github.com/FoundationDB/fdb-record-layer/tree/main/examples\" rel=\"noopener nofollow ugc\">examples</a> code on the public repo using maven instead of gradle, and for some reason anything to do with secondary indexes always throws an exception.</p>\n<pre><code class=\"lang-auto\">com.apple.foundationdb.record.metadata.MetaDataException: Unknown index type for Index {'Customer$phone_number'}#2\n        at com.apple.foundationdb.record.provider.foundationdb.IndexMaintainerRegistryImpl.getIndexValidator(IndexMaintainerRegistryImpl.java:81) ~\n        at com.apple.foundationdb.record.metadata.MetaDataValidator.validateIndex(MetaDataValidator.java:118) ~\n        at java.util.ArrayList.forEach(ArrayList.java:1511) ~[?:?]\n        at com.apple.foundationdb.record.metadata.MetaDataValidator.validateCurrentAndFormerIndexes(MetaDataValidator.java:104)\n        at com.apple.foundationdb.record.metadata.MetaDataValidator.validate(MetaDataValidator.java:65) ~\n        at com.apple.foundationdb.record.RecordMetaDataBuilder.build(RecordMetaDataBuilder.java:1395) ~\n        at com.apple.foundationdb.record.RecordMetaDataBuilder.build(RecordMetaDataBuilder.java:1348) ~\n        at com.apple.foundationdb.record.RecordMetaDataBuilder.getRecordMetaData(RecordMetaDataBuilder.java:1337) ~\n        at com.apple.foundationdb.record.RecordMetaData.build(RecordMetaData.java:487) ~\n</code></pre>\n<p>Commenting out the secondary in-line single field indexes on protobuf allows the rest of the example code to run fine (reading/writing to the db + logging these changes), until new indexes are added and rebuilt - at that point the program crashes again.</p>\n<pre><code class=\"lang-auto\">com.apple.foundationdb.record.metadata.MetaDataException: Unknown index type for Index {'email_address'}#2\n        at com.apple.foundationdb.record.provider.foundationdb.IndexMaintainerRegistryImpl.getIndexValidator(IndexMaintainerRegistryImpl.java:81) ~\n        at com.apple.foundationdb.record.metadata.MetaDataValidator.validateIndex(MetaDataValidator.java:118) ~\n        at java.util.ArrayList.forEach(ArrayList.java:1511) ~[?:?]\n        at com.apple.foundationdb.record.metadata.MetaDataValidator.validateCurrentAndFormerIndexes(MetaDataValidator.java:104) ~\n        at com.apple.foundationdb.record.metadata.MetaDataValidator.validate(MetaDataValidator.java:65) ~\n        at com.apple.foundationdb.record.RecordMetaDataBuilder.build(RecordMetaDataBuilder.java:1395) ~\n        at com.apple.foundationdb.record.RecordMetaDataBuilder.build(RecordMetaDataBuilder.java:1348) ~\n        at com.apple.foundationdb.record.RecordMetaDataBuilder.getRecordMetaData(RecordMetaDataBuilder.java:1337) ~\n</code></pre>\n<p>Maven dependencies:</p>\n<pre><code class=\"lang-auto\">        &lt;dependency&gt;\n            &lt;groupId&gt;org.foundationdb&lt;/groupId&gt;\n            &lt;artifactId&gt;fdb-java&lt;/artifactId&gt;\n            &lt;version&gt;6.3.23&lt;/version&gt;\n        &lt;/dependency&gt;\n        &lt;dependency&gt;\n            &lt;groupId&gt;org.foundationdb&lt;/groupId&gt;\n            &lt;artifactId&gt;fdb-record-layer-core-pb3&lt;/artifactId&gt;\n            &lt;version&gt;3.1.228.0&lt;/version&gt;\n        &lt;/dependency&gt;\n        &lt;dependency&gt;\n            &lt;groupId&gt;com.google.protobuf&lt;/groupId&gt;\n            &lt;artifactId&gt;protobuf-java&lt;/artifactId&gt;\n            &lt;version&gt;3.19.3&lt;/version&gt;\n        &lt;/dependency&gt;\n</code></pre>\n<p>Maven repositories:</p>\n<pre><code class=\"lang-auto\">        &lt;repository&gt;\n            &lt;id&gt;fdb-record-layer&lt;/id&gt;\n            &lt;url&gt;https://ossartifacts.jfrog.io/artifactory/fdb-record-layer/&lt;/url&gt;\n        &lt;/repository&gt;\n</code></pre>\n<p>Maven plugins:</p>\n<pre><code class=\"lang-auto\">            &lt;plugin&gt;\n                &lt;groupId&gt;com.github.os72&lt;/groupId&gt;\n                &lt;artifactId&gt;protoc-jar-maven-plugin&lt;/artifactId&gt;\n                &lt;version&gt;3.11.4&lt;/version&gt;\n                &lt;executions&gt;\n                    &lt;execution&gt;\n                        &lt;phase&gt;generate-sources&lt;/phase&gt;\n                        &lt;goals&gt;\n                            &lt;goal&gt;run&lt;/goal&gt;\n                        &lt;/goals&gt;\n                        &lt;configuration&gt;\n                            &lt;protocArtifact&gt;com.google.protobuf:protoc:3.6.1&lt;/protocArtifact&gt;\n                            &lt;addProtoSources&gt;all&lt;/addProtoSources&gt;\n                            &lt;includeMavenTypes&gt;direct&lt;/includeMavenTypes&gt;\n                            &lt;inputDirectories&gt;\n                                &lt;include&gt;src/main/protobuf&lt;/include&gt;\n                            &lt;/inputDirectories&gt;\n                        &lt;/configuration&gt;\n                    &lt;/execution&gt;\n                &lt;/executions&gt;\n            &lt;/plugin&gt;\n</code></pre>\n<p>Building metadata with build(false) to skip validations results in a segfault.</p>\n<p>Any help will be much appreciated, thanks.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-01-22T05:01:24.168Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 46,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 232.6,
+        "yours": false,
+        "topic_id": 3134,
+        "topic_slug": "unknown-index-type-for-index-errors-with-record-layer-examples-code-maven",
+        "display_username": "transfitted",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/tree/main/examples",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-record-layer/examples at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1061,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/unknown-index-type-for-index-errors-with-record-layer-examples-code-maven/3134/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      10620
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1369
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "&lsquo;Unknown index type for Index&rsquo; errors with record-layer examples code. (maven)",
+  "id": 3134,
+  "title": "'Unknown index type for Index' errors with record-layer examples code. (maven)",
+  "posts_count": 1,
+  "created_at": "2022-01-22T04:41:43.125Z",
+  "views": 406,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-01-22T04:41:43.202Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "unknown-index-type-for-index-errors-with-record-layer-examples-code-maven",
+  "category_id": 14,
+  "word_count": 463,
+  "deleted_at": null,
+  "user_id": 1061,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3134",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Creating secondary index on data within a Map",
+      "id": 1910,
+      "title": "Creating secondary index on data within a Map",
+      "slug": "creating-secondary-index-on-data-within-a-map",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-01-27T01:16:00.108Z",
+      "last_posted_at": "2020-01-27T21:21:25.792Z",
+      "bumped": true,
+      "bumped_at": "2020-01-27T21:21:25.792Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1054,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 713,
+            "username": "samitsawant",
+            "name": "Samit Sawant",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/13edae/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Ignoring Presence of New Indexes",
+      "id": 3146,
+      "title": "Ignoring Presence of New Indexes",
+      "slug": "ignoring-presence-of-new-indexes",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2022-01-31T17:35:34.942Z",
+      "last_posted_at": "2022-02-01T19:17:25.321Z",
+      "bumped": true,
+      "bumped_at": "2022-02-01T19:17:25.321Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 731,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Question about FDB Record Layer&rsquo;s SIGMOD&rsquo;19 paper",
+      "id": 2460,
+      "title": "Question about FDB Record Layer's SIGMOD'19 paper",
+      "slug": "question-about-fdb-record-layers-sigmod19-paper",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-12-02T13:26:04.240Z",
+      "last_posted_at": "2020-12-04T12:54:03.141Z",
+      "bumped": true,
+      "bumped_at": "2020-12-04T12:54:03.141Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1056,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 857,
+            "username": "zydong",
+            "name": "ZhiyuanDong",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zydong/{size}/994_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Multiple questions about Indexes, functions and watches to implement etcd-layer",
+      "id": 2047,
+      "title": "Multiple questions about Indexes, functions and watches to implement etcd-layer",
+      "slug": "multiple-questions-about-indexes-functions-and-watches-to-implement-etcd-layer",
+      "posts_count": 8,
+      "reply_count": 6,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2020-04-06T11:43:10.344Z",
+      "last_posted_at": "2020-06-03T06:21:53.521Z",
+      "bumped": true,
+      "bumped_at": "2020-06-03T06:21:53.521Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 3094,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "About the Record Layer category",
+      "id": 939,
+      "title": "About the Record Layer category",
+      "slug": "about-the-record-layer-category",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-12-06T20:43:53.135Z",
+      "last_posted_at": null,
+      "bumped": true,
+      "bumped_at": "2018-12-06T21:04:22.837Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": true,
+      "unpinned": null,
+      "excerpt": "Topics related to the FoundationDB Record Layer.",
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 882,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1,
+            "username": "davelester",
+            "name": "Dave Lester",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davelester/{size}/1927_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1061,
+        "username": "transfitted",
+        "name": "transfitted",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9dc877/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1061,
+      "username": "transfitted",
+      "name": "transfitted",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9dc877/{size}.png"
+    },
+    "last_poster": {
+      "id": 1061,
+      "username": "transfitted",
+      "name": "transfitted",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9dc877/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/tree/main/examples",
+        "title": "fdb-record-layer/examples at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 1061,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

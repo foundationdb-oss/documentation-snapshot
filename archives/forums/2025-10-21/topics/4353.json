@@ -1,0 +1,637 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13771,
+        "name": "Brian Breniser",
+        "username": "brianbreniser",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png",
+        "created_at": "2024-02-12T21:22:15.095Z",
+        "cooked": "<p>Hello experts,</p>\n<p>I am reaching out today to try to diagnose the issues with my foundation DB operator environment that I\u2019m using for testing. As of right now, I cannot get rid of write conflicts no matter what configuration I put the cluster in. I\u2019m using the fdbcli command with the \u2018status details\u2019 argument to get information from the cluster, as well as running the fdbexplorer/fdbexporter to gather information.</p>\n<p>We\u2019re testing this on an ARO cluster with worker nodes with relevant configs:</p>\n<pre><code class=\"lang-auto\">vmSize: Standard_L8s_v3\nstorageAccountType: Premium_LRS\ndiskSizeGB: 128\n</code></pre>\n<p>As well we are running all stateless processes on Azure vms:</p>\n<pre><code class=\"lang-auto\">vmSize: Standard_F8s_v2\n</code></pre>\n<p>And to snapshot an fdbcli output in the middle of a test, we see this:</p>\n<pre><code class=\"lang-auto\">Redundancy mode        - triple\n  Storage engine         - ssd-redwood-1-experimental\n  Coordinators           - 9\n  Desired Commit Proxies - 5\n  Desired GRV Proxies    - 5\n  Desired Resolvers      - 1\n  Desired Logs           - 12\n  Desired Remote Logs    - -1\n  Desired Log Routers    - -1\n  Usable Regions         - 2\n  Regions:\n    Primary -\n        Datacenter                    - dc1\n        Satellite datacenters         - dc2, dc3\n        Satellite Logs                - 3\n    Remote -\n        Datacenter                    - dc3\n        Satellite datacenters         - dc2, dc1\n        Satellite Logs                - 3\nCluster:\n  FoundationDB processes - 296\n  Zones                  - 59\n  Machines               - 59\n  Memory availability    - 6.2 GB per process on machine with least available\n  Retransmissions rate   - 154 Hz\n  Fault Tolerance        - 2 machines\n  Server time            - 01/29/24 22:00:00\nData:\n  Replication health     - (Re)initializing automatic data distribution\n  Moving data            - unknown (initializing)\n  Sum of key-value sizes - unknown\n  Disk space used        - 4.207 TB\nOperating space:\n  Storage server         - 1658.9 GB free on most full server\n  Log server             - 1807.4 GB free on most full server\nWorkload:\n  Read rate              - 59 Hz\n  Write rate             - 34079 Hz\n  Transactions started   - 441 Hz\n  Transactions committed - 169 Hz\n  Conflict rate          - 222 Hz # &lt;------ This is the important bit, why do we have conflicts???\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n</code></pre>\n<p>Of course our YCSB configs are also important, this is in our statefulset we have in kubernetes, these are environment variables + bash commands + our run loop to get multiple processes:</p>\n<pre><code class=\"lang-auto\">YCSB Setup:\n          update_proportion=0.0\n          read_proportion=0.0\n          insert_proportion=1.0\n          read_modify_write_proportion=0.0\n          num_keys=300000000\n          value_size_bytes=2000\n          batch_size=200\n          num_clients=20\n          threads_per_process=16\n          max_execution_time_seconds=900\n          keys_per_host=$((num_keys / num_clients))\n          operation_count=$((keys_per_process / batch_size))\n          run_phase() {\n            ./bin/ycsb.sh run foundationdb -s \\\n              -P $workloadrun \\\n              -p foundationdb.clusterfile=$FDB_CLUSTER_FILE \\\n              -p recordcount=$num_keys \\\n              -p operationcount=$operation_count \\\n              -p foundationdb.batchsize=$batch_size \\\n              -p maxexecutiontime=$max_execution_time_seconds \\\n              -p fieldcount=$field_count \\\n              -p fieldlength=$field_length \\\n              -p readproportion=$read_proportion \\\n              -p insertproportion=$insert_proportion \\\n              -p updateproportion=$update_proportion \\\n              -p readmodifywriteproportion=$read_modify_write_proportion \\\n              -p requestdistribution=uniform \\\n              -p threadcount=$threads_per_process\n          }\n</code></pre>\n<p>I\u2019ve omitted the least important things. The important bits are:</p>\n<pre><code class=\"lang-auto\">- 5 processes\n- 16 threads per process\n- 20 pods on 20 separate nodes in kubernetes\n- batch_size of 200\n- workload is 100% inserts\n- 15 minute runtime\n- Not all of the env vars are included, but everything the ycsb command uses are defined\n</code></pre>\n<p>As you can see in the fdbcli output we are getting conflicts when writing to the database. To me I don\u2019t believe this should happen because we are splitting up the key space appropriately according to what YCSB needs so that the various threads don\u2019t try to overwrite each other.</p>\n<p>I\u2019ve dove into the YCSB logs on process start up and I see that the keys are being split up appropriately. Every single YCSB thread starts its key space with one key after the last YCSB thread ends its key space. Example: YCSB thread 1: keys 1-100, YCSB thread 2: Keys 101-200. Sorry for the impromptu log, I don\u2019t have one offhand at the moment.</p>\n<p>Given that, if something looks obviously wrong with how I split up the keys, that could be one of the problems. Maybe I just missed it in the logs.</p>\n<p>Otherwise, is there something we can look into regarding the operator configs to eliminate conflicts? We\u2019re seeing some speed problems compard to our VM setup, and we think this might be the primary reason, but any operator tuning recommendations would be considered helpful.</p>\n<p>Thanks all!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-02-12T21:22:15.095Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 62,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 316.4,
+        "yours": false,
+        "topic_id": 4353,
+        "topic_slug": "write-conflicts-impossible-to-eliminate-fdb-operator-ycsb-testing-tool",
+        "display_username": "Brian Breniser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1286,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/write-conflicts-impossible-to-eliminate-fdb-operator-ycsb-testing-tool/4353/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13810,
+        "name": "Miguel Ping",
+        "username": "mping-exo",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mping-exo/{size}/1374_2.png",
+        "created_at": "2024-02-28T16:18:35.554Z",
+        "cooked": "<p>Do you do queries with <code>KeySelector/lastLessOrEqual</code> or <code>KeySelector/firstGreaterOrEqual</code>? That may go over your sharding range, specially while populating the database.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-02-28T16:18:35.554Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 23.4,
+        "yours": false,
+        "topic_id": 4353,
+        "topic_slug": "write-conflicts-impossible-to-eliminate-fdb-operator-ycsb-testing-tool",
+        "display_username": "Miguel Ping",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1131,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/write-conflicts-impossible-to-eliminate-fdb-operator-ycsb-testing-tool/4353/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13771,
+      13810
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      617
+    ],
+    [
+      2,
+      601
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance",
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Write conflicts impossible to eliminate? FDB operator + YCSB testing tool",
+  "id": 4353,
+  "title": "Write conflicts impossible to eliminate? FDB operator + YCSB testing tool",
+  "posts_count": 2,
+  "created_at": "2024-02-12T21:22:14.990Z",
+  "views": 321,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-02-28T16:18:35.554Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "write-conflicts-impossible-to-eliminate-fdb-operator-ycsb-testing-tool",
+  "category_id": 16,
+  "word_count": 680,
+  "deleted_at": null,
+  "user_id": 1286,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4353",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Optimizing a single large transaction ( 10,000 keys)",
+      "id": 1961,
+      "title": "Optimizing a single large transaction ( 10,000 keys)",
+      "slug": "optimizing-a-single-large-transaction-10-000-keys",
+      "posts_count": 12,
+      "reply_count": 10,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-02-17T13:36:55.355Z",
+      "last_posted_at": "2020-02-24T11:30:42.854Z",
+      "bumped": true,
+      "bumped_at": "2020-02-24T11:30:42.854Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2373,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB @ Kubernetes having &ldquo;issues&rdquo;",
+      "id": 383,
+      "title": "FoundationDB @ Kubernetes having \"issues\"",
+      "slug": "foundationdb-kubernetes-having-issues",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-09T10:17:53.797Z",
+      "last_posted_at": "2018-05-11T17:28:05.081Z",
+      "bumped": true,
+      "bumped_at": "2018-05-11T17:28:05.081Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2031,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Benchmarking FoundationDB on AWS",
+      "id": 410,
+      "title": "Benchmarking FoundationDB on AWS",
+      "slug": "benchmarking-foundationdb-on-aws",
+      "posts_count": 19,
+      "reply_count": 12,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2018-05-14T09:55:57.604Z",
+      "last_posted_at": "2018-10-30T16:01:15.283Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T16:01:15.283Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 9035,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 257,
+            "username": "cih.y2k",
+            "name": "cih.y2k",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cih.y2k/{size}/423_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "id": 637,
+      "title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "slug": "scripts-to-deploy-benchmark-and-tinker-with-1m-operations-sec-foundationdb-cluster-on-aws",
+      "posts_count": 14,
+      "reply_count": 5,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2018-08-14T14:13:06.849Z",
+      "last_posted_at": "2018-11-06T16:58:50.747Z",
+      "bumped": true,
+      "bumped_at": "2018-11-06T16:58:50.747Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 4284,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 55,
+            "username": "bowlofstew",
+            "name": "Stewart Henderson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 409,
+            "username": "TommyLike",
+            "name": "Hu Sheng",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tommylike/{size}/395_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB kubernetes operator continuously boucing processes",
+      "id": 2092,
+      "title": "FDB kubernetes operator continuously boucing processes",
+      "slug": "fdb-kubernetes-operator-continuously-boucing-processes",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-04-29T10:57:13.947Z",
+      "last_posted_at": "2020-05-03T07:18:12.844Z",
+      "bumped": true,
+      "bumped_at": "2020-05-03T07:18:12.844Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1013,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 724,
+            "username": "larshagen",
+            "name": "Lars Hagen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/larshagen/{size}/776_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1131,
+        "username": "mping-exo",
+        "name": "Miguel Ping",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mping-exo/{size}/1374_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1286,
+        "username": "brianbreniser",
+        "name": "Brian Breniser",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1286,
+      "username": "brianbreniser",
+      "name": "Brian Breniser",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png"
+    },
+    "last_poster": {
+      "id": 1131,
+      "username": "mping-exo",
+      "name": "Miguel Ping",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mping-exo/{size}/1374_2.png"
+    }
+  },
+  "bookmarks": []
+}

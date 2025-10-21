@@ -1,0 +1,522 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14706,
+        "name": "Miguel Filipe",
+        "username": "msf",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png",
+        "created_at": "2025-02-15T15:43:11.620Z",
+        "cooked": "<p>We have a deployment w/ 3 servers, using double replication.<br>\nEach server has 10GBit networking, 256GB of ram, 10TB of nvme disk, 48cores (96 threads).<br>\nWe run with 3 coordinators (one per node), total of 48 fdbserver processes per node and all processes share the same nvme drive. We use ssd-redwood-1 for storage engine.</p>\n<p>The servers are all \u201cidle\u201d looking at cpu and io-load, network load is also small (100Mbit/sec utilization).</p>\n<p>The load is coming from a single process, also on the same 10GBit network, doing sequential reads of &lt;1KiB. the avg read time is \u00b1900microseconds, but the P99.9 is around 70millis, P99.99 is hovering around 350millis.</p>\n<p>bpftrace shows me that the load is not io constrained and is mostly being served from fdbserver processes cache.</p>\n<p>Any tips on how to make fdb latencies more consistent, at this small load, having such high P99.9 latencies is definitely not expected.</p>\n<p>Here\u2019s the output of <code>status details</code></p>\n<pre><code class=\"lang-auto\">Configuration:\n  Redundancy mode        - double\n  Storage engine         - ssd-redwood-1\n  Log engine             - ssd-2\n  Encryption at-rest     - disabled\n  Coordinators           - 3\n  Desired Commit Proxies - 3\n  Desired GRV Proxies    - 1\n  Desired Resolvers      - 1\n  Desired Logs           - 8\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 144\n  Zones                  - 3\n  Machines               - 3\n  Memory availability    - 3.3 GB per process on machine with least available\n                           &gt;&gt;&gt;&gt;&gt; (WARNING: 4.0 GB recommended) &lt;&lt;&lt;&lt;&lt;\n  Retransmissions rate   - 6 Hz\n  Fault Tolerance        - 1 machines\n  Server time            - 02/15/25 16:52:35\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 7.519 TB\n  Disk space used        - 17.076 TB\n\nOperating space:\n  Storage server         - 8479.5 GB free on most full server\n  Log server             - 8471.4 GB free on most full server\n\nWorkload:\n  Read rate              - 1271 Hz\n  Write rate             - 4552 Hz\n  Transactions started   - 25 Hz\n  Transactions committed - 11 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n  10.100.36.123:4500     (  1% cpu;  1% machine; 0.209 Gbps; 37% disk IO; 3.1 GB / 3.4 GB RAM  )\n( ...144 entries that all look very similar....)\n  10.100.196.188:4542    (  1% cpu;  1% machine; 0.068 Gbps; 20% disk IO; 2.9 GB / 3.3 GB RAM  )\n  10.100.196.188:4543    (  1% cpu;  1% machine; 0.068 Gbps; 20% disk IO; 2.9 GB / 3.3 GB RAM  )\n  10.100.196.188:4544    (  1% cpu;  1% machine; 0.068 Gbps; 21% disk IO; 3.1 GB / 3.3 GB RAM  )\n  10.100.196.188:4545    (  1% cpu;  1% machine; 0.068 Gbps; 21% disk IO; 3.1 GB / 3.3 GB RAM  )\n  10.100.196.188:4546    (  1% cpu;  1% machine; 0.068 Gbps; 21% disk IO; 3.0 GB / 3.3 GB RAM  )\n  10.100.196.188:4547    (  1% cpu;  1% machine; 0.068 Gbps; 21% disk IO; 3.2 GB / 3.3 GB RAM  )\n\nCoordination servers:\n  10.100.36.123:4500  (reachable)\n  10.100.196.187:4500  (reachable)\n  10.100.196.188:4500  (reachable)\n\nClient time: 02/15/25 16:52:35\n\nWARNING: A single process is both a transaction log and a storage server.\n  For best performance use dedicated disks for the transaction logs by setting process classes.\n</code></pre>\n<p>We don\u2019t limit the RAM per process, the servers are dedicated to foundationdb, we are assigning 1cpu to each process and expecting it to use 4GiB per process. <code>fdbcli status details</code> shows utilization evenly spread across the 144 fdbserver processes.</p>\n<p>Our client code in C++ is using 1 fdbclient thread, the thread business isn\u2019t high (\u00b116%)<br>\nAny tips are appreciated, thank you.<br>\nWe can share more details if necessary.</p>\n<p>here\u2019s a plot of client side latency metrics:<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5.png\" data-download-href=\"/uploads/short-url/fa6LZLH9y67kGHvZTXkj6EVxl41.png?dl=1\" title=\"image\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5_2_689x296.png\" alt=\"image\" data-base62-sha1=\"fa6LZLH9y67kGHvZTXkj6EVxl41\" width=\"689\" height=\"296\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5_2_689x296.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5_2_1033x444.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5.png 2x\" data-dominant-color=\"202421\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">image</span><span class=\"informations\">1293\u00d7556 54.9 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-02-15T15:54:40.006Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 53.6,
+        "yours": false,
+        "topic_id": 4775,
+        "topic_slug": "high-p99-9-latencies-70millis-on-range-reads-1kib-with-1000-reads-per-second",
+        "display_username": "Miguel Filipe",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1491,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/high-p99-9-latencies-70millis-on-range-reads-1kib-with-1000-reads-per-second/4775/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      14706
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      248
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "High P99.9 Latencies (\u00b170millis) on range reads (&lt;1KiB) with \u00b11000 reads per second",
+  "id": 4775,
+  "title": "High P99.9 Latencies (\u00b170millis) on range reads (<1KiB) with \u00b11000 reads per second",
+  "posts_count": 1,
+  "created_at": "2025-02-15T15:43:11.540Z",
+  "views": 74,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-02-15T15:43:11.620Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "high-p99-9-latencies-70millis-on-range-reads-1kib-with-1000-reads-per-second",
+  "category_id": 7,
+  "word_count": 619,
+  "deleted_at": null,
+  "user_id": 1491,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5_2_1024x440.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4775",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1293,
+      "height": 556,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 440,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/6/6a45277bf7dd19c25a2231c4f9568ad229129ed5_2_1024x440.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "The read latency of 1% read request up to 50ms",
+      "id": 3154,
+      "title": "The read latency of 1% read request up to 50ms",
+      "slug": "the-read-latency-of-1-read-request-up-to-50ms",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/c/c54587436a23e9cde6b65bc38325dfa005b46545_2_1024x122.png",
+      "created_at": "2022-02-09T03:05:03.594Z",
+      "last_posted_at": "2022-02-09T03:05:03.663Z",
+      "bumped": true,
+      "bumped_at": "2022-02-09T03:24:55.139Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 416,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1042,
+            "username": "widjaoidnasdqw",
+            "name": "widjaoidnasdqw",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/widjaoidnasdqw/{size}/1274_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Are spikes of 500ms+ MaxRowReadLatency normal?",
+      "id": 1508,
+      "title": "Are spikes of 500ms+ MaxRowReadLatency normal?",
+      "slug": "are-spikes-of-500ms-maxrowreadlatency-normal",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-07-05T04:45:03.599Z",
+      "last_posted_at": "2019-07-11T00:15:09.522Z",
+      "bumped": true,
+      "bumped_at": "2019-07-11T00:15:09.522Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1216,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 619,
+            "username": "eastern-grey",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/e/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB read performance",
+      "id": 729,
+      "title": "FoundationDB read performance",
+      "slug": "foundationdb-read-performance",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-09-25T07:10:56.281Z",
+      "last_posted_at": "2018-09-26T12:47:46.621Z",
+      "bumped": true,
+      "bumped_at": "2018-09-26T12:47:46.621Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1526,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 382,
+            "username": "rahul",
+            "name": "Rahul",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f14d63/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Benchmark output",
+      "id": 2791,
+      "title": "Benchmark output",
+      "slug": "benchmark-output",
+      "posts_count": 6,
+      "reply_count": 5,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-07-13T11:18:30.539Z",
+      "last_posted_at": "2021-07-29T05:13:14.876Z",
+      "bumped": true,
+      "bumped_at": "2021-07-29T05:13:14.876Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 748,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 931,
+            "username": "mumair5393",
+            "name": "Umair",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1491,
+        "username": "msf",
+        "name": "Miguel Filipe",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1491,
+      "username": "msf",
+      "name": "Miguel Filipe",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png"
+    },
+    "last_poster": {
+      "id": 1491,
+      "username": "msf",
+      "name": "Miguel Filipe",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png"
+    }
+  },
+  "bookmarks": []
+}

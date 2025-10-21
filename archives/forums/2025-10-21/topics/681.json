@@ -1,0 +1,804 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2038,
+        "name": "John Li",
+        "username": "nittanybank",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/c6cbf5/{size}.png",
+        "created_at": "2018-09-05T16:44:58.767Z",
+        "cooked": "<p>Hello<br>\nI was cross building for linux/amd64 on MacOS and running this error, any idea? I am using FoundatationDB  bindings release 5.2 branch.</p>\n<p>\u2013&gt; linux/amd64: <a href=\"http://github.com/hashicorp/vault\" rel=\"nofollow noopener\">github.com/hashicorp/vault</a></p>\n<p>1 errors occurred:<br>\n\u2013&gt; linux/amd64 error: exit status 2</p>\n<h1><a href=\"http://github.com/apple/foundationdb/bindings/go/src/fdb\" rel=\"nofollow noopener\">github.com/apple/foundationdb/bindings/go/src/fdb</a></h1>\n<p>\u2026/\u2026/apple/foundationdb/bindings/go/src/fdb/generated.go:28:9: undefined: NetworkOptions</p>\n<p>It is weired that the NetworkOptions is defined \u2026/\u2026/apple/foundationdb/bindings/go/src/fdb/fdb.go which is is in the same package as generated.go sits.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-09-05T16:44:58.767Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 99,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 501.2,
+        "yours": false,
+        "topic_id": 681,
+        "topic_slug": "undefined-networkoptions",
+        "display_username": "John Li",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "http://github.com/apple/foundationdb/bindings/go/src/fdb",
+            "internal": false,
+            "reflection": false,
+            "clicks": 4
+          },
+          {
+            "url": "http://github.com/hashicorp/vault",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 365,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/undefined-networkoptions/681/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2040,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-09-06T18:42:05.633Z",
+        "cooked": "<p>How are you building the bindings?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-09-06T18:42:05.633Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 10.6,
+        "yours": false,
+        "topic_id": 681,
+        "topic_slug": "undefined-networkoptions",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/undefined-networkoptions/681/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 2077,
+        "name": "Mathieu Hinderyckx",
+        "username": "mathieu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mathieu/{size}/365_2.png",
+        "created_at": "2018-09-12T09:27:19.578Z",
+        "cooked": "<p>I am facing the same issue while trying to package our FoundationDB client program in a container, and have not found a working solution for this after hours of frustration. My Dockerfile looks somewhat like this</p>\n<pre><code class=\"lang-bash\">FROM ubuntu:18.04\n\nRUN apt-get update &amp;&amp; apt-get install -y git golang-go wget\n\n# Command line arguments for the go build\nENV GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GOPATH=/go/ GOBIN=/go/bin\n\n# Install FoundationDB client libraries\nRUN wget https://www.foundationdb.org/downloads/5.2.5/ubuntu/installers/foundationdb-clients_5.2.5-1_amd64.deb &amp;&amp; dpkg -i foundationdb-clients_5.2.5-1_amd64.deb &amp;&amp; rm foundationdb-clients_5.2.5-1_amd64.deb\n\n# Add example program\nADD src/main.go /go/src/main.go\n\nCMD /bin/bash\n</code></pre>\n<p>The <code>src/main.go</code> file is just the example file from <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#hdr-Basic_Usage\" rel=\"nofollow noopener\">godoc</a> with the apiversion 520 instead of 200. In reality our own codebase is there in the <code>src</code> directory.</p>\n<p>Build this and start a container:</p>\n<pre><code class=\"lang-bash\">docker build -t test .\ndocker run -it -w /go/src/ test /bin/bash\n</code></pre>\n<p>Now try a go get, this results:</p>\n<pre><code class=\"lang-bash\">root@dd4d269335a2:/go/src# go get\n# github.com/apple/foundationdb/bindings/go/src/fdb\ngithub.com/apple/foundationdb/bindings/go/src/fdb/generated.go:48:9: undefined: NetworkOptions\nroot@dd4d269335a2:/go/src#\n</code></pre>\n<p>This doesn\u2019t get solved when doing a checkout of the <code>release-5.1</code> or any other branch as some issues are related to that (see <a href=\"https://github.com/apple/foundationdb/issues/246\" rel=\"nofollow noopener\">github</a>).</p>\n<p>Additionally I can run using the go bindings on my Mac just fine, but when I try to compile for Linux directly on it (instead of in the Docker container) I get the same error.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-09-12T09:27:19.578Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 76.8,
+        "yours": false,
+        "topic_id": 681,
+        "topic_slug": "undefined-networkoptions",
+        "display_username": "Mathieu Hinderyckx",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/246",
+            "internal": false,
+            "reflection": false,
+            "title": "Build errors with golang bindings \u00b7 Issue #246 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#hdr-Basic_Usage",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 359,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/undefined-networkoptions/681/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 2114,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2018-09-15T18:14:53.449Z",
+        "cooked": "<p>Okay, I think I know what\u2019s going on.</p>\n<p>I left a more detailed response <a href=\"https://github.com/apple/foundationdb/issues/246#issuecomment-421609079\">as a comment on a GitHub issue</a> where you had raised this problem, but I think it\u2019s a cgo configuration issue and that setting the CGO_ENABLED environment variable to 1 should fix the issue.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-09-15T18:14:53.449Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 28.4,
+        "yours": false,
+        "topic_id": 681,
+        "topic_slug": "undefined-networkoptions",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/246#issuecomment-421609079",
+            "internal": false,
+            "reflection": false,
+            "title": "Build errors with golang bindings \u00b7 Issue #246 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 24
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 359,
+          "username": "mathieu",
+          "name": "Mathieu Hinderyckx",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/mathieu/{size}/365_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/undefined-networkoptions/681/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2038,
+      2040,
+      2077,
+      2114
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2603
+    ],
+    [
+      2,
+      2602
+    ],
+    [
+      3,
+      2597
+    ],
+    [
+      4,
+      2593
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Undefined: NetworkOptions",
+  "id": 681,
+  "title": "Undefined: NetworkOptions",
+  "posts_count": 4,
+  "created_at": "2018-09-05T16:44:58.666Z",
+  "views": 907,
+  "reply_count": 2,
+  "like_count": 1,
+  "last_posted_at": "2018-09-15T18:14:53.449Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "undefined-networkoptions",
+  "category_id": 5,
+  "word_count": 449,
+  "deleted_at": null,
+  "user_id": 365,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_681",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 12,
+  "participant_count": 4,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Go + FoundationDB - Straight Forward Steps",
+      "id": 1274,
+      "title": "Go + FoundationDB - Straight Forward Steps",
+      "slug": "go-foundationdb-straight-forward-steps",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-04-01T21:02:46.452Z",
+      "last_posted_at": "2019-04-09T06:37:50.005Z",
+      "bumped": true,
+      "bumped_at": "2019-04-09T06:37:50.005Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3046,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 170,
+            "username": "meln1k",
+            "name": "Nikita Melkozerov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meln1k/{size}/150_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Errors building for Go",
+      "id": 3905,
+      "title": "Errors building for Go",
+      "slug": "errors-building-for-go",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2023-04-14T22:00:19.455Z",
+      "last_posted_at": "2023-04-15T12:22:25.406Z",
+      "bumped": true,
+      "bumped_at": "2023-04-15T12:22:25.406Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 333,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1237,
+            "username": "danthegoodman",
+            "name": "Dan Goodman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Install Help on MacOS with Go Languange Binding",
+      "id": 216,
+      "title": "Install Help on MacOS with Go Languange Binding",
+      "slug": "install-help-on-macos-with-go-languange-binding",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-04-23T13:06:15.351Z",
+      "last_posted_at": "2018-04-24T16:33:28.452Z",
+      "bumped": true,
+      "bumped_at": "2018-04-24T16:33:28.452Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1276,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 149,
+            "username": "spprichard",
+            "name": "Steven Prichard",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/bbe5ce/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 76,
+            "username": "schafdog",
+            "name": "Dennis Schafroth",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/76d3ee/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Golang Errors finding github.com/apple/foundationdb/bindings/go/src/fdb",
+      "id": 4133,
+      "title": "Golang Errors finding github.com/apple/foundationdb/bindings/go/src/fdb",
+      "slug": "golang-errors-finding-github-com-apple-foundationdb-bindings-go-src-fdb",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2023-08-26T10:50:46.052Z",
+      "last_posted_at": "2023-08-26T13:43:32.448Z",
+      "bumped": true,
+      "bumped_at": "2023-08-26T13:43:32.448Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 346,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1128,
+            "username": "manfontan",
+            "name": "Manuel Fontan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB error code 4100 when trying to debug golang program under windows",
+      "id": 2361,
+      "title": "FoundationDB error code 4100 when trying to debug golang program under windows",
+      "slug": "foundationdb-error-code-4100-when-trying-to-debug-golang-program-under-windows",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-09-25T11:30:34.405Z",
+      "last_posted_at": "2020-10-16T06:16:07.493Z",
+      "bumped": true,
+      "bumped_at": "2020-10-16T06:16:07.493Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 882,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 297,
+            "username": "imukhin",
+            "name": "Ivan Mukhin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/b19c9b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 359,
+        "username": "mathieu",
+        "name": "Mathieu Hinderyckx",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mathieu/{size}/365_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 365,
+        "username": "nittanybank",
+        "name": "John Li",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/c6cbf5/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 365,
+      "username": "nittanybank",
+      "name": "John Li",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/c6cbf5/{size}.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/246#issuecomment-421609079",
+        "title": "Build errors with golang bindings \u00b7 Issue #246 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 24,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "http://github.com/apple/foundationdb/bindings/go/src/fdb",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 365,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/issues/246",
+        "title": "Build errors with golang bindings \u00b7 Issue #246 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 359,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

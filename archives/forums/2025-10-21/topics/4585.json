@@ -1,0 +1,629 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14302,
+        "name": "Bozhidar Lenchov",
+        "username": "blenchov",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/bbe5ce/{size}.png",
+        "created_at": "2024-08-15T22:42:20.384Z",
+        "cooked": "<p>Hello FDB experts,</p>\n<p>Wanted to ask about FDB7.x Regions vs DR performance and whether one or the other (or a separate solution) can be best used for our use-case below.</p>\n<p>We have a source FDB cluster in CloudA which we\u2019d like to copy to machines in CloudB, and have both running independently until we\u2019re ready to switch to CloudB serving traffic weeks later. Once the initial sync between CloudA and CloudB clusters is complete via FDB (we tested mostly with regions so far), we want to remain serving from CloudA. After the FDB data is copied, our application tier will have the responsibility to keep the 2 environment in sync rather than FDB itself.</p>\n<p>Our questions so far are:</p>\n<ol>\n<li>Does FDB Regions use less resources than FDB DR? (i.e. do we need more machines/process count or process classes at source or destination to keep replication running alongside regular FDB usage)</li>\n<li>Can regions be used to copy a cluster and then make 2 independent clusters, as I attempted to describe above? (or DR or another solution)</li>\n</ol>\n<p>For the switch from replicating via FDB vs our own ingest data path, we are able to stop ingestion at the source and start queuing up data to ensure consistency. We are planning to then disconnect the 2 clusters (stop replication via FDB), wait for each to report healthy, and resume ingestion of queued messages into CloudA and CloudB FDB clusters separately.</p>\n<p>Also worth noting from our FDB Regions testing that we needed to disable perpetual_storage_wiggle (since we didn\u2019t set <a href=\"https://apple.github.io/foundationdb/perpetual-storage-wiggle.html#example-commands\" rel=\"noopener nofollow ugc\">perpetual_storage_wiggle_locality</a>, and replication using regions started losing data once destination region with -1 priority was added and usable_regions were set to 2. Not sure if <a href=\"https://apple.github.io/foundationdb/configuration.html#migrating-a-database-to-use-a-region-configuration\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Configuration \u2014 FoundationDB 7.1</a> needs to be updated to mention wiggle, which I don\u2019t think FDB7 enables by default, but we needed when switching from FDB6 ssd storage engine to FDB7 ssd-redwood-1-experimental.</p>\n<p>Thank you,<br>\nBoz</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-08-15T23:07:31.664Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 37,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 187.2,
+        "yours": false,
+        "topic_id": 4585,
+        "topic_slug": "fdb-regions-vs-dr-performance-and-usage-for-creating-independent-fdb-clusters",
+        "display_username": "Bozhidar Lenchov",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/configuration.html#migrating-a-database-to-use-a-region-configuration",
+            "internal": false,
+            "reflection": false,
+            "title": "Configuration \u2014 FoundationDB 7.1",
+            "clicks": 0
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/perpetual-storage-wiggle.html#example-commands",
+            "internal": false,
+            "reflection": false,
+            "title": "Perpetual Storage Wiggle \u2014 FoundationDB 7.1",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1455,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-regions-vs-dr-performance-and-usage-for-creating-independent-fdb-clusters/4585/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14303,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2024-08-17T18:07:48.863Z",
+        "cooked": "<p>Interesting questions. I\u2019ll throw out my thoughts on them.</p>\n<ol>\n<li>FDB region won\u2019t use less resources than FDB DR. In normal operations, the remote region doesn\u2019t have read traffic (because read to primary region is faster), so you may be tempted to use less resource. However, when there is a problem in the primary region and the cluster needs to fail over, less resource can cause performance degradation. Thus, it\u2019s not a good idea to use less resource in the remote. Additionally, FDB region requires a separate satellite site for storing log data, which is additional resource requirement.</li>\n<li>Region can give you almost synchronized data across two data centers. However, there are a few seconds lag. Theoretically you could make 2 independent clusters, but there are a couple of problems to solve:</li>\n</ol>\n<p>a) The lag problem. Either pause writes (e.g., lock the database) or use application level logic to make sure data are identical across two regions.</p>\n<p>b) Making separate clusters. You need to have separate cluster files, where each cluster has its own set of coordinators. These coordinators need to have the data from a majority of the original set of coordinators before the separation. There is no such tool existed today to do the above, so some manual testing is needed and then can be converted into an automation tool.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-08-17T18:07:48.863Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 7.2,
+        "yours": false,
+        "topic_id": 4585,
+        "topic_slug": "fdb-regions-vs-dr-performance-and-usage-for-creating-independent-fdb-clusters",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-regions-vs-dr-performance-and-usage-for-creating-independent-fdb-clusters/4585/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14302,
+      14303
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      432
+    ],
+    [
+      2,
+      430
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FDB Regions vs DR performance and usage for creating independent FDB clusters",
+  "id": 4585,
+  "title": "FDB Regions vs DR performance and usage for creating independent FDB clusters",
+  "posts_count": 2,
+  "created_at": "2024-08-15T22:42:20.324Z",
+  "views": 65,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-08-17T18:07:48.863Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-regions-vs-dr-performance-and-usage-for-creating-independent-fdb-clusters",
+  "category_id": 7,
+  "word_count": 578,
+  "deleted_at": null,
+  "user_id": 1455,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4585",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Multiple DR running simultaneously",
+      "id": 2246,
+      "title": "Multiple DR running simultaneously",
+      "slug": "multiple-dr-running-simultaneously",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-07-13T20:53:45.013Z",
+      "last_posted_at": "2020-07-13T21:27:53.792Z",
+      "bumped": true,
+      "bumped_at": "2020-07-13T21:27:53.792Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 765,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 781,
+            "username": "jarvis",
+            "name": "jar ",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/e36b37/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Multi-region configuration - spreading copies inside a region across AZs",
+      "id": 959,
+      "title": "Multi-region configuration - spreading copies inside a region across AZs",
+      "slug": "multi-region-configuration-spreading-copies-inside-a-region-across-azs",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-12-13T23:01:25.118Z",
+      "last_posted_at": "2018-12-18T13:38:00.340Z",
+      "bumped": true,
+      "bumped_at": "2018-12-18T13:38:00.340Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1469,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 423,
+            "username": "kocolosk",
+            "name": "Adam Kocoloski",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kocolosk/{size}/412_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 378,
+            "username": "num",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/db5fbb/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Replication method consideration",
+      "id": 1410,
+      "title": "Replication method consideration",
+      "slug": "replication-method-consideration",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-30T12:13:55.382Z",
+      "last_posted_at": "2019-05-31T00:39:24.107Z",
+      "bumped": true,
+      "bumped_at": "2019-05-31T00:39:24.107Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 792,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 595,
+            "username": "Choboz",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/65b543/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cross Datacenter/Region?",
+      "id": 186,
+      "title": "Cross Datacenter/Region?",
+      "slug": "cross-datacenter-region",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-04-21T18:09:15.229Z",
+      "last_posted_at": "2018-06-14T19:55:13.933Z",
+      "bumped": true,
+      "bumped_at": "2018-06-14T19:55:13.933Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3406,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 130,
+            "username": "aphistic",
+            "name": "Erik Davidson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aphistic/{size}/90_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 183,
+            "username": "tylerchr",
+            "name": "Tyler",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tylerchr/{size}/143_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Best configuration for worldwide low latency with small databases",
+      "id": 2451,
+      "title": "Best configuration for worldwide low latency with small databases",
+      "slug": "best-configuration-for-worldwide-low-latency-with-small-databases",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-11-22T23:14:51.893Z",
+      "last_posted_at": "2020-12-01T08:40:17.199Z",
+      "bumped": true,
+      "bumped_at": "2020-12-01T08:40:17.199Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 2122,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 854,
+            "username": "mikehearn",
+            "name": "Mike Hearn",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mikehearn/{size}/984_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 461,
+            "username": "Jmintz",
+            "name": "Josh Mintz",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jmintz/{size}/451_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      },
+      {
+        "id": 1455,
+        "username": "blenchov",
+        "name": "Bozhidar Lenchov",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/bbe5ce/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1455,
+      "username": "blenchov",
+      "name": "Bozhidar Lenchov",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/bbe5ce/{size}.png"
+    },
+    "last_poster": {
+      "id": 454,
+      "username": "jzhou",
+      "name": "Jingyu Zhou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+    }
+  },
+  "bookmarks": []
+}

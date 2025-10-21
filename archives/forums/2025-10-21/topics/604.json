@@ -1,0 +1,749 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1772,
+        "name": "Amirouche",
+        "username": "amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "created_at": "2018-08-01T09:53:50.269Z",
+        "cooked": "<p>I would like to build versioned quad store with a linear history. Let\u2019s forget for a moment what a quad store is.</p>\n<p>The problem we have at work is that basically bugs sneak into production and then it mess with the data and we need to trace what happened to fix the production database. Another use case, is that we need to trace when changes happens for domain logic/business purpose. Right now, we rely on ad-hoc solution<strong>s</strong>. For instance, we add things like <code>modified_at</code> columns or use tables (or collection in the case of MongoDB) just to keep track of what happened sometime recording the previous values like event logs. Yet another example, are workflows. We end with complicated models and multiple ad-hoc solutions, a lot of efforts and duplication to solve the problem of logging changes.</p>\n<p>I don\u2019t <em>think</em> event sourcing (as in a table that logs events/changes) offers the correct canvas, because you can not AFAIK without storing snapshots (like backups) go back in time. And the history track is limited or costly to recompute. Like I said we need to keep track of changes not only for debug but also to implement domain logic. So getting the history of a given model must be easy.</p>\n<p>The quad store is a 4-tuple set. I plan to record changes / diff ie. what was added or deleted along a linear history. So, with the diff it\u2019s possible to recompute for a given revision relatively quickly if you avoid counters the state of the data and know the history of a model.</p>\n<p>In addition the diffs, I want to store the last version of the data to make reading the data super quick. There is not issue with reading the last version of the data.</p>\n<p><strong>My problem is how should I materialize what I call transaction <code>uid</code> that must build a linear history. I was thinking about using <a href=\"https://apple.github.io/foundationdb/api-python.html#fdb.Transaction.set_versionstamped_key\" rel=\"nofollow noopener\"><code>set_versionstamped_key</code></a>. I am not sure how it work.</strong></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-01T09:53:50.269Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 339,
+        "reads": 58,
+        "readers_count": 57,
+        "score": 1706.6,
+        "yours": false,
+        "topic_id": 604,
+        "topic_slug": "how-to-use-set-versionstamped-key",
+        "display_username": "Amirouche",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-python.html#fdb.Transaction.set_versionstamped_key",
+            "internal": false,
+            "reflection": false,
+            "title": "Python API \u2014 FoundationDB 5.2",
+            "clicks": 35
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 41,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-use-set-versionstamped-key/604/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1775,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2018-08-01T20:28:47.383Z",
+        "cooked": "<p>Versionstamped keys are exactly what you want.  They record the commit version at which FDB committed your transaction, and the ordering of transactions within the batch of transactions that were all applied at that version.  FDB promises that if you take all your transactions and apply them in versionstamp order, then you will get exactly the same data that FDB contains or will present to you.  So FDB already provides this linear history, and versionstamps let you easily build on top of that.</p>\n<p>You should just be able to maintain one subspace that records all the changes done to your database, and another subspace that is the current-up-to-date copy of the database.  Make sure your transactions always modify both, and record a versionstamp so you know in what order to roll back operations you did to the database if you need to go backwards in time.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-01T20:28:47.383Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 56,
+        "readers_count": 55,
+        "score": 31.2,
+        "yours": false,
+        "topic_id": 604,
+        "topic_slug": "how-to-use-set-versionstamped-key",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-use-set-versionstamped-key/604/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1786,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2018-08-02T20:27:30.776Z",
+        "cooked": "<p>In addition to what <a class=\"mention\" href=\"/u/alexmiller\">@alexmiller</a> mentioned, you might also want to see this <a href=\"https://forums.foundationdb.org/t/versionstamp-uniqueness-and-monotonicity/602\">discussion</a>, which went into some pitfalls that you might run into if you need to perform a restore on a database that you have decided to use versionstamp operations or if you decide you need to be able to copy versionstamped data between FDB clusters.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-02T20:27:30.776Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 53,
+        "readers_count": 52,
+        "score": 30.6,
+        "yours": false,
+        "topic_id": 604,
+        "topic_slug": "how-to-use-set-versionstamped-key",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/versionstamp-uniqueness-and-monotonicity/602",
+            "internal": true,
+            "reflection": false,
+            "title": "VersionStamp uniqueness and monotonicity",
+            "clicks": 80
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-use-set-versionstamped-key/604/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1772,
+      1775,
+      1786
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2639
+    ],
+    [
+      2,
+      2638
+    ],
+    [
+      3,
+      2637
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How to use set_versionstamped_key",
+  "id": 604,
+  "title": "How to use set_versionstamped_key",
+  "posts_count": 3,
+  "created_at": "2018-08-01T09:53:50.179Z",
+  "views": 1633,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2018-08-02T20:27:30.776Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-use-set-versionstamped-key",
+  "category_id": 7,
+  "word_count": 562,
+  "deleted_at": null,
+  "user_id": 41,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_604",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Use case of versionstamp and behavior of pack_with_versionstamp",
+      "id": 869,
+      "title": "Use case of versionstamp and behavior of pack_with_versionstamp",
+      "slug": "use-case-of-versionstamp-and-behavior-of-pack-with-versionstamp",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-11-14T21:14:41.993Z",
+      "last_posted_at": "2018-11-26T18:06:38.323Z",
+      "bumped": true,
+      "bumped_at": "2018-11-26T18:06:38.323Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 2402,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "VersionStamp vs CommittedVersion",
+      "id": 600,
+      "title": "VersionStamp vs CommittedVersion",
+      "slug": "versionstamp-vs-committedversion",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-07-30T06:50:38.826Z",
+      "last_posted_at": "2018-09-17T19:43:14.827Z",
+      "bumped": true,
+      "bumped_at": "2018-09-17T19:43:14.827Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 3916,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Use Same Versionstamp in Multiple Subspaces",
+      "id": 701,
+      "title": "Use Same Versionstamp in Multiple Subspaces",
+      "slug": "use-same-versionstamp-in-multiple-subspaces",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-09-13T00:06:32.578Z",
+      "last_posted_at": "2018-09-13T18:14:05.248Z",
+      "bumped": true,
+      "bumped_at": "2018-09-13T18:14:05.248Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 781,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 372,
+            "username": "seancarroll",
+            "name": "Sean Carroll",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Implementing VersionStamps in bindings",
+      "id": 250,
+      "title": "Implementing VersionStamps in bindings",
+      "slug": "implementing-versionstamps-in-bindings",
+      "posts_count": 25,
+      "reply_count": 18,
+      "highest_post_number": 25,
+      "image_url": null,
+      "created_at": "2018-04-24T19:05:11.830Z",
+      "last_posted_at": "2018-05-09T18:14:10.990Z",
+      "bumped": true,
+      "bumped_at": "2018-05-09T18:14:10.990Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 5417,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Get current VersionStamp",
+      "id": 586,
+      "title": "Get current VersionStamp",
+      "slug": "get-current-versionstamp",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-07-25T11:48:55.737Z",
+      "last_posted_at": "2018-07-26T08:05:42.219Z",
+      "bumped": true,
+      "bumped_at": "2018-07-26T08:05:42.219Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1210,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 41,
+        "username": "amirouche",
+        "name": "Amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 41,
+      "username": "amirouche",
+      "name": "Amirouche",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/versionstamp-uniqueness-and-monotonicity/602",
+        "title": "VersionStamp uniqueness and monotonicity",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 80,
+        "user_id": 8,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/api-python.html#fdb.Transaction.set_versionstamped_key",
+        "title": "Python API \u2014 FoundationDB 5.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 35,
+        "user_id": 41,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

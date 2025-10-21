@@ -1,0 +1,668 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10863,
+        "name": "Rajiv M Ranganath",
+        "username": "rajivr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "created_at": "2022-03-28T14:30:28.085Z",
+        "cooked": "<p>I am currently writing the Tokio equivalent of <a href=\"https://apple.github.io/foundationdb/class-scheduling-java.html#appendix-classscheduling-java\" rel=\"noopener nofollow ugc\">ClassScheduling.java</a> app.</p>\n<p>As I was studying the Java code, I found the something potentially strange in the following code snippet.</p>\n<pre><code class=\"lang-java\">// in method simulateStudents\ntry {\n  // ...\n  if (mood.equals(\"add\")) {\n    c = allClasses.get(rand.nextInt(allClasses.size()));\n    signup(db, studentID, c);\n    myClasses.add(c);\n  } // ...\n}\n\nprivate static void signup(TransactionContext db, final String s, final String c) {\n  db.run((Transaction tr) -&gt; {\n    // ...\n    if (tr.get(rec).join() != null)\n      return null; // already signed up\n\n    // ...\n  });\n}\n</code></pre>\n<p>In the unlikely event where <code>rand.nextInt</code> returns the same number twice, wouldn\u2019t we end up adding the same class to <code>myClasses</code> array twice?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-03-28T14:32:24.387Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 9,
+        "readers_count": 8,
+        "score": 21.8,
+        "yours": false,
+        "topic_id": 3233,
+        "topic_slug": "question-regarding-classscheduling-java",
+        "display_username": "Rajiv M Ranganath",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/class-scheduling-java.html#appendix-classscheduling-java",
+            "internal": false,
+            "reflection": false,
+            "title": "Class Scheduling in Java \u2014 FoundationDB 6.3",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 946,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/question-regarding-classscheduling-java/3233/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10871,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2022-03-29T16:34:44.192Z",
+        "cooked": "<p>Yeah, I believe you would. I think <code>myClasses</code> should probably be a <code>Set</code> instead of a <code>List</code>. It looks like the <code>signup</code> method already anticipates that you might already be signed up for a class, though the surrounding code doesn\u2019t</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-03-29T16:34:44.192Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 6.6,
+        "yours": false,
+        "topic_id": 3233,
+        "topic_slug": "question-regarding-classscheduling-java",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/question-regarding-classscheduling-java/3233/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 10873,
+        "name": "Rajiv M Ranganath",
+        "username": "rajivr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "created_at": "2022-03-30T00:26:02.354Z",
+        "cooked": "<p>Thanks for the reply <a class=\"mention\" href=\"/u/alloc\">@alloc</a> <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<p>Another scenario that I just encountered while debugging an error in the Tokio Class Scheduling App.</p>\n<p>In the following code, suppose both <code>oldC</code> and <code>newC</code> contain classes that the student has already signed up for. Basically the student is trying to switch between two classes she has already signed up for.</p>\n<pre><code class=\"lang-java\">private static void switchClasses(TransactionContext db, final String s, final String oldC, final String newC) {\n  db.run((Transaction tr) -&gt; {\n    drop(tr, s, oldC);\n    signup(tr, s, newC);\n    return null;\n  });\n}\n</code></pre>\n<p>In this scenario, there is nothing to switch. However, from what I am understanding, we would be dropping <code>oldC</code>, and ignoring the second signup of <code>newC</code>.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-03-30T00:27:06.959Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 1.6,
+        "yours": false,
+        "topic_id": 3233,
+        "topic_slug": "question-regarding-classscheduling-java",
+        "display_username": "Rajiv M Ranganath",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 8,
+          "username": "alloc",
+          "name": "Alec Grieser",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 946,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/question-regarding-classscheduling-java/3233/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10863,
+      10871,
+      10873
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1303
+    ],
+    [
+      2,
+      1302
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Question regarding ClassScheduling.java",
+  "id": 3233,
+  "title": "Question regarding ClassScheduling.java",
+  "posts_count": 3,
+  "created_at": "2022-03-28T14:30:28.022Z",
+  "views": 326,
+  "reply_count": 2,
+  "like_count": 0,
+  "last_posted_at": "2022-03-30T00:26:02.354Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "question-regarding-classscheduling-java",
+  "category_id": 7,
+  "word_count": 274,
+  "deleted_at": null,
+  "user_id": 946,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3233",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "API version may be set only once exception",
+      "id": 2221,
+      "title": "API version may be set only once exception",
+      "slug": "api-version-may-be-set-only-once-exception",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2020-07-02T02:19:30.331Z",
+      "last_posted_at": "2020-07-05T11:35:18.331Z",
+      "bumped": true,
+      "bumped_at": "2020-07-05T11:35:18.331Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1051,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 782,
+            "username": "omidb",
+            "name": "Omid Bakhshandeh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/omidb/{size}/925_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A precise test oracle for FoundationDB simulation workloads",
+      "id": 289,
+      "title": "A precise test oracle for FoundationDB simulation workloads",
+      "slug": "a-precise-test-oracle-for-foundationdb-simulation-workloads",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-04-27T14:04:16.394Z",
+      "last_posted_at": "2018-04-30T00:17:47.601Z",
+      "bumped": true,
+      "bumped_at": "2018-04-30T00:20:48.970Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1249,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Issues Using Java API on Long Running JVM",
+      "id": 693,
+      "title": "Issues Using Java API on Long Running JVM",
+      "slug": "issues-using-java-api-on-long-running-jvm",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-09-11T17:18:08.844Z",
+      "last_posted_at": "2018-09-12T18:23:10.519Z",
+      "bumped": true,
+      "bumped_at": "2018-09-12T18:23:10.519Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1013,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Emulate secondary index",
+      "id": 430,
+      "title": "Emulate secondary index",
+      "slug": "emulate-secondary-index",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-05-18T07:04:04.967Z",
+      "last_posted_at": "2018-05-21T14:11:05.503Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T14:11:05.503Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1123,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 268,
+            "username": "urykhy",
+            "name": "Yury",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/u/7bcc69/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 190,
+            "username": "itp",
+            "name": "Ian Peters",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/itp/{size}/151_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "id": 516,
+      "title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "slug": "what-is-the-life-time-of-key-value-and-other-arguments-passed-to-fdb-transaction",
+      "posts_count": 11,
+      "reply_count": 4,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-06-18T18:28:57.904Z",
+      "last_posted_at": "2018-07-17T16:11:21.242Z",
+      "bumped": true,
+      "bumped_at": "2018-07-17T16:11:21.242Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2608,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 946,
+        "username": "rajivr",
+        "name": "Rajiv M Ranganath",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 946,
+      "username": "rajivr",
+      "name": "Rajiv M Ranganath",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png"
+    },
+    "last_poster": {
+      "id": 946,
+      "username": "rajivr",
+      "name": "Rajiv M Ranganath",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/class-scheduling-java.html#appendix-classscheduling-java",
+        "title": "Class Scheduling in Java \u2014 FoundationDB 6.3",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

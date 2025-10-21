@@ -1,0 +1,740 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14413,
+        "name": "Sam Weaver",
+        "username": "swr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png",
+        "created_at": "2024-10-04T17:42:57.217Z",
+        "cooked": "<p>We\u2019re running FDB on Linux VMs, not with the K8S operator. We initiate a nightly backup using <code>fdbbackup</code> to Amazon S3, and the runtime of this backup is unpredictable.</p>\n<p>Sometimes the backup takes less than 5 minutes, and other times it takes nearly an hour. In both cases, the database size is similar (+/- 1 GB) and all the same backup parameters are present. Can anyone explain what might cause a backup to take longer?</p>\n<p>We\u2019re using the default <code>--initial-snapshot-interval</code> of <code>0</code>, but sometimes it takes 30-40 minutes to complete the initial snapshot (which makes the log phase take longer). What could cause this?</p>\n<p>Also, sometimes, the backup just hangs at the <code>(just started)</code> phase, what causes this?</p>\n<p>I\u2019ve tried setting <code>--knob_http_verbose_level=4</code> to troubleshoot whether there are any issues uploading to S3, but I\u2019m not sure where these \u201cverbose\u201d HTTP logs end up.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-10-04T17:42:57.217Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 21,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 108.2,
+        "yours": false,
+        "topic_id": 4646,
+        "topic_slug": "what-causes-a-point-in-time-backup-to-backup-slowly",
+        "display_username": "Sam Weaver",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1309,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-causes-a-point-in-time-backup-to-backup-slowly/4646/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14422,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2024-10-08T21:34:06.836Z",
+        "cooked": "<p>The backup snapshot works by dividing the keyspace up recursively into many short snapshot tasks which each produce a key range snapshot at some read version.  These tasks are executed by <code>backup_agent</code> processes.  The things that most affect backup speed are:</p>\n<ul>\n<li>the number of <code>backup_agent</code> processes you are running</li>\n<li>the stability of the <code>backup_agent</code> processes</li>\n</ul>\n<p>If your backups sometimes take 5 minutes and sometimes 30 minutes without changing the database size, I would guess that you have some kind of backup agent instability.  One possibility is you have one or more <code>backup_agent</code> instances that can\u2019t write to S3 but they <em>can</em> commit to FDB.  The effect of this is that every time such an agent claims backup subtask in FDB it tries but fails to complete it with many retries.  Eventually it will give up and the subtask will go back into the scheduling pool to be claimed by another (or possibly the same) agent.</p>\n<p>Another source of instability could be agents crashing from OutOfMemory errors because the tasks they are taking on require too much memory at once.  This will randomly cause delays because tasks which are in progress during a crash have to time out and be reclaimed by other agents before progress continues.</p>\n<p>I suggest that you check your <code>backup_agent</code> trace logs for warnings and errors, especially with Type starting with \u201cFileBackup\u201d or \u201cTaskBucket\u201d (TaskBucket is the internal task scheduling/distribution framework that Backup is built on).</p>\n<p>If a backup never gets past <code>started</code> then you likely do not have any functional <code>backup_agent</code> processes.</p>\n<p>The logging from <code>--knob_http_verbose_level</code> writes to <code>stdout</code> from the <code>backup_agent</code> processes.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-10-08T21:34:06.836Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 23.0,
+        "yours": false,
+        "topic_id": 4646,
+        "topic_slug": "what-causes-a-point-in-time-backup-to-backup-slowly",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-causes-a-point-in-time-backup-to-backup-slowly/4646/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14424,
+        "name": "Sam Weaver",
+        "username": "swr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png",
+        "created_at": "2024-10-09T19:55:46.905Z",
+        "cooked": "<p>Thanks for this detailed answer Steve.</p>\n<p>The answer was in the trace logs as you suggested. We encountered these concerning errors:</p>\n<pre data-code-wrap=\"xml\"><code class=\"lang-xml\">&lt;Event\n  Severity=\"30\"\n  Time=\"1728146920.821939\"\n  DateTime=\"2024-10-05T16:48:40Z\"\n  Type=\"UnableToWriteStatus\"\n  ID=\"0000000000000000\"\n  Error=\"platform_error\"\n  ErrorDescription=\"Platform error\"\n  ErrorCode=\"1500\"\n  ThreadID=\"3803461471724407639\"\n  Machine=\"REDACTED\"\n  LogGroup=\"default\"\n  ClientDescription=\"primary-7.2.0-3803461471724407639\"\n/&gt;\n&lt;Event\n  Severity=\"40\"\n  ErrorKind=\"Unset\"\n  Time=\"1728147140.541484\"\n  DateTime=\"2024-10-05T16:52:20Z\"\n  Type=\"GetMemoryUsage\"\n  ID=\"0000000000000000\"\n  UnixErrorCode=\"18\"\n  UnixError=\"Too many open files\"\n  ThreadID=\"3803461471724407639\"\n  Backtrace=\"addr2line -e backup_agent.debug -p -C -f -i 0x11fb51c 0x11fa160 0x11fa54e 0x11bedf9 0x5e6585 0x5e74de 0xd4b738 0x7fff68 0xb328b0 0xb330f3 0xb2d4c0 0xb35228 0xb3c09e 0xb34318 0xb34418 0xae9648 0x6706e8 0x1004577 0x1004c3b 0x68aa60 0x118d752 0xaa4d22 0x59dfd8 0x7f4cbc885083\"\n  Machine=\"REDACTED\"\n  LogGroup=\"default\"\n  ClientDescription=\"primary-7.2.0-3803461471724407639\"\n/&gt;\n</code></pre>\n<p>It turns out that the running <code>backup_agent</code> processes had a <em>soft</em> <code>nofile</code> limit of 1024 open files, and it was hitting that limit from file descriptors and network sockets. Your suggestion about the stability of the <code>backup_agent</code> processes was right!</p>\n<p>We encountered this because we\u2019re running FoundationDB on Ubuntu 20.04, installed thru the <code>.deb</code> package. Ubuntu runs systemd, but the <code>.deb</code> package installs FoundationDB as a service thru a SysV <code>init.d</code> startup script at <code>/etc/init.d/foundationdb</code>.</p>\n<p>systemd handles this by converting the script to a systemd service with <a href=\"https://www.freedesktop.org/software/systemd/man/latest/systemd-sysv-generator.html#\" rel=\"noopener nofollow ugc\"><code>systemd-sysv-generator(8)</code></a>, which does not include a <code>LimitNOFILE</code> option in the generated service config. Therefore, on an unmodified Ubuntu server install, other users might hit this issue. Figured it was useful to share here.</p>\n<p>We fixed this by raising the global soft <code>nofile</code> limit. Our server provisioning tools had code to do this, but it was outdated and we didn\u2019t notice until now since most of our service definitions have a <code>LimitNOFILE</code> option set in the service file.</p>\n<aside class=\"quote no-group\" data-username=\"SteavedHams\" data-post=\"2\" data-topic=\"4646\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/steavedhams/48/18_2.png\" class=\"avatar\"> SteavedHams:</div>\n<blockquote>\n<p>The logging from <code>--knob_http_verbose_level</code> writes to <code>stdout</code> from the <code>backup_agent</code> processes.</p>\n</blockquote>\n</aside>\n<p>One question: when running these <code>backup_agents</code> under <code>fdbmonitor</code> as normal, (and as described in the docs,) where is that <code>stdout</code> redirected to? The <code>stdout</code> of <code>fdbmonitor</code>? <code>/dev/null</code>? I wasn\u2019t able to find that output anywhere obvious while I had the knob enabled.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-10-09T19:55:46.905Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 1,
+        "incoming_link_count": 1,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 13.0,
+        "yours": false,
+        "topic_id": 4646,
+        "topic_slug": "what-causes-a-point-in-time-backup-to-backup-slowly",
+        "display_username": "Sam Weaver",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://www.freedesktop.org/software/systemd/man/latest/systemd-sysv-generator.html#",
+            "internal": false,
+            "reflection": false,
+            "title": "systemd-sysv-generator",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1309,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-causes-a-point-in-time-backup-to-backup-slowly/4646/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14446,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2024-10-15T19:24:02.657Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"swr\" data-post=\"3\" data-topic=\"4646\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/swr/48/1643_2.png\" class=\"avatar\"> swr:</div>\n<blockquote>\n<p>One question: when running these <code>backup_agents</code> under <code>fdbmonitor</code> as normal, (and as described in the docs,) where is that <code>stdout</code> redirected to? The <code>stdout</code> of <code>fdbmonitor</code>? <code>/dev/null</code>? I wasn\u2019t able to find that output anywhere obvious while I had the knob enabled.</p>\n</blockquote>\n</aside>\n<p>I\u2019m not sure, I haven\u2019t used the verbose output when launching from <code>fdbmonitor</code>.  I think <code>fdbmonitor</code> captures the <code>stdout</code> and <code>stderr</code> from its child processes but I\u2019m not sure what it does with them.  Since <code>fdbmonitor</code> does write events to the syslog I suggest checking there.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-10-15T19:24:02.657Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 1,
+        "incoming_link_count": 0,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 17.2,
+        "yours": false,
+        "topic_id": 4646,
+        "topic_slug": "what-causes-a-point-in-time-backup-to-backup-slowly",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-causes-a-point-in-time-backup-to-backup-slowly/4646/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14413,
+      14422,
+      14424,
+      14446
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      382
+    ],
+    [
+      2,
+      378
+    ],
+    [
+      3,
+      377
+    ],
+    [
+      4,
+      371
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "What causes a point in time backup to backup slowly?",
+  "id": 4646,
+  "title": "What causes a point in time backup to backup slowly?",
+  "posts_count": 4,
+  "created_at": "2024-10-04T17:42:57.153Z",
+  "views": 66,
+  "reply_count": 2,
+  "like_count": 2,
+  "last_posted_at": "2024-10-15T19:24:02.657Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "what-causes-a-point-in-time-backup-to-backup-slowly",
+  "category_id": 17,
+  "word_count": 894,
+  "deleted_at": null,
+  "user_id": 1309,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4646",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Backup &amp; restore performance tuning",
+      "id": 2078,
+      "title": "Backup & restore performance tuning",
+      "slug": "backup-restore-performance-tuning",
+      "posts_count": 18,
+      "reply_count": 16,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2020-04-18T06:43:29.997Z",
+      "last_posted_at": "2020-05-06T09:01:50.194Z",
+      "bumped": true,
+      "bumped_at": "2020-05-06T09:01:50.194Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2929,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup /restore fdb",
+      "id": 1637,
+      "title": "Backup /restore fdb",
+      "slug": "backup-restore-fdb",
+      "posts_count": 22,
+      "reply_count": 17,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2019-09-19T17:04:18.878Z",
+      "last_posted_at": "2019-10-05T04:45:51.663Z",
+      "bumped": true,
+      "bumped_at": "2019-10-05T04:45:51.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2729,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup using disk snapshots",
+      "id": 1076,
+      "title": "Backup using disk snapshots",
+      "slug": "backup-using-disk-snapshots",
+      "posts_count": 15,
+      "reply_count": 9,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-01-29T12:52:43.232Z",
+      "last_posted_at": "2019-02-14T18:12:56.795Z",
+      "bumped": true,
+      "bumped_at": "2019-02-14T18:12:56.795Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2676,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 360,
+            "username": "bjorndv",
+            "name": "Bj\u00f6rn",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/f05b48/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 417,
+            "username": "lihtnes",
+            "name": "Senthil Ramamoorthy",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/848f3c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backing up the database using `fdbbackup` command returns in an error",
+      "id": 1844,
+      "title": "Backing up the database using `fdbbackup` command returns in an error",
+      "slug": "backing-up-the-database-using-fdbbackup-command-returns-in-an-error",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-16T10:49:12.154Z",
+      "last_posted_at": "2019-12-16T13:54:49.984Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T13:54:49.984Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1069,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Restore is slow and parallel restore doesn&rsquo;t achieve performance boost",
+      "id": 2128,
+      "title": "Restore is slow and parallel restore doesn't achieve performance boost",
+      "slug": "restore-is-slow-and-parallel-restore-doesnt-achieve-performance-boost",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-05-20T05:56:49.975Z",
+      "last_posted_at": "2020-05-23T04:17:19.585Z",
+      "bumped": true,
+      "bumped_at": "2020-05-23T04:17:19.585Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1398,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 1309,
+        "username": "swr",
+        "name": "Sam Weaver",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1309,
+      "username": "swr",
+      "name": "Sam Weaver",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    }
+  },
+  "bookmarks": []
+}

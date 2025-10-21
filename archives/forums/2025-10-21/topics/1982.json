@@ -1,0 +1,695 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 6322,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2020-02-26T23:11:18.066Z",
+        "cooked": "<p><a href=\"https://github.com/apple/foundationdb/pull/2745/files\">Use a b-tree instead of a SkipList #2745</a> wishes to include Abseil into FDB (in this instance, for a BTree container).  I\u2019ve previously copied absl::stacktrace by copy-paste into platform/.  I have an eye on bringing <a href=\"https://github.com/AmokHuginnsson/replxx\">replxx</a> into our codebase as Fancy CLI Library v2.</p>\n<p>This all brings up two large questions:</p>\n<ol>\n<li>\n<p>Are there any objections to including Abseil into FDB as the Large Supporting C++ Library Of Choice (as opposed to Folly, or \u2026 something else?)</p>\n</li>\n<li>\n<p>What is the most idiomatic way to include this in our project?  Git submodules is an easy answer, and will require changing our build instructions and automation.  Boost is currently set up as a CMake FindBoost that locates an external copy or downloads a release.  Should we do the same for all other projects?</p>\n</li>\n</ol>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-02-26T23:11:18.066Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 65,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 361.4,
+        "yours": false,
+        "topic_id": 1982,
+        "topic_slug": "expanding-the-external-code-dependencies-of-fdb",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/2745/files",
+            "internal": false,
+            "reflection": false,
+            "title": "Use a b-tree instead of a SkipList by Daniel-B-Smith \u00b7 Pull Request #2745 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 10
+          },
+          {
+            "url": "https://github.com/AmokHuginnsson/replxx",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - AmokHuginnsson/replxx: A readline and libedit replacement that supports UTF-8, syntax highlighting, hints and Windows and is BSD licensed.",
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/expanding-the-external-code-dependencies-of-fdb/1982/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 6324,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2020-02-26T23:24:16.672Z",
+        "cooked": "<p>git submodules are super painful in my experience, so I am kind of opposed using this.</p>\n<p>An additional option would be using a package manager (for example <a href=\"https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019\">vcpkg</a> or <a href=\"https://conan.io\">conan</a>).</p>\n<p>I evaluated conan quite a while ago and it was painful and created more problems than it solved. We could evaluate package managers again, maybe there is something that we like.</p>\n<p>Of all solutions currently available I like the cmake solution best (find dependency on the system and use that or use <code>ExternalProject_add</code> if it was not found). The main drawback is that it involves some work adding a dependency. But imho this is a feature, if adding dependencies is super easy, we will soon build against every C++ library out there (and become Java <img src=\"https://emoji.discourse-cdn.com/twitter/wink.png?v=9\" title=\":wink:\" class=\"emoji\" alt=\":wink:\"> )</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-02-26T23:24:16.672Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 36.2,
+        "yours": false,
+        "topic_id": 1982,
+        "topic_slug": "expanding-the-external-code-dependencies-of-fdb",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019",
+            "internal": false,
+            "reflection": false,
+            "title": "vcpkg: a C++ package manager for Windows, Linux, and MacOS | Microsoft Docs",
+            "clicks": 1
+          },
+          {
+            "url": "https://conan.io",
+            "internal": false,
+            "reflection": false,
+            "title": "C/C++ Open Source Package Manager",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/expanding-the-external-code-dependencies-of-fdb/1982/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      6322,
+      6324
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2064
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Expanding the external code dependencies of FDB",
+  "id": 1982,
+  "title": "Expanding the external code dependencies of FDB",
+  "posts_count": 2,
+  "created_at": "2020-02-26T23:11:18.012Z",
+  "views": 743,
+  "reply_count": 0,
+  "like_count": 3,
+  "last_posted_at": "2020-02-26T23:24:16.672Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "expanding-the-external-code-dependencies-of-fdb",
+  "category_id": 8,
+  "word_count": 288,
+  "deleted_at": null,
+  "user_id": 13,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1982",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDB Build System",
+      "id": 790,
+      "title": "FoundationDB Build System",
+      "slug": "foundationdb-build-system",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-10-19T17:50:59.329Z",
+      "last_posted_at": "2018-10-28T22:43:28.265Z",
+      "bumped": true,
+      "bumped_at": "2018-10-28T22:43:28.265Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1090,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 397,
+            "username": "rescrv",
+            "name": "Robert Escriva",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/a87d85/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 55,
+            "username": "bowlofstew",
+            "name": "Stewart Henderson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "CMake and better IDE support",
+      "id": 334,
+      "title": "CMake and better IDE support",
+      "slug": "cmake-and-better-ide-support",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-05-03T23:09:33.328Z",
+      "last_posted_at": "2018-08-11T00:35:30.260Z",
+      "bumped": true,
+      "bumped_at": "2018-08-11T00:35:30.260Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1711,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Is it allowed to use external libraries in foundationdb development",
+      "id": 450,
+      "title": "Is it allowed to use external libraries in foundationdb development",
+      "slug": "is-it-allowed-to-use-external-libraries-in-foundationdb-development",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-05-22T14:05:49.573Z",
+      "last_posted_at": "2018-05-22T19:04:57.881Z",
+      "bumped": true,
+      "bumped_at": "2018-05-22T19:04:57.881Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 728,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 275,
+            "username": "vmanukyan",
+            "name": "Vruyr Manukyan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vmanukyan/{size}/329_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB on NixOS: packaging, notes and questions",
+      "id": 251,
+      "title": "FoundationDB on NixOS: packaging, notes and questions",
+      "slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-24T20:01:29.570Z",
+      "last_posted_at": "2018-04-25T22:03:31.681Z",
+      "bumped": true,
+      "bumped_at": "2018-04-25T22:03:31.681Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2219,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proposal: Dropping MSVC",
+      "id": 1939,
+      "title": "Proposal: Dropping MSVC",
+      "slug": "proposal-dropping-msvc",
+      "posts_count": 13,
+      "reply_count": 8,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2020-02-12T01:24:59.706Z",
+      "last_posted_at": "2020-02-13T20:00:39.983Z",
+      "bumped": true,
+      "bumped_at": "2020-02-13T20:00:39.983Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 1644,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 323,
+            "username": "WolfDan",
+            "name": "Wolf Dan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfdan/{size}/806_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 500,
+            "username": "wohali",
+            "name": "Joan Touzet",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wohali/{size}/773_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    },
+    "last_poster": {
+      "id": 15,
+      "username": "markus.pilman",
+      "name": "Markus Pilman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/pull/2745/files",
+        "title": "Use a b-tree instead of a SkipList by Daniel-B-Smith \u00b7 Pull Request #2745 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 10,
+        "user_id": 13,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/AmokHuginnsson/replxx",
+        "title": "GitHub - AmokHuginnsson/replxx: A readline and libedit replacement that supports UTF-8, syntax highlighting, hints and Windows and is BSD licensed.",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 13,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://docs.microsoft.com/en-us/cpp/build/vcpkg?view=vs-2019",
+        "title": "vcpkg: a C++ package manager for Windows, Linux, and MacOS | Microsoft Docs",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 15,
+        "domain": "docs.microsoft.com",
+        "root_domain": "microsoft.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

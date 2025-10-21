@@ -1,0 +1,726 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5687,
+        "name": "Garren Smith",
+        "username": "garrensmith",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png",
+        "created_at": "2019-12-02T14:30:57.621Z",
+        "cooked": "<p>Hi All,</p>\n<p>I\u2019m working on implementing CouchDB\u2019s map/reduce functionality on top of FoundationDB. I\u2019ve just started working on the reduce work which is quite a tricky thing to solve. Currently, I\u2019m looking to implement a skip list - similar to RankedSet in the Record Layer, in FDB with aggregated results at each level.</p>\n<p>I\u2019ve written an <a href=\"https://github.com/apache/couchdb-documentation/pull/441\" rel=\"nofollow noopener\">RFC</a> with a basic js implementation on how I plan to implement it. I would really appreciate any feedback from the community on this.</p>\n<p>Just to note, at this stage the reduce index would not be built in parallel, but we would like to do that as a next step.</p>\n<p>For those new to CouchDB:<br>\n<a href=\"https://docs.couchdb.org/en/stable/ddocs/ddocs.html#reduce-and-rereduce-functions\" rel=\"nofollow noopener\">Documentation</a> on CouchDB\u2019s reduce functions<br>\n<a href=\"https://docs.couchdb.org/en/stable/ddocs/views/intro.html#reduce-rereduce\" rel=\"nofollow noopener\">Introduction</a> to how CouchDB\u2019s reduce currently work</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-12-02T14:30:57.621Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 106,
+        "reads": 39,
+        "readers_count": 38,
+        "score": 582.8,
+        "yours": false,
+        "topic_id": 1792,
+        "topic_slug": "reduce-aggregations-with-foundationdb",
+        "display_username": "Garren Smith",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apache/couchdb-documentation/pull/441",
+            "internal": false,
+            "reflection": false,
+            "title": "initial reduce rfc by garrensmith \u00b7 Pull Request #441 \u00b7 apache/couchdb-documentation \u00b7 GitHub",
+            "clicks": 17
+          },
+          {
+            "url": "https://docs.couchdb.org/en/stable/ddocs/ddocs.html#reduce-and-rereduce-functions",
+            "internal": false,
+            "reflection": false,
+            "title": "3.1. Design Documents \u2014 Apache CouchDB\u00ae 2.3 Documentation",
+            "clicks": 4
+          },
+          {
+            "url": "https://docs.couchdb.org/en/stable/ddocs/views/intro.html#reduce-rereduce",
+            "internal": false,
+            "reflection": false,
+            "title": "3.2.1. Introduction to Views \u2014 Apache CouchDB\u00ae 2.3 Documentation",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 499,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/reduce-aggregations-with-foundationdb/1792/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5693,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2019-12-03T06:14:58.142Z",
+        "cooked": "<p>Regarding the parallel build, you might be interested in an (eventually) upcoming feature</p>\n<aside class=\"onebox githubissue\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/issues/1122\" target=\"_blank\">github.com/apple/foundationdb</a>\n  </header>\n  <article class=\"onebox-body\">\n    <div class=\"github-row\">\n  <div class=\"github-icon-container\" title=\"Issue\">\n\t  <svg width=\"60\" height=\"60\" class=\"github-icon\" viewbox=\"0 0 14 16\" aria-hidden=\"true\"><path d=\"M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z\"></path></svg>\n  </div>\n\n  <div class=\"github-info-container\">\n    <h4>\n      <a href=\"https://github.com/apple/foundationdb/issues/1122\" target=\"_blank\">Provide a client API for querying a storage server's byte sample</a>\n    </h4>\n\n    <div class=\"github-info\">\n      <div class=\"date\">\n        opened <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2019-02-06\" data-time=\"17:53:13\" data-timezone=\"UTC\">05:53PM - 06 Feb 19 UTC</span>\n      </div>\n\n\n      <div class=\"user\">\n        <a href=\"https://github.com/etschannen\" target=\"_blank\">\n          <img alt=\"etschannen\" src=\"https://global.discourse-cdn.com/foundationdb/original/1X/ff6700df10628a6bf2f530368dbea5dc9506dde6.png\" class=\"onebox-avatar-inline\" width=\"20\" height=\"20\">\n          etschannen\n        </a>\n      </div>\n    </div>\n  </div>\n</div>\n\n<div class=\"github-row\">\n  <p class=\"github-content\">The storage servers keep a sample of key-value sizes so that data distribution can decide when to split and merge shards....</p>\n</div>\n\n<div class=\"labels\">\n</div>\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>which will enable (directly or indirectly) dividing the key space into chunks of a desired size for parallel processing.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-12-03T06:14:58.142Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 11.4,
+        "yours": false,
+        "topic_id": 1792,
+        "topic_slug": "reduce-aggregations-with-foundationdb",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/1122",
+            "internal": false,
+            "reflection": false,
+            "title": "Provide a client API for querying a storage server's byte sample \u00b7 Issue #1122 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 10
+          },
+          {
+            "url": "https://github.com/etschannen",
+            "internal": false,
+            "reflection": false,
+            "title": "etschannen (Evan Tschannen) \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/reduce-aggregations-with-foundationdb/1792/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5687,
+      5693
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2150
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Reduce/aggregations with FoundationDB",
+  "id": 1792,
+  "title": "Reduce/aggregations with FoundationDB",
+  "posts_count": 2,
+  "created_at": "2019-12-02T14:30:57.557Z",
+  "views": 630,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2019-12-03T06:14:58.142Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "reduce-aggregations-with-foundationdb",
+  "category_id": 7,
+  "word_count": 202,
+  "deleted_at": null,
+  "user_id": 499,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1792",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "CouchDB considering rearchitecting as an FDB layer?",
+      "id": 1088,
+      "title": "CouchDB considering rearchitecting as an FDB layer?",
+      "slug": "couchdb-considering-rearchitecting-as-an-fdb-layer",
+      "posts_count": 15,
+      "reply_count": 4,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-01-30T21:01:16.231Z",
+      "last_posted_at": "2019-02-01T05:57:07.000Z",
+      "bumped": true,
+      "bumped_at": "2019-02-01T05:57:07.000Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 13,
+      "views": 4077,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 491,
+            "username": "iilyak",
+            "name": "Iilyak",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/iilyak/{size}/1073_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 451,
+            "username": "rnewson",
+            "name": "Robert Newson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rnewson/{size}/502_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 235,
+            "username": "wolfspider",
+            "name": "Jesse Bennett",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Keyspace partitions &amp; performance",
+      "id": 168,
+      "title": "Keyspace partitions & performance",
+      "slug": "keyspace-partitions-performance",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-21T05:03:54.670Z",
+      "last_posted_at": "2018-04-22T03:29:31.049Z",
+      "bumped": true,
+      "bumped_at": "2018-04-22T03:29:31.049Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 5892,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Any chance of server-side Boolean operations like intersection?",
+      "id": 445,
+      "title": "Any chance of server-side Boolean operations like intersection?",
+      "slug": "any-chance-of-server-side-boolean-operations-like-intersection",
+      "posts_count": 9,
+      "reply_count": 3,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-21T10:01:41.965Z",
+      "last_posted_at": "2018-05-22T16:57:56.442Z",
+      "bumped": true,
+      "bumped_at": "2018-05-22T16:57:56.442Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1706,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 208,
+            "username": "cloudspeech",
+            "name": "Cloudspeech",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cloudspeech/{size}/330_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 31,
+            "username": "dicklacara",
+            "name": "Richard Applebaum",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8797f3/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Feature Request: Predicate pushdown",
+      "id": 954,
+      "title": "Feature Request: Predicate pushdown",
+      "slug": "feature-request-predicate-pushdown",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-12-12T17:32:10.909Z",
+      "last_posted_at": "2019-04-08T13:18:45.867Z",
+      "bumped": true,
+      "bumped_at": "2019-04-08T13:18:45.867Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1940,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 499,
+            "username": "garrensmith",
+            "name": "Garren Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can subspace/dir be used unlimited (modelling) and about multi client",
+      "id": 536,
+      "title": "Can subspace/dir be used unlimited (modelling) and about multi client",
+      "slug": "can-subspace-dir-be-used-unlimited-modelling-and-about-multi-client",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-07-01T15:39:50.966Z",
+      "last_posted_at": "2018-07-03T18:41:34.170Z",
+      "bumped": true,
+      "bumped_at": "2018-07-03T18:44:49.138Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1105,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 317,
+            "username": "Lundin",
+            "name": "Pontus Lundin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/dfb087/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 499,
+        "username": "garrensmith",
+        "name": "Garren Smith",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 499,
+      "username": "garrensmith",
+      "name": "Garren Smith",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apache/couchdb-documentation/pull/441",
+        "title": "initial reduce rfc by garrensmith \u00b7 Pull Request #441 \u00b7 apache/couchdb-documentation \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 17,
+        "user_id": 499,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/issues/1122",
+        "title": "Provide a client API for querying a storage server's byte sample \u00b7 Issue #1122 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 10,
+        "user_id": 7,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://docs.couchdb.org/en/stable/ddocs/ddocs.html#reduce-and-rereduce-functions",
+        "title": "3.1. Design Documents \u2014 Apache CouchDB\u00ae 2.3 Documentation",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 499,
+        "domain": "docs.couchdb.org",
+        "root_domain": "couchdb.org"
+      },
+      {
+        "url": "https://docs.couchdb.org/en/stable/ddocs/views/intro.html#reduce-rereduce",
+        "title": "3.2.1. Introduction to Views \u2014 Apache CouchDB\u00ae 2.3 Documentation",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 499,
+        "domain": "docs.couchdb.org",
+        "root_domain": "couchdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

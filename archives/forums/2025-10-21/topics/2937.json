@@ -1,0 +1,603 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10101,
+        "name": "Sean McCauliff",
+        "username": "Sean",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/sean/{size}/1198_2.png",
+        "created_at": "2021-10-11T06:00:45.078Z",
+        "cooked": "<p>I was looking at this, <a href=\"https://www.youtube.com/watch?v=4fFDFbi3toc\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">\"Testing Distributed Systems w/ Deterministic Simulation\" by Will Wilson - YouTube</a>,  talk on You Tube concerning deterministic simulation for testing.  This seems very interesting.  I can see how mocking out networking would work since networking is just communication with some chaos added in.  But disk I/O actually needs to write bytes at some point and probably needs to read them back.  Just writing into memory limits the scale of a test.  So what do you do about disk I/O?  Can anyone point me a the relevant parts of the foundation DB code that implements this?</p>\n<p>Thanks,<br>\nSean</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-10-11T06:00:45.078Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 37,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 189.2,
+        "yours": false,
+        "topic_id": 2937,
+        "topic_slug": "simulation-of-disk-i-o",
+        "display_username": "Sean McCauliff",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://www.youtube.com/watch?v=4fFDFbi3toc",
+            "internal": false,
+            "reflection": false,
+            "title": "\"Testing Distributed Systems w/ Deterministic Simulation\" by Will Wilson - YouTube",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1011,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/simulation-of-disk-i-o/2937/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10105,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2021-10-11T17:18:46.884Z",
+        "cooked": "<p>The file system layer in simulation is quite complex. If you want to look at the code you can find it in these files:</p>\n<ul>\n<li>\n<code>AsyncFileNonDurable.actor.h</code> (the classes <code>AsyncFileDetachable</code> and <code>AsyncFileNonDurable</code>\n</li>\n<li><code>AsyncFileNonDurable.actor.cpp</code></li>\n<li>\n<code>sim2.actor.cpp</code> implements <code>SimpleFile</code>\n</li>\n</ul>\n<p><code>SimpleFile</code> is the lowest lever of abstraction here. The basic idea is:</p>\n<ol>\n<li>All disk IO is done using blocking IO.</li>\n<li>Since we simulate time, these syscalls look like they complete in 0 seconds.</li>\n<li>We add <code>delay</code> statements with a random time before/after each syscall to simulate them taking time (this is also a form of failure injection \u2013 we can simulate a disk being very slow).</li>\n</ol>\n<p>Additionally there\u2019s logic to sometimes randomly throw exceptions. We also can do other things (like randomly corrupt data). But keep in mind that this is difficult as FDB doesn\u2019t protect against byzantine failures. So certain failures that we could see on a disk in theory we might not simulate because we know it wouldn\u2019t work. Though the only such failure I can think of is that a number of <code>write</code> followed by a <code>fsync</code> would return successfully but the data doesn\u2019t get written at all.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-10-11T17:18:46.884Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 18,
+        "readers_count": 17,
+        "score": 48.6,
+        "yours": false,
+        "topic_id": 2937,
+        "topic_slug": "simulation-of-disk-i-o",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/simulation-of-disk-i-o/2937/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10101,
+      10105
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1472
+    ],
+    [
+      2,
+      1471
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Simulation of disk I/O",
+  "id": 2937,
+  "title": "Simulation of disk I/O",
+  "posts_count": 2,
+  "created_at": "2021-10-11T06:00:45.013Z",
+  "views": 402,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2021-10-11T17:18:46.884Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "simulation-of-disk-i-o",
+  "category_id": 8,
+  "word_count": 298,
+  "deleted_at": null,
+  "user_id": 1011,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2937",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Systems using simulation testing",
+      "id": 1593,
+      "title": "Systems using simulation testing",
+      "slug": "systems-using-simulation-testing",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-08-26T14:26:03.960Z",
+      "last_posted_at": "2019-08-27T05:37:43.880Z",
+      "bumped": true,
+      "bumped_at": "2019-08-27T05:37:43.880Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1411,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB Simulate with fdbserver - documentation?",
+      "id": 1594,
+      "title": "FDB Simulate with fdbserver - documentation?",
+      "slug": "fdb-simulate-with-fdbserver-documentation",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-08-26T18:23:33.098Z",
+      "last_posted_at": "2019-08-26T18:42:19.426Z",
+      "bumped": true,
+      "bumped_at": "2019-08-26T18:42:19.426Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 818,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 596,
+            "username": "JoeD",
+            "name": "Joe D",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Show the FDB Forums: prototyping simulation runs on Kubernetes",
+      "id": 1357,
+      "title": "Show the FDB Forums: prototyping simulation runs on Kubernetes",
+      "slug": "show-the-fdb-forums-prototyping-simulation-runs-on-kubernetes",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-13T15:01:31.101Z",
+      "last_posted_at": "2019-05-13T20:44:25.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-13T20:44:25.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1046,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Flow &amp; determinism &amp; logical time",
+      "id": 4460,
+      "title": "Flow & determinism & logical time",
+      "slug": "flow-determinism-logical-time",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2024-05-05T20:10:41.660Z",
+      "last_posted_at": "2024-05-07T08:22:42.525Z",
+      "bumped": true,
+      "bumped_at": "2024-05-07T08:22:42.525Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 197,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1415,
+            "username": "ssmith",
+            "name": "Sean",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/958977/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "RocksDB backend",
+      "id": 845,
+      "title": "RocksDB backend",
+      "slug": "rocksdb-backend",
+      "posts_count": 16,
+      "reply_count": 9,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2018-11-05T13:22:47.660Z",
+      "last_posted_at": "2018-11-15T19:24:35.829Z",
+      "bumped": true,
+      "bumped_at": "2018-11-15T19:24:35.829Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 5685,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 328,
+            "username": "yangruifeng",
+            "name": "Yang Ruifeng ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/yangruifeng/{size}/710_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 1011,
+        "username": "Sean",
+        "name": "Sean McCauliff",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/sean/{size}/1198_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1011,
+      "username": "Sean",
+      "name": "Sean McCauliff",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/sean/{size}/1198_2.png"
+    },
+    "last_poster": {
+      "id": 15,
+      "username": "markus.pilman",
+      "name": "Markus Pilman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+    },
+    "links": [
+      {
+        "url": "https://www.youtube.com/watch?v=4fFDFbi3toc",
+        "title": "\"Testing Distributed Systems w/ Deterministic Simulation\" by Will Wilson - YouTube",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1011,
+        "domain": "www.youtube.com",
+        "root_domain": "youtube.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

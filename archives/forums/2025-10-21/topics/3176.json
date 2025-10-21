@@ -1,0 +1,681 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10708,
+        "name": "Muhammad Khalil",
+        "username": "hamakh12",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/258eb7/{size}.png",
+        "created_at": "2022-02-15T11:52:46.857Z",
+        "cooked": "<p>I have 3 server clusters for the test environment, I want to clear/delete every data in this cluster. I tried</p>\n<pre><code class=\"lang-auto\">fdbcli&gt; clearrange \"\" \\xff\n</code></pre>\n<p>but it\u2019s not working still data remains in the cluster. with this command, I managed to delete 4.5GB of a total of 9.6GB total disk space used. The <strong>deletion process</strong> was going <strong>very slowly it took about 4 hours</strong> to delete this much I don\u2019t think that is normal, and now it stopped progressing. I don\u2019t know what to do and there is not much on the internet about this topic. if you guys could help I appreciate it a lot. here is my configuration below:<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/f/f7c982e7f1330b1bd26cb813856838dc24822de5.png\" data-download-href=\"/uploads/short-url/zm1FCoZ6Cw6ViFRmh96AFEV0mQB.png?dl=1\" title=\"foundation issue\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/original/2X/f/f7c982e7f1330b1bd26cb813856838dc24822de5.png\" alt=\"foundation issue\" data-base62-sha1=\"zm1FCoZ6Cw6ViFRmh96AFEV0mQB\" width=\"690\" height=\"484\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f7c982e7f1330b1bd26cb813856838dc24822de5_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">foundation issue</span><span class=\"informations\">1161\u00d7815 18.8 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-02-15T11:52:46.857Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 709,
+        "reads": 55,
+        "readers_count": 54,
+        "score": 3551.0,
+        "yours": false,
+        "topic_id": 3176,
+        "topic_slug": "cant-clear-database-delete-all-data",
+        "display_username": "Muhammad Khalil",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/f/f7c982e7f1330b1bd26cb813856838dc24822de5.png",
+            "internal": false,
+            "reflection": false,
+            "title": "f7c982e7f1330b1bd26cb813856838dc24822de5.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/changing-the-pvc-size-in-spec-resulting-in-new-pods-being-created-and-the-old-pods-still-remain/3511/5",
+            "internal": true,
+            "reflection": true,
+            "title": "Changing the PVC size in spec resulting in new pods being created and the old pods still remain",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1046,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cant-clear-database-delete-all-data/3176/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10730,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2022-02-19T03:26:58.911Z",
+        "cooked": "<p>The reason for slow deletion process is that the <code>clear</code> operation itself writes a tome stone to the database, which is very quick. However, the actual deletion of data happens in the background, and is slow, because the background deletion should minimally affect the regular client transaction traffic.</p>\n<p>The particular reason is that the default SQLite storage engine is B-tree, and clearing the whole database means all existing SQLite pages need to be removed, which is inefficient.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-02-19T03:26:58.911Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 9,
+        "reads": 45,
+        "readers_count": 44,
+        "score": 54.0,
+        "yours": false,
+        "topic_id": 3176,
+        "topic_slug": "cant-clear-database-delete-all-data",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cant-clear-database-delete-all-data/3176/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10708,
+      10730
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1344
+    ],
+    [
+      2,
+      1341
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Can&rsquo;t clear database (delete all data)",
+  "id": 3176,
+  "title": "Can't clear database (delete all data)",
+  "posts_count": 2,
+  "created_at": "2022-02-15T11:52:46.789Z",
+  "views": 1340,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-02-19T03:26:58.911Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "cant-clear-database-delete-all-data",
+  "category_id": 7,
+  "word_count": 199,
+  "deleted_at": null,
+  "user_id": 1046,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f7c982e7f1330b1bd26cb813856838dc24822de5_2_1024x718.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3176",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1161,
+      "height": 815,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/f/f7c982e7f1330b1bd26cb813856838dc24822de5.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 718,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f7c982e7f1330b1bd26cb813856838dc24822de5_2_1024x718.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Cannot clear all keys by &ldquo;clearrange \\x00 \\xff&rdquo;",
+      "id": 1578,
+      "title": "Cannot clear all keys by \"clearrange \\x00 \\xff\"",
+      "slug": "cannot-clear-all-keys-by-clearrange-x00-xff",
+      "posts_count": 16,
+      "reply_count": 10,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2019-08-10T05:44:48.247Z",
+      "last_posted_at": "2022-07-03T22:20:16.158Z",
+      "bumped": true,
+      "bumped_at": "2022-07-03T22:20:16.158Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2970,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 629,
+            "username": "Sraw",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/a88e57/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Clear all Data but disk space utilization still same",
+      "id": 3794,
+      "title": "Clear all Data but disk space utilization still same",
+      "slug": "clear-all-data-but-disk-space-utilization-still-same",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2023-02-09T23:18:44.569Z",
+      "last_posted_at": "2023-02-10T21:44:11.236Z",
+      "bumped": true,
+      "bumped_at": "2023-02-10T21:44:11.236Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 685,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1104,
+            "username": "chetan_pg",
+            "name": "chetan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdb taking around 15 ms to clear 1 single key",
+      "id": 3705,
+      "title": "Fdb taking around 15 ms to clear 1 single key",
+      "slug": "fdb-taking-around-15-ms-to-clear-1-single-key",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2022-12-22T18:08:16.688Z",
+      "last_posted_at": "2023-01-02T11:03:02.097Z",
+      "bumped": true,
+      "bumped_at": "2023-01-02T11:03:02.097Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 417,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1194,
+            "username": "sandeep-nallapu",
+            "name": "papi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sandeep-nallapu/{size}/1484_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1160,
+            "username": "hbs",
+            "name": "Mathias Herberts",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hbs/{size}/1419_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Disk space used not going down after clearrange",
+      "id": 2153,
+      "title": "Disk space used not going down after clearrange",
+      "slug": "disk-space-used-not-going-down-after-clearrange",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2020-06-02T15:35:25.369Z",
+      "last_posted_at": "2020-06-05T17:59:33.994Z",
+      "bumped": true,
+      "bumped_at": "2020-06-05T17:59:33.994Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1370,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 773,
+            "username": "surya",
+            "name": "Surya Teja Gora",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/surya/{size}/871_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Shards are not splitted into smaller ones",
+      "id": 815,
+      "title": "Shards are not splitted into smaller ones",
+      "slug": "shards-are-not-splitted-into-smaller-ones",
+      "posts_count": 13,
+      "reply_count": 9,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2018-10-29T10:43:52.561Z",
+      "last_posted_at": "2021-08-16T17:39:23.884Z",
+      "bumped": true,
+      "bumped_at": "2021-08-16T17:39:23.884Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2641,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 296,
+            "username": "theos",
+            "name": "Daniil Gitelson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/theos/{size}/282_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 417,
+            "username": "lihtnes",
+            "name": "Senthil Ramamoorthy",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/848f3c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      },
+      {
+        "id": 1046,
+        "username": "hamakh12",
+        "name": "Muhammad Khalil",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/258eb7/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1046,
+      "username": "hamakh12",
+      "name": "Muhammad Khalil",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/258eb7/{size}.png"
+    },
+    "last_poster": {
+      "id": 454,
+      "username": "jzhou",
+      "name": "Jingyu Zhou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+    }
+  },
+  "bookmarks": []
+}

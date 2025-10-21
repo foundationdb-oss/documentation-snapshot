@@ -1,0 +1,509 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13805,
+        "name": "James Linnell",
+        "username": "Jamamp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jamamp/{size}/1754_2.png",
+        "created_at": "2024-02-25T19:41:06.065Z",
+        "cooked": "<p>Hello, I\u2019ve been reading a lot about FoundationDB lately and getting to understand it. I understand that it\u2019s a drastically different database design than traditional RDBMSes, where FDB primarily just supports key/value storage and anything else you want you build on top of using layers, such as the record layer in Java.</p>\n<p>In reading through things and trying to relate it to how I use, e.g., DynamoDB at my job for our data and APIs, I had some questions and musings on how to query data (efficiently).</p>\n<p><strong>Easy FDB storage and indexes</strong></p>\n<p>I think that getting data when you know the identifier is simple enough. The primary key is encoded within the fdb key (along with perhaps a directory and/or subspace prefix. And you can either serialize different data parts within the value (such as protobuf serialization with record layer) or encoded the data parts as individual key/value pairs with subspace suffixes after the primary key.</p>\n<p>The next step is retrieving values by something other than the primary key, by using an index. Suppose I want to retrieve all objects where a field is equal to a certain value. The naive method would be using a get range operation on the subspace for objects of that type. If it were protobuf encoded, you would deserialize the value and comparing the value or if the object, then retrieve the primary key from the fdb key. If the object were exploded then you would look at keys within that object\u2019s subspace where the key\u2019s suffix matches the field you\u2019re comparing and looking at the value from there. The get range is a bit wasteful because you\u2019re effectively doing a scan of all data, like a table scan in SQL.</p>\n<p>An index would be storing the value you\u2019re looking for in the fdb key before the primary key, e.g. <code>(prefix, value, pk) =&gt; nil</code>. So you can just do a get range operation on <code>(prefix, value, )</code> and parse the primary keys from the resulting keys. All key/value results from this get range read would be usable and nothing is wasted. You can then do individual gets on the pk to get the whole object, if needed. The index takes up some more key space in your db, but that\u2019s unavoidable.</p>\n<p>Up to this point, I think I understand everything well enough, from a high level.</p>\n<p><strong>Queries</strong></p>\n<p>The next part is how you perform more complicated queries.</p>\n<p><span class=\"hashtag-raw\">#1:</span> <strong>Prefix match</strong>. If I wanted to find objects whose string field <em>starts with</em> a certain value, this would actually be very easy with a regular index described above, because of how fdb\u2019s get range operation works. Simply do a get range over <code>(subspace prefix, value prefix, )</code> instead of the whole value</p>\n<p><span class=\"hashtag-raw\">#2</span> <strong>Contains match</strong>. If I wanted to find objects whose string field contains a value, there\u2019s no perfectly efficient way to handle this. If you could enumerate what \u201ccontains value\u201d values are being queried, you could make a custom index for that, storing many index records for each \u201cword\u201d (e.g.) in the value. But user-generated searches would be impossible to predict.</p>\n<p>A naive way to perform this might be to perform a scan over all objects. If the object is stored with its values exploded in suffixes, not only would you have to scan over objects that don\u2019t match the query, but you\u2019d also have to scan over key/value pairs that don\u2019t even contain the field you\u2019re querying against.</p>\n<p>For example, suppose the data <code>(subspace, object type, pk1, name) =&gt; alice</code> and <code>(subspace, object type, pk1, email) =&gt; a@a.com</code>. If I want to query for objects whose name value contains <code>lic</code>, I\u2019d do a get range over <code>(subspace, object type, )</code>, discard results whose suffix does not match <code>name</code>, and then compare the data.</p>\n<p>If we want to not wastefully iterate over keys which contain fields other than the field we\u2019re querying for, we could scan over an index on that field instead of scanning over the live data. The get range over <code>(subspace, index for object, name value,)</code> means every key/value pair you get back can be actionable for the query. It\u2019s like an index scan instead of a table scan.</p>\n<p>The next concern is how much data there might be. Queries are read-only but may still run into the 5 second FDB transaction limit. Perhaps I understand this less with read transactions and there may be a way to query without transaction time limits, or do a series of transactions that carry off from one another (use the last key from the last transaction results as the starting key in the next transaction).</p>\n<p><span class=\"hashtag-raw\">#3</span> <strong>Ends with, case-insensitive matching, etc</strong>. I think most other simple queries against single data points follows the same woes as described above in <span class=\"hashtag-raw\">#2</span>.</p>\n<p><span class=\"hashtag-raw\">#4</span> <strong>Complex queries</strong>. Next would be combining multiple data points and filters. Such as <code>name eq \"alice\" and (email endswith \"@gmail.com\" or email contains \"alice\")</code>. This would be the job of a query planner to figure out dynamically, choosing the best set of get ranges and gets to perform to minimize response time. This is obviously a much deeper undertaking and depends on how data is stored, available indexes, etc. and is something RDBMSes spend a lot of time getting right and tuning. I think the FDB record layer has some notion of this built in. Regardless, it\u2019s probably a large undertaking in its own right to nail well.</p>\n<p><strong>Other considerations</strong></p>\n<p><span class=\"hashtag-raw\">#1</span> <strong>Tenancy vs global</strong>. Consider if you\u2019re designing a system that stores tenant data separately. My understanding is that this is how Apple iCloud stores data for users, each user effectively gets their own database, so all your data is \u201ccloser together\u201d in the overall FoundationDB key space due to how keys are ordered. Retrieving a user\u2019s Notes and Reminders would all be under e.g. the <code>(icloud, user id,)</code> key prefix, instead of <code>(icloud, notes, user id,)</code> and <code>(icloud, reminders, user id,)</code> prefixes which may be far away and split from each other.</p>\n<p>In this way, \u201ctable scans\u201d or \u201cindex\u201d scans may be cheaper. You\u2019re not iterating over millions of users data to find the value you want due to how data is partitioned or grouped. Fewer discarded results in the scan if you\u2019re only querying your own data. This is as opposed to global data, like all iCloud user\u2019s notes being stored in one giant SQL table with the user id as part of the primary key.</p>\n<p>But if you have tenant-oriented data, if you wanted to perform queries globally you hit other problems. Such as first iterating over every user id then scanning each user\u2019s Notes key subspace, as a rough example. (A better example may be if you wanted to search all Tweets, since iCloud Notes obviously can\u2019t be queried like that). Or if this type of data is something specially designed to be queried, you could have per-user indexes within the user\u2019s tenancy subspace plus a second global index for global queries.</p>\n<p><span class=\"hashtag-raw\">#2</span> <strong>External query service</strong>. I think that a natural conclusion to make is that FoundationDB, as a key/value store, is somewhat limited in regard to open-ended, complex queries. It can be done, but there\u2019d be a fair amount of engineering to take into account. FDB seems like it excels with direct retrieval of data and \u201cfield equals value\u201d indexed queries\". But if it gets more complex, you may have to bite the bullet on slightly slower scans or write complex query planners. And it depends entirely on your data model, e.g. iCloud user-guarded tenant data, or a global and open social media platform.</p>\n<p>From this, perhaps offloading queries to a separate platform may be desired. Such as Elastic Search. Data writes to FoundationDB are replicated to ES so that simple API requests on direct data can be performed against FDB while complex and open-ended searches are performed against ES. I believe this may be what Okta does, for instance, since they even mention in their documentation that new or updated User objects may take up to 1-2 seconds before it\u2019s available from their search APIs. Obviously FDB can\u2019t perform every function perfectly, and other storage formats may excel better for certain scenarios, and bringing in other technologies to your system to achieve your goals is acceptable.</p>\n<p><strong>Closing thoughts</strong></p>\n<p>I think that I needed to write this all out to get it organized in my head a little bit better. There\u2019s a lot to consider in your data modeling, and many of the FoundationDB articles I\u2019ve read recently don\u2019t go into querying more than a simple index described further above, or some of the considerations you have to take into account when adopting FDB over an RDBMS.</p>\n<p>I think I wanted to think about this ahead of time, so the following doesn\u2019t occur: begin creating a new service with FDB as its store, get it all working with simple operations, begin to implement different searches/queries, and get stumped on how to actually implement it well.</p>\n<p>I think everything I\u2019ve said above answers my own questions well, but would love to hear what others\u2019 experiences are.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2024-02-25T19:41:06.065Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1013,
+        "reads": 39,
+        "readers_count": 38,
+        "score": 5032.8,
+        "yours": false,
+        "topic_id": 4369,
+        "topic_slug": "query-practices-with-fdb",
+        "display_username": "James Linnell",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1387,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/query-practices-with-fdb/4369/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      13805
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      604
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Query practices with FDB",
+  "id": 4369,
+  "title": "Query practices with FDB",
+  "posts_count": 1,
+  "created_at": "2024-02-25T19:41:05.910Z",
+  "views": 1022,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-02-25T19:41:06.065Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "query-practices-with-fdb",
+  "category_id": 7,
+  "word_count": 1571,
+  "deleted_at": null,
+  "user_id": 1387,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4369",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Secondary indexing approaches",
+      "id": 792,
+      "title": "Secondary indexing approaches",
+      "slug": "secondary-indexing-approaches",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-10-19T19:24:02.093Z",
+      "last_posted_at": "2018-10-20T15:08:09.001Z",
+      "bumped": true,
+      "bumped_at": "2018-10-20T15:08:09.001Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2905,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 391,
+            "username": "atombender",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/atombender/{size}/688_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to efficiently query data from FDB?",
+      "id": 3895,
+      "title": "How to efficiently query data from FDB?",
+      "slug": "how-to-efficiently-query-data-from-fdb",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2023-04-10T11:25:58.221Z",
+      "last_posted_at": "2023-04-19T14:23:07.437Z",
+      "bumped": true,
+      "bumped_at": "2023-04-19T14:23:07.437Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 741,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1212,
+            "username": "Apache",
+            "name": "Apache",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/2acd7d/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Missing API for getting just the count of a key range?",
+      "id": 444,
+      "title": "Missing API for getting just the count of a key range?",
+      "slug": "missing-api-for-getting-just-the-count-of-a-key-range",
+      "posts_count": 14,
+      "reply_count": 9,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2018-05-21T09:23:36.938Z",
+      "last_posted_at": "2018-09-10T16:25:03.060Z",
+      "bumped": true,
+      "bumped_at": "2018-09-10T16:25:03.060Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 3599,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 208,
+            "username": "cloudspeech",
+            "name": "Cloudspeech",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cloudspeech/{size}/330_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 31,
+            "username": "dicklacara",
+            "name": "Richard Applebaum",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8797f3/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Implementing sorting by one field and filtering by another",
+      "id": 1276,
+      "title": "Implementing sorting by one field and filtering by another",
+      "slug": "implementing-sorting-by-one-field-and-filtering-by-another",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-04-02T12:42:34.217Z",
+      "last_posted_at": "2019-04-03T08:23:30.090Z",
+      "bumped": true,
+      "bumped_at": "2019-04-03T08:23:30.090Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1015,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 554,
+            "username": "chanon",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/a587f6/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Emulate secondary index",
+      "id": 430,
+      "title": "Emulate secondary index",
+      "slug": "emulate-secondary-index",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-05-18T07:04:04.967Z",
+      "last_posted_at": "2018-05-21T14:11:05.503Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T14:11:05.503Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1123,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 268,
+            "username": "urykhy",
+            "name": "Yury",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/u/7bcc69/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 190,
+            "username": "itp",
+            "name": "Ian Peters",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/itp/{size}/151_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1387,
+        "username": "Jamamp",
+        "name": "James Linnell",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jamamp/{size}/1754_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1387,
+      "username": "Jamamp",
+      "name": "James Linnell",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jamamp/{size}/1754_2.png"
+    },
+    "last_poster": {
+      "id": 1387,
+      "username": "Jamamp",
+      "name": "James Linnell",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jamamp/{size}/1754_2.png"
+    }
+  },
+  "bookmarks": []
+}

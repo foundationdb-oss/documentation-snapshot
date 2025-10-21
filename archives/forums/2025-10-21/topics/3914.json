@@ -1,0 +1,721 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12734,
+        "name": "",
+        "username": "mAdkins23",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/7993a0/{size}.png",
+        "created_at": "2023-04-18T15:47:16.764Z",
+        "cooked": "<p>I\u2019m trying to figure out how much duplication of data is actually in the DB. I\u2019ve been poking around the web but I haven\u2019t stumbled across a page that answers my question.</p>\n<p>For this example Go program:</p>\n<pre><code class=\"lang-auto\">package main\n\nimport (\n\t\"log\"\n\n\t\"github.com/apple/foundationdb/bindings/go/src/fdb\"\n\t\"github.com/apple/foundationdb/bindings/go/src/fdb/directory\"\n\t\"github.com/apple/foundationdb/bindings/go/src/fdb/tuple\"\n\t\"github.com/google/uuid\"\n)\n\nfunc main() {\n\tfdb.MustAPIVersion(630)\n\tdb := fdb.MustOpenDefault()\n\n\tds, err := directory.CreateOrOpen(db, []string{\"records\"}, nil)\n\tif err != nil {\n\t\tlog.Fatalf(\"Unable to create/open directory: %s\\n\", err)\n\t}\n\n\tfield := map[string]string{\n\t\t\"one\":   \"alpha\",\n\t\t\"two\":   \"bravo\",\n\t\t\"three\": \"charlie\",\n\t\t\"four\":  \"delta\",\n\t\t\"five\":  \"echo\",\n\t\t\"six\":   \"foxtrot\",\n\t\t\"seven\": \"golf\",\n\t}\n\n\tfor i := 0; i &lt; 2; i++ {\n\t\tid, err := uuid.NewRandom()\n\t\tif err != nil {\n\t\t\tlog.Fatalf(\"Unable to get random ID: %s\\n\", err)\n\t\t}\n\n\t\t_, _ = db.Transact(func(tr fdb.Transaction) (interface{}, error) {\n\t\t\tfor key, value := range field {\n\t\t\t\ttr.Set(ds.Pack([]tuple.TupleElement{id.String(), key}), []byte(value))\n\t\t\t}\n\t\t\treturn nil, nil\n\t\t})\n\t}\n}\n</code></pre>\n<p>I get the following from <code>fdbcli</code>:</p>\n<pre><code class=\"lang-auto\">fdb&gt; getrange \"\" \"\\xFF\"\n\nRange limited to 25 keys\n`\\x15\\x12\\x02052f6dad-1076-4696-a246-3d7524245dd6\\x00\\x02five\\x00' is `echo'\n`\\x15\\x12\\x02052f6dad-1076-4696-a246-3d7524245dd6\\x00\\x02four\\x00' is `delta'\n`\\x15\\x12\\x02052f6dad-1076-4696-a246-3d7524245dd6\\x00\\x02one\\x00' is `alpha'\n`\\x15\\x12\\x02052f6dad-1076-4696-a246-3d7524245dd6\\x00\\x02seven\\x00' is `golf'\n`\\x15\\x12\\x02052f6dad-1076-4696-a246-3d7524245dd6\\x00\\x02six\\x00' is `foxtrot'\n`\\x15\\x12\\x02052f6dad-1076-4696-a246-3d7524245dd6\\x00\\x02three\\x00' is `charlie'\n`\\x15\\x12\\x02052f6dad-1076-4696-a246-3d7524245dd6\\x00\\x02two\\x00' is `bravo'\n`\\x15\\x12\\x02c723601e-ec4c-4e43-a536-6b2e72cfb504\\x00\\x02five\\x00' is `echo'\n`\\x15\\x12\\x02c723601e-ec4c-4e43-a536-6b2e72cfb504\\x00\\x02four\\x00' is `delta'\n`\\x15\\x12\\x02c723601e-ec4c-4e43-a536-6b2e72cfb504\\x00\\x02one\\x00' is `alpha'\n`\\x15\\x12\\x02c723601e-ec4c-4e43-a536-6b2e72cfb504\\x00\\x02seven\\x00' is `golf'\n`\\x15\\x12\\x02c723601e-ec4c-4e43-a536-6b2e72cfb504\\x00\\x02six\\x00' is `foxtrot'\n`\\x15\\x12\\x02c723601e-ec4c-4e43-a536-6b2e72cfb504\\x00\\x02three\\x00' is `charlie'\n`\\x15\\x12\\x02c723601e-ec4c-4e43-a536-6b2e72cfb504\\x00\\x02two\\x00' is `bravo'\n`\\xfe\\x01\\x15\\x12\\x00\\x01layer\\x00' is `'\n`\\xfe\\x01\\xfe\\x00\\x01hca\\x00\\x14\\x14' is `\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00'\n`\\xfe\\x01\\xfe\\x00\\x01hca\\x00\\x15\\x01\\x15\\x12' is `'\n`\\xfe\\x01\\xfe\\x00\\x01version\\x00' is `\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00'\n`\\xfe\\x01\\xfe\\x00\\x14\\x02records\\x00' is `\\x15\\x12'\n</code></pre>\n<p>I can see a lot of repeated string data here. Is this repeated in the underlying data store?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-04-18T15:47:16.764Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 94,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 474.0,
+        "yours": false,
+        "topic_id": 3914,
+        "topic_slug": "duplication-of-key-data",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1242,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/duplication-of-key-data/3914/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12735,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2023-04-19T08:43:27.179Z",
+        "cooked": "<p>Is the question essentially \u201cis there any kind of compression to avoid storing duplicate data multiple times?\u201d</p>\n<p>The answer to that question is \u201cnot currently with most configurations\u201d, though the answer does depend on which storage engine the database is configured with. The most common storage engines (\u201cssd\u201d, which is based on sqlite, and \u201cmemory\u201d, which requires everything to fit in memory but makes data durable to a circular queue) do not have any kind of compression, and so the common data at the beginning of each key will be stored multiple times.</p>\n<p>There are a few experimental/beta storage engines that seek to address this shortcoming. Redwood (a custom B+tree implementation) has prefix compression as one of its primary features (see more about that here: <a href=\"https://youtu.be/5iqKu1pVDvE\" class=\"inline-onebox\">Redwood Storage Engine Update - Steve Atherton, Apple - YouTube</a>). There\u2019s also a \u201cmemory-radixtree-beta\u201d storage engine built on a trie-type data structure, though I\u2019m actually not sure if that only materializes the radix trie in memory, or if there are also on-disk savings. Finally, there\u2019s an in-the-works RocksDB-based storage engine which would have both prefix compression and full-file compression to try and limit the impact of duplicative key data.</p>\n<p>The other technique you can use here is to dictionary compress your key prefixes so that common strings are stored in a more compact way. The <a href=\"https://apple.github.io/foundationdb/developer-guide.html#directories\">directory layer</a> included in each language binding offers a way to map paths of strings to short prefixes, for example. There are a few different reasons one might want to do this, but shortening a long prefix into a shorter prefix for space savings reasons is one of them. In your example, note that the text \u201crecords\u201d is not repeated in each key, but instead there\u2019s one key <code>\\xfe\\x01\\xfe\\x00\\x14\\x02records\\x00</code> that maps to the prefix <code>\\x15\\x12</code>, and then all of the other keys begin with <code>\\x15\\x12</code> instead of <code>\\x02records\\x00</code>. The Record Layer expands upon that, and adds some things like caching and hierarchy management, to support directory layer encoding elements of a longer path while maintaining prefix hierarchy (that is, encoding longer paths so that if one path is a prefix of another path, the on-disk encoding of the former is the prefix of the on-disk encoding of the latter) in the \u201ckey space path\u201d abstraction, where one can use a <a href=\"https://javadoc.io/doc/org.foundationdb/fdb-record-layer-core-pb3-shaded/2.8.84.0/com/apple/foundationdb/record/provider/foundationdb/keyspace/DirectoryLayerDirectory.html\"><code>DirectoryLayerDirectory</code></a> to shorten individual path elements.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-04-19T08:44:12.576Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 18.4,
+        "yours": false,
+        "topic_id": 3914,
+        "topic_slug": "duplication-of-key-data",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://youtu.be/5iqKu1pVDvE",
+            "internal": false,
+            "reflection": false,
+            "title": "Redwood Storage Engine Update - Steve Atherton, Apple - YouTube",
+            "clicks": 5
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#directories",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB 7.2",
+            "clicks": 5
+          },
+          {
+            "url": "https://javadoc.io/doc/org.foundationdb/fdb-record-layer-core-pb3-shaded/2.8.84.0/com/apple/foundationdb/record/provider/foundationdb/keyspace/DirectoryLayerDirectory.html",
+            "internal": false,
+            "reflection": false,
+            "title": "DirectoryLayerDirectory - fdb-record-layer-core-pb3-shaded 2.8.84.0 javadoc",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/duplication-of-key-data/3914/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12739,
+        "name": "",
+        "username": "mAdkins23",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/7993a0/{size}.png",
+        "created_at": "2023-04-19T14:47:41.015Z",
+        "cooked": "<p>Thank you for that clear and complete answer. Kind of what I expected.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-04-19T15:37:12.427Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 3.2,
+        "yours": false,
+        "topic_id": 3914,
+        "topic_slug": "duplication-of-key-data",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1242,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/duplication-of-key-data/3914/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12734,
+      12735,
+      12739
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      917
+    ],
+    [
+      3,
+      916
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Duplication of key data?",
+  "id": 3914,
+  "title": "Duplication of key data?",
+  "posts_count": 3,
+  "created_at": "2023-04-18T15:47:16.689Z",
+  "views": 462,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-04-19T14:47:41.015Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "duplication-of-key-data",
+  "category_id": 7,
+  "word_count": 890,
+  "deleted_at": null,
+  "user_id": 1242,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3914",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How does FoundationDB store keys with duplicate prefixes?",
+      "id": 1234,
+      "title": "How does FoundationDB store keys with duplicate prefixes?",
+      "slug": "how-does-foundationdb-store-keys-with-duplicate-prefixes",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-03-16T03:26:49.825Z",
+      "last_posted_at": "2019-03-17T06:11:23.374Z",
+      "bumped": true,
+      "bumped_at": "2019-03-17T06:11:23.374Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1091,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Best practice of storing structs. Should I pack or store fields separately",
+      "id": 425,
+      "title": "Best practice of storing structs. Should I pack or store fields separately",
+      "slug": "best-practice-of-storing-structs-should-i-pack-or-store-fields-separately",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-05-16T23:07:22.662Z",
+      "last_posted_at": "2018-05-17T13:16:48.924Z",
+      "bumped": true,
+      "bumped_at": "2018-05-17T13:16:48.924Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 2000,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 265,
+            "username": "brainfucker",
+            "name": "Illarionov Oleg",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brainfucker/{size}/237_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Moving Data more than double the key-value size stored",
+      "id": 1006,
+      "title": "Moving Data more than double the key-value size stored",
+      "slug": "moving-data-more-than-double-the-key-value-size-stored",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2019-01-11T14:25:18.665Z",
+      "last_posted_at": "2019-01-11T14:25:18.879Z",
+      "bumped": true,
+      "bumped_at": "2019-01-11T14:25:18.879Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 472,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 332,
+            "username": "wmd",
+            "name": "William Dowling",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/fbc32d/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB for embedded use",
+      "id": 221,
+      "title": "FoundationDB for embedded use",
+      "slug": "foundationdb-for-embedded-use",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-04-23T15:37:04.218Z",
+      "last_posted_at": "2018-04-24T14:43:25.652Z",
+      "bumped": true,
+      "bumped_at": "2018-04-24T14:43:25.652Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 3290,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 151,
+            "username": "eric",
+            "name": "Eric S.",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/eric/{size}/128_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Log abstraction on FoundationDB",
+      "id": 117,
+      "title": "Log abstraction on FoundationDB",
+      "slug": "log-abstraction-on-foundationdb",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-04-20T10:47:11.941Z",
+      "last_posted_at": "2018-05-03T17:35:34.126Z",
+      "bumped": true,
+      "bumped_at": "2018-05-03T17:35:34.126Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 3110,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 78,
+            "username": "pineapple",
+            "name": "Brian Haslet",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/7993a0/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1242,
+        "username": "mAdkins23",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/7993a0/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 1242,
+      "username": "mAdkins23",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/7993a0/{size}.png"
+    },
+    "last_poster": {
+      "id": 1242,
+      "username": "mAdkins23",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/7993a0/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/developer-guide.html#directories",
+        "title": "Developer Guide \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 8,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://youtu.be/5iqKu1pVDvE",
+        "title": "Redwood Storage Engine Update - Steve Atherton, Apple - YouTube",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 8,
+        "domain": "youtu.be",
+        "root_domain": "youtu.be"
+      },
+      {
+        "url": "https://javadoc.io/doc/org.foundationdb/fdb-record-layer-core-pb3-shaded/2.8.84.0/com/apple/foundationdb/record/provider/foundationdb/keyspace/DirectoryLayerDirectory.html",
+        "title": "DirectoryLayerDirectory - fdb-record-layer-core-pb3-shaded 2.8.84.0 javadoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 8,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

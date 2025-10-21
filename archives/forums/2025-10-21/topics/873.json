@@ -1,0 +1,630 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2670,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2018-11-17T12:30:29.747Z",
+        "cooked": "<p>While updating the list of error codes, I see that both errors 2021 and 2023 have the same <code>transaction_read_only</code> label: <a href=\"https://apple.github.io/foundationdb/api-error-codes.html\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/api-error-codes.html</a></p>\n<p>This makes it difficult to use enums to model these, and I\u2019ll have to change the name of one or the other.</p>\n<p>Is this normal? It looks like 2021 could probably have an additional word in it (since it seems to go along with 2020 that seems to be when trying to get the commit version of a transaction)</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-17T12:30:29.747Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 22,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 116.4,
+        "yours": false,
+        "topic_id": 873,
+        "topic_slug": "both-error-codes-2021-and-2023-have-the-same-name-transaction-read-only",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-error-codes.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Error Codes \u2014 FoundationDB 6.0",
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/both-error-codes-2021-and-2023-have-the-same-name-transaction-read-only/873/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2716,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-11-26T18:00:12.668Z",
+        "cooked": "<p>That looks like an error in the documentation. In the source code, 2021 is named <code>no_commit_version</code>:<br>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/dbaaaac35408e0cca03f599d62dc6ab84611089b/flow/error_definitions.h#L129\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/dbaaaac35408e0cca03f599d62dc6ab84611089b/flow/error_definitions.h#L129\" target=\"_blank\">apple/foundationdb/blob/dbaaaac35408e0cca03f599d62dc6ab84611089b/flow/error_definitions.h#L129</a></h4>\n<pre class=\"onebox\"><code class=\"lang-h\"><ol class=\"start lines\" start=\"119\" style=\"counter-reset: li-counter 118 ;\">\n<li>ERROR( version_invalid, 2011, \"Version not valid\" )</li>\n<li>ERROR( range_limits_invalid, 2012, \"Range limits not valid\" )</li>\n<li>ERROR( invalid_database_name, 2013, \"Database name must be 'DB'\" )</li>\n<li>ERROR( attribute_not_found, 2014, \"Attribute not found\" )</li>\n<li>ERROR( future_not_set, 2015, \"Future not ready\" )</li>\n<li>ERROR( future_not_error, 2016, \"Future not an error\" )</li>\n<li>ERROR( used_during_commit, 2017, \"Operation issued while a commit was outstanding\" )</li>\n<li>ERROR( invalid_mutation_type, 2018, \"Unrecognized atomic mutation type\" )</li>\n<li>ERROR( attribute_too_large, 2019, \"Attribute too large for type int\" )</li>\n<li>ERROR( transaction_invalid_version, 2020, \"Transaction does not have a valid commit version\" )</li>\n<li class=\"selected\">ERROR( no_commit_version, 2021, \"Transaction is read-only and therefore does not have a commit version\" )</li>\n<li>ERROR( environment_variable_network_option_failed, 2022, \"Environment variable network option could not be set\" )</li>\n<li>ERROR( transaction_read_only, 2023, \"Attempted to commit a transaction specified as read-only\" )</li>\n<li>\n</li>\n<li>ERROR( incompatible_protocol_version, 2100, \"Incompatible protocol version\" )</li>\n<li>ERROR( transaction_too_large, 2101, \"Transaction exceeds byte limit\" )</li>\n<li>ERROR( key_too_large, 2102, \"Key length exceeds limit\" )</li>\n<li>ERROR( value_too_large, 2103, \"Value length exceeds limit\" )</li>\n<li>ERROR( connection_string_invalid, 2104, \"Connection string invalid\" )</li>\n<li>ERROR( address_in_use, 2105, \"Local address in use\" )</li>\n<li>ERROR( invalid_local_address, 2106, \"Invalid local address\" )</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n</p>\n<p>I\u2019ll fix the documentation.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-26T18:00:12.668Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 29.2,
+        "yours": false,
+        "topic_id": 873,
+        "topic_slug": "both-error-codes-2021-and-2023-have-the-same-name-transaction-read-only",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/dbaaaac35408e0cca03f599d62dc6ab84611089b/flow/error_definitions.h#L129",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/error_definitions.h at dbaaaac35408e0cca03f599d62dc6ab84611089b \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/both-error-codes-2021-and-2023-have-the-same-name-transaction-read-only/873/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2670,
+      2716
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2530
+    ],
+    [
+      2,
+      2521
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Both error codes 2021 and 2023 have the same name &ldquo;transaction_read_only&rdquo;",
+  "id": 873,
+  "title": "Both error codes 2021 and 2023 have the same name \"transaction_read_only\"",
+  "posts_count": 2,
+  "created_at": "2018-11-17T12:30:29.659Z",
+  "views": 794,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2018-11-26T18:00:12.668Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "both-error-codes-2021-and-2023-have-the-same-name-transaction-read-only",
+  "category_id": 8,
+  "word_count": 121,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_873",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "id": 1833,
+      "title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "slug": "cannot-commit-transaction-that-reads-the-metadataversion-key-after-changing-it",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-12-11T22:52:33.816Z",
+      "last_posted_at": "2019-12-13T13:23:15.818Z",
+      "bumped": true,
+      "bumped_at": "2019-12-13T14:11:35.389Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1297,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction does not have a valid commit version",
+      "id": 2683,
+      "title": "Transaction does not have a valid commit version",
+      "slug": "transaction-does-not-have-a-valid-commit-version",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2021-04-29T19:52:10.414Z",
+      "last_posted_at": "2021-05-08T17:54:57.211Z",
+      "bumped": true,
+      "bumped_at": "2021-05-08T17:54:57.211Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 488,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why Read Version is necessary for read-write transactions?",
+      "id": 2386,
+      "title": "Why Read Version is necessary for read-write transactions?",
+      "slug": "why-read-version-is-necessary-for-read-write-transactions",
+      "posts_count": 13,
+      "reply_count": 10,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2020-10-12T05:42:44.091Z",
+      "last_posted_at": "2020-10-13T04:04:47.663Z",
+      "bumped": true,
+      "bumped_at": "2020-10-13T04:04:47.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2050,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 805,
+            "username": "roohitavaf",
+            "name": "Mohammad Roohitavaf",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/roohitavaf/{size}/1026_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "[Java] why is setReadVersion not part of ReadTransaction/ReadSnapshot",
+      "id": 646,
+      "title": "[Java] why is setReadVersion not part of ReadTransaction/ReadSnapshot",
+      "slug": "java-why-is-setreadversion-not-part-of-readtransaction-readsnapshot",
+      "posts_count": 15,
+      "reply_count": 12,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2018-08-19T08:03:20.405Z",
+      "last_posted_at": "2018-08-22T02:19:45.224Z",
+      "bumped": true,
+      "bumped_at": "2018-08-22T02:19:45.224Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 983,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/api-error-codes.html",
+        "title": "Error Codes \u2014 FoundationDB 6.0",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 53,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/dbaaaac35408e0cca03f599d62dc6ab84611089b/flow/error_definitions.h#L129",
+        "title": "foundationdb/error_definitions.h at dbaaaac35408e0cca03f599d62dc6ab84611089b \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

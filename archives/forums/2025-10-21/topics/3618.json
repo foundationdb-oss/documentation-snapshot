@@ -1,0 +1,499 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11897,
+        "name": "Kiss Stefan",
+        "username": "stefan-kiss",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/stefan-kiss/{size}/1359_2.png",
+        "created_at": "2022-10-21T12:53:56.593Z",
+        "cooked": "<p>Hello, I have a cluster with the configuration below (form fdbcli status)</p>\n<p>I\u2019m setting all the process classes in configuration and i\u2019m making sure to have the classes well separated. however i still get into The situation below: one of the storage servers also has the log role.</p>\n<pre><code class=\"lang-auto\">Using cluster file `/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - double\n  Storage engine         - ssd-redwood-1-experimental\n  Coordinators           - 5\n  Desired Commit Proxies - -1\n  Desired GRV Proxies    - -1\n  Desired Resolvers      - -1\n  Desired Logs           - -1\n  Desired Remote Logs    - -1\n  Desired Log Routers    - -1\n  Usable Regions         - 2\n  Regions:\n    Primary -\n        Datacenter                    - DC1\n        Satellite datacenters         - DC2, DC3\n        Satellite Redundancy Mode     - one_satellite_triple\n        Satellite Logs                - 1\n    Remote -\n        Datacenter                    - DC3\n        Satellite datacenters         - DC2, DC1\n        Satellite Redundancy Mode     - one_satellite_triple\n        Satellite Logs                - 1\n\nCluster:\n  FoundationDB processes - 89\n  Zones                  - 13\n  Machines               - 13\n  Memory availability    - 5.9 GB per process on machine with least available\n  Retransmissions rate   - 0 Hz\n  Fault Tolerance        - 2 machines\n  Server time            - 10/21/22 12:43:10\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 0 MB\n  Disk space used        - 80.396 GB\n\nOperating space:\n  Storage server         - 1800.7 GB free on most full server\n  Log server             - 1800.6 GB free on most full server\n\nWorkload:\n  Read rate              - 228 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 54 Hz\n  Transactions committed - 1 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 10/21/22 12:43:10\n\nWARNING: A single process is both a transaction log and a storage server.\n  For best performance use dedicated disks for the transaction logs by setting process classes.\n</code></pre>\n<p>inventory of classes and roles taken from status json (scroll down to <code>xx.xx.xx.26:4502:tls</code> )</p>\n<pre><code class=\"lang-auto\">Address               | Class       | Roles\nxx.xx.xx.10:4500:tls | coordinator | coordinator\nxx.xx.xx.10:4501:tls | log         |\nxx.xx.xx.10:4502:tls | log         |\nxx.xx.xx.10:4503:tls | log         | log\nxx.xx.xx.10:4504:tls | log         | log\nxx.xx.xx.13:4500:tls | coordinator | coordinator\nxx.xx.xx.13:4501:tls | log         |\nxx.xx.xx.13:4502:tls | log         |\nxx.xx.xx.13:4503:tls | log         |\nxx.xx.xx.13:4504:tls | log         |\nxx.xx.xx.18:4500:tls | coordinator | coordinator\nxx.xx.xx.18:4501:tls | log         |\nxx.xx.xx.18:4502:tls | log         |\nxx.xx.xx.18:4503:tls | log         | log\nxx.xx.xx.18:4504:tls | log         |\nxx.xx.xx.19:4500:tls | coordinator | coordinator\nxx.xx.xx.19:4501:tls | log         | log\nxx.xx.xx.19:4502:tls | log         |\nxx.xx.xx.19:4503:tls | log         | log\nxx.xx.xx.19:4504:tls | log         |\nxx.xx.xx.22:4500:tls | storage     | storage\nxx.xx.xx.22:4501:tls | storage     | storage\nxx.xx.xx.22:4502:tls | storage     | storage\nxx.xx.xx.22:4503:tls | storage     | storage\nxx.xx.xx.22:4504:tls | storage     | storage\nxx.xx.xx.22:4505:tls | storage     | storage\nxx.xx.xx.22:4506:tls | storage     | storage\nxx.xx.xx.22:4507:tls | storage     | storage\nxx.xx.xx.23:4500:tls | storage     | storage\nxx.xx.xx.23:4501:tls | storage     | storage\nxx.xx.xx.23:4502:tls | storage     | storage\nxx.xx.xx.23:4503:tls | storage     | storage\nxx.xx.xx.23:4504:tls | storage     | storage\nxx.xx.xx.23:4505:tls | storage     | storage\nxx.xx.xx.23:4506:tls | storage     | storage\nxx.xx.xx.23:4507:tls | storage     | storage\nxx.xx.xx.26:4500:tls | storage     | storage\nxx.xx.xx.26:4501:tls | storage     | storage\nxx.xx.xx.26:4502:tls | storage     | log,storage           &lt;---- HERE\nxx.xx.xx.26:4503:tls | storage     | storage\nxx.xx.xx.26:4504:tls | storage     | storage\nxx.xx.xx.26:4505:tls | storage     | storage\nxx.xx.xx.26:4506:tls | storage     | storage\nxx.xx.xx.26:4507:tls | storage     | storage\nxx.xx.xx.27:4500:tls | storage     | storage\nxx.xx.xx.27:4501:tls | storage     | storage\nxx.xx.xx.27:4502:tls | storage     | storage\nxx.xx.xx.27:4503:tls | storage     | storage\nxx.xx.xx.27:4504:tls | storage     | storage\nxx.xx.xx.27:4505:tls | storage     | storage\nxx.xx.xx.27:4506:tls | storage     | storage\nxx.xx.xx.27:4507:tls | storage     | storage\nxx.xx.xx.30:4500:tls | stateless   |\nxx.xx.xx.30:4501:tls | stateless   |\nxx.xx.xx.30:4502:tls | stateless   | router\nxx.xx.xx.30:4503:tls | stateless   | router\nxx.xx.xx.30:4504:tls | stateless   |\nxx.xx.xx.30:4505:tls | stateless   | router\nxx.xx.xx.30:4506:tls | stateless   |\nxx.xx.xx.30:4507:tls | stateless   |\nxx.xx.xx.33:4500:tls | stateless   |\nxx.xx.xx.33:4501:tls | stateless   |\nxx.xx.xx.33:4502:tls | stateless   |\nxx.xx.xx.33:4503:tls | stateless   |\nxx.xx.xx.33:4504:tls | stateless   |\nxx.xx.xx.33:4505:tls | stateless   |\nxx.xx.xx.33:4506:tls | stateless   |\nxx.xx.xx.33:4507:tls | stateless   |\nxx.xx.xx.6:4500:tls  | stateless   |\nxx.xx.xx.6:4501:tls  | stateless   | commit_proxy\nxx.xx.xx.6:4502:tls  | stateless   |\nxx.xx.xx.6:4503:tls  | stateless   | grv_proxy\nxx.xx.xx.6:4504:tls  | stateless   | data_distributor\nxx.xx.xx.6:4505:tls  | stateless   | commit_proxy\nxx.xx.xx.6:4506:tls  | stateless   |\nxx.xx.xx.6:4507:tls  | stateless   | master\nxx.xx.xx.7:4500:tls  | stateless   | resolver\nxx.xx.xx.7:4501:tls  | stateless   | commit_proxy\nxx.xx.xx.7:4502:tls  | stateless   |\nxx.xx.xx.7:4503:tls  | stateless   | ratekeeper\nxx.xx.xx.7:4504:tls  | stateless   |\nxx.xx.xx.7:4505:tls  | stateless   |\nxx.xx.xx.7:4506:tls  | stateless   | cluster_controller\nxx.xx.xx.7:4507:tls  | stateless   |\nxx.xx.xx.9:4500:tls  | coordinator | coordinator\nxx.xx.xx.9:4501:tls  | log         |\nxx.xx.xx.9:4502:tls  | log         | log\nxx.xx.xx.9:4503:tls  | log         | log\nxx.xx.xx.9:4504:tls  | log         | log\n</code></pre>\n<p>As you can see there are processes assigned log class that do not have any role, but still i have the storage one that gets also a log role.<br>\nCurrently i\u2019m thinking this might happen while i\u2019m still joining nodes and fdb never gets to reassign it ?</p>\n<p>I would also mentioned here that currently the cluster is unused yet. So is there possible that as transactions gets in the role will be reassigned ?<br>\nWhat would be the best way to prevent this things from happening ? all the classes are pre-assigned in config\u2026<br>\nLE: fdb version 7.1.15 ( but i\u2019m kind of sure i saw this behavior on 7.1.23 also)</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-10-21T13:31:48.776Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 44,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 225.8,
+        "yours": false,
+        "topic_id": 3618,
+        "topic_slug": "log-role-on-storage-class-how-can-i-prevent-it",
+        "display_username": "Kiss Stefan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1115,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/log-role-on-storage-class-how-can-i-prevent-it/3618/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      11897
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1096
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Log role on storage class - how can i prevent it?",
+  "id": 3618,
+  "title": "Log role on storage class - how can i prevent it?",
+  "posts_count": 1,
+  "created_at": "2022-10-21T12:53:56.526Z",
+  "views": 356,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-10-21T12:53:56.593Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "log-role-on-storage-class-how-can-i-prevent-it",
+  "category_id": 7,
+  "word_count": 1087,
+  "deleted_at": null,
+  "user_id": 1115,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3618",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Storage process being assigned log roles automatically",
+      "id": 2170,
+      "title": "Storage process being assigned log roles automatically",
+      "slug": "storage-process-being-assigned-log-roles-automatically",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-06-08T10:53:48.559Z",
+      "last_posted_at": "2020-06-08T15:19:03.484Z",
+      "bumped": true,
+      "bumped_at": "2020-06-08T15:19:03.484Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 834,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 747,
+            "username": "ashishgupta",
+            "name": "Ashish Gupta",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Under what situations can the process initially created with the Storage class become a Log process?",
+      "id": 1425,
+      "title": "Under what situations can the process initially created with the Storage class become a Log process?",
+      "slug": "under-what-situations-can-the-process-initially-created-with-the-storage-class-become-a-log-process",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-06-05T09:38:06.458Z",
+      "last_posted_at": "2019-06-05T10:23:43.979Z",
+      "bumped": true,
+      "bumped_at": "2019-06-05T10:23:43.979Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 807,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Never assign Storage role to Log processes",
+      "id": 4294,
+      "title": "Never assign Storage role to Log processes",
+      "slug": "never-assign-storage-role-to-log-processes",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2023-12-10T22:20:41.666Z",
+      "last_posted_at": "2025-09-15T13:25:08.545Z",
+      "bumped": true,
+      "bumped_at": "2025-09-15T13:25:08.545Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 374,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 715,
+            "username": "simenl",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/simenl/{size}/1671_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1142,
+            "username": "danm",
+            "name": "Dan Meyers",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1363,
+            "username": "gm42",
+            "name": "Giuseppe",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions about process classes, recruitment behavior and cluster configuration",
+      "id": 1177,
+      "title": "Questions about process classes, recruitment behavior and cluster configuration",
+      "slug": "questions-about-process-classes-recruitment-behavior-and-cluster-configuration",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-02-21T19:47:47.590Z",
+      "last_posted_at": "2019-06-15T13:16:26.887Z",
+      "bumped": true,
+      "bumped_at": "2019-06-15T13:16:26.887Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2849,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 475,
+            "username": "monsiper",
+            "name": "mehmet onsiper",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/ba9def/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 170,
+            "username": "meln1k",
+            "name": "Nikita Melkozerov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meln1k/{size}/150_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Searching for more information",
+      "id": 371,
+      "title": "Searching for more information",
+      "slug": "searching-for-more-information",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-05-07T22:33:41.199Z",
+      "last_posted_at": "2018-05-09T06:02:51.732Z",
+      "bumped": true,
+      "bumped_at": "2018-05-09T06:02:51.732Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 733,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 236,
+            "username": "marctrem",
+            "name": "Marc-Andr\u00e9 Tremblay",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/marctrem/{size}/208_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1115,
+        "username": "stefan-kiss",
+        "name": "Kiss Stefan",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/stefan-kiss/{size}/1359_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1115,
+      "username": "stefan-kiss",
+      "name": "Kiss Stefan",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/stefan-kiss/{size}/1359_2.png"
+    },
+    "last_poster": {
+      "id": 1115,
+      "username": "stefan-kiss",
+      "name": "Kiss Stefan",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/stefan-kiss/{size}/1359_2.png"
+    }
+  },
+  "bookmarks": []
+}

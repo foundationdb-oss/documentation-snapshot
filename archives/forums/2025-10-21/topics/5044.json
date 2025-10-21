@@ -1,0 +1,678 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 15219,
+        "name": "Mark Sh1",
+        "username": "MarkSh1",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/marksh1/{size}/1789_2.png",
+        "created_at": "2025-08-22T11:59:45.327Z",
+        "cooked": "<p>To solve the problem with SELinux, I suggest moving backup_agent to the \u201c/usr/bin\u201d folder. What do you think?</p>\n<aside class=\"onebox githubissue\" data-onebox-src=\"https://github.com/apple/foundationdb/issues/2579\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/issues/2579\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com/apple/foundationdb</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"github-row\">\n  <div class=\"github-icon-container\" title=\"Issue\" data-github-private-repo=\"false\">\n\t  <svg width=\"60\" height=\"60\" class=\"github-icon\" viewBox=\"0 0 14 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z\"></path></svg>\n  </div>\n\n  <div class=\"github-info-container\">\n    <h4>\n      <a href=\"https://github.com/apple/foundationdb/issues/2579\" target=\"_blank\" rel=\"noopener nofollow ugc\">backup_agent fails to write logs if selinux is enabled</a>\n    </h4>\n\n    <div class=\"github-info\">\n      <div class=\"date\">\n        opened <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2020-01-22\" data-time=\"12:18:37\" data-timezone=\"UTC\">12:18PM - 22 Jan 20 UTC</span>\n      </div>\n\n\n      <div class=\"user\">\n        <a href=\"https://github.com/oleg68\" target=\"_blank\" rel=\"noopener nofollow ugc\">\n          <img alt=\"\" src=\"https://global.discourse-cdn.com/foundationdb/original/2X/d/d80c36d554bd14195c57125b850a45ec5b27c98c.jpeg\" class=\"onebox-avatar-inline\" width=\"20\" height=\"20\" data-dominant-color=\"94857F\">\n          oleg68\n        </a>\n      </div>\n    </div>\n\n    <div class=\"labels\">\n    </div>\n  </div>\n</div>\n\n  <div class=\"github-row\">\n    <p class=\"github-body-container\">After installing Foundation Db server on a system with SELinux enabled, backup a<span class=\"show-more-container\"><a href=\"\" rel=\"noopener\" class=\"show-more\">\u2026</a></span><span class=\"excerpt hidden\">gents can not create trace files. The errors in the system journals are:\n\n```\nJan 22 14:44:27 fdbs fdbmonitor[1736]: LogGroup=\"default\" Process=\"backup_agent.1\": ERROR: could not create trace log file `/var/log/foundationdb/trace.127.0.0.1.1737.1579693462.7sC&gt;\n```\n\nSetting selinux policy to Permissive eliminates tese errors but there are still a lot messages of illegal access attempts:\n\n```\nJan 22 14:57:23 fdbs audit[1737]: AVC avc:  denied  { create } for  pid=1737 comm=\"backup_agent\" name=\"trace.127.0.0.1.1737.1579693462.7sCRr8.0.1.xml\" scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file permissive=0\nJan 22 14:57:23 fdbs audit[1737]: AVC avc:  denied  { name_connect } for  pid=1737 comm=\"backup_agent\" dest=4500 scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:ipsecnat_port_t:s0 tclass=tcp_socket permissive=0\nJan 22 14:57:24 fdbs audit[1737]: AVC avc:  denied  { create } for  pid=1737 comm=\"backup_agent\" name=\"trace.127.0.0.1.1737.1579693462.7sCRr8.0.1.xml\" scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file permissive=0\nJan 22 14:57:24 fdbs audit[1737]: AVC avc:  denied  { name_connect } for  pid=1737 comm=\"backup_agent\" dest=4500 scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:ipsecnat_port_t:s0 tclass=tcp_socket permissive=0\nJan 22 14:57:25 fdbs audit[1737]: AVC avc:  denied  { create } for  pid=1737 comm=\"backup_agent\" name=\"trace.127.0.0.1.1737.1579693462.7sCRr8.0.1.xml\" scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file permissive=0\nJan 22 14:57:25 fdbs audit[1737]: AVC avc:  denied  { name_connect } for  pid=1737 comm=\"backup_agent\" dest=4500 scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:ipsecnat_port_t:s0 tclass=tcp_socket permissive=0\nJan 22 14:57:26 fdbs audit[1737]: AVC avc:  denied  { create } for  pid=1737 comm=\"backup_agent\" name=\"trace.127.0.0.1.1737.1579693462.7sCRr8.0.1.xml\" scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file permissive=0\nJan 22 14:57:26 fdbs audit[1737]: AVC avc:  denied  { name_connect } for  pid=1737 comm=\"backup_agent\" dest=4500 scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:ipsecnat_port_t:s0 tclass=tcp_socket permissive=0\nJan 22 14:58:01 fdbs audit[43435]: AVC avc:  denied  { name_connect } for  pid=43435 comm=\"backup_agent\" dest=4500 scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:ipsecnat_port_t:s0 tclass=tcp_socket permissive=1\nJan 22 14:58:01 fdbs audit[43435]: AVC avc:  denied  { create } for  pid=43435 comm=\"backup_agent\" name=\"trace.127.0.0.1.43435.1579694281.ZKAKOV.0.1.xml\" scontext=system_u:system_r:init_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file permissive=1\n```\n\nThe reason is that /usr/lib/foundationdb/backup_agent/backup_agent resides under /usr/lib and has a wrong security type lib_t instead of bin_t:\n\n```\n[root@fdbs ~]# ls -Z /usr/lib/foundationdb/backup_agent/backup_agent\nsystem_u:object_r:lib_t:s0 /usr/lib/foundationdb/backup_agent/backup_agent\n```\n\nThe solution may be placing backup_agent into a dirs with executables (ex /usr/sbin like fdbserver) or implicit changing its security context after installation:\n\n```\nchcon system_u:object_r:bin_t:s0 /usr/lib/foundationdb/backup_agent/backup_agent\nsystemctl restart foundationdb\n```\n\nThen backup_agent can create trace files.</span></p>\n  </div>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-08-22T11:59:45.327Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 2.4,
+        "yours": false,
+        "topic_id": 5044,
+        "topic_slug": "backup-agent-fails-to-write-logs-if-selinux-is-enabled",
+        "display_username": "Mark Sh1",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/2579",
+            "internal": false,
+            "reflection": false,
+            "title": "backup_agent fails to write logs if selinux is enabled \u00b7 Issue #2579 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1422,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-agent-fails-to-write-logs-if-selinux-is-enabled/5044/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 15224,
+        "name": "Michael Stack",
+        "username": "saintstack",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/saintstack/{size}/1844_2.png",
+        "created_at": "2025-08-22T15:23:32.234Z",
+        "cooked": "<p>Sounds good to me (currently it\u2019s in /usr/lib/foundationdb/backup_agent/backup_agent). Would be interested if this will cause anyone grief.</p>\n<p>S</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-08-22T15:23:32.234Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 2.4,
+        "yours": false,
+        "topic_id": 5044,
+        "topic_slug": "backup-agent-fails-to-write-logs-if-selinux-is-enabled",
+        "display_username": "Michael Stack",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1456,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-agent-fails-to-write-logs-if-selinux-is-enabled/5044/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 15324,
+        "name": "Mark Sh1",
+        "username": "MarkSh1",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/marksh1/{size}/1789_2.png",
+        "created_at": "2025-09-10T10:08:01.652Z",
+        "cooked": "<p>It should be noted that if CI foundationdb automatic update is configured, then after installing a new version of foundationdb, the path to backup_agent in foundationdb.conf will not be replaced and the log with the startup error will grow indefinitely.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-09-10T10:08:01.652Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 5,
+        "readers_count": 4,
+        "score": 1.0,
+        "yours": false,
+        "topic_id": 5044,
+        "topic_slug": "backup-agent-fails-to-write-logs-if-selinux-is-enabled",
+        "display_username": "Mark Sh1",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1422,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-agent-fails-to-write-logs-if-selinux-is-enabled/5044/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      15219,
+      15224,
+      15324
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      60
+    ],
+    [
+      3,
+      42
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Backup_agent fails to write logs if selinux is enabled",
+  "id": 5044,
+  "title": "Backup_agent fails to write logs if selinux is enabled",
+  "posts_count": 3,
+  "created_at": "2025-08-22T11:59:45.259Z",
+  "views": 29,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-09-10T10:08:01.652Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "backup-agent-fails-to-write-logs-if-selinux-is-enabled",
+  "category_id": 5,
+  "word_count": 90,
+  "deleted_at": null,
+  "user_id": 1422,
+  "featured_link": "https://github.com/apple/foundationdb/issues/2579",
+  "featured_link_root_domain": "github.com",
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_5044",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "[RESOLVED?] Fdbbackup &lsquo;Platform error&rsquo; on &lsquo;file_backup_write_range&rsquo;",
+      "id": 412,
+      "title": "[RESOLVED?] Fdbbackup 'Platform error' on 'file_backup_write_range'",
+      "slug": "resolved-fdbbackup-platform-error-on-file-backup-write-range",
+      "posts_count": 9,
+      "reply_count": 6,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-14T13:43:20.133Z",
+      "last_posted_at": "2018-05-17T00:24:36.294Z",
+      "bumped": true,
+      "bumped_at": "2018-05-17T00:24:36.294Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2465,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Sanity check: FoundationDB backup blobstore credentials permissions errors",
+      "id": 1944,
+      "title": "Sanity check: FoundationDB backup blobstore credentials permissions errors",
+      "slug": "sanity-check-foundationdb-backup-blobstore-credentials-permissions-errors",
+      "posts_count": 20,
+      "reply_count": 4,
+      "highest_post_number": 20,
+      "image_url": null,
+      "created_at": "2020-02-13T17:22:53.536Z",
+      "last_posted_at": "2020-02-19T00:40:20.641Z",
+      "bumped": true,
+      "bumped_at": "2020-02-19T00:40:20.641Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1493,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 484,
+            "username": "ksnavely",
+            "name": "Kyle Snavely",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ksnavely/{size}/483_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup_agent trace log size control?",
+      "id": 3604,
+      "title": "Backup_agent trace log size control?",
+      "slug": "backup-agent-trace-log-size-control",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2022-10-19T15:04:32.261Z",
+      "last_posted_at": "2022-10-19T15:04:32.313Z",
+      "bumped": true,
+      "bumped_at": "2022-10-19T15:04:32.313Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 300,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 890,
+            "username": "tangerine",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tangerine/{size}/1084_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Regarding issue faced while running fdbbackup",
+      "id": 1458,
+      "title": "Regarding issue faced while running fdbbackup",
+      "slug": "regarding-issue-faced-while-running-fdbbackup",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-06-17T12:33:04.574Z",
+      "last_posted_at": "2019-12-17T19:51:11.604Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T19:51:11.604Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2007,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 587,
+            "username": "pragawaran",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f07891/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup /restore fdb",
+      "id": 1637,
+      "title": "Backup /restore fdb",
+      "slug": "backup-restore-fdb",
+      "posts_count": 22,
+      "reply_count": 17,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2019-09-19T17:04:18.878Z",
+      "last_posted_at": "2019-10-05T04:45:51.663Z",
+      "bumped": true,
+      "bumped_at": "2019-10-05T04:45:51.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2729,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1422,
+        "username": "MarkSh1",
+        "name": "Mark Sh1",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/marksh1/{size}/1789_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1456,
+        "username": "saintstack",
+        "name": "Michael Stack",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/saintstack/{size}/1844_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1422,
+      "username": "MarkSh1",
+      "name": "Mark Sh1",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/marksh1/{size}/1789_2.png"
+    },
+    "last_poster": {
+      "id": 1422,
+      "username": "MarkSh1",
+      "name": "Mark Sh1",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/marksh1/{size}/1789_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/2579",
+        "title": "backup_agent fails to write logs if selinux is enabled \u00b7 Issue #2579 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1422,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

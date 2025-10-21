@@ -1,0 +1,828 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 6515,
+        "name": "Alan Bird",
+        "username": "abird",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/abird/{size}/805_2.png",
+        "created_at": "2020-03-28T20:33:15.418Z",
+        "cooked": "<p>My data model requires an array with insert and delete capabilities. In the FDB documentation there is a description of how to model an array, but it doesn\u2019t include insertion and deletion. I have not been able to find mention of any good algorithms for this. Here is what I\u2019m going to do and would appreciate any feedback if anyone has a better way.</p>\n<p>My API needs to do the following:</p>\n<p><strong>Read entire array</strong><br>\nFor this, just do a range read to access all array elements</p>\n<p><strong>Delete at index</strong><br>\nClear the element at an offset from the first array element</p>\n<p><strong>Append</strong><br>\nAppend items with this key: [array key] + [version stamp]. Since the version stamps are increasing values, this will sort the array elements in the correct order.</p>\n<p><strong>Insert at index</strong><br>\nThis is the tricky one. When an element needs to be inserted between two other elements, generate a key with a version stamp that is halfway between the previous element and the following one. If inserting at location zero, use a version stamp that is somewhat less than the former first element. If inserting at the end, just do an append as explained above.</p>\n<p>My main concern is how quickly I could run out of space between two existing elements and not have room to insert an element. It appears that, including the <code>UserVersion</code> field at the end of the version stamp there are about 4 bytes of least-significant bytes between successive version stamps. That would appear to be plenty since there are over 4 billion values in 4 bytes. However, because this algorithm is choosing a key halfway between the previous and next key, it\u2019s using up an entire bit of the 32 available bits each time you insert at the same index. So there is potential for a collision after 32 inserts at the same index. The only solution at that point seems to be to rewrite every key in the array, spacing them out appropriately.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-03-28T20:35:12.065Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 151,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 763.4,
+        "yours": false,
+        "topic_id": 2030,
+        "topic_slug": "array-with-insert-and-delete",
+        "display_username": "Alan Bird",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 749,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/array-with-insert-and-delete/2030/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 6516,
+        "name": "",
+        "username": "George",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+        "created_at": "2020-03-29T00:30:44.752Z",
+        "cooked": "<p>Although this seems like a simple enough problem, I think you have stumbled on an iceberg of complexity, I wrestled with a similar issue when working on a text editor base on CRDTs (the <a href=\"https://hal.inria.fr/inria-00445975/document\" rel=\"nofollow noopener\">Treedoc paper</a> is good reading if you are interested in this space). Luckily FoundationDB\u2019s consistency model makes CRDTs unnecessary.</p>\n<p>I would recommend against using the versionstamp, and certainly against making versionstamp-like keys. Instead, you can use a trivial tree algorithm where the first item you write is <code>0</code>, and if you need to insert an item before it, that item is <code>00</code>, an item after would be <code>1</code>. This should be pretty simple to do with key selectors.<br>\nThe problem you will quickly run into is that if you are simply appending elements to the end of this array, your key size will grow linearly, i.e. the 100th item\u2019s key will be 99 <code>1</code>s. To solve this you will need to occasionally balance your tree. There are a number of well-worn <a href=\"https://en.wikipedia.org/wiki/Self-balancing_binary_search_tree\" rel=\"nofollow noopener\">self-balancing tree</a> if you are feeling like going down a rabbit hole, or you can simply rewrite the entire array with consecutive n-bit keys, where n^2 is greater than the number of items in the array. You can also mitigate this issue by adding \u201cpadding\u201d when you choose identifiers to leave room for new identifiers that wouldn\u2019t increase the key size.<br>\nDepending on how you define the \u201cidentity\u201d of elements, you might run into some issues when the identifiers change and the choice of how to solve <em>that</em> issue will likely be domain-specific.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-03-29T00:30:44.752Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 16.2,
+        "yours": false,
+        "topic_id": 2030,
+        "topic_slug": "array-with-insert-and-delete",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://en.wikipedia.org/wiki/Self-balancing_binary_search_tree",
+            "internal": false,
+            "reflection": false,
+            "title": "Self-balancing binary search tree - Wikipedia",
+            "clicks": 2
+          },
+          {
+            "url": "https://hal.inria.fr/inria-00445975/document",
+            "internal": false,
+            "reflection": false,
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 251,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/array-with-insert-and-delete/2030/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 6517,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2020-03-29T00:37:57.902Z",
+        "cooked": "<p>I would suggest not viewing this as an array data modeling problem, but just that you need a user-specified sort order, and the ability to randomly insert/delete elements and maintain your sorted order.  This problem now becomes roughly isomorphic to <a href=\"https://forums.foundationdb.org/t/how-to-model-a-leaderboard/373\" class=\"inline-onebox\">How to model a Leaderboard</a></p>\n<p>Similarly to what George proposed, I think one can go a step further and rely on the infinite number of things that are lexicographically between any two values.  For example, if you have two elements at \u201cindex\u201d <code>X</code> and <code>Y</code>, <code>XM</code> lexicographically sorts between <code>X</code> and <code>Y</code>, with a bit of randomness in choosing the in-between point and taking advantage of the full 256 values in a byte, you could still achieve reasonably conflict-free inserts/deletes.  You would then need to maintain an index of the number of elements under any given prefix to make seeking a particular index faster.</p>\n<p>Do be aware that \u201cInsert X as the 100th element\u201d is going to be an inherently conflict-prone operation, as you must also ensure that no other element was inserted or deleted between 0 and 99, otherwise you\u2019d be inserting at a now-incorrect place.  However you\u2019re finding the 100th indexed location will likely leave enough conflict ranges in your transaction to enforce this, but minor changes in how you specify your exact contract of insert/delete will have a large impact on how concurrent this datastructure will be.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-03-29T00:43:23.043Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 16.2,
+        "yours": false,
+        "topic_id": 2030,
+        "topic_slug": "array-with-insert-and-delete",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/how-to-model-a-leaderboard/373",
+            "internal": true,
+            "reflection": false,
+            "title": "How to model a Leaderboard",
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/array-with-insert-and-delete/2030/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 6578,
+        "name": "Alan Bird",
+        "username": "abird",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/abird/{size}/805_2.png",
+        "created_at": "2020-04-01T21:27:13.847Z",
+        "cooked": "<p>Thank you for the comments</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-04-01T21:27:13.847Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 9.4,
+        "yours": false,
+        "topic_id": 2030,
+        "topic_slug": "array-with-insert-and-delete",
+        "display_username": "Alan Bird",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 749,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/array-with-insert-and-delete/2030/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      6515,
+      6516,
+      6517,
+      6578
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2033
+    ],
+    [
+      4,
+      2029
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Array with insert and delete",
+  "id": 2030,
+  "title": "Array with insert and delete",
+  "posts_count": 4,
+  "created_at": "2020-03-28T20:33:15.346Z",
+  "views": 1153,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2020-04-01T21:27:13.847Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "array-with-insert-and-delete",
+  "category_id": 7,
+  "word_count": 866,
+  "deleted_at": null,
+  "user_id": 749,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2030",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Log abstraction on FoundationDB",
+      "id": 117,
+      "title": "Log abstraction on FoundationDB",
+      "slug": "log-abstraction-on-foundationdb",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-04-20T10:47:11.941Z",
+      "last_posted_at": "2018-05-03T17:35:34.126Z",
+      "bumped": true,
+      "bumped_at": "2018-05-03T17:35:34.126Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 3110,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 78,
+            "username": "pineapple",
+            "name": "Brian Haslet",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/7993a0/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Emulate secondary index",
+      "id": 430,
+      "title": "Emulate secondary index",
+      "slug": "emulate-secondary-index",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-05-18T07:04:04.967Z",
+      "last_posted_at": "2018-05-21T14:11:05.503Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T14:11:05.503Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1123,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 268,
+            "username": "urykhy",
+            "name": "Yury",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/u/7bcc69/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 190,
+            "username": "itp",
+            "name": "Ian Peters",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/itp/{size}/151_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Designing an expiring key/value store",
+      "id": 758,
+      "title": "Designing an expiring key/value store",
+      "slug": "designing-an-expiring-key-value-store",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-10-10T01:28:42.464Z",
+      "last_posted_at": "2018-10-11T04:22:58.609Z",
+      "bumped": true,
+      "bumped_at": "2018-10-11T04:22:58.609Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2598,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 44,
+            "username": "cespare",
+            "name": "Caleb Spare",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Node bindings release 0.8.0, now with Versionstamp support in the tuple layer!",
+      "id": 1035,
+      "title": "Node bindings release 0.8.0, now with Versionstamp support in the tuple layer!",
+      "slug": "node-bindings-release-0-8-0-now-with-versionstamp-support-in-the-tuple-layer",
+      "posts_count": 14,
+      "reply_count": 11,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2019-01-18T12:41:26.214Z",
+      "last_posted_at": "2019-01-29T11:37:56.955Z",
+      "bumped": true,
+      "bumped_at": "2019-01-29T11:37:56.955Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 792,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Keyspace partitions &amp; performance",
+      "id": 168,
+      "title": "Keyspace partitions & performance",
+      "slug": "keyspace-partitions-performance",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-21T05:03:54.670Z",
+      "last_posted_at": "2018-04-22T03:29:31.049Z",
+      "bumped": true,
+      "bumped_at": "2018-04-22T03:29:31.049Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 5892,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 749,
+        "username": "abird",
+        "name": "Alan Bird",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/abird/{size}/805_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 251,
+        "username": "George",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 749,
+      "username": "abird",
+      "name": "Alan Bird",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/abird/{size}/805_2.png"
+    },
+    "last_poster": {
+      "id": 749,
+      "username": "abird",
+      "name": "Alan Bird",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/abird/{size}/805_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/how-to-model-a-leaderboard/373",
+        "title": "How to model a Leaderboard",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 13,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://en.wikipedia.org/wiki/Self-balancing_binary_search_tree",
+        "title": "Self-balancing binary search tree - Wikipedia",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 251,
+        "domain": "en.wikipedia.org",
+        "root_domain": "wikipedia.org"
+      },
+      {
+        "url": "https://hal.inria.fr/inria-00445975/document",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 251,
+        "domain": "hal.inria.fr",
+        "root_domain": "inria.fr"
+      }
+    ]
+  },
+  "bookmarks": []
+}

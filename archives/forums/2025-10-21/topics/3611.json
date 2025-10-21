@@ -1,0 +1,494 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11887,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2022-10-20T13:32:54.207Z",
+        "cooked": "<p>We\u2019re ingesting a reasonably large amount of data (millions of records, tens of GB) from a Kafka cluster into FoundationDB at the moment, and our container(s) doing the work were gradually increasing RAM usage until K8s killed them for exceeding their limits (it seemed to take ~10 mins to go from the expected 1-1.5GB up to 5GB).</p>\n<p>I did a load of testing, and had it down to calls to <code>.set</code>, <code>.get[Range]</code> and <code>.clear[Range]</code> within a transaction. If I opened a transaction and did nothing before committing and closing it, there was no memory leak. As soon as I performed an operation on the DB, memory started leaking. (We were using <code>Database.run</code> for this, so the commit/close was encapsualted within that method).</p>\n<p>Heap dumps of the JVM showed no issues, the heap was sat fine at ~200-300MB, but the resident memory just kept climbing. It certainly <em>looked</em> like a leak in the FDB native bindings somewhere, but I\u2019m always inclined to blame our code over a well-known third party open source system <img src=\"https://emoji.discourse-cdn.com/twitter/wink.png?v=12\" title=\":wink:\" class=\"emoji\" alt=\":wink:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<p>Separately to this, our log aggregator started rate limiting us because of the sheer level of FoundationDB logs we were pushing. I went and had a look in our code, and spotted that one of our engineers had enabled <code>setServerRequestTracing</code> on the transaction options, even though we in the infra team were seeing no performance or other problems that would warrant it, so I turned it back off.</p>\n<p>As soon as I did so (and redeployed the container), all our our memory leak issues went away. It certainly seems like there is an issue with memory leakage when you turn on server request tracing, even though I thought this didn\u2019t do much on the client side.</p>\n<p>Is there something else that is being cached/logged on the client because of this, that I need to manually close/clean up, or is this a valid memory leak I should raise a GitHub issue or similar for?</p>\n<p>Our FDB cluster is running 7.1.21, and the client library is 7.1.10. I\u2019m <em>also</em> looking into upgrading the client lib to match the cluster.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-10-20T13:34:13.619Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 48,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 233.4,
+        "yours": false,
+        "topic_id": 3611,
+        "topic_slug": "memory-leak-in-java-client-bindings-when-server-request-tracing-is-enabled",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/memory-leak-in-java-client-bindings-when-server-request-tracing-is-enabled/3611/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      11887
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1097
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings",
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Memory leak in Java client bindings when server request tracing is enabled?",
+  "id": 3611,
+  "title": "Memory leak in Java client bindings when server request tracing is enabled?",
+  "posts_count": 1,
+  "created_at": "2022-10-20T13:32:54.137Z",
+  "views": 401,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-10-20T13:32:54.207Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "memory-leak-in-java-client-bindings-when-server-request-tracing-is-enabled",
+  "category_id": 7,
+  "word_count": 368,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3611",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Memory leak in client profiling code",
+      "id": 2108,
+      "title": "Memory leak in client profiling code",
+      "slug": "memory-leak-in-client-profiling-code",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-05-07T20:05:59.143Z",
+      "last_posted_at": "2020-05-08T23:21:40.526Z",
+      "bumped": true,
+      "bumped_at": "2020-05-08T23:21:40.526Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 726,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "On Potential Memory Leaking due to FDB Java Library getRange on a Transaction",
+      "id": 1603,
+      "title": "On Potential Memory Leaking due to FDB Java Library getRange on a Transaction",
+      "slug": "on-potential-memory-leaking-due-to-fdb-java-library-getrange-on-a-transaction",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-08-30T22:59:33.728Z",
+      "last_posted_at": "2019-08-31T18:40:10.044Z",
+      "bumped": true,
+      "bumped_at": "2019-08-31T18:40:10.044Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 653,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 16,
+            "username": "ashishnm",
+            "name": "Ashish Motivala",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b5e925/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Memory leak in C API?",
+      "id": 554,
+      "title": "Memory leak in C API?",
+      "slug": "memory-leak-in-c-api",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-07-09T10:54:23.376Z",
+      "last_posted_at": "2018-07-10T12:55:14.679Z",
+      "bumped": true,
+      "bumped_at": "2018-07-10T12:55:14.679Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1120,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 319,
+            "username": "kirilltitov",
+            "name": "Kirill Titov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kirilltitov/{size}/328_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Memory leak in C client-lib - when a timeout() is set on transaction options?",
+      "id": 1710,
+      "title": "Memory leak in C client-lib - when a timeout() is set on transaction options?",
+      "slug": "memory-leak-in-c-client-lib-when-a-timeout-is-set-on-transaction-options",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/b55b0e80a4a533be00e26d30756cb9b860ad76b1.png",
+      "created_at": "2019-11-01T07:02:02.599Z",
+      "last_posted_at": "2019-11-09T04:04:11.942Z",
+      "bumped": true,
+      "bumped_at": "2019-11-09T10:56:45.389Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 865,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "id": 2080,
+      "title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "slug": "foundationdb-6-2-fdbserver-going-out-of-memory",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-04-20T14:55:39.274Z",
+      "last_posted_at": "2020-04-23T04:34:49.858Z",
+      "bumped": true,
+      "bumped_at": "2020-04-23T04:34:49.858Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1037,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    }
+  },
+  "bookmarks": []
+}

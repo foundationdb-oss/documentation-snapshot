@@ -1,0 +1,604 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13092,
+        "name": "",
+        "username": "Imperatorx",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+        "created_at": "2023-07-20T15:41:05.985Z",
+        "cooked": "<p>In the java binding, there is a local concurrency bug:</p>\n<p>Inside a single transaction, if multiple threads are createOrOpening directories in a base directory with a common prefix, the directory might return as created, but in reality, it won\u2019t be created. Even inside the same transation, listing it will cause an error.</p>\n<p>7.1.x, Linux and Windows tested. Reproducer:</p>\n<p>(\u201ca\u201d, \u201cb\u201d) is the base directory.</p>\n<p>(\u201ca\u201d, \u201cb\u201d, \u201cprefix\u201d, random-uuid) are the directories being created.</p>\n<pre><code class=\"lang-auto\"> public static void main(String[] args) {\n\n        int subDirectoryCount = 100;\n\n        var executor = Executors.newFixedThreadPool(8);\n\n        var db = FDB.selectAPIVersion(710)\n                .open(null, Runnable::run);\n\n        List&lt;String&gt; basePath = List.of(\"a\", \"b\");\n\n        // Delete root dir of it existed\n        db.run(tr -&gt; {\n            DirectoryLayer.getDefault()\n                    .removeIfExists(tr, basePath)\n                    .join();\n            return null;\n        });\n\n        // Create root dir\n        var baseDirectory = db.run(tr -&gt; {\n            return DirectoryLayer.getDefault()\n                    .createOrOpen(tr, basePath)\n                    .join();\n        });\n\n        // Create many subdirectories in PARALLEL\n        try (var tr = db.createTransaction(Runnable::run)) {\n            CompletableFuture[] dirFutures = IntStream.range(0, subDirectoryCount)\n                    .mapToObj(x -&gt; CompletableFuture.supplyAsync(() -&gt; {\n                        try {\n\n                            String subDirName = UUID.randomUUID().toString();\n\n                            baseDirectory.createOrOpen(tr, List.of(\"prefix\", subDirName))\n                                    .join();\n\n                            if (!baseDirectory.exists(tr, List.of(\"prefix\", subDirName)).join()) {\n                                throw new IllegalStateException(\"Subdir does not exist, although it was just created\");\n                            }\n\n                            return null;\n\n                        } catch (Exception e) {\n                            throw new RuntimeException(e);\n                        }\n                    }, executor))\n                    .toArray(CompletableFuture[]::new);\n\n            CompletableFuture.allOf(dirFutures)\n                    .join();\n\n            tr.commit().join();\n        }\n\n        executor.shutdownNow();\n        db.close();\n        System.out.println(\"No bug detected\");\n    }\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-07-20T15:41:05.985Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 7,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 39.6,
+        "yours": false,
+        "topic_id": 4071,
+        "topic_slug": "concurrency-bug-in-the-directory-layer",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 164,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/concurrency-bug-in-the-directory-layer/4071/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13134,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2023-08-06T02:21:22.268Z",
+        "cooked": "<p>Thanks for the report! This is possibly a reproduction of this bug:</p>\n<aside class=\"onebox githubissue\" data-onebox-src=\"https://github.com/apple/foundationdb/issues/895\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/issues/895\" target=\"_blank\" rel=\"noopener\">github.com/apple/foundationdb</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"github-row\">\n  <div class=\"github-icon-container\" title=\"Issue\">\n\t  <svg width=\"60\" height=\"60\" class=\"github-icon\" viewBox=\"0 0 14 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z\"></path></svg>\n  </div>\n\n  <div class=\"github-info-container\">\n    <h4>\n      <a href=\"https://github.com/apple/foundationdb/issues/895\" target=\"_blank\" rel=\"noopener\">Mutating a directory multiple times simultaneously in the same transaction is unsafe</a>\n    </h4>\n\n    <div class=\"github-info\">\n      <div class=\"date\">\n        opened <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2018-11-04\" data-time=\"18:37:57\" data-timezone=\"UTC\">06:37PM - 04 Nov 18 UTC</span>\n      </div>\n\n\n      <div class=\"user\">\n        <a href=\"https://github.com/jared2501\" target=\"_blank\" rel=\"noopener\">\n          <img alt=\"jared2501\" src=\"https://global.discourse-cdn.com/foundationdb/original/2X/b/bac8d3f100b758ccf04166f1bea7d10ac6d57434.png\" class=\"onebox-avatar-inline\" width=\"20\" height=\"20\" data-dominant-color=\"D9E7CB\">\n          jared2501\n        </a>\n      </div>\n    </div>\n\n    <div class=\"labels\">\n    </div>\n  </div>\n</div>\n\n  <div class=\"github-row\">\n    <p class=\"github-body-container\">The Java implementation of DirectoryLayer does not seem to work when used with a<span class=\"show-more-container\"><a href=\"\" rel=\"noopener\" class=\"show-more\">\u2026</a></span><span class=\"excerpt hidden\">n FDBTransaction, but does when used with an FDBDatabase.\n\nI'm seeing issues where the DirectoryLayer allocates a prefix and returns it to me. I commit the transaction successfully, but future calls to the DirectoryLayer from new transactions do not find the allocated directory.\n\nIf I use a FDBDatabase when invoking DirectoryLayer.createOrOpen(...) then all works fine.\n\nSince FDBTransaction implements TransactionContext I would have expected it to work with DirectoryLayer. Is this a correct assumption? I know this issue is not the most helpful, but I'm not quite sure where to start on getting useful information.</span></p>\n  </div>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>Unfortunately at this point, I don\u2019t think there has been any attempt to make these directory operations within a single transaction thread safe.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-08-06T02:21:22.268Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 17.6,
+        "yours": false,
+        "topic_id": 4071,
+        "topic_slug": "concurrency-bug-in-the-directory-layer",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/895",
+            "internal": false,
+            "reflection": false,
+            "title": "Mutating a directory multiple times simultaneously in the same transaction is unsafe \u00b7 Issue #895 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 8
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/concurrency-bug-in-the-directory-layer/4071/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13092,
+      13134
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      824
+    ],
+    [
+      2,
+      808
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Concurrency bug in the Directory Layer",
+  "id": 4071,
+  "title": "Concurrency bug in the Directory Layer",
+  "posts_count": 2,
+  "created_at": "2023-07-20T15:41:05.912Z",
+  "views": 346,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-08-06T02:21:22.268Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "concurrency-bug-in-the-directory-layer",
+  "category_id": 7,
+  "word_count": 269,
+  "deleted_at": null,
+  "user_id": 164,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4071",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Clj-foundationdb - Clojure bindings over Java wrapper",
+      "id": 393,
+      "title": "Clj-foundationdb - Clojure bindings over Java wrapper",
+      "slug": "clj-foundationdb-clojure-bindings-over-java-wrapper",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-05-10T09:39:50.001Z",
+      "last_posted_at": "2018-05-10T16:00:56.888Z",
+      "bumped": true,
+      "bumped_at": "2018-05-10T16:00:56.888Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1013,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 231,
+            "username": "xtreak",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimizing a single large transaction ( 10,000 keys)",
+      "id": 1961,
+      "title": "Optimizing a single large transaction ( 10,000 keys)",
+      "slug": "optimizing-a-single-large-transaction-10-000-keys",
+      "posts_count": 12,
+      "reply_count": 10,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-02-17T13:36:55.355Z",
+      "last_posted_at": "2020-02-24T11:30:42.854Z",
+      "bumped": true,
+      "bumped_at": "2020-02-24T11:30:42.854Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2373,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proof of concept filesystem layer",
+      "id": 1605,
+      "title": "Proof of concept filesystem layer",
+      "slug": "proof-of-concept-filesystem-layer",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-09-03T19:30:43.703Z",
+      "last_posted_at": "2020-01-28T07:13:46.874Z",
+      "bumped": true,
+      "bumped_at": "2020-01-28T07:13:46.874Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 1651,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Directory Layer specification",
+      "id": 1426,
+      "title": "Directory Layer specification",
+      "slug": "directory-layer-specification",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-05T09:53:02.603Z",
+      "last_posted_at": "2019-06-17T23:03:14.516Z",
+      "bumped": true,
+      "bumped_at": "2019-06-17T23:03:14.516Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1022,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Most common issues or annoyances when using the Directory Layer",
+      "id": 2096,
+      "title": "Most common issues or annoyances when using the Directory Layer",
+      "slug": "most-common-issues-or-annoyances-when-using-the-directory-layer",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2020-04-29T21:39:42.138Z",
+      "last_posted_at": "2020-04-29T21:39:42.217Z",
+      "bumped": true,
+      "bumped_at": "2020-04-29T21:45:25.210Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 685,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 164,
+        "username": "Imperatorx",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 164,
+      "username": "Imperatorx",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/895",
+        "title": "Mutating a directory multiple times simultaneously in the same transaction is unsafe \u00b7 Issue #895 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

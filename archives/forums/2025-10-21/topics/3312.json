@@ -1,0 +1,622 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11094,
+        "name": "Alwin",
+        "username": "ajames",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png",
+        "created_at": "2022-05-10T17:00:49.577Z",
+        "cooked": "<p>We are seeing below RecordCore timeouts exceptions in several deployments that talk to FDB. We use a <code>MetaDataVersionStampStoreStateCache</code></p>\n<p>We started seeing this recently. There was no change to application logic/ cluster config. This seems to slow down the application and we are seeing increased latency.<br>\nAny pointers to troubleshoot/ narrow down the issue is much appreciated.</p>\n<pre><code class=\"lang-auto\">Caused by: com.apple.foundationdb.record.RecordCoreException: null\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBExceptions.wrapException(FDBExceptions.java:199)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBDatabase.lambda$new$0(FDBDatabase.java:162)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBDatabase.asyncToSync(FDBDatabase.java:1002)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBRecordContext.asyncToSync(FDBRecordContext.java:986)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBRecordStoreBase$BaseBuilder.createOrOpen(FDBRecordStoreBase.java:1948)\n\tat io.branch.service.persona.fdb.IPRecordStore.lambda$getGeoIPRecordStore$1(IPRecordStore.java:62)\n\tat io.branch.service.persona.fdb.IPRecordStore.getFDBRecordStore(IPRecordStore.java:47)\n\tat io.branch.ip.store.provider.IPStoreCandidateImpl.lambda$batchWriteRecord$3(IPStoreCandidateImpl.java:171)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBDatabaseRunnerImpl$RunRetriable.lambda$runAsync$4(FDBDatabaseRunnerImpl.java:331)\n\tat com.apple.foundationdb.async.AsyncUtil$LoopPartial.apply(AsyncUtil.java:355)\nCaused by: java.util.concurrent.TimeoutException: null\n\tat java.util.concurrent.CompletableFuture.timedGet(CompletableFuture.java:1771)\n\tat java.util.concurrent.CompletableFuture.get(CompletableFuture.java:1915)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBDatabase.asyncToSync(FDBDatabase.java:993)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBRecordContext.asyncToSync(FDBRecordContext.java:986)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBRecordStoreBase$BaseBuilder.createOrOpen(FDBRecordStoreBase.java:1948)\n\tat io.branch.service.persona.fdb.IPRecordStore.lambda$getGeoIPRecordStore$1(IPRecordStore.java:62)\n\tat io.branch.service.persona.fdb.IPRecordStore.getFDBRecordStore(IPRecordStore.java:47)\n\tat io.branch.ip.store.provider.IPStoreCandidateImpl.lambda$batchWriteRecord$3(IPStoreCandidateImpl.java:171)\n\tat com.apple.foundationdb.record.provider.foundationdb.FDBDatabaseRunnerImpl$RunRetriable.lambda$runAsync$4(FDBDatabaseRunnerImpl.java:331)\n\tat com.apple.foundationdb.async.AsyncUtil$LoopPartial.apply(AsyncUtil.java:355)\n</code></pre>\n<p>fdbRecordLayer = \u201c2.8.110.0\u201d<br>\nfdbJava = \u201c6.1.8\u201d<br>\nfdbExtensions =\u201c2.8.110.0\u201d</p>\n<p><strong>Cluster details:</strong></p>\n<pre><code class=\"lang-auto\">FoundationDB 6.2 (v6.2.15)\nsource version 20566f2ff06a7e822b30e8cfd91090fbd863a393\nprotocol fdb00b062010001\n</code></pre>\n<pre><code class=\"lang-auto\">Configuration:\n  Redundancy mode        - double\n  Storage engine         - ssd-2\n  Coordinators           - 6\n  Exclusions             - 28 (type `exclude' for details)\n  Desired Proxies        - 12\n  Desired Resolvers      - 8\n  Desired Logs           - 12\n\nCluster:\n  FoundationDB processes - 316 (less 2 excluded; 0 with errors)\n  Zones                  - 24\n  Machines               - 24\n  Memory availability    - 5.6 GB per process on machine with least available\n  Retransmissions rate   - 4 Hz\n  Fault Tolerance        - 1 machine\n  Server time            - 05/10/22 00:38:00\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 839.649 GB\n  Disk space used        - 2.332 TB\n\nOperating space:\n  Storage server         - 1618.5 GB free on most full server\n  Log server             - 825.8 GB free on most full server\n\nWorkload:\n  Read rate              - 102118 Hz\n  Write rate             - 56493 Hz\n  Transactions started   - 60974 Hz\n  Transactions committed - 195 Hz\n  Conflict rate          - 2 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n</code></pre>\n<p>Issue started on 04/28 at 04:50 AM PST.</p>\n<p>Few graphs between 04:00 - 06:00 AM PST on 04/28<br>\nWe do not see RateKeeper ratelimiting application.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36.png\" data-download-href=\"/uploads/short-url/ydi2tiE9NwLGtho2NsxZHHqP8Wy.png?dl=1\" title=\"Screen Shot 2022-05-09 at 5.47.19 PM\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36_2_690x284.png\" alt=\"Screen Shot 2022-05-09 at 5.47.19 PM\" data-base62-sha1=\"ydi2tiE9NwLGtho2NsxZHHqP8Wy\" width=\"690\" height=\"284\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36_2_690x284.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36_2_1035x426.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36_2_1380x568.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Screen Shot 2022-05-09 at 5.47.19 PM</span><span class=\"informations\">1850\u00d7764 106 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>GRV latency bands:<br>\nMetric - <code>fdb_cluster_processes_roles_proxy_grv_latency_bands_0_XXXX</code><br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/b/b03ec1df560b8e7887e9eac91baffb7d5be3c2ed.png\" data-download-href=\"/uploads/short-url/p98uubGm52iLsp9YabldeW9qXal.png?dl=1\" title=\"Screen Shot 2022-05-09 at 5.47.51 PM\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b03ec1df560b8e7887e9eac91baffb7d5be3c2ed_2_690x280.png\" alt=\"Screen Shot 2022-05-09 at 5.47.51 PM\" data-base62-sha1=\"p98uubGm52iLsp9YabldeW9qXal\" width=\"690\" height=\"280\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b03ec1df560b8e7887e9eac91baffb7d5be3c2ed_2_690x280.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b03ec1df560b8e7887e9eac91baffb7d5be3c2ed_2_1035x420.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b03ec1df560b8e7887e9eac91baffb7d5be3c2ed_2_1380x560.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b03ec1df560b8e7887e9eac91baffb7d5be3c2ed_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Screen Shot 2022-05-09 at 5.47.51 PM</span><span class=\"informations\">1839\u00d7747 90.8 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>Proxy Commit latency bands<br>\nMetric - <code>fdb_cluster_processes_roles_proxy_commit_latency_bands_0_XXXX</code><br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/e/e16f1408df466e45f9c4feea5693aa160e7552af.png\" data-download-href=\"/uploads/short-url/wahpIYyPak3hKOWfIfHancKENkP.png?dl=1\" title=\"Screen Shot 2022-05-09 at 5.51.16 PM\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e16f1408df466e45f9c4feea5693aa160e7552af_2_690x279.png\" alt=\"Screen Shot 2022-05-09 at 5.51.16 PM\" data-base62-sha1=\"wahpIYyPak3hKOWfIfHancKENkP\" width=\"690\" height=\"279\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e16f1408df466e45f9c4feea5693aa160e7552af_2_690x279.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e16f1408df466e45f9c4feea5693aa160e7552af_2_1035x418.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e16f1408df466e45f9c4feea5693aa160e7552af_2_1380x558.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e16f1408df466e45f9c4feea5693aa160e7552af_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Screen Shot 2022-05-09 at 5.51.16 PM</span><span class=\"informations\">1847\u00d7749 134 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>Tx Log Queue:<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/6/67b28f38e40819c2696bd2fa7ed4c36e6975f5f7.jpeg\" data-download-href=\"/uploads/short-url/eNlJXHOjbDI83h9DoRsUrTtGc5N.jpeg?dl=1\" title=\"Screen Shot 2022-05-10 at 9.56.41 AM\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/67b28f38e40819c2696bd2fa7ed4c36e6975f5f7_2_690x247.jpeg\" alt=\"Screen Shot 2022-05-10 at 9.56.41 AM\" data-base62-sha1=\"eNlJXHOjbDI83h9DoRsUrTtGc5N\" width=\"690\" height=\"247\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/67b28f38e40819c2696bd2fa7ed4c36e6975f5f7_2_690x247.jpeg, https://global.discourse-cdn.com/foundationdb/optimized/2X/6/67b28f38e40819c2696bd2fa7ed4c36e6975f5f7_2_1035x370.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/6/67b28f38e40819c2696bd2fa7ed4c36e6975f5f7_2_1380x494.jpeg 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/67b28f38e40819c2696bd2fa7ed4c36e6975f5f7_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Screen Shot 2022-05-10 at 9.56.41 AM</span><span class=\"informations\">1853\u00d7665 77.4 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>Read/Write Rate:<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/6/692fa4df10acb1008c37b018055deee582aced8b.png\" data-download-href=\"/uploads/short-url/f0wd64FloVj6wotsS4hpijmLeMH.png?dl=1\" title=\"Screen Shot 2022-05-10 at 9.58.26 AM\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/692fa4df10acb1008c37b018055deee582aced8b_2_690x104.png\" alt=\"Screen Shot 2022-05-10 at 9.58.26 AM\" data-base62-sha1=\"f0wd64FloVj6wotsS4hpijmLeMH\" width=\"690\" height=\"104\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/692fa4df10acb1008c37b018055deee582aced8b_2_690x104.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/6/692fa4df10acb1008c37b018055deee582aced8b_2_1035x156.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/6/692fa4df10acb1008c37b018055deee582aced8b_2_1380x208.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/6/692fa4df10acb1008c37b018055deee582aced8b_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Screen Shot 2022-05-10 at 9.58.26 AM</span><span class=\"informations\">1784\u00d7271 97.3 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>Tx started/committed/conflicts<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/1/1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0.png\" data-download-href=\"/uploads/short-url/4xupf2EGyF3eooy3oUSOzahTzlC.png?dl=1\" title=\"Screen Shot 2022-05-10 at 9.58.38 AM\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/1/1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0_2_690x73.png\" alt=\"Screen Shot 2022-05-10 at 9.58.38 AM\" data-base62-sha1=\"4xupf2EGyF3eooy3oUSOzahTzlC\" width=\"690\" height=\"73\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/1/1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0_2_690x73.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/1/1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0_2_1035x109.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/1/1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0_2_1380x146.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/1/1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Screen Shot 2022-05-10 at 9.58.38 AM</span><span class=\"informations\">1792\u00d7190 68.3 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p><a class=\"mention\" href=\"/u/amehta\">@amehta</a></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-05-10T17:00:49.577Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 34.0,
+        "yours": false,
+        "topic_id": 3312,
+        "topic_slug": "fdb-timeoutexceptions-degrading-application-performance",
+        "display_username": "Alwin",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/6/67b28f38e40819c2696bd2fa7ed4c36e6975f5f7.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "67b28f38e40819c2696bd2fa7ed4c36e6975f5f7.jpeg",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36.png",
+            "internal": false,
+            "reflection": false,
+            "title": "efca886325bc68bba55f61a8e4b775a3ef824f36.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/b/b03ec1df560b8e7887e9eac91baffb7d5be3c2ed.png",
+            "internal": false,
+            "reflection": false,
+            "title": "b03ec1df560b8e7887e9eac91baffb7d5be3c2ed.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/6/692fa4df10acb1008c37b018055deee582aced8b.png",
+            "internal": false,
+            "reflection": false,
+            "title": "692fa4df10acb1008c37b018055deee582aced8b.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/e16f1408df466e45f9c4feea5693aa160e7552af.png",
+            "internal": false,
+            "reflection": false,
+            "title": "e16f1408df466e45f9c4feea5693aa160e7552af.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/1/1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0.png",
+            "internal": false,
+            "reflection": false,
+            "title": "1fd1da1411d9a7cf990c88c9d6ccfdaee32243a0.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 769,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-timeoutexceptions-degrading-application-performance/3312/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11096,
+        "name": "Alwin",
+        "username": "ajames",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png",
+        "created_at": "2022-05-10T23:55:07.110Z",
+        "cooked": "<p>Found a networking issue that was affecting subset of application pods. Resolved.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-05-10T23:55:07.110Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 18.4,
+        "yours": false,
+        "topic_id": 3312,
+        "topic_slug": "fdb-timeoutexceptions-degrading-application-performance",
+        "display_username": "Alwin",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/fdb-initialization-timeouts-in-application/3310/3",
+            "internal": true,
+            "reflection": true,
+            "title": "FDB initialization timeouts in application",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 769,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-timeoutexceptions-degrading-application-performance/3312/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11094,
+      11096
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1260
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FDB TimeoutExceptions degrading application performance",
+  "id": 3312,
+  "title": "FDB TimeoutExceptions degrading application performance",
+  "posts_count": 2,
+  "created_at": "2022-05-10T17:00:49.501Z",
+  "views": 523,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2022-05-10T23:55:07.110Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-timeoutexceptions-degrading-application-performance",
+  "category_id": 17,
+  "word_count": 631,
+  "deleted_at": null,
+  "user_id": 769,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36_2_1024x422.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3312",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1850,
+      "height": 764,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 422,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/e/efca886325bc68bba55f61a8e4b775a3ef824f36_2_1024x422.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FDB initialization timeouts in application",
+      "id": 3310,
+      "title": "FDB initialization timeouts in application",
+      "slug": "fdb-initialization-timeouts-in-application",
+      "posts_count": 2,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2022-05-10T00:57:04.612Z",
+      "last_posted_at": "2022-05-11T20:31:02.030Z",
+      "bumped": true,
+      "bumped_at": "2022-05-11T20:31:02.030Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 543,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1101,
+            "username": "amehta",
+            "name": "Aesha Mehta",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/a587f6/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scalable time series database / Improving write throughput",
+      "id": 2032,
+      "title": "Scalable time series database / Improving write throughput",
+      "slug": "scalable-time-series-database-improving-write-throughput",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-03-29T21:33:25.875Z",
+      "last_posted_at": "2020-03-30T22:48:00.513Z",
+      "bumped": true,
+      "bumped_at": "2020-03-30T22:48:00.513Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1709,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Unknown FDB downtime",
+      "id": 2760,
+      "title": "Unknown FDB downtime",
+      "slug": "unknown-fdb-downtime",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/b/be0059bd8213494e166802fceb9415fed949f30b.png",
+      "created_at": "2021-06-14T20:59:33.974Z",
+      "last_posted_at": "2021-06-17T16:52:55.701Z",
+      "bumped": true,
+      "bumped_at": "2021-06-17T16:52:55.701Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 733,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 742,
+            "username": "kentwang929",
+            "name": "Chung Kang Wang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kentwang929/{size}/799_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 412,
+            "username": "mengranewo",
+            "name": "Mengran Wang",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/8e8cbc/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB error code 1009 (Request for future version)",
+      "id": 610,
+      "title": "FoundationDB error code 1009 (Request for future version)",
+      "slug": "foundationdb-error-code-1009-request-for-future-version",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-08-03T23:10:12.599Z",
+      "last_posted_at": "2018-08-07T15:11:58.142Z",
+      "bumped": true,
+      "bumped_at": "2018-08-07T15:11:58.142Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3375,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 174,
+            "username": "seddonm1",
+            "name": "seddonm1",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/e274bd/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Getting timeout error while reconciling foundationDB cluster in kubernetes",
+      "id": 2150,
+      "title": "Getting timeout error while reconciling foundationDB cluster in kubernetes",
+      "slug": "getting-timeout-error-while-reconciling-foundationdb-cluster-in-kubernetes",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-06-01T10:44:55.604Z",
+      "last_posted_at": "2020-06-01T16:46:30.092Z",
+      "bumped": true,
+      "bumped_at": "2020-06-01T16:46:30.092Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 789,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 772,
+            "username": "antonprabin",
+            "name": "Prabin Poulose",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 769,
+        "username": "ajames",
+        "name": "Alwin",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 769,
+      "username": "ajames",
+      "name": "Alwin",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png"
+    },
+    "last_poster": {
+      "id": 769,
+      "username": "ajames",
+      "name": "Alwin",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

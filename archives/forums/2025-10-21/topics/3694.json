@@ -1,0 +1,668 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12131,
+        "name": "mason",
+        "username": "mason",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+        "created_at": "2022-12-15T14:54:51.334Z",
+        "cooked": "<p>Hi all,<br>\nI got issue but I don\u2019t know how to fix it.<br>\nI create <code>fdbbackup</code> task and got error. It comes from ipv4 and ipv6.<br>\nWhen I use network with resolve domain like: <code>s3.us-east-2.amazonaws.com</code> to two type of ipv4 and ipv6, backup container cannot connect to blob endpoint.</p>\n<pre><code class=\"lang-auto\">root@a1d0acf38b0d:/var/fdb# host s3.us-east-2.amazonaws.com\ns3.us-east-2.amazonaws.com has address 52.219.98.217\ns3.us-east-2.amazonaws.com has IPv6 address 64:ff9b::34db:62d9\nroot@a1d0acf38b0d:/var/fdb# fdbbackup start -d \"blobstore://&lt;access_key&gt;:&lt;secret_key&gt;@s3.us-east-2.amazonaws.com/fdb-service?bucket=aa-tmp-1&amp;sc=0\" --knob_http_verbose_level=4 --knob_http_request_aws_v4_header=true\n\n# Debug log to get IP type\nDEBUG: Host: s3.us-east-2.amazonaws.com, Service: \nDEBUG: Connect and resolve IP\nDEBUG: IPAddress: 64:ff9b::34db:6e39\n\nERROR: Could not create backup container: Operation timed out\nERROR: An error was encountered during submission\nFatal Error: Backup error\n</code></pre>\n<p>Then I use another network with ipv4 only, it work</p>\n<pre><code class=\"lang-auto\">root@a1d0acf38b0d:/var/fdb# host s3.us-east-2.amazonaws.com\ns3.us-east-2.amazonaws.com has address 52.219.107.73\nroot@a1d0acf38b0d:/var/fdb# ./fdbbackup start -d \"blobstore://&lt;access_key&gt;:&lt;secret_key&gt;@s3.us-east-2.amazonaws.com/fdb-service?bucket=aa-tmp-1&amp;sc=0\" --knob_http_verbose_level=4 --knob_http_request_aws_v4_header=true\n\nDEBUG: Host: s3.us-east-2.amazonaws.com, Service: \nDEBUG: Connect and resolve IP\nDEBUG: IPAddress: 52.219.107.73\n\n[2d75f8d81bb7c2cf053fae81f7dee075] HTTP starting HEAD /aa-tmp-1 ContentLen:0\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key&gt;/20221215/us-east-2/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=a7dcfb4d459614618ecf41c5e5462e802d3f4b5615ab66cdcd4892c5ecf7a24c\nRequest Header: Content-Length: 0\nRequest Header: Host: s3.us-east-2.amazonaws.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20221215T145201Z\n[2d75f8d81bb7c2cf053fae81f7dee075] HTTP code=200 early=0, time=0.295300s HEAD /aa-tmp-1 contentLen=0 [403 out, response content len -1]\n[2d75f8d81bb7c2cf053fae81f7dee075] HTTP RESPONSE:  HEAD /aa-tmp-1\nResponse Code: 200\nResponse ContentLen: -1\nReponse Header: Content-Type: application/xml\nReponse Header: Date: Thu, 15 Dec 2022 14:52:02 GMT\nReponse Header: Server: AmazonS3\nReponse Header: x-amz-access-point-alias: false\nReponse Header: x-amz-bucket-region: us-east-2\nReponse Header: x-amz-id-2: ZbZSnIoFIdx74I9IL2A159e26wnlSVD3oD8tE6vtx2b2d1QgX+G8FWEOXV8VvkokCeCUAZ/7iSA=\nReponse Header: x-amz-request-id: Y270XM0WTB69J8PT\n-- RESPONSE CONTENT--\n\n--------\n\n[2d75f8d81bb7c2cf053fae81f7dee075] HTTP starting HEAD /aa-tmp-1/backups/fdb-service ContentLen:0\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key&gt;/20221215/us-east-2/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=f312e1938eb3d412dcdbf1e9fff75b76640fe860946c989980909e433c844713\nRequest Header: Content-Length: 0\nRequest Header: Host: s3.us-east-2.amazonaws.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20221215T145201Z\n[2d75f8d81bb7c2cf053fae81f7dee075] HTTP code=200 early=0, time=0.286125s HEAD /aa-tmp-1/backups/fdb-service contentLen=0 [423 out, response content len 0]\n[2d75f8d81bb7c2cf053fae81f7dee075] HTTP RESPONSE:  HEAD /aa-tmp-1/backups/fdb-service\nResponse Code: 200\nResponse ContentLen: 0\nReponse Header: Accept-Ranges: bytes\nReponse Header: Content-Length: 0\nReponse Header: Content-Type: binary/octet-stream\nReponse Header: Date: Thu, 15 Dec 2022 14:52:03 GMT\nReponse Header: ETag: \"d41d8cd98f00b204e9800998ecf8427e\"\nReponse Header: Last-Modified: Thu, 15 Dec 2022 14:18:46 GMT\nReponse Header: Server: AmazonS3\nReponse Header: x-amz-id-2: KIh66yL7cpa2whYFocvZ3icWQvvykCDtSIYFqrOsAUh9h+5ElzuBDOUzGSdH/+Z2uw49Gwj9N9k=\nReponse Header: x-amz-request-id: ATRKRA9TAN620SJ5\n-- RESPONSE CONTENT--\n\n--------\n\nThe backup on tag `default' was successfully submitted but no backup agents are responding.\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-12-15T14:59:08.569Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 48,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 243.2,
+        "yours": false,
+        "topic_id": 3694,
+        "topic_slug": "fdbbackup-not-work-with-ipv6-resolver-work-with-ipv4",
+        "display_username": "mason",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/option-to-ipv6-in-dns-lookup-for-backups/4114",
+            "internal": true,
+            "reflection": true,
+            "title": "Option to ipv6 in DNS lookup for backups",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 970,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-not-work-with-ipv6-resolver-work-with-ipv4/3694/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12153,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2022-12-22T04:33:46.770Z",
+        "cooked": "<p>This looks like a bug to me. We can file a github issue to track this.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-12-22T04:33:46.770Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 8.0,
+        "yours": false,
+        "topic_id": 3694,
+        "topic_slug": "fdbbackup-not-work-with-ipv6-resolver-work-with-ipv4",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-not-work-with-ipv6-resolver-work-with-ipv4/3694/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12157,
+        "name": "mason",
+        "username": "mason",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+        "created_at": "2022-12-22T13:44:36.339Z",
+        "cooked": "<p>Hi <a class=\"mention\" href=\"/u/jzhou\">@jzhou</a><br>\nAfter several tests, I realize that it is not bug of FDB.<br>\nI deploy FDB on docker and as default, docker run on IP v4 only, not support IP v6.<br>\nSo I add ipv6 and ip6tables support for docker, it works well.</p>\n<p>For any deploy FDB on docker, you can use these configs to make it work for Ip v6<br>\n/etc/docker/daemon.json</p>\n<pre><code class=\"lang-auto\">{\n  \"ipv6\": true,\n  \"fixed-cidr-v6\": \"2001:db8:1::/64\",\n  \"ip6tables\": true,\n  \"experimental\": true\n}\n\n</code></pre>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-12-22T13:46:01.737Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 47.8,
+        "yours": false,
+        "topic_id": 3694,
+        "topic_slug": "fdbbackup-not-work-with-ipv6-resolver-work-with-ipv4",
+        "display_username": "mason",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 454,
+          "username": "jzhou",
+          "name": "Jingyu Zhou",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 970,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-not-work-with-ipv6-resolver-work-with-ipv4/3694/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12131,
+      12153,
+      12157
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1041
+    ],
+    [
+      2,
+      1035
+    ],
+    [
+      3,
+      1034
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fdbbackup not work with ipv6 resolver, work with ipv4",
+  "id": 3694,
+  "title": "Fdbbackup not work with ipv6 resolver, work with ipv4",
+  "posts_count": 3,
+  "created_at": "2022-12-15T14:54:51.264Z",
+  "views": 390,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2022-12-22T13:44:36.339Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdbbackup-not-work-with-ipv6-resolver-work-with-ipv4",
+  "category_id": 7,
+  "word_count": 688,
+  "deleted_at": null,
+  "user_id": 970,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3694",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDB fdbbackup",
+      "id": 1460,
+      "title": "FoundationDB fdbbackup",
+      "slug": "foundationdb-fdbbackup",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-17T18:54:47.516Z",
+      "last_posted_at": "2019-10-09T03:07:15.974Z",
+      "bumped": true,
+      "bumped_at": "2019-10-09T03:07:15.974Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2461,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 579,
+            "username": "approachcp",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 581,
+            "username": "surprisetalk",
+            "name": "Taylor Sarrafian",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/surprisetalk/{size}/579_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "&ldquo;backup failure: Could not create backup container: Operation timed out&rdquo; with version 6.3.9",
+      "id": 2703,
+      "title": "\"backup failure: Could not create backup container: Operation timed out\" with version 6.3.9",
+      "slug": "backup-failure-could-not-create-backup-container-operation-timed-out-with-version-6-3-9",
+      "posts_count": 7,
+      "reply_count": 1,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2021-05-17T11:07:44.747Z",
+      "last_posted_at": "2022-01-05T11:17:46.398Z",
+      "bumped": true,
+      "bumped_at": "2022-01-05T15:04:16.923Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1224,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 865,
+            "username": "manish-2014",
+            "name": "Manish Sharan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manish-2014/{size}/1002_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 949,
+            "username": "DenisBY",
+            "name": "Denis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/denisby/{size}/1104_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backing up the database using `fdbbackup` command returns in an error",
+      "id": 1844,
+      "title": "Backing up the database using `fdbbackup` command returns in an error",
+      "slug": "backing-up-the-database-using-fdbbackup-command-returns-in-an-error",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-16T10:49:12.154Z",
+      "last_posted_at": "2019-12-16T13:54:49.984Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T13:54:49.984Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1069,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "[RESOLVED?] Fdbbackup &lsquo;Platform error&rsquo; on &lsquo;file_backup_write_range&rsquo;",
+      "id": 412,
+      "title": "[RESOLVED?] Fdbbackup 'Platform error' on 'file_backup_write_range'",
+      "slug": "resolved-fdbbackup-platform-error-on-file-backup-write-range",
+      "posts_count": 9,
+      "reply_count": 6,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-14T13:43:20.133Z",
+      "last_posted_at": "2018-05-17T00:24:36.294Z",
+      "bumped": true,
+      "bumped_at": "2018-05-17T00:24:36.294Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2465,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup /restore fdb",
+      "id": 1637,
+      "title": "Backup /restore fdb",
+      "slug": "backup-restore-fdb",
+      "posts_count": 22,
+      "reply_count": 17,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2019-09-19T17:04:18.878Z",
+      "last_posted_at": "2019-10-05T04:45:51.663Z",
+      "bumped": true,
+      "bumped_at": "2019-10-05T04:45:51.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2729,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 970,
+        "username": "mason",
+        "name": "mason",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 970,
+      "username": "mason",
+      "name": "mason",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png"
+    },
+    "last_poster": {
+      "id": 970,
+      "username": "mason",
+      "name": "mason",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png"
+    }
+  },
+  "bookmarks": []
+}

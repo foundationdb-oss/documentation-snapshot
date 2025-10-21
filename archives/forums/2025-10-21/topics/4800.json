@@ -1,0 +1,702 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14756,
+        "name": "Jon Chambers",
+        "username": "jon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "created_at": "2025-03-07T13:54:51.929Z",
+        "cooked": "<p>With apologies for the now-familiar introduction, we\u2019re evaluating FoundationDB for some new use cases and are doing an initial load test. We\u2019re using the FDB Kubernetes operator in <code>three_data_hall</code> configuration; we\u2019re using AWS EKS with <a href=\"https://aws.amazon.com/ec2/instance-types/i3en/\" rel=\"noopener nofollow ugc\"><code>i3en.xlarge</code></a> nodes. We\u2019re observing a strange phenomenon where the placement of our resolver processes within the cluster <em>dramatically</em> affects their CPU usage.</p>\n<p>When we change our database configuration (e.g. adding new storage processes), the various stateless roles tend to get redistributed among our processes with <code>stateless</code> process classes. When that happens, our resolvers can move to new Kubernetes nodes, and that can lead to enormous swings even with consistent write load. Here\u2019s one example:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/b/b8b03bba90639ba6108e622414684e7f858a6a70.png\" data-download-href=\"/uploads/short-url/qlPqPis3FTqEAB2wIbktZro5K00.png?dl=1\" title=\"Resolver CPU load\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/original/2X/b/b8b03bba90639ba6108e622414684e7f858a6a70.png\" alt=\"Resolver CPU load\" data-base62-sha1=\"qlPqPis3FTqEAB2wIbktZro5K00\" width=\"646\" height=\"358\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Resolver CPU load</span><span class=\"informations\">646\u00d7358 15.9 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div></p>\n<p>In the case pictured here, we added some new commit proxies (not pictured), and that triggered a role shuffle. The resolvers moved, and their average CPU utilization jumped from ~50% to ~85% despite no changes in overall load. That change was durable and lasted until the next shuffle.</p>\n<p>For context, here\u2019s our database configuration:</p>\n<pre><code class=\"lang-auto\">database_configuration = {\n  storage        = 75\n  logs           = 6\n  commit_proxies = 6\n  grv_proxies    = 4\n  resolvers      = 2\n}\n</code></pre>\n<p>The resolver CPU utilization swings are a big deal for us because the resolvers are really the fundamental limiting factor for our use case. If our cluster-wide write capacity can get cut in ~half by some weird roll of the dice, that\u2019s a biiiiiig problem.</p>\n<p>I haven\u2019t yet found any discussion about how resolver placement within a cluster might affect CPU utilization, and am wondering if there\u2019s an obvious cause for this behavior. Without much knowledge of a resolver\u2019s internals, it\u2019s not obvious to me how placement would affect CPU utilization in particular. So far, we\u2019ve observed that the low-utilization configuration happened when the resolvers were both in one particular availability zone (let\u2019s call that <code>az-1-a</code>), and the high-utilization configuration happened when both were in a different availability zone (<code>az-1-f</code>).</p>\n<p>My first wild guess is that this could be a network latency thing; do resolvers benefit from proximity to some other process? My other wild guess is that there\u2019s something different about the hardware in one AWS availability zone versus another, and I\u2019ll investigate that in parallel. In the meantime, is this a familiar/expected phenomenon?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-03-07T13:54:51.929Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 7,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 37.0,
+        "yours": false,
+        "topic_id": 4800,
+        "topic_slug": "significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster",
+        "display_username": "Jon Chambers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://aws.amazon.com/ec2/instance-types/i3en/",
+            "internal": false,
+            "reflection": false,
+            "title": "Amazon EC2 I3en Instances - dense SSD storage instances",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1505,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster/4800/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14757,
+        "name": "Jon Chambers",
+        "username": "jon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "created_at": "2025-03-07T16:19:56.709Z",
+        "cooked": "<p>It looks like this is a classic \u201cnoisy neighbor\u201d problem. In the cases where resolver processes have elevated CPU load, they share a Kubernetes node (emphasis on node\u2014not pod or process!) with some other heavily-loaded storage or log process. It sounds like experimenting with <a href=\"https://forums.foundationdb.org/t/setting-cpu-affinity-for-fdbservers/84\">CPU affinity</a> or static CPU allocation might help\u2014or just making sure resolvers (and proxies?) go on their own uncontested nodes. I\u2019ll follow up if this turns out to be productive (although this current round of load testing is coming to a close, so follow-up results may happen later!).</p>\n<p>In case it\u2019s helpful to anybody else in the future, I cooked up a very simple Python script to help diagnose issues like these:</p>\n<pre data-code-wrap=\"python\"><code class=\"lang-python\">import json\nimport sys\n\nif __name__ == \"__main__\":\n    if len(sys.argv) != 2:\n        raise SystemExit(\"Usage: describe-cluster-topology.py STATUS_JSON_FILE\")\n\n    with open(sys.argv[1]) as status_json_file:\n        status_json = json.load(status_json_file)\n\n    cluster = status_json[\"cluster\"]\n\n    if not cluster:\n        raise ValueError(\"Status did not contain a 'cluster' section\")\n\n    machines = cluster[\"machines\"]\n\n    if not machines:\n        raise ValueError(\"Cluster did not contain a 'machines' section\")\n\n    machines_by_az = {}\n\n    for machine in machines:\n        az = machines[machine][\"locality\"][\"data_hall\"]\n\n        if az not in machines_by_az:\n            machines_by_az[az] = []\n\n        machines_by_az[az].append(machine)\n\n    processes = cluster[\"processes\"]\n\n    if not processes:\n        raise ValueError(\"Cluster did not contain a 'processes' section\")\n\n    processes_by_machine = {}\n    roles_by_process = {}\n    cpu_by_process = {}\n\n    for process in processes:\n        address = processes[process][\"address\"]\n        machine_id = processes[process][\"machine_id\"]\n\n        if machine_id not in processes_by_machine:\n            processes_by_machine[machine_id] = []\n\n        processes_by_machine[machine_id].append(address)\n\n        cpu_by_process[address] = processes[process][\"cpu\"][\"usage_cores\"]\n\n        for role in processes[process][\"roles\"]:\n            if address not in roles_by_process:\n                roles_by_process[address] = []\n\n            roles_by_process[address].append(role[\"role\"])\n\n    for az in machines_by_az:\n        print(f\"- {az}\")\n\n        for machine in machines_by_az[az]:\n            print(f\"  - {machine}\")\n\n            # Some machines may have no processes\n            if machine in processes_by_machine:\n                for process in processes_by_machine[machine]:\n                    cpu_utilization = cpu_by_process[process]\n\n                    print(f\"    - {process} (CPU: {cpu_utilization})\")\n\n                    # Some processes may have no roles\n                    if process in roles_by_process:\n                        for role in roles_by_process[process]:\n                            print(f\"      - {role}\")\n</code></pre>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-03-07T16:19:56.709Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 4800,
+        "topic_slug": "significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster",
+        "display_username": "Jon Chambers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/setting-cpu-affinity-for-fdbservers/84",
+            "internal": true,
+            "reflection": false,
+            "title": "Setting CPU affinity for fdbservers",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/log-processes-and-cpu-saturation/4799/4",
+            "internal": true,
+            "reflection": true,
+            "title": "Log processes and CPU saturation",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1505,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster/4800/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14756,
+      14757
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      228
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Significant changes in CPU load on resolver processes depending on placement in a cluster",
+  "id": 4800,
+  "title": "Significant changes in CPU load on resolver processes depending on placement in a cluster",
+  "posts_count": 2,
+  "created_at": "2025-03-07T13:54:51.869Z",
+  "views": 46,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-03-07T16:19:56.709Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster",
+  "category_id": 17,
+  "word_count": 737,
+  "deleted_at": null,
+  "user_id": 1505,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/b/b8b03bba90639ba6108e622414684e7f858a6a70.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4800",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 646,
+      "height": 358,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/b/b8b03bba90639ba6108e622414684e7f858a6a70.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Configuring FoundationDB to Use More Than One Resolver",
+      "id": 1414,
+      "title": "Configuring FoundationDB to Use More Than One Resolver",
+      "slug": "configuring-foundationdb-to-use-more-than-one-resolver",
+      "posts_count": 24,
+      "reply_count": 18,
+      "highest_post_number": 24,
+      "image_url": null,
+      "created_at": "2019-05-30T20:58:21.102Z",
+      "last_posted_at": "2019-08-21T08:48:24.207Z",
+      "bumped": true,
+      "bumped_at": "2019-08-21T08:48:24.207Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 2574,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 641,
+            "username": "smithclarkson01",
+            "name": "Smith Clarkson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/977dab/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Adding a resolver causes cluster to become non-reconciled",
+      "id": 2971,
+      "title": "Adding a resolver causes cluster to become non-reconciled",
+      "slug": "adding-a-resolver-causes-cluster-to-become-non-reconciled",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2021-10-28T14:11:58.949Z",
+      "last_posted_at": "2021-10-29T17:09:20.753Z",
+      "bumped": true,
+      "bumped_at": "2021-10-29T17:09:20.753Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance",
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 511,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 890,
+            "username": "tangerine",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tangerine/{size}/1084_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cluster tuning cookbook",
+      "id": 520,
+      "title": "Cluster tuning cookbook",
+      "slug": "cluster-tuning-cookbook",
+      "posts_count": 27,
+      "reply_count": 19,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-06-19T14:35:25.802Z",
+      "last_posted_at": "2019-02-01T12:38:24.733Z",
+      "bumped": true,
+      "bumped_at": "2019-02-01T12:38:24.733Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 8885,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 310,
+            "username": "shamatar",
+            "name": "Alexander",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/shamatar/{size}/315_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 502,
+            "username": "nikolas.ioannou",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/5daacb/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "CPU limited storage processes",
+      "id": 2140,
+      "title": "CPU limited storage processes",
+      "slug": "cpu-limited-storage-processes",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-05-29T11:53:05.632Z",
+      "last_posted_at": "2021-05-18T11:29:51.842Z",
+      "bumped": true,
+      "bumped_at": "2021-05-18T11:29:51.842Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1567,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 741,
+            "username": "sears",
+            "name": "Russell Sears",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction/operation throughput",
+      "id": 1880,
+      "title": "Transaction/operation throughput",
+      "slug": "transaction-operation-throughput",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-01-14T22:48:44.649Z",
+      "last_posted_at": "2020-01-23T15:09:25.796Z",
+      "bumped": true,
+      "bumped_at": "2020-01-23T15:09:25.796Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2027,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1505,
+        "username": "jon",
+        "name": "Jon Chambers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1505,
+      "username": "jon",
+      "name": "Jon Chambers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png"
+    },
+    "last_poster": {
+      "id": 1505,
+      "username": "jon",
+      "name": "Jon Chambers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png"
+    },
+    "links": [
+      {
+        "url": "https://aws.amazon.com/ec2/instance-types/i3en/",
+        "title": "Amazon EC2 I3en Instances - dense SSD storage instances",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1505,
+        "domain": "aws.amazon.com",
+        "root_domain": "amazon.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

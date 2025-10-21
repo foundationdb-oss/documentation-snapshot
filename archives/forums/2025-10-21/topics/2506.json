@@ -1,0 +1,842 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 8926,
+        "name": "",
+        "username": "Passion",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png",
+        "created_at": "2021-01-11T22:03:13.283Z",
+        "cooked": "<p>Hello,</p>\n<p>We just ran YCSB workloads over the latest FoundationDB (with redwood storage engine) on SSDs with built-in hardware-based transparent compression, and measured how transparent compression could reduce the physical dataset footprint and write amplification. One thing we observed is that the workload concurrency (i.e., the number of YCSB clients) has a significant impact on the write amplification, e.g., under 100%-update YCSB with 64B record size and 4KB page size, write amplification (i.e., the total_write_IO_traffic_volume / total_size_of_updated_records) increases by 3x when we reduce the client number from 32 to 4. Could anyone please shed light on what the reason could be? The reason why we are interested in write amplification (in addition to storage capacity) is that the emerging QLC flash has very limited cycling endurance, hence it is critical to reduce the write amplification. Thanks.</p>\n<p>Tong Zhang, ScaleFlux</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2021-01-11T22:03:13.283Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 74,
+        "reads": 35,
+        "readers_count": 34,
+        "score": 392.0,
+        "yours": false,
+        "topic_id": 2506,
+        "topic_slug": "impact-of-workload-concurrency-on-write-amplification",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 514,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/impact-of-workload-concurrency-on-write-amplification/2506/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 8930,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2021-01-13T09:25:28.836Z",
+        "cooked": "<p>When you reduce the client count, doesn\u2019t that also decrease throughput?  Unless it does not, then what you are seeing is completely expected for a BTree and a small random update workload.</p>\n<p>The more writes there are, the more likelihood there is that in a given commit more than one of those writes will fall on the same page.  When that happens, there is less write amplification because you are able to update more KV bytes per 4k page written.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2021-01-13T09:25:28.836Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 21.4,
+        "yours": false,
+        "topic_id": 2506,
+        "topic_slug": "impact-of-workload-concurrency-on-write-amplification",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/impact-of-workload-concurrency-on-write-amplification/2506/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 8932,
+        "name": "",
+        "username": "Passion",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png",
+        "created_at": "2021-01-13T13:20:16.633Z",
+        "cooked": "<p>Thanks for your response. Yes, the overall throughput drops as the client count reduces. The dataset is about 200GB, and the updates distribute uniformly over the entire dataset. So for either 32 or 4 clients, there should be a small probability that multiple updates fall into the same 4KB page in a given commit. Similar write amplification difference was also observed when we increase the record size from 64B to 256B. Could the write amplification difference partly come from WAL or pager (e.g., less client count may cause larger write amplification on WAL or pager writes since each WAL/pager write-to-SSD must be 4KB)?</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2021-01-13T13:20:16.633Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 26.0,
+        "yours": false,
+        "topic_id": 2506,
+        "topic_slug": "impact-of-workload-concurrency-on-write-amplification",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 514,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/impact-of-workload-concurrency-on-write-amplification/2506/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 9010,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2021-01-29T08:51:26.421Z",
+        "cooked": "<p>The RedwoodMetrics trace events will help answer this question, if you can make them available to me I should be able to tell you what is going on.</p>\n<p>The storage servers do not care about or see client count, they just see <code>(Version, Mutation)...</code> and send them to the storage engine in order with a <code>commit()</code> periodically based on a time or byte limit, whichever comes first.  Therefore it does not matter how many clients are generating the random writes, it only matters what the writes are in each commit batch on each storage server.</p>\n<p>The extra writes are likely coming from the Pager, yes, but it\u2019s probably the case that in the lower throughput regime the Pager is having to make writes that it was able to skip in the higher throughput regime.</p>\n<p>Redwood does not exactly have a WAL in the traditional sense.  It writes new or updated pages onto a free page, and in the case of updated pages it writes a record to a pager log that says \u201clogical page X as of version V is now located at physical page Y\u201d.  Eventually, in order to truncate records from the front of this pager log so that it does not grow larger indefinitely, after data versions prior to V are no longer being maintained the contents of Y might be copied onto physical page X.   I say \u201cmight\u201d because this copy will be skipped if it is possible to do so without data loss.  The more write activity you have, the more likely it is possible to do this.</p>\n<p>One mechanism to skip some of these writes is that the log truncation intentionally lags behind the oldest readable commit version so that when a remap entry is popped from the front of the log the copy can be skipped if it is known that the page is updated again or freed prior to the first retained readable version.  The longer the remap cleanup window is (this is a knob, defaults to 50 storage engine commits which, due to other knobs, equates to up to 25 seconds but will be less under high write load) the more skippable writes of this form there will be.</p>\n<p>Another mechanism is that if, during the remap cleanup window, multiple sibling BTree nodes under the same parent nodes are updated, then the BTree will update the parent node to point directly to the new child locations so when the child remap entries are truncated from the log the new page data does not have to be copied onto the original page.</p>\n<p>Most likely, these two optimizations are what reduce your write amplification with higher throughput.  The RedwoodMetrics trace events will show whether or not this is the case.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2021-01-29T08:51:26.421Z",
+        "reply_count": 1,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 10.0,
+        "yours": false,
+        "topic_id": 2506,
+        "topic_slug": "impact-of-workload-concurrency-on-write-amplification",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 514,
+          "username": "Passion",
+          "name": "",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/impact-of-workload-concurrency-on-write-amplification/2506/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 9016,
+        "name": "",
+        "username": "Passion",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png",
+        "created_at": "2021-01-29T18:34:05.940Z",
+        "cooked": "<p>Really appreciate your detailed explanation! Yes, it now makes our observation a perfect sense, and we will further double check with the trace. Thanks.</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2021-01-29T18:34:05.940Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 4.4,
+        "yours": false,
+        "topic_id": 2506,
+        "topic_slug": "impact-of-workload-concurrency-on-write-amplification",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 7,
+          "username": "SteavedHams",
+          "name": "Steve Atherton",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 514,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/impact-of-workload-concurrency-on-write-amplification/2506/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      8926,
+      8930,
+      8932,
+      9010,
+      9016
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1744
+    ],
+    [
+      2,
+      1743
+    ],
+    [
+      3,
+      1742
+    ],
+    [
+      4,
+      1727
+    ],
+    [
+      5,
+      1726
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Impact of workload concurrency on write amplification",
+  "id": 2506,
+  "title": "Impact of workload concurrency on write amplification",
+  "posts_count": 5,
+  "created_at": "2021-01-11T22:03:13.203Z",
+  "views": 655,
+  "reply_count": 2,
+  "like_count": 3,
+  "last_posted_at": "2021-01-29T18:34:05.940Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "impact-of-workload-concurrency-on-write-amplification",
+  "category_id": 7,
+  "word_count": 814,
+  "deleted_at": null,
+  "user_id": 514,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2506",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Bandwidth consumption from one fdb client to fdbserver process",
+      "id": 407,
+      "title": "Bandwidth consumption from one fdb client to fdbserver process",
+      "slug": "bandwidth-consumption-from-one-fdb-client-to-fdbserver-process",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-05-13T18:02:42.359Z",
+      "last_posted_at": "2018-05-17T00:09:20.521Z",
+      "bumped": true,
+      "bumped_at": "2018-05-17T00:09:20.521Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1119,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 243,
+            "username": "brb",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to troubleshoot throughput performance degrade?",
+      "id": 1436,
+      "title": "How to troubleshoot throughput performance degrade?",
+      "slug": "how-to-troubleshoot-throughput-performance-degrade",
+      "posts_count": 36,
+      "reply_count": 24,
+      "highest_post_number": 36,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/9c9854ce87e53265f75154876f180812ee93f8ec.png",
+      "created_at": "2019-06-10T10:09:55.810Z",
+      "last_posted_at": "2019-06-20T21:36:30.209Z",
+      "bumped": true,
+      "bumped_at": "2019-06-20T21:36:30.209Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 4377,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 597,
+            "username": "rayjcwu",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rayjcwu/{size}/602_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 592,
+            "username": "nfeinberg",
+            "name": "Nicholas Feinberg",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/ba8739/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to increase the read/write throughput for foundationdb 5.2",
+      "id": 1968,
+      "title": "How to increase the read/write throughput for foundationdb 5.2",
+      "slug": "how-to-increase-the-read-write-throughput-for-foundationdb-5-2",
+      "posts_count": 21,
+      "reply_count": 19,
+      "highest_post_number": 23,
+      "image_url": null,
+      "created_at": "2020-02-20T00:35:23.457Z",
+      "last_posted_at": "2020-05-24T08:05:30.224Z",
+      "bumped": true,
+      "bumped_at": "2020-05-24T08:05:30.224Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3153,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 718,
+            "username": "Cliicy",
+            "name": "Dragon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/47e85d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Benchmarking FoundationDB on AWS",
+      "id": 410,
+      "title": "Benchmarking FoundationDB on AWS",
+      "slug": "benchmarking-foundationdb-on-aws",
+      "posts_count": 19,
+      "reply_count": 12,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2018-05-14T09:55:57.604Z",
+      "last_posted_at": "2018-10-30T16:01:15.283Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T16:01:15.283Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 9035,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 257,
+            "username": "cih.y2k",
+            "name": "cih.y2k",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cih.y2k/{size}/423_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scaling issues with FDB for write throughput",
+      "id": 2327,
+      "title": "Scaling issues with FDB for write throughput",
+      "slug": "scaling-issues-with-fdb-for-write-throughput",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2020-09-03T04:48:25.889Z",
+      "last_posted_at": "2020-09-14T23:02:57.196Z",
+      "bumped": true,
+      "bumped_at": "2020-09-14T23:02:57.196Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1866,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 757,
+            "username": "dsubramaniam",
+            "name": "DeepikaaSubramaniam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/f17d59/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 769,
+            "username": "ajames",
+            "name": "Alwin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 514,
+        "username": "Passion",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 514,
+      "username": "Passion",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png"
+    },
+    "last_poster": {
+      "id": 514,
+      "username": "Passion",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

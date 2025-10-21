@@ -1,0 +1,659 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4722,
+        "name": "",
+        "username": "George",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+        "created_at": "2019-07-26T19:30:02.093Z",
+        "cooked": "<p>Is there a design document for the directory layer similar to the one provided for the <a href=\"https://github.com/apple/foundationdb/blob/43629d8e4591b29ebc74dee145ee8cdb17ea77fa/design/tuple.md\" rel=\"nofollow noopener\">tuple layer</a>?</p>\n<p>I\u2019m wondering about the exact way the directory allocator works, how the directory path keys are formatted and how the values of those keys map to the prefixes of descendant keys.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-07-26T19:30:02.093Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 116,
+        "reads": 40,
+        "readers_count": 39,
+        "score": 588.0,
+        "yours": false,
+        "topic_id": 1538,
+        "topic_slug": "directory-layer-design-document",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/43629d8e4591b29ebc74dee145ee8cdb17ea77fa/design/tuple.md",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/tuple.md at 43629d8e4591b29ebc74dee145ee8cdb17ea77fa \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 11
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 251,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/directory-layer-design-document/1538/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4723,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2019-07-26T20:00:10.504Z",
+        "cooked": "<p>I don\u2019t think there is one out there. I believe I started to work on one, but then I got distracted.</p>\n<p>There is actually a blob post from a community member on how the high contention allocator works, which is a good read: <a href=\"https://activesphere.com/blog/2018/08/05/high-contention-allocator\" rel=\"nofollow noopener\">https://activesphere.com/blog/2018/08/05/high-contention-allocator</a></p>\n<p>The main mapping part of the directory layer are essentially keys that include the long string as the key and a (tuple-encoded) integer as the value. Then for child values, there are keys that are prefixed by the shortened value of their parent and then include their long string as the key and a different (tuple-encoded) integer as the value. The value in each case is the prefix in the database where the data for that directory should be stored. Note that the directory prefix does not include the parents\u2019 prefixes, which means that directories can be moved around only by manipulating the directory layer. The downside is that to resolve a path, you must read one key (in serial) for each directory entry.</p>\n<p>I\u2019m not actually sure if that was your question, though.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-07-26T20:00:10.504Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 40,
+        "readers_count": 39,
+        "score": 13.0,
+        "yours": false,
+        "topic_id": 1538,
+        "topic_slug": "directory-layer-design-document",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://activesphere.com/blog/2018/08/05/high-contention-allocator",
+            "internal": false,
+            "reflection": false,
+            "title": "High contention allocator \u2022 ActiveSphere - Software consulting",
+            "clicks": 32
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/directory-layer-design-document/1538/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4722,
+      4723
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2279
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Directory Layer design document",
+  "id": 1538,
+  "title": "Directory Layer design document",
+  "posts_count": 2,
+  "created_at": "2019-07-26T19:30:02.034Z",
+  "views": 1042,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-07-26T20:00:10.504Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "directory-layer-design-document",
+  "category_id": 9,
+  "word_count": 251,
+  "deleted_at": null,
+  "user_id": 251,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1538",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Questions about the Directory partitions",
+      "id": 2514,
+      "title": "Questions about the Directory partitions",
+      "slug": "questions-about-the-directory-partitions",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-01-18T13:24:12.363Z",
+      "last_posted_at": "2021-01-25T12:20:22.847Z",
+      "bumped": true,
+      "bumped_at": "2021-01-25T12:20:22.847Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 883,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Application design using Subspace and Tuple",
+      "id": 452,
+      "title": "Application design using Subspace and Tuple",
+      "slug": "application-design-using-subspace-and-tuple",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-22T21:46:43.537Z",
+      "last_posted_at": "2018-07-14T21:02:50.010Z",
+      "bumped": true,
+      "bumped_at": "2018-07-14T21:02:50.010Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 3678,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 317,
+            "username": "Lundin",
+            "name": "Pontus Lundin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/dfb087/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How does FoundationDB store keys with duplicate prefixes?",
+      "id": 1234,
+      "title": "How does FoundationDB store keys with duplicate prefixes?",
+      "slug": "how-does-foundationdb-store-keys-with-duplicate-prefixes",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-03-16T03:26:49.825Z",
+      "last_posted_at": "2019-03-17T06:11:23.374Z",
+      "bumped": true,
+      "bumped_at": "2019-03-17T06:11:23.374Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1091,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What&rsquo;s the purpose of the Directory layer?",
+      "id": 677,
+      "title": "What's the purpose of the Directory layer?",
+      "slug": "whats-the-purpose-of-the-directory-layer",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-09-02T20:58:11.436Z",
+      "last_posted_at": "2022-07-22T02:24:33.270Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T02:24:33.270Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 11,
+      "views": 6523,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1080,
+            "username": "knarayanan88",
+            "name": "Narayanan K",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/knarayanan88/{size}/1300_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Directory Layer specification",
+      "id": 1426,
+      "title": "Directory Layer specification",
+      "slug": "directory-layer-specification",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-05T09:53:02.603Z",
+      "last_posted_at": "2019-06-17T23:03:14.516Z",
+      "bumped": true,
+      "bumped_at": "2019-06-17T23:03:14.516Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1022,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 251,
+        "username": "George",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 251,
+      "username": "George",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://activesphere.com/blog/2018/08/05/high-contention-allocator",
+        "title": "High contention allocator \u2022 ActiveSphere - Software consulting",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 32,
+        "user_id": 8,
+        "domain": "activesphere.com",
+        "root_domain": "activesphere.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/43629d8e4591b29ebc74dee145ee8cdb17ea77fa/design/tuple.md",
+        "title": "foundationdb/tuple.md at 43629d8e4591b29ebc74dee145ee8cdb17ea77fa \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 11,
+        "user_id": 251,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

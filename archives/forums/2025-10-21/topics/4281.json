@@ -1,0 +1,728 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13584,
+        "name": "Daniel Lytkin",
+        "username": "aikoven",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aikoven/{size}/535_2.png",
+        "created_at": "2023-12-06T09:56:27.776Z",
+        "cooked": "<p>After rolling nodes in our Kubernetes cluster, we found ourselves in the following situation:</p>\n<ol start=\"0\">\n<li>\n<p>Our FoundationDB cluster was unavailable.<br>\nWe are using FDB 6.3.x, operator v1.21.0, FDB cluster with <code>publicIPSource: service</code>.</p>\n</li>\n<li>\n<p>Some pods of the FoundationDB cluster were missing. Particularly the one corresponding to the first coordinator in the connection string.</p>\n</li>\n<li>\n<p>Operator logged errors like these and could not progress:</p>\n<pre><code class=\"lang-auto\">Error determining public address: connect: Operation not permitted [system:1]\n  ERROR: Unable to bind to network (1512)\n  Unable to connect to cluster from `/tmp/19f5e8db-4d3f-4d40-9fa4-ebaac5f4c57e\n</code></pre>\n<p>We also saw similar errors in FDB trace logs.</p>\n</li>\n</ol>\n<p>After some digging we found that the error came from <a href=\"https://github.com/apple/foundationdb/blob/6.3.25/fdbclient/AutoPublicAddress.cpp\" rel=\"noopener nofollow ugc\">determinePublicIPAutomatically</a> function inside the FDB client, which uses the address of the first coordinator to determine the client\u2019s public address. To do this, it creates a dummy UDP socket. As I understand, this trick does not require the first coordinator to be available, as no actual packets are sent.</p>\n<p>This appears to not play well with Cilium socket-based load-balancing feature, which enables Kubernetes networking without kube-proxy. This feature (enabled by <code>bpf-lb-sock</code> flag) in its default configuration breaks the above algorithm in case when the first coordinator pod is missing. The eBPF program rewires socket <code>connect</code> calls replacing target address with Kubernetes Service endpoint address. And in our case the Service had no endpoints, which resulted in an error which FDB client seen as <code>Operation not permitted</code>.</p>\n<p>We fixed this problem by setting Cilium agent flag <code>bpf-lb-sock-hostns-only</code> to <code>true</code>.</p>\n<p>As I can see in the <a href=\"https://github.com/apple/foundationdb/blob/main/fdbclient/CoordinationInterface.cpp\" rel=\"noopener nofollow ugc\">recent FoundationDB code</a>, the client now tries every coordinator, not just the first one, so it seems that this situation should not happen with recent FoundationDB versions. But we still want to share this in case anyone faces the same problem.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-12-06T09:56:27.776Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 583,
+        "reads": 18,
+        "readers_count": 17,
+        "score": 2903.6,
+        "yours": false,
+        "topic_id": 4281,
+        "topic_slug": "cluster-stuck-in-broken-state-when-using-cilium-networking",
+        "display_username": "Daniel Lytkin",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/fdbclient/CoordinationInterface.cpp",
+            "internal": false,
+            "reflection": false,
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/6.3.25/fdbclient/AutoPublicAddress.cpp",
+            "internal": false,
+            "reflection": false,
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 539,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-stuck-in-broken-state-when-using-cilium-networking/4281/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13585,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2023-12-06T10:53:33.542Z",
+        "cooked": "<p>Thanks for sharing! Do you know why some of the Pods were missing? The operator should be creating them, assuming there are enough resources in the cluster.</p>\n<p>Depending on your setup, once you upgraded to FDB 7.0+, you could make use of DNS in the cluster file instead of using a service for the static IP: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/customization.md#using-dns\" rel=\"noopener nofollow ugc\">https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/customization.md#using-dns</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-12-06T10:53:33.542Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 11,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 63.4,
+        "yours": false,
+        "topic_id": 4281,
+        "topic_slug": "cluster-stuck-in-broken-state-when-using-cilium-networking",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/customization.md#using-dns",
+            "internal": false,
+            "reflection": false,
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-stuck-in-broken-state-when-using-cilium-networking/4281/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13587,
+        "name": "Daniel Lytkin",
+        "username": "aikoven",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aikoven/{size}/535_2.png",
+        "created_at": "2023-12-06T11:33:44.724Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"johscheuer\" data-post=\"2\" data-topic=\"4281\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/j/f475e1/48.png\" class=\"avatar\"> johscheuer:</div>\n<blockquote>\n<p>Do you know why some of the Pods were missing? The operator should be creating them, assuming there are enough resources in the cluster.</p>\n</blockquote>\n</aside>\n<p>Yeah, the pods got deleted because we restarted our nodes, and the operator could not recreate them because it was stuck in these errors. Here are the operator logs: <a href=\"https://pastebin.com/raw/jGxPm5PS\" rel=\"noopener nofollow ugc\">https://pastebin.com/raw/jGxPm5PS</a></p>\n<aside class=\"quote no-group\" data-username=\"johscheuer\" data-post=\"2\" data-topic=\"4281\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/j/f475e1/48.png\" class=\"avatar\"> johscheuer:</div>\n<blockquote>\n<p>Depending on your setup, once you upgraded to FDB 7.0+, you could make use of DNS in the cluster file instead of using a service for the static IP</p>\n</blockquote>\n</aside>\n<p>Right! It\u2019s on our roadmap. Thanks for advice <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=14\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-12-06T11:33:44.724Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 1,
+        "incoming_link_count": 3,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 18.2,
+        "yours": false,
+        "topic_id": 4281,
+        "topic_slug": "cluster-stuck-in-broken-state-when-using-cilium-networking",
+        "display_username": "Daniel Lytkin",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://pastebin.com/raw/jGxPm5PS",
+            "internal": false,
+            "reflection": false,
+            "clicks": 8
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 539,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-stuck-in-broken-state-when-using-cilium-networking/4281/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13584,
+      13585,
+      13587
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      686
+    ],
+    [
+      2,
+      685
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Cluster stuck in broken state when using Cilium networking",
+  "id": 4281,
+  "title": "Cluster stuck in broken state when using Cilium networking",
+  "posts_count": 3,
+  "created_at": "2023-12-06T09:56:27.679Z",
+  "views": 815,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2023-12-06T11:33:44.724Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "cluster-stuck-in-broken-state-when-using-cilium-networking",
+  "category_id": 16,
+  "word_count": 516,
+  "deleted_at": null,
+  "user_id": 539,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4281",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 2,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "K8s operator fdb.cluster IP addresses issue",
+      "id": 2273,
+      "title": "K8s operator fdb.cluster IP addresses issue",
+      "slug": "k8s-operator-fdb-cluster-ip-addresses-issue",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2020-08-03T20:04:36.427Z",
+      "last_posted_at": "2020-09-18T09:27:09.647Z",
+      "bumped": true,
+      "bumped_at": "2020-09-18T09:27:09.647Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1219,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 798,
+            "username": "ghenom",
+            "name": "Ghenom",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/46a35a/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 820,
+            "username": "kcking",
+            "name": "Kevin King",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kcking/{size}/934_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB @ Kubernetes having &ldquo;issues&rdquo;",
+      "id": 383,
+      "title": "FoundationDB @ Kubernetes having \"issues\"",
+      "slug": "foundationdb-kubernetes-having-issues",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-09T10:17:53.797Z",
+      "last_posted_at": "2018-05-11T17:28:05.081Z",
+      "bumped": true,
+      "bumped_at": "2018-05-11T17:28:05.081Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2031,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "useDNSInClusterFile - Connection string invalid",
+      "id": 3679,
+      "title": "useDNSInClusterFile - Connection string invalid",
+      "slug": "usednsinclusterfile-connection-string-invalid",
+      "posts_count": 13,
+      "reply_count": 9,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2022-12-01T22:46:28.002Z",
+      "last_posted_at": "2023-01-23T09:15:29.448Z",
+      "bumped": true,
+      "bumped_at": "2023-01-23T09:15:29.448Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1518,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1190,
+            "username": "KRKroening",
+            "name": "KrKroening",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krkroening/{size}/1473_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 970,
+            "username": "mason",
+            "name": "mason",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Recovering from FoundationDB crashes",
+      "id": 2846,
+      "title": "Recovering from FoundationDB crashes",
+      "slug": "recovering-from-foundationdb-crashes",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-08-09T18:21:00.384Z",
+      "last_posted_at": "2021-08-24T18:40:23.091Z",
+      "bumped": true,
+      "bumped_at": "2021-08-24T18:40:23.091Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 921,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 927,
+            "username": "peter",
+            "name": "Peter Zeller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/peter/{size}/1064_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proposal: Don&rsquo;t identify a coordinator based on its IP",
+      "id": 502,
+      "title": "Proposal: Don't identify a coordinator based on its IP",
+      "slug": "proposal-dont-identify-a-coordinator-based-on-its-ip",
+      "posts_count": 26,
+      "reply_count": 13,
+      "highest_post_number": 26,
+      "image_url": null,
+      "created_at": "2018-06-09T13:09:51.305Z",
+      "last_posted_at": "2019-08-06T20:24:41.013Z",
+      "bumped": true,
+      "bumped_at": "2019-08-06T20:24:41.013Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 8425,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 302,
+            "username": "basgys",
+            "name": "Bastien Gysler",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/basgys/{size}/291_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 339,
+            "username": "Zatte",
+            "name": "Mikael Rapp ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zatte/{size}/344_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 545,
+            "username": "rishabh",
+            "name": "Rishabh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rishabh/{size}/540_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 614,
+            "username": "qrpike",
+            "name": "Quinton Pike",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/qrpike/{size}/618_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 539,
+        "username": "aikoven",
+        "name": "Daniel Lytkin",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aikoven/{size}/535_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 539,
+      "username": "aikoven",
+      "name": "Daniel Lytkin",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aikoven/{size}/535_2.png"
+    },
+    "last_poster": {
+      "id": 539,
+      "username": "aikoven",
+      "name": "Daniel Lytkin",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aikoven/{size}/535_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/customization.md#using-dns",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://pastebin.com/raw/jGxPm5PS",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 539,
+        "domain": "pastebin.com",
+        "root_domain": "pastebin.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/main/fdbclient/CoordinationInterface.cpp",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 539,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/6.3.25/fdbclient/AutoPublicAddress.cpp",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 539,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

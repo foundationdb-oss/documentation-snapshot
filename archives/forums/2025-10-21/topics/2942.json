@@ -1,0 +1,601 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10113,
+        "name": "Alan Muhammad",
+        "username": "superhail",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/superhail/{size}/1191_2.png",
+        "created_at": "2021-10-13T02:03:21.274Z",
+        "cooked": "<pre><code class=\"lang-auto\">ACTOR template &lt;class T&gt;\nFuture&lt;T&gt; brokenPromiseToNever(Future&lt;T&gt; in) {\n\ttry {\n\t\tT t = wait(in);\n\t\treturn t;\n\t} catch (Error&amp; e) {\n\t\tif (e.code() != error_code_broken_promise)\n\t\t\tthrow;\n\t\twait(Never()); // never return\n\t\tthrow internal_error(); // does not happen\n\t}\n}\n</code></pre>\n<p>what\u2019s the meaning of this error message <code>error_code_broken_promise</code>, and why fdb is using this actor? to ignore some servers shutting down?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-10-13T02:03:21.274Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 330,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 1656.6,
+        "yours": false,
+        "topic_id": 2942,
+        "topic_slug": "what-does-broken-promise-error-mean",
+        "display_username": "Alan Muhammad",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1006,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-does-broken-promise-error-mean/2942/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10131,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2021-10-16T22:54:57.280Z",
+        "cooked": "<p><code>error_code_broken_promise</code> is an error code to indicate that an PRC server side no longer exists, thus the client side gets this error.</p>\n<p>This <code>brokenPromiseToNever</code> is used to ignore such errors. This is intended, because most of the time such errors are caused by crashing server, which results in a transaction system recovery. Thus, the client side typically don\u2019t need to perform error handling due to such errors----the client just blocks at <code>wait(Never())</code> and is restarted during the recovery.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-10-16T22:54:57.280Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 35.8,
+        "yours": false,
+        "topic_id": 2942,
+        "topic_slug": "what-does-broken-promise-error-mean",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-does-broken-promise-error-mean/2942/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10113,
+      10131
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1470
+    ],
+    [
+      2,
+      1466
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "What does broken promise error mean?",
+  "id": 2942,
+  "title": "What does broken promise error mean?",
+  "posts_count": 2,
+  "created_at": "2021-10-13T02:03:21.221Z",
+  "views": 877,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2021-10-16T22:54:57.280Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "what-does-broken-promise-error-mean",
+  "category_id": 8,
+  "word_count": 137,
+  "deleted_at": null,
+  "user_id": 1006,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2942",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to fix the problem &ldquo;com.apple.foundationdb.FDBException: Broken promise&rdquo;?",
+      "id": 3673,
+      "title": "How to fix the problem \"com.apple.foundationdb.FDBException: Broken promise\"?",
+      "slug": "how-to-fix-the-problem-com-apple-foundationdb-fdbexception-broken-promise",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2022-11-25T10:50:31.503Z",
+      "last_posted_at": "2022-11-28T10:12:21.375Z",
+      "bumped": true,
+      "bumped_at": "2022-11-28T10:12:21.375Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings",
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 469,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1022,
+            "username": "liyyue",
+            "name": "liyyue",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1144,
+            "username": "windsteel",
+            "name": "Windsteel",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/windsteel/{size}/1395_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Checking if an error is retryable?",
+      "id": 913,
+      "title": "Checking if an error is retryable?",
+      "slug": "checking-if-an-error-is-retryable",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-29T05:48:16.720Z",
+      "last_posted_at": "2018-11-29T20:25:24.144Z",
+      "bumped": true,
+      "bumped_at": "2018-11-29T20:25:24.144Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1877,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 439,
+            "username": "yields",
+            "name": "Amir",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/yields/{size}/545_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Destroying futures after &lsquo;fdb_transaction_on_error()&rsquo;",
+      "id": 1307,
+      "title": "Destroying futures after 'fdb_transaction_on_error()'",
+      "slug": "destroying-futures-after-fdb-transaction-on-error",
+      "posts_count": 9,
+      "reply_count": 1,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-04-16T13:33:52.150Z",
+      "last_posted_at": "2019-04-24T18:38:45.358Z",
+      "bumped": true,
+      "bumped_at": "2019-04-24T18:38:45.358Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1428,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Crashes every day go bindings",
+      "id": 1219,
+      "title": "Crashes every day go bindings",
+      "slug": "crashes-every-day-go-bindings",
+      "posts_count": 19,
+      "reply_count": 13,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2019-03-13T07:03:38.291Z",
+      "last_posted_at": "2019-07-05T15:14:02.982Z",
+      "bumped": true,
+      "bumped_at": "2019-07-05T15:14:02.982Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2317,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 562,
+            "username": "ddi",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ddi/{size}/721_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proper transaction retry loops",
+      "id": 2090,
+      "title": "Proper transaction retry loops",
+      "slug": "proper-transaction-retry-loops",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-04-28T21:37:58.250Z",
+      "last_posted_at": "2020-04-29T20:54:27.789Z",
+      "bumped": true,
+      "bumped_at": "2020-04-29T20:54:27.789Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 561,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 576,
+            "username": "davisp",
+            "name": "Paul J  Davis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davisp/{size}/570_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      },
+      {
+        "id": 1006,
+        "username": "superhail",
+        "name": "Alan Muhammad",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/superhail/{size}/1191_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1006,
+      "username": "superhail",
+      "name": "Alan Muhammad",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/superhail/{size}/1191_2.png"
+    },
+    "last_poster": {
+      "id": 454,
+      "username": "jzhou",
+      "name": "Jingyu Zhou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+    }
+  },
+  "bookmarks": []
+}

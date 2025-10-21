@@ -1,0 +1,505 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13560,
+        "name": "BoLee",
+        "username": "libo-sober",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "created_at": "2023-11-30T06:41:20.926Z",
+        "cooked": "<p>I currently have a 5-node triple mode FDB 7.1.27 cluster. I created a backup folder on one of the machines and changed the permissions before performing the backup.</p>\n<pre><code class=\"lang-auto\">mkdir /fdb/backup\nchmod 777 /fdb/backup\nfdbbackup start -d  file:///fdb/backup/ -t local\n</code></pre>\n<p>The result after executing the above command is as follows:</p>\n<pre><code class=\"lang-auto\">backup]# fdbbackup start -d  file:///fdb/backup/ -t local --logdir .\nThe backup on tag `local' was successfully submitted.\nbackup]# fdbbackup status -t local\nThe backup on tag `local' is in progress to file:///fdb/backup/backup-2023-11-30-14-19-56.363443.\nBackupUID: 831b2776a5fbaac26e630b6d0bdbf843\nBackupURL: file:///fdb/backup/backup-2023-11-30-14-19-56.363443\nSnapshot interval is 864000 seconds.  The initial snapshot is still running.\n\nDetails:\n LogBytes written - 0\n RangeBytes written - 455520173\n Last complete log version and timestamp        - 105206242641, 2023/11/30.14:17:42+0800\n Last complete snapshot version and timestamp   - N/A, N/A\n Current Snapshot start version and timestamp   - 105206320414, 2023/11/30.14:17:42+0800\n Expected snapshot end version and timestamp    - 105206320414, 2023/11/30.14:17:42+0800\n Backup supposed to stop at next snapshot completion - Yes\nRecent Errors (since initialization)\n28 second(s) ago : 'File could not be written' on 'file_backup_write_range_5.2'\n</code></pre>\n<p>You can see  that there is an error message \u201cFile could not be written\u2019 on \u2018file_backup_write_range_5.2\u2019\u201d. But the data directory has already been created.</p>\n<pre><code class=\"lang-auto\">backup]# ll\ntotal 16\ndrwxr-xr-x 5 foundationdb foundationdb    67 Nov 30 14:27 backup-2023-11-30-14-19-56.363443\n-rw-r--r-- 1 root         root         14387 Nov 30 14:19 trace.100.71.8.128.43376.1701325196.U2Nc8k.0.1.xml\n backup]# cd backup-2023-11-30-14-19-56.363443/\nbackup-2023-11-30-14-19-56.363443]# ll\ntotal 0\ndrwxr-xr-x 3 foundationdb foundationdb 49 Nov 30 14:19 kvranges\ndrwxr-xr-x 3 foundationdb foundationdb 26 Nov 30 14:21 logs\ndrwxr-xr-x 2 foundationdb foundationdb 67 Nov 30 14:27 snapshots\n backup-2023-11-30-14-19-56.363443]# du -sh ./*\n2.0G    ./kvranges\n0       ./logs\n20K     ./snapshots\n</code></pre>\n<p>Does this have an impact?<br>\nIn addition, if the same backup directory is created on any B node in the cluster and permissions are granted. Executing the backup command at the current node will also generate a backup file for node B.</p>\n<pre><code class=\"lang-auto\">nodeB backup]# ll\ntotal 4\nnodeB 4096 Nov 30 14:25 backup-2023-11-30-14-19-56.363443\nnodeB backup]# ll backup-2023-11-30-14-19-56.363443\ntotal 8\ndrwxr-xr-x. 3 foundationdb foundationdb 4096 Nov 30 14:25 kvranges\ndrwxr-xr-x. 3 foundationdb foundationdb 4096 Nov 30 14:25 logs\nnodeB backup]# du -sh ./backup-2023-11-30-14-19-56.363443/*\n195M    ./backup-2023-11-30-14-19-56.363443/kvranges\n12K     ./backup-2023-11-30-14-19-56.363443/logs\nnodeB backup]#\n</code></pre>\n<p>So do we need to create backup directories on all nodes in the cluster?<br>\nThanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-11-30T06:41:20.926Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 13,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 68.0,
+        "yours": false,
+        "topic_id": 4267,
+        "topic_slug": "will-executing-fdbbackup-on-a-certain-node-create-backup-files-for-all-nodes",
+        "display_username": "BoLee",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1175,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/will-executing-fdbbackup-on-a-certain-node-create-backup-files-for-all-nodes/4267/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      13560
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      692
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Will executing fdbbackup on a certain node create backup files for all nodes?",
+  "id": 4267,
+  "title": "Will executing fdbbackup on a certain node create backup files for all nodes?",
+  "posts_count": 1,
+  "created_at": "2023-11-30T06:41:20.862Z",
+  "views": 194,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-11-30T06:41:20.926Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "will-executing-fdbbackup-on-a-certain-node-create-backup-files-for-all-nodes",
+  "category_id": 7,
+  "word_count": 499,
+  "deleted_at": null,
+  "user_id": 1175,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4267",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Backup /restore fdb",
+      "id": 1637,
+      "title": "Backup /restore fdb",
+      "slug": "backup-restore-fdb",
+      "posts_count": 22,
+      "reply_count": 17,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2019-09-19T17:04:18.878Z",
+      "last_posted_at": "2019-10-05T04:45:51.663Z",
+      "bumped": true,
+      "bumped_at": "2019-10-05T04:45:51.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2729,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "[RESOLVED?] Fdbbackup &lsquo;Platform error&rsquo; on &lsquo;file_backup_write_range&rsquo;",
+      "id": 412,
+      "title": "[RESOLVED?] Fdbbackup 'Platform error' on 'file_backup_write_range'",
+      "slug": "resolved-fdbbackup-platform-error-on-file-backup-write-range",
+      "posts_count": 9,
+      "reply_count": 6,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-14T13:43:20.133Z",
+      "last_posted_at": "2018-05-17T00:24:36.294Z",
+      "bumped": true,
+      "bumped_at": "2018-05-17T00:24:36.294Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2465,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDBbackup does not create backup files and backup_worker_enabled flag is always zero",
+      "id": 3446,
+      "title": "FDBbackup does not create backup files and backup_worker_enabled flag is always zero",
+      "slug": "fdbbackup-does-not-create-backup-files-and-backup-worker-enabled-flag-is-always-zero",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2022-07-11T23:27:34.152Z",
+      "last_posted_at": "2022-07-16T05:09:34.566Z",
+      "bumped": true,
+      "bumped_at": "2022-07-16T05:09:34.566Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 357,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 915,
+            "username": "skr1942",
+            "name": "srai",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9f8e36/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB creates 2 backup folders",
+      "id": 3272,
+      "title": "FDB creates 2 backup folders",
+      "slug": "fdb-creates-2-backup-folders",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2022-04-19T23:55:18.944Z",
+      "last_posted_at": "2022-04-25T20:21:48.502Z",
+      "bumped": true,
+      "bumped_at": "2022-04-25T20:21:48.502Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 477,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1090,
+            "username": "OIanchevskyi",
+            "name": "Ianchevskyi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/oianchevskyi/{size}/1314_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to get a simple backup to local folder working?",
+      "id": 2694,
+      "title": "How to get a simple backup to local folder working?",
+      "slug": "how-to-get-a-simple-backup-to-local-folder-working",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2021-05-10T18:56:39.929Z",
+      "last_posted_at": "2021-05-13T15:12:34.981Z",
+      "bumped": true,
+      "bumped_at": "2021-05-13T15:12:34.981Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 650,
+      "category_id": 11,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 865,
+            "username": "manish-2014",
+            "name": "Manish Sharan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manish-2014/{size}/1002_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1175,
+        "username": "libo-sober",
+        "name": "BoLee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1175,
+      "username": "libo-sober",
+      "name": "BoLee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png"
+    },
+    "last_poster": {
+      "id": 1175,
+      "username": "libo-sober",
+      "name": "BoLee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png"
+    }
+  },
+  "bookmarks": []
+}

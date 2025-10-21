@@ -1,0 +1,563 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9890,
+        "name": "Matias Holte",
+        "username": "matiasholte",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+        "created_at": "2021-08-19T22:17:42.996Z",
+        "cooked": "<p>Hi!<br>\nI tried to restore from backup, and it kept crashing with <em>out of memory</em> errors.<br>\nIs there something wrong, when the <strong>fdbrestore start</strong> command consumes so much memory?<br>\nI then added the parameter <strong>-m 32GB</strong> to make it use all the memory on the kubernetes pod, and it worked, but the memory consumption is still a bit worrisome. Here is a plot of the memory consumption of the pod:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a.png\" data-download-href=\"/uploads/short-url/pSBvYyQaXEo6fzsRrWc2aDapwGm.png?dl=1\" title=\"Screen Shot 2021-08-20 at 00.14.59\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a_2_690x266.png\" alt=\"Screen Shot 2021-08-20 at 00.14.59\" data-base62-sha1=\"pSBvYyQaXEo6fzsRrWc2aDapwGm\" width=\"690\" height=\"266\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a_2_690x266.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a_2_1035x399.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a_2_1380x532.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">Screen Shot 2021-08-20 at 00.14.59</span><span class=\"informations\">2394\u00d7924 137 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>As you can see, the fdbrestore command use increasingly more memory, while it goes through the snapshot files. After it is done with loading the files, the memory consumption doubles from 6.5 GB to over 12 GB. It then spends some more time, before the job is submitted successfully.</p>\n<p>Is there any rule of thumb to how much memory is needed for a restore? Are there any parameters that I can set, to prevent the process from crashing when it\u2019s about to run out of memory? Is the memory consumption similar for the <strong>fdbrestore start</strong> command and the backup_workers?</p>\n<p>About the backup:<br>\nIt has about 150 snapshots, and I restore to the last one. The backups and backup_workers are manually created in kubernetes (not through the fdb kubernetes operator), and they are stored in azure blobstore through a minio gateway.</p>\n<details>\n<summary>\nSummary</summary>\n<p>root@foundationdb-cluster-1-backup-agent-7cfc4d6766-hqfcw:/var/fdb# fdbbackup describe -d \u2018blobstore://minio:minio-password@minio-gateway.namespace.svc:9000/automatic_backups/2021-03-09T13-16-06?bucket=foundationdb-backup-container&amp;sc=0\u2019<br>\nURL: blobstore://minio:minio-password@minio-gateway.namespace.svc:9000/automatic_backups/2021-03-09T13-16-06?bucket=foundationdb-backup-container&amp;sc=0<br>\nRestorable: true<br>\nPartitioned logs: false<br>\nSnapshot:  startVersion=11731745327769 (maxLogEnd -156.43 days)  endVersion=11734122762318 (maxLogEnd -156.40 days)  totalBytes=252527533240  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=11734160964163 (maxLogEnd -156.40 days)  endVersion=11820500498719 (maxLogEnd -155.40 days)  totalBytes=252891816480  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=11820519590803 (maxLogEnd -155.40 days)  endVersion=11906900438547 (maxLogEnd -154.40 days)  totalBytes=253513185920  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=11906916670234 (maxLogEnd -154.40 days)  endVersion=11993301498494 (maxLogEnd -153.40 days)  totalBytes=254118333398  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=11993346138257 (maxLogEnd -153.40 days)  endVersion=12079703061873 (maxLogEnd -152.40 days)  totalBytes=254838641940  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12079735505227 (maxLogEnd -152.40 days)  endVersion=12166046799044 (maxLogEnd -151.40 days)  totalBytes=255490937686  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12166053160915 (maxLogEnd -151.40 days)  endVersion=12252441567280 (maxLogEnd -150.40 days)  totalBytes=256079635391  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12252453395368 (maxLogEnd -150.40 days)  endVersion=12338845736534 (maxLogEnd -149.40 days)  totalBytes=256736496240  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12338890100819 (maxLogEnd -149.40 days)  endVersion=12425230802770 (maxLogEnd -148.40 days)  totalBytes=257463135944  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12425289592213 (maxLogEnd -148.40 days)  endVersion=12511620834210 (maxLogEnd -147.40 days)  totalBytes=258060783359  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12511637560462 (maxLogEnd -147.40 days)  endVersion=12598028105481 (maxLogEnd -146.40 days)  totalBytes=258646285433  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12598042681198 (maxLogEnd -146.40 days)  endVersion=12684427639744 (maxLogEnd -145.40 days)  totalBytes=259234303318  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12684453159580 (maxLogEnd -145.40 days)  endVersion=12770828779823 (maxLogEnd -144.40 days)  totalBytes=259795394429  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12770840424098 (maxLogEnd -144.40 days)  endVersion=12857230245095 (maxLogEnd -143.40 days)  totalBytes=260352477859  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12857245023263 (maxLogEnd -143.40 days)  endVersion=12943628400600 (maxLogEnd -142.40 days)  totalBytes=260919599811  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=12943661239352 (maxLogEnd -142.40 days)  endVersion=13030028070217 (maxLogEnd -141.40 days)  totalBytes=261499429897  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13030041899928 (maxLogEnd -141.40 days)  endVersion=13116437485829 (maxLogEnd -140.40 days)  totalBytes=262142534900  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13116441067552 (maxLogEnd -140.40 days)  endVersion=13202841354223 (maxLogEnd -139.40 days)  totalBytes=262876472326  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13202861719993 (maxLogEnd -139.40 days)  endVersion=13289246244577 (maxLogEnd -138.40 days)  totalBytes=269301097485  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13289260421117 (maxLogEnd -138.40 days)  endVersion=13375641240453 (maxLogEnd -137.40 days)  totalBytes=270174981567  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13375655115655 (maxLogEnd -137.40 days)  endVersion=13462033154859 (maxLogEnd -136.40 days)  totalBytes=270969851922  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13462065429466 (maxLogEnd -136.40 days)  endVersion=13548434643786 (maxLogEnd -135.40 days)  totalBytes=293492539339  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13548454861068 (maxLogEnd -135.40 days)  endVersion=13634848498290 (maxLogEnd -134.40 days)  totalBytes=308456744309  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13634853638519 (maxLogEnd -134.40 days)  endVersion=13721244352297 (maxLogEnd -133.40 days)  totalBytes=309020902010  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13721260508692 (maxLogEnd -133.40 days)  endVersion=13807627886089 (maxLogEnd -132.40 days)  totalBytes=309588867080  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13807633282601 (maxLogEnd -132.40 days)  endVersion=13893997875890 (maxLogEnd -131.40 days)  totalBytes=310137336185  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13894013082090 (maxLogEnd -131.40 days)  endVersion=13980387561161 (maxLogEnd -130.40 days)  totalBytes=310695211726  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=13980402918753 (maxLogEnd -130.40 days)  endVersion=14066780096295 (maxLogEnd -129.40 days)  totalBytes=311253720357  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14066785446590 (maxLogEnd -129.40 days)  endVersion=14153184344948 (maxLogEnd -128.40 days)  totalBytes=311812064319  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14153226748866 (maxLogEnd -128.40 days)  endVersion=14239592282074 (maxLogEnd -127.40 days)  totalBytes=312376559566  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14239603460752 (maxLogEnd -127.40 days)  endVersion=14325978499551 (maxLogEnd -126.40 days)  totalBytes=312970616532  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14325993458821 (maxLogEnd -126.40 days)  endVersion=14412387030602 (maxLogEnd -125.40 days)  totalBytes=313564668730  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14412405495076 (maxLogEnd -125.40 days)  endVersion=14498788715685 (maxLogEnd -124.40 days)  totalBytes=314138941164  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14498799548400 (maxLogEnd -124.40 days)  endVersion=14585190211961 (maxLogEnd -123.40 days)  totalBytes=314716224786  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14585212715014 (maxLogEnd -123.40 days)  endVersion=14671591320447 (maxLogEnd -122.40 days)  totalBytes=315273270441  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14671604803133 (maxLogEnd -122.40 days)  endVersion=14758000758745 (maxLogEnd -121.40 days)  totalBytes=315865090661  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14758005262414 (maxLogEnd -121.40 days)  endVersion=14844400212887 (maxLogEnd -120.40 days)  totalBytes=316446994143  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14844403495889 (maxLogEnd -120.40 days)  endVersion=14930793539418 (maxLogEnd -119.40 days)  totalBytes=317040183866  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=14930811279669 (maxLogEnd -119.40 days)  endVersion=15017192722651 (maxLogEnd -118.40 days)  totalBytes=317627823576  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15017210186474 (maxLogEnd -118.40 days)  endVersion=15103599194987 (maxLogEnd -117.40 days)  totalBytes=324040950139  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15103653885336 (maxLogEnd -117.40 days)  endVersion=15189993534137 (maxLogEnd -116.40 days)  totalBytes=324857501914  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15190012278855 (maxLogEnd -116.40 days)  endVersion=15276386552042 (maxLogEnd -115.40 days)  totalBytes=325425920340  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15276405507150 (maxLogEnd -115.40 days)  endVersion=15362787680713 (maxLogEnd -114.40 days)  totalBytes=332548795588  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15362836411606 (maxLogEnd -114.40 days)  endVersion=15449191198299 (maxLogEnd -113.40 days)  totalBytes=390226306999  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15449203172639 (maxLogEnd -113.40 days)  endVersion=15535592524900 (maxLogEnd -112.40 days)  totalBytes=475494284317  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15535601705897 (maxLogEnd -112.40 days)  endVersion=15622001843269 (maxLogEnd -111.40 days)  totalBytes=506584639875  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15622011345547 (maxLogEnd -111.40 days)  endVersion=15708408333698 (maxLogEnd -110.40 days)  totalBytes=519168886430  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15708436258014 (maxLogEnd -110.40 days)  endVersion=15794813800860 (maxLogEnd -109.40 days)  totalBytes=523604889011  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15794816109790 (maxLogEnd -109.40 days)  endVersion=15881212870721 (maxLogEnd -108.40 days)  totalBytes=528164631920  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15881228253276 (maxLogEnd -108.40 days)  endVersion=15967632510438 (maxLogEnd -107.40 days)  totalBytes=611572513604  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=15967652308092 (maxLogEnd -107.40 days)  endVersion=16054095880374 (maxLogEnd -106.40 days)  totalBytes=816858501407  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16054099720521 (maxLogEnd -106.40 days)  endVersion=16140554110117 (maxLogEnd -105.40 days)  totalBytes=1121532737270  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16140573572366 (maxLogEnd -105.40 days)  endVersion=16226991536207 (maxLogEnd -104.40 days)  totalBytes=1543840643634  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16227000873899 (maxLogEnd -104.40 days)  endVersion=16313537230731 (maxLogEnd -103.40 days)  totalBytes=2142739747641  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16313546107224 (maxLogEnd -103.40 days)  endVersion=16400097505796 (maxLogEnd -102.39 days)  totalBytes=2866110328352  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16400133929793 (maxLogEnd -102.39 days)  endVersion=16487223466148 (maxLogEnd -101.39 days)  totalBytes=3545749630189  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16487242316409 (maxLogEnd -101.39 days)  endVersion=16579681908626 (maxLogEnd -100.32 days)  totalBytes=4183792717357  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16579709466301 (maxLogEnd -100.32 days)  endVersion=16670819331778 (maxLogEnd -99.26 days)  totalBytes=4464309526065  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16670836319492 (maxLogEnd -99.26 days)  endVersion=16766296370390 (maxLogEnd -98.16 days)  totalBytes=4598754051663  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16766333049506 (maxLogEnd -98.16 days)  endVersion=16876328824258 (maxLogEnd -96.88 days)  totalBytes=4839347455909  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16876383019371 (maxLogEnd -96.88 days)  endVersion=16992779693726 (maxLogEnd -95.54 days)  totalBytes=4979398808791  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=16992790883003 (maxLogEnd -95.54 days)  endVersion=17115863004080 (maxLogEnd -94.11 days)  totalBytes=5033542751969  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=17115910234894 (maxLogEnd -94.11 days)  endVersion=17232755430039 (maxLogEnd -92.76 days)  totalBytes=5053843769452  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=17232773708932 (maxLogEnd -92.76 days)  endVersion=17348061809338 (maxLogEnd -91.42 days)  totalBytes=5063994567053  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=17348113850577 (maxLogEnd -91.42 days)  endVersion=17474255611555 (maxLogEnd -89.96 days)  totalBytes=5092581687121  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=17474331977674 (maxLogEnd -89.96 days)  endVersion=17604857796120 (maxLogEnd -88.45 days)  totalBytes=5119946671087  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=17604907736734 (maxLogEnd -88.45 days)  endVersion=17742043439805 (maxLogEnd -86.86 days)  totalBytes=5144430792317  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=17742065980755 (maxLogEnd -86.86 days)  endVersion=17873284645601 (maxLogEnd -85.34 days)  totalBytes=5179207515655  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=17873338412000 (maxLogEnd -85.34 days)  endVersion=18008999876843 (maxLogEnd -83.77 days)  totalBytes=5239911569797  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=18009032454285 (maxLogEnd -83.77 days)  endVersion=18146026606230 (maxLogEnd -82.19 days)  totalBytes=5316028425317  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=18146108300513 (maxLogEnd -82.19 days)  endVersion=18301339110384 (maxLogEnd -80.39 days)  totalBytes=5382778848817  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=18301441455763 (maxLogEnd -80.39 days)  endVersion=18456947891725 (maxLogEnd -78.59 days)  totalBytes=5424303950495  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=18456965956585 (maxLogEnd -78.59 days)  endVersion=18615971098054 (maxLogEnd -76.75 days)  totalBytes=5502976931358  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=18615996371155 (maxLogEnd -76.75 days)  endVersion=18762602295377 (maxLogEnd -75.05 days)  totalBytes=5582112126416  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=18762618609934 (maxLogEnd -75.05 days)  endVersion=18913221863417 (maxLogEnd -73.31 days)  totalBytes=5591883984418  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=18914232158343 (maxLogEnd -73.30 days)  endVersion=19077741641109 (maxLogEnd -71.40 days)  totalBytes=5601038716302  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=19077758312349 (maxLogEnd -71.40 days)  endVersion=19302333804111 (maxLogEnd -68.80 days)  totalBytes=5576988430325  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=19302412963177 (maxLogEnd -68.80 days)  endVersion=19460600074137 (maxLogEnd -66.97 days)  totalBytes=5483241871794  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=19460655313049 (maxLogEnd -66.97 days)  endVersion=19628906138558 (maxLogEnd -65.02 days)  totalBytes=5374283361489  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=19629203682502 (maxLogEnd -65.02 days)  endVersion=19768007157750 (maxLogEnd -63.41 days)  totalBytes=5346827193749  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=19768111395262 (maxLogEnd -63.41 days)  endVersion=19876567354622 (maxLogEnd -62.16 days)  totalBytes=5319522641584  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=19876598156882 (maxLogEnd -62.16 days)  endVersion=19967011637686 (maxLogEnd -61.11 days)  totalBytes=5295602398478  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=19967042873669 (maxLogEnd -61.11 days)  endVersion=20054886155156 (maxLogEnd -60.09 days)  totalBytes=5271519115115  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20054920873715 (maxLogEnd -60.09 days)  endVersion=20158483954987 (maxLogEnd -58.90 days)  totalBytes=5169813215856  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20158581165359 (maxLogEnd -58.89 days)  endVersion=20273436422464 (maxLogEnd -57.56 days)  totalBytes=5051802384546  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20273502785376 (maxLogEnd -57.56 days)  endVersion=20390966313891 (maxLogEnd -56.20 days)  totalBytes=5052760521947  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20391201033587 (maxLogEnd -56.20 days)  endVersion=20511535540370 (maxLogEnd -54.81 days)  totalBytes=5053124033609  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20511682824554 (maxLogEnd -54.81 days)  endVersion=20631454304465 (maxLogEnd -53.42 days)  totalBytes=5053955773484  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20631551006356 (maxLogEnd -53.42 days)  endVersion=20749193331794 (maxLogEnd -52.06 days)  totalBytes=5054897471478  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20749266280189 (maxLogEnd -52.06 days)  endVersion=20872091040292 (maxLogEnd -50.64 days)  totalBytes=5055365426876  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20872168841495 (maxLogEnd -50.63 days)  endVersion=20991808342341 (maxLogEnd -49.25 days)  totalBytes=5056404732443  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=20991913329083 (maxLogEnd -49.25 days)  endVersion=21115387831179 (maxLogEnd -47.82 days)  totalBytes=5057077284565  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21115550050045 (maxLogEnd -47.82 days)  endVersion=21238537677177 (maxLogEnd -46.39 days)  totalBytes=5057989528623  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21238679249916 (maxLogEnd -46.39 days)  endVersion=21361180358438 (maxLogEnd -44.98 days)  totalBytes=5058740762426  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21361269740530 (maxLogEnd -44.97 days)  endVersion=21485617301504 (maxLogEnd -43.53 days)  totalBytes=5059564621510  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21485719721082 (maxLogEnd -43.53 days)  endVersion=21610887228404 (maxLogEnd -42.08 days)  totalBytes=5060389159031  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21611040864360 (maxLogEnd -42.08 days)  endVersion=21736447765313 (maxLogEnd -40.63 days)  totalBytes=5061254379075  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21736598737723 (maxLogEnd -40.63 days)  endVersion=21860660330604 (maxLogEnd -39.19 days)  totalBytes=5062116722496  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21860808839976 (maxLogEnd -39.19 days)  endVersion=21984852075899 (maxLogEnd -37.76 days)  totalBytes=5062970735341  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=21984903097687 (maxLogEnd -37.76 days)  endVersion=22106399359675 (maxLogEnd -36.35 days)  totalBytes=5064259439325  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=22106552729011 (maxLogEnd -36.35 days)  endVersion=22226784675528 (maxLogEnd -34.96 days)  totalBytes=5065115810513  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=22226890459491 (maxLogEnd -34.96 days)  endVersion=22349967848443 (maxLogEnd -33.53 days)  totalBytes=5065952889989  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=22350023357913 (maxLogEnd -33.53 days)  endVersion=22477101217459 (maxLogEnd -32.06 days)  totalBytes=5066346219388  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=22477229773859 (maxLogEnd -32.06 days)  endVersion=22609187225012 (maxLogEnd -30.53 days)  totalBytes=5066847447863  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=22609332826751 (maxLogEnd -30.53 days)  endVersion=22742942066841 (maxLogEnd -28.98 days)  totalBytes=5067779806464  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=22743030716419 (maxLogEnd -28.98 days)  endVersion=22877513113472 (maxLogEnd -27.42 days)  totalBytes=5068634242955  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=22877658827306 (maxLogEnd -27.42 days)  endVersion=23011533405248 (maxLogEnd -25.87 days)  totalBytes=5069583594624  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23011605070978 (maxLogEnd -25.87 days)  endVersion=23144646393644 (maxLogEnd -24.33 days)  totalBytes=5070503452880  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23144798776991 (maxLogEnd -24.33 days)  endVersion=23279651330799 (maxLogEnd -22.77 days)  totalBytes=5071350374989  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23279794973952 (maxLogEnd -22.77 days)  endVersion=23415695145935 (maxLogEnd -21.20 days)  totalBytes=5072196247230  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23415767829179 (maxLogEnd -21.20 days)  endVersion=23552256521675 (maxLogEnd -19.62 days)  totalBytes=5073011068653  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23552425481385 (maxLogEnd -19.61 days)  endVersion=23687005002607 (maxLogEnd -18.06 days)  totalBytes=5074104213567  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23687080955208 (maxLogEnd -18.05 days)  endVersion=23821589945222 (maxLogEnd -16.50 days)  totalBytes=5075013990556  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23821671790029 (maxLogEnd -16.50 days)  endVersion=23957780872814 (maxLogEnd -14.92 days)  totalBytes=5075836103460  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=23957873967388 (maxLogEnd -14.92 days)  endVersion=24093482235160 (maxLogEnd -13.35 days)  totalBytes=5076802489867  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=24093568699163 (maxLogEnd -13.35 days)  endVersion=24229240929686 (maxLogEnd -11.78 days)  totalBytes=5077775385137  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=24229325915994 (maxLogEnd -11.78 days)  endVersion=24362045585286 (maxLogEnd -10.24 days)  totalBytes=5078788553463  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=24362140716974 (maxLogEnd -10.24 days)  endVersion=24497472793947 (maxLogEnd -8.68 days)  totalBytes=5079589443496  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=24497567752092 (maxLogEnd -8.67 days)  endVersion=24636878770286 (maxLogEnd -7.06 days)  totalBytes=5080452708946  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=24637057474187 (maxLogEnd -7.06 days)  endVersion=24940984872699 (maxLogEnd -3.54 days)  totalBytes=5082359788221  restorable=true  expiredPct=0.00<br>\nSnapshot:  startVersion=24941502016764 (maxLogEnd -3.54 days)  endVersion=25138402762171 (maxLogEnd -1.26 days)  totalBytes=5083914409298  restorable=true  expiredPct=0.00<br>\nSnapshotBytes: 360657245910048<br>\nMinLogBeginVersion:      11731745119538 (maxLogEnd -156.43 days)<br>\nContiguousLogEndVersion: 25247024247494 (maxLogEnd -0.00 days)<br>\nMaxLogEndVersion:        25247024247494 (maxLogEnd -0.00 days)<br>\nMinRestorableVersion:    11734122762318 (maxLogEnd -156.40 days)<br>\nMaxRestorableVersion:    25247024247493 (maxLogEnd -0.00 days)</p>\n</details>\n<p>A separate issue was when the restore failed after a 499 error code, and it did not retry. Are there parameters to retry errors like 499?</p>\n<pre><code class=\"lang-auto\">fdbrestore start -t continuous -r 'blobstore://minio:minio-password@minio-gateway.namespace.svc:9000/automatic_backups/2021-03-09T13-16-06?bucket=foundationdb-backup-container&amp;sc=0' --dest_cluster_file /var/dynamic-conf/cluster-file -v 25246000000000 -n --knob_http_verbose_level=1\n</code></pre>\n<details>\n<summary>\nDebug logs</summary>\n<p>[9b67766ce9fcf50dc39596e6a1258014] HTTP code=499 early=0, time=0.193128s GET /foundationdb-backup-container/?max-keys=1000&amp;prefix=data/automatic_backups/2021-03-09T13-16-06/kvranges/snapshot.000023011600418151/50/&amp;delimiter=/&amp;marker=data/automatic_backups/2021-03-09T13-16-06/kvranges/snapshot.000023011600418151/50/range,23080921056124,236cf1ffc38fd7471f0635f9964731a2,1048576 contentLen=0 [476 out, response content len 347]</p>\n<p>followed by a bunch of these and a crash \u201cHTTP response code not received or indicated failure\u201d</p>\n<p>[c8c8a27ae92db4aadb9d47ecf3d9db6f] HTTP <em>ERROR</em>=operation_cancelled early=0, time=0.970043s GET /foundationdb-backup-container/?max-keys=1000&amp;prefix=data/automatic_backups/2021-03-09T13-16-06/kvranges/snapshot.000023011600418151/0/&amp;delimiter=/&amp;marker=data/automatic_backups/2021-03-09T13-16-06/kvranges/snapshot.000023011600418151/0/range,23013049665647,e9c3393a8ef2ae3e842d3ba0444192f9,1048576 contentLen=0 [474 out]</p>\n</details>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2021-08-19T22:17:42.996Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 40,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 220.0,
+        "yours": false,
+        "topic_id": 2855,
+        "topic_slug": "out-of-memory-in-fdbrestore",
+        "display_username": "Matias Holte",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a.png",
+            "internal": false,
+            "reflection": false,
+            "title": "b56286f825431dfd3a27e0f585ec4ee23bbf8a3a.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 746,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/out-of-memory-in-fdbrestore/2855/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      9890
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1524
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Out of memory in fdbrestore",
+  "id": 2855,
+  "title": "Out of memory in fdbrestore",
+  "posts_count": 1,
+  "created_at": "2021-08-19T22:17:42.885Z",
+  "views": 502,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2021-08-19T22:17:42.996Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "out-of-memory-in-fdbrestore",
+  "category_id": 7,
+  "word_count": 2927,
+  "deleted_at": null,
+  "user_id": 746,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a_2_1024x395.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2855",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 2394,
+      "height": 924,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 395,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/b/b56286f825431dfd3a27e0f585ec4ee23bbf8a3a_2_1024x395.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Fdb restore started but stuck at some point, was error &rdquo;Task execution stopped due to timeout, abort, or completion by another worker&rsquo;",
+      "id": 2966,
+      "title": "Fdb restore started but stuck at some point, was error ''Task execution stopped due to timeout, abort, or completion by another worker'",
+      "slug": "fdb-restore-started-but-stuck-at-some-point-was-error-task-execution-stopped-due-to-timeout-abort-or-completion-by-another-worker",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2021-10-25T14:00:00.928Z",
+      "last_posted_at": "2023-02-23T20:33:03.997Z",
+      "bumped": true,
+      "bumped_at": "2023-06-06T11:09:48.946Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 646,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 994,
+            "username": "maxim",
+            "name": "maxim ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/maxim/{size}/1211_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB 6.3 performant restore",
+      "id": 2137,
+      "title": "FDB 6.3 performant restore",
+      "slug": "fdb-6-3-performant-restore",
+      "posts_count": 17,
+      "reply_count": 8,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2020-05-27T06:16:38.330Z",
+      "last_posted_at": "2022-10-05T00:25:32.840Z",
+      "bumped": true,
+      "bumped_at": "2022-10-05T00:25:32.840Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2583,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 746,
+            "username": "matiasholte",
+            "name": "Matias Holte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "id": 1131,
+      "title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "slug": "fdbbackup-expire-with-blobstore-returning-error-not-deleting-from-s3",
+      "posts_count": 19,
+      "reply_count": 11,
+      "highest_post_number": 19,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/dc9b21297880928293b7194125f1889c26a4f70a_2_1024x579.png",
+      "created_at": "2019-02-12T22:55:17.346Z",
+      "last_posted_at": "2020-01-24T13:25:04.572Z",
+      "bumped": true,
+      "bumped_at": "2020-01-24T13:25:04.572Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2227,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 634,
+            "username": "somu",
+            "name": "somasundaram",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ce73a5/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Restore is slow and parallel restore doesn&rsquo;t achieve performance boost",
+      "id": 2128,
+      "title": "Restore is slow and parallel restore doesn't achieve performance boost",
+      "slug": "restore-is-slow-and-parallel-restore-doesnt-achieve-performance-boost",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-05-20T05:56:49.975Z",
+      "last_posted_at": "2020-05-23T04:17:19.585Z",
+      "bumped": true,
+      "bumped_at": "2020-05-23T04:17:19.585Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1398,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Large spikes in memory usage on storage processes, 6.0.18",
+      "id": 2115,
+      "title": "Large spikes in memory usage on storage processes, 6.0.18",
+      "slug": "large-spikes-in-memory-usage-on-storage-processes-6-0-18",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_1024x320.png",
+      "created_at": "2020-05-12T19:17:47.329Z",
+      "last_posted_at": "2020-05-12T21:58:14.570Z",
+      "bumped": true,
+      "bumped_at": "2020-05-12T21:58:14.570Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 582,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 746,
+        "username": "matiasholte",
+        "name": "Matias Holte",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 746,
+      "username": "matiasholte",
+      "name": "Matias Holte",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png"
+    },
+    "last_poster": {
+      "id": 746,
+      "username": "matiasholte",
+      "name": "Matias Holte",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png"
+    }
+  },
+  "bookmarks": []
+}

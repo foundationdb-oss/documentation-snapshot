@@ -1,0 +1,535 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 6863,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2020-04-29T21:39:42.217Z",
+        "cooked": "<p>I just finished a big refactoring of the Directory Layer implementation in the .NET binding, due to the need for adding metadata caching (to reduce the latency), and also make it easier to integrate with other layers that also have their own caching of metadata.</p>\n<p>I should preface by saying that I heavily use the Directory Layer for everything, and use a lot of directory partitions, usually nested in other partitions, and so the paths are usually long and require one or two \u201chops\u201d between partitions to resolve. Without any caching, this makes transactions very slow (DL by itself would require up to a dozen serialized reads just to know where the keys are!)</p>\n<p>All the points below are either annoyances that have bitten me one too many time (some of them since 2014!) or what I think are real issues that can compound with other bugs and cascade into outages or data corruptions.</p>\n<h3>Directory paths are untyped</h3>\n<p>Currently, most implementations of the Directory Layer take paths as vectors of strings, usually with a custom overload that take a single string.</p>\n<p>Ex:</p>\n<ul>\n<li>\n<code>x.TryOpen(\"Foo\")</code> takes a string</li>\n<li>\n<code>x.TryOpen(new string[] { \"Foo\", \"Bar\", \"Baz\" })</code> array/vector</li>\n<li>\n<code>x.TryOpen(\"Foo\", \"Baz\", \"Baz\")</code> for languages that support the equivalent of <code>params string[]</code>\n</li>\n<li>\n<code>x.TryOpen(basePath.Append(\"Baz\"))</code> very common where layer is initialized with a base path, and will populate sub-directories as required.</li>\n</ul>\n<p>But in the mind of developers, directory paths are very similar to \u201cdisk\u201d folder paths, and they like to represent them as \u201c/Foo/Bar/Baz\u201d.</p>\n<p>It is very easy for someone to call <code>x.TryOpen(\"/Foo/Bar/Baz\")</code>, ending up with a single directory whose name is literaly <code>\"/Foo/Bar/Baz\"</code> with \u2018/\u2019 unrecognized.</p>\n<p>One way to deal with it is to not provide methods that take a single string, and force the caller to split the path into arrays/tuples.</p>\n<p>But for languages that support the \u201cparams string<span class=\"chcklst-box fa fa-square-o fa-fw\"></span>\u201d notation (compiler implicitly creating the array), calling <code>x.TryOpen(\"/Foo/Bar/Baz\")</code> would end up compiled as <code>x.TryOpen(new [] { \"/Foo/Bar/Baz\" })</code>, and back to square one.</p>\n<p>I think that the Directory Layer API should have is own \u201cPath\u201d type that models the notion of path as a list of \u201csegments\u201d, and have a set of factory methods on that type:</p>\n<pre><code class=\"lang-auto\">class FdbPath { \n   Segments[]  // holds the \"segments\"\n   FullName    // return the serialized path, like '/Foo/Bar/Baz'\n   Name        // return the last segment, like 'Baz'\n   [n]         // get the Nth segment (0-based)\n   Parent      // return the parent path (or nothing/error if top-level)\n   Append(..)  // return a new path with extra segments\n   Slice(..)   // return a sub-section of the path\n   ...\n   static Parse(\"/Foo/Bar/Baz\")\n   static Create(\"Foo\", \"Bar\", \"Baz\")\n}\n</code></pre>\n<h3>Relative vs Absolute paths</h3>\n<p>There are two main components that drive the Directory Layer:</p>\n<ul>\n<li>the <code>DirectoryLayer</code> instance itself which contains the code that read/mutates the <code>\\xFE</code> subspace.\n<ul>\n<li>This instance takes \u201cabsolute paths\u201d and walks the tree of nodes to find their prefix and layer id.</li>\n</ul>\n</li>\n<li>the <code>DirectorySubspace</code> instances that are returned, on the other hand, have methods the take <em>relative</em> paths</li>\n</ul>\n<p>Examples:</p>\n<pre><code class=\"lang-auto\">var folder = DirectoryLayer.CreateOrOpen(\"/Foo/Bar\") // take an absolute path\nAssert(folder.Path == \"/Foo/Bar\")\nvar child = folder.CreateOrOpen(\"Baz\")  // takes a relative path\nAssert(child.Path == \"/Foo/Bar/Baz\")\n</code></pre>\n<p>The current implementation of a directory path is a vector of strings, which does not encode the notion of \u201cabsolute\u201d vs \u201crelative. In regular \u201cdisk\u201d paths, we usually add a leading \u2018/\u2019 to distinguish between the two (\u201d/Foo/Bar\" vs \u201cFoo/Bar\u201d)</p>\n<p>When refactoring the Directory Layer to implement caching (and optimizing some of the internal implementation), this caused so many issues, like double concatenation that produces things like \u201c/Foo/Bar/Foo/Bar/Baz\u201d instead of \u201c/Foo/Bar/Bar\u201d.</p>\n<p><em>note: these are very similar to the kind of bugs one end up when attempting to combine file paths \u201cby hand\u201d</em></p>\n<p>I think that directory paths should be extended to have a flag \u201cAbsolute\u201d vs \u201cRelative\u201d, in order to distinguish them. When represented as a single string, it would simply add the leading \u2018/\u2019 or not.</p>\n<p>In the above Path type, we would add an \u201cIsAbsolute\u201d boolean flag, which would match the presence of the leading \u2018/\u2019.</p>\n<p>All methods for combining paths would make sure that the type is preserved and that some operations are forbidden (like added an absolute path to a relative path, \u2026)</p>\n<p>Then, all methods of the Directory Layer API could check the type of the path: the Directory Layer would only accept absolute paths, and the instance methods of directory subspaces would only accept relative paths OR absolute paths that are children of the subspace.</p>\n<p>Introducing this change would like reveal a lot of bugs, like code that \u201cworks\u201d because - by coincidence - it is passing relative paths to some object whose base path is \u2018/\u2019. This code would work until an admin change the base path to \u2018/Foo\u2019.</p>\n<h3>Paths do not carry the layer id of the parents</h3>\n<p>Paths to directories are only a vector of string, but do not carry the \u201cLayerId\u201d of the corresponding folders.</p>\n<p>This is a big issue when recursively creating parents directory that are located in partitions or using custom layer ids !</p>\n<p>ex:  <code>CreateOrOpen(\"/TopPartition/Some/Path/To/SomethingWithALayerId/Foo\", \"LayerForFoo\")</code></p>\n<p>Here, \u201cTopPartition\u201d is a directory partition (layerId = \u201cpartition\u201d) and \u201cSomethingWithALayerId\u201d has layer Id \u201cMyAwesomeLayer\u201d.</p>\n<p>If there was some maintenance done that ended up deleting the whole <code>TopPartition</code> partition, but some other tool wanted to create the <code>Foo</code> nested sub-directory, the code will recursively attempt to create all the parents. But since the method call only provide the layer id for the leaf, it will create both <code>TopPartition</code> and <code>SomethingWithALayerId</code> as regular folders.</p>\n<p>Then other code attempting to open these folders by specifying the correct layer id will fail (since these directories have an empty layer id). This is even more a problem for partitions because this will completely change the expectations of the administrateur (key prefix isolation!)</p>\n<p>To fix this:</p>\n<ul>\n<li>\n<ol>\n<li>Either we have to NOT recursively create missing parents, and throw if the parent is missing (caller has to ensure the path from the root is valid before creating a leaf)</li>\n</ol>\n</li>\n<li>OR, 2. we change the meaning of the directory path to be a vector of pairs (Name, LayerId) for each segment:\n<ul>\n<li>ex: <code>{ (\"TopPartition\", \"partition\"), (\"Some\",\"\"), (\"Path\", \"\"), (\"To\", \"\"), (\"SomethingWithALayerId\", \"MyAwesomeLayer\"), (\"Foo\", \"LayerForFoo\") }</code>\n</li>\n<li>that way, whenever we want to access or create any node traversed by the path, we know its layerId and can use that to create it if it is missing.</li>\n</ul>\n</li>\n</ul>\n<p>Solution 1 is the most simple to do for the binding, but may create issues at runtime for application developpers: they may forget to check the parent, or a parent could be removed at any time.</p>\n<p>Solution 2 seems to address the issue properly, but requires the application developper to know all the layer ids of all the parent folders.</p>\n<p>This may not be an issue, because for example in most of my code, layers are passed a \u201cbase\u201d folder, derived from the config, and will append their own sub-path to it, adding their own layer id when required.</p>\n<p>Since most people want to represent a path as a string, we can\u2019t simply join the segments with <code>/</code>, like <code>/TopPartition/Some/Path/To/SomethingWithALayerId/Foo</code> because it would loose the layer id.</p>\n<p>We could maybe represent it like <code>/TopPartition[partition]/Some/Path/To/SomethingWithALayerId[MyAwesomeLayer]/Foo[LayerForFoo]</code>, and add rules for escaping <code>[</code> if it is part of the name.</p>\n<p>There are cases when some code wants to traverse a path without bothering to check the layer ids, so maybe if \u2018[\u2026]\u2019 is present it means \u201ccheck that the layer id is equal to this\u201d, but when omitted it means \u201cdon\u2019t check\u201d</p>\n<p><strong>Open Questions</strong>:</p>\n<ul>\n<li>What is the best way to encode the layer, along side the name, in a path segment? Right know I\u2019m using <code>name[layer]</code> with rules to encode any [ or ] present in either the name or layer, but this seems a bit weird. I thought of using other separators, like <code>':'</code> or <code>';'</code> or <code>'!'</code> but there are legitimate uses of these in application, for ex when using IPv6 addresses as folder name (<code>::1</code>).</li>\n<li>It feels like the layer id is a mix between a content type (<code>application/foo</code>) and a file extension (<code>xxx.jpg</code>). I thought of using the <code>.</code> as a separator (<code>name.layer</code>) but again the dot is present in natural keys like IPv4 adresses, etc\u2026</li>\n</ul>\n<h3>List / TryList do not return the full path</h3>\n<p>This is a minor annoyance that I lived with for a long time, but the List/TryList methods usually only return the name of the sub-folders, not their path. They also don\u2019t return the layer id of the directory.</p>\n<p>The caller can simply add back the parent path to the resulting array, but this is more code and more memory allocations.</p>\n<p>I think that List/TryList should return the list of the absolute \u2018paths\u2019 of the children, and by extension include the layer ids of these.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2020-04-29T21:48:09.001Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 115,
+        "reads": 43,
+        "readers_count": 42,
+        "score": 583.6,
+        "yours": false,
+        "topic_id": 2096,
+        "topic_slug": "most-common-issues-or-annoyances-when-using-the-directory-layer",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/most-common-issues-or-annoyances-when-using-the-directory-layer/2096/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      6863
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2001
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Most common issues or annoyances when using the Directory Layer",
+  "id": 2096,
+  "title": "Most common issues or annoyances when using the Directory Layer",
+  "posts_count": 1,
+  "created_at": "2020-04-29T21:39:42.138Z",
+  "views": 685,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2020-04-29T21:39:42.217Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "most-common-issues-or-annoyances-when-using-the-directory-layer",
+  "category_id": 7,
+  "word_count": 1497,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2096",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Directory Layer specification",
+      "id": 1426,
+      "title": "Directory Layer specification",
+      "slug": "directory-layer-specification",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-05T09:53:02.603Z",
+      "last_posted_at": "2019-06-17T23:03:14.516Z",
+      "bumped": true,
+      "bumped_at": "2019-06-17T23:03:14.516Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1022,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions about the Directory partitions",
+      "id": 2514,
+      "title": "Questions about the Directory partitions",
+      "slug": "questions-about-the-directory-partitions",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-01-18T13:24:12.363Z",
+      "last_posted_at": "2021-01-25T12:20:22.847Z",
+      "bumped": true,
+      "bumped_at": "2021-01-25T12:20:22.847Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 883,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What&rsquo;s the purpose of the Directory layer?",
+      "id": 677,
+      "title": "What's the purpose of the Directory layer?",
+      "slug": "whats-the-purpose-of-the-directory-layer",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-09-02T20:58:11.436Z",
+      "last_posted_at": "2022-07-22T02:24:33.270Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T02:24:33.270Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 11,
+      "views": 6523,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1080,
+            "username": "knarayanan88",
+            "name": "Narayanan K",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/knarayanan88/{size}/1300_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Application design using Subspace and Tuple",
+      "id": 452,
+      "title": "Application design using Subspace and Tuple",
+      "slug": "application-design-using-subspace-and-tuple",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-22T21:46:43.537Z",
+      "last_posted_at": "2018-07-14T21:02:50.010Z",
+      "bumped": true,
+      "bumped_at": "2018-07-14T21:02:50.010Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 3678,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 317,
+            "username": "Lundin",
+            "name": "Pontus Lundin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/dfb087/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Directory Layer design document",
+      "id": 1538,
+      "title": "Directory Layer design document",
+      "slug": "directory-layer-design-document",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-26T19:30:02.034Z",
+      "last_posted_at": "2019-07-26T20:00:10.504Z",
+      "bumped": true,
+      "bumped_at": "2019-07-26T20:00:10.504Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1042,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 251,
+            "username": "George",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    }
+  },
+  "bookmarks": []
+}

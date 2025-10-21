@@ -1,0 +1,682 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 483,
+        "name": "Sam Pullara",
+        "username": "spullara",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+        "created_at": "2018-04-24T02:20:23.635Z",
+        "cooked": "<p>I\u2019ve been looking at this new mutation:</p>\n<p>Appends <code>param</code> to the end of the existing value already in the database at the given key (or creates the key and sets the value to <code>param</code> if the key is empty). This will only append the value if the final concatenated value size is less than or equal to the maximum value size (i.e., if it fits). WARNING: No error is surfaced back to the user if the final value is too large because the mutation will not be applied until after the transaction has been committed. Therefore, it is only safe to use this mutation type if one can guarantee that one will keep the total value size under the maximum size.</p>\n<p>Unlike the other mutations, this caveat seems incredibly limiting since I will have to check the length, possibly in another key though, before calling append. What kind of layer features do you expect could be implemented with this mutation type? Maybe tracking the size using watch off to the side and hoping?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-24T02:20:23.635Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 57,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 291.6,
+        "yours": false,
+        "topic_id": 234,
+        "topic_slug": "use-case-for-append-if-fits",
+        "display_username": "Sam Pullara",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 156,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/use-case-for-append-if-fits/234/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 485,
+        "name": "David Scherer",
+        "username": "dave",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+        "created_at": "2018-04-24T02:56:30.272Z",
+        "cooked": "<p>The motivating use case is/was high performance internal metrics collection.  See <a href=\"https://github.com/apple/foundationdb/blob/f2d9c169933287f2df5037069021ab1e990dbc50/fdbclient/MetricLogger.actor.cpp#L278\" rel=\"nofollow noopener\">MetricLogger.actor.cpp line 278</a>.  I\u2019m not sure, but I think that in this case the data model means that there is only one possible writer for the key, so that the writer knows exactly how long the value it\u2019s appending to is, and the use of an atomic operation is not the usual high concurrency but just reducing network communication overhead when appending a small value to a large one.  Even if you had to actually read the value in the transaction, you would still save the network and transaction logging bandwidth to write the entire value in a conventional compare-and-set.</p>\n<p>As you say, you could safely use it if some global invariant means that the length is a function of other things in the database you can check more cheaply (say, there are a bunch of keys that will always be the same length).  Or you could have a data model such that if the key hits the maximum length it isn\u2019t wrong (maybe you are updating a compact representation of data you have in a less compact form elsewhere, and your read code could go read the hard way if it detect that the value has overflowed).  Or some invariant could just make an overflow impossible in the first place.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-24T02:57:19.388Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 11.4,
+        "yours": false,
+        "topic_id": 234,
+        "topic_slug": "use-case-for-append-if-fits",
+        "display_username": "David Scherer",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/f2d9c169933287f2df5037069021ab1e990dbc50/fdbclient/MetricLogger.actor.cpp#L278",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/MetricLogger.actor.cpp at f2d9c169933287f2df5037069021ab1e990dbc50 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 22,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/use-case-for-append-if-fits/234/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 486,
+        "name": "Sam Pullara",
+        "username": "spullara",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+        "created_at": "2018-04-24T03:02:52.566Z",
+        "cooked": "<p>Ok, that is more or less what I expected. I suppose another nice use case would be cases where you know the period of the appends, their size and that the key is dependent on the timestamp such that you know it won\u2019t overflow.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-24T03:02:52.566Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 11.2,
+        "yours": false,
+        "topic_id": 234,
+        "topic_slug": "use-case-for-append-if-fits",
+        "display_username": "Sam Pullara",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 22,
+          "username": "dave",
+          "name": "David Scherer",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 156,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/use-case-for-append-if-fits/234/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      483,
+      485,
+      486
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2738
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Use case for append_if_fits?",
+  "id": 234,
+  "title": "Use case for append_if_fits?",
+  "posts_count": 3,
+  "created_at": "2018-04-24T02:20:23.505Z",
+  "views": 612,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2018-04-24T03:02:52.566Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "use-case-for-append-if-fits",
+  "category_id": 7,
+  "word_count": 462,
+  "deleted_at": null,
+  "user_id": 156,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_234",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Why was APPEND_IF_FITS deprecated?",
+      "id": 4252,
+      "title": "Why was APPEND_IF_FITS deprecated?",
+      "slug": "why-was-append-if-fits-deprecated",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2023-11-24T16:45:00.376Z",
+      "last_posted_at": "2023-11-24T16:45:00.435Z",
+      "bumped": true,
+      "bumped_at": "2023-11-24T16:45:00.435Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 186,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 208,
+            "username": "cloudspeech",
+            "name": "Cloudspeech",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cloudspeech/{size}/330_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction size limit calculation",
+      "id": 811,
+      "title": "Transaction size limit calculation",
+      "slug": "transaction-size-limit-calculation",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-10-27T23:31:00.061Z",
+      "last_posted_at": "2019-01-26T01:12:16.191Z",
+      "bumped": true,
+      "bumped_at": "2019-01-26T01:12:16.191Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimizing a single large transaction ( 10,000 keys)",
+      "id": 1961,
+      "title": "Optimizing a single large transaction ( 10,000 keys)",
+      "slug": "optimizing-a-single-large-transaction-10-000-keys",
+      "posts_count": 12,
+      "reply_count": 10,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-02-17T13:36:55.355Z",
+      "last_posted_at": "2020-02-24T11:30:42.854Z",
+      "bumped": true,
+      "bumped_at": "2020-02-24T11:30:42.854Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2373,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Design document of internals &amp; storage?",
+      "id": 92,
+      "title": "Design document of internals & storage?",
+      "slug": "design-document-of-internals-storage",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-20T03:23:18.769Z",
+      "last_posted_at": "2018-04-20T18:45:52.668Z",
+      "bumped": true,
+      "bumped_at": "2018-04-20T18:45:52.668Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 2035,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 64,
+            "username": "zodvik",
+            "name": "Nikhil Bafna",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zodvik/{size}/469_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 68,
+            "username": "daverosenthal",
+            "name": "Dave Rosenthal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daverosenthal/{size}/51_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 4,
+            "username": "bbc",
+            "name": "Ben Collins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bbc/{size}/4_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why the 100KB max value size limit?",
+      "id": 2081,
+      "title": "Why the 100KB max value size limit?",
+      "slug": "why-the-100kb-max-value-size-limit",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2020-04-20T18:09:30.061Z",
+      "last_posted_at": "2020-04-21T10:59:34.523Z",
+      "bumped": true,
+      "bumped_at": "2020-04-21T10:59:34.523Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2917,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 156,
+        "username": "spullara",
+        "name": "Sam Pullara",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 22,
+        "username": "dave",
+        "name": "David Scherer",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 156,
+      "username": "spullara",
+      "name": "Sam Pullara",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png"
+    },
+    "last_poster": {
+      "id": 156,
+      "username": "spullara",
+      "name": "Sam Pullara",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/f2d9c169933287f2df5037069021ab1e990dbc50/fdbclient/MetricLogger.actor.cpp#L278",
+        "title": "foundationdb/MetricLogger.actor.cpp at f2d9c169933287f2df5037069021ab1e990dbc50 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 22,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

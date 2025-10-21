@@ -1,0 +1,754 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11755,
+        "name": "T T Rz879",
+        "username": "T-TRz879",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/t-trz879/{size}/1418_2.png",
+        "created_at": "2022-09-23T07:07:21.028Z",
+        "cooked": "<p>i want to code cas operation in mutate</p>\n<pre><code class=\"lang-auto\">  public void testCAS() throws InterruptedException {\n    Database db = fdb.open();\n    try (Transaction tr = db.createTransaction()) {\n      tr.clear(Tuple.from(\"count\").pack());\n      tr.commit().join();\n    }\n    CountDownLatch countDownLatch = new CountDownLatch(10);\n    for (int i = 0; i &lt; 10; i++) {\n      new Thread(\n              () -&gt; {\n                db.run(\n                    tr -&gt; {\n                      incrementCounter1(tr);\n                      return null;\n                    });\n                countDownLatch.countDown();\n              })\n          .start();\n    }\n    countDownLatch.await();\n    try (Transaction tr1 = db.createTransaction()) {\n      byte[] join = tr1.snapshot().get(Tuple.from(\"count\").pack()).join();\n      System.out.println(Tuple.fromBytes(join).getLong(0));\n    }\n  }\n\n  private void incrementCounter1(Transaction tr) {\n    byte[] join = tr.snapshot().get(Tuple.from(\"count\").pack()).join();\n    long counterValue = 0;\n    if (join != null) {\n      counterValue = Tuple.fromBytes(join).getLong(0);\n    }\n    tr.mutate(MutationType.ADD, Tuple.from(\"count\").pack(), Tuple.from(counterValue + 1).pack());\n  }\n</code></pre>\n<p>Actually,I have some problems\u2026<br>\nFinally, I want to get the value of count, but the returned byte array is [-46,10]</p>\n<pre><code class=\"lang-auto\">java.lang.IllegalArgumentException: Unknown tuple data type -46 at index 0\n\n\tat com.apple.foundationdb.tuple.TupleUtil.decode(TupleUtil.java:588)\n\tat com.apple.foundationdb.tuple.TupleUtil.unpack(TupleUtil.java:676)\n\tat com.apple.foundationdb.tuple.Tuple.fromBytes(Tuple.java:552)\n\tat com.apple.foundationdb.tuple.Tuple.fromBytes(Tuple.java:527)\n\tat com.trz.CRUDTest.testCAS(CRUDTest.java:229)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.lang.reflect.Method.invoke(Method.java:498)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)\n\tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)\n\tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)\n\tat org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)\n\tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)\n\tat org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)\n\tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)\n\tat org.junit.runners.ParentRunner.run(ParentRunner.java:309)\n\tat org.junit.runner.JUnitCore.run(JUnitCore.java:160)\n\tat com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:69)\n\tat com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38)\n\tat com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11)\n\tat com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35)\n\tat com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:235)\n\tat com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:54)\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-09-23T07:08:05.399Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 94,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 473.4,
+        "yours": false,
+        "topic_id": 3560,
+        "topic_slug": "how-can-i-use-mutate-in-java-client",
+        "display_username": "T T Rz879",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1158,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-can-i-use-mutate-in-java-client/3560/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11756,
+        "name": "Mike McMahon",
+        "username": "MMcM",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+        "created_at": "2022-09-23T16:34:47.208Z",
+        "cooked": "<p><code>MutationType.ADD</code> <a href=\"https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/MutationType.html#ADD\" rel=\"noopener nofollow ugc\">Javadoc</a>:</p>\n<blockquote>\n<p>Performs an addition of little-endian integers.</p>\n</blockquote>\n<p>There is no atomic mutation for Tuple-encoded integers.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-09-23T16:34:47.208Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 18.0,
+        "yours": false,
+        "topic_id": 3560,
+        "topic_slug": "how-can-i-use-mutate-in-java-client",
+        "display_username": "Mike McMahon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/MutationType.html#ADD",
+            "internal": false,
+            "reflection": false,
+            "title": "MutationType (FoundationDB Java Client API)",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 219,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-can-i-use-mutate-in-java-client/3560/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11759,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2022-09-26T15:29:51.283Z",
+        "cooked": "<p>You can see an example of how to use the ADD mutation in the <code>multimap</code> sample code: <a href=\"https://apple.github.io/foundationdb/multimaps-java.html\" class=\"inline-onebox\">Multimaps \u2014 FoundationDB 7.1</a></p>\n<p>It\u2019s a bit unfortunate that the atomic mutation uses a different serialization format from Tuples, and perhaps there\u2019s space for some kind of syntactic sugar in the Java API to do the conversion for you (for example, some kind of <code>void tr.add(byte[] key, long value)</code> and then I guess <code>long tr.getLong(byte[] key)</code>), but the sample code linked above uses a <code>ByteBuffer</code> to encode and decode in a compatible format.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-09-26T15:29:51.283Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 17.4,
+        "yours": false,
+        "topic_id": 3560,
+        "topic_slug": "how-can-i-use-mutate-in-java-client",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/multimaps-java.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Multimaps \u2014 FoundationDB 7.1",
+            "clicks": 15
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 219,
+          "username": "MMcM",
+          "name": "Mike McMahon",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-can-i-use-mutate-in-java-client/3560/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11755,
+      11756,
+      11759
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1125
+    ],
+    [
+      2,
+      1124
+    ],
+    [
+      3,
+      1121
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "How can i use mutate in Java Client",
+  "id": 3560,
+  "title": "How can i use mutate in Java Client",
+  "posts_count": 3,
+  "created_at": "2022-09-23T07:07:20.959Z",
+  "views": 484,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2022-09-26T15:29:51.283Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-can-i-use-mutate-in-java-client",
+  "category_id": 7,
+  "word_count": 564,
+  "deleted_at": null,
+  "user_id": 1158,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3560",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "What&rsquo;s new since 3.0.7 for the low level client API?",
+      "id": 79,
+      "title": "What's new since 3.0.7 for the low level client API?",
+      "slug": "whats-new-since-3-0-7-for-the-low-level-client-api",
+      "posts_count": 16,
+      "reply_count": 10,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2018-04-19T21:25:31.350Z",
+      "last_posted_at": "2018-04-28T11:31:44.605Z",
+      "bumped": true,
+      "bumped_at": "2018-04-28T11:31:44.605Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1223,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Failed to retrieve machine-readable status via the FoundationDB Java Client API",
+      "id": 1205,
+      "title": "Failed to retrieve machine-readable status via the FoundationDB Java Client API",
+      "slug": "failed-to-retrieve-machine-readable-status-via-the-foundationdb-java-client-api",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-03-07T10:44:33.338Z",
+      "last_posted_at": "2019-03-11T21:03:03.406Z",
+      "bumped": true,
+      "bumped_at": "2019-03-11T21:03:03.406Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1236,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 535,
+            "username": "st96d045",
+            "name": "Esteban S.",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/e99b99/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Java Hello World insert- fdbcli get Hello is not returning value",
+      "id": 291,
+      "title": "Java Hello World insert- fdbcli get Hello is not returning value",
+      "slug": "java-hello-world-insert-fdbcli-get-hello-is-not-returning-value",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-27T15:29:50.468Z",
+      "last_posted_at": "2018-04-29T17:50:50.229Z",
+      "bumped": true,
+      "bumped_at": "2018-04-29T21:14:09.076Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 3588,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 194,
+            "username": "nchiring",
+            "name": "Nitu Chiring",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/nchiring/{size}/154_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 11,
+            "username": "ral",
+            "name": "Richard Low",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f04885/{size}.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How can i use the operation of CAS in Java Client",
+      "id": 3543,
+      "title": "How can i use the operation of CAS in Java Client",
+      "slug": "how-can-i-use-the-operation-of-cas-in-java-client",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2022-09-07T06:10:46.124Z",
+      "last_posted_at": "2022-09-07T17:32:18.670Z",
+      "bumped": true,
+      "bumped_at": "2022-09-07T17:32:18.670Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 676,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1158,
+            "username": "T-TRz879",
+            "name": "T T Rz879",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/t-trz879/{size}/1418_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 219,
+        "username": "MMcM",
+        "name": "Mike McMahon",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1158,
+        "username": "T-TRz879",
+        "name": "T T Rz879",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/t-trz879/{size}/1418_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1158,
+      "username": "T-TRz879",
+      "name": "T T Rz879",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/t-trz879/{size}/1418_2.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/multimaps-java.html",
+        "title": "Multimaps \u2014 FoundationDB 7.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 8,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/MutationType.html#ADD",
+        "title": "MutationType (FoundationDB Java Client API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 219,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

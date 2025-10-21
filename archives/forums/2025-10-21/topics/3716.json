@@ -1,0 +1,687 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12179,
+        "name": "madianjun",
+        "username": "mdianjun",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png",
+        "created_at": "2023-01-03T08:09:57.086Z",
+        "cooked": "<p>I encountered a SIGSEGV error when calling fdb_run_network(), the stack is as follows:</p>\n<pre><code class=\"lang-auto\">Program terminated with signal SIGSEGV, Segmentation fault.\n#0  __GI_getenv (name=0x7f14dfc58ff0 \"B_TLS_CERTIFICATE_FILE\") at getenv.c:84\n84      getenv.c: No such file or directory.\n[Current thread is 1 (Thread 0x7f14cc876700 (LWP 28214))]\n(gdb) bt\n#0  __GI_getenv (name=0x7f14dfc58ff0 \"B_TLS_CERTIFICATE_FILE\") at getenv.c:84\n#1  0x00007f14df84b723 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#2  0x00007f14df86a3a0 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#3  0x00007f14df86d00c in fdb_transaction_set_option () from /lib/libfdb_c.so\n#4  0x00007f14df813a04 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#5  0x00007f14df2785de in fdb_transaction_set_option () from /lib/libfdb_c.so\n#6  0x00007f14df6c3228 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#7  0x00007f14df6c336b in fdb_transaction_set_option () from /lib/libfdb_c.so\n#8  0x00007f14df5f34d0 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#9  0x00007f14df81257e in fdb_transaction_set_option () from /lib/libfdb_c.so\n#10 0x00007f14df151ef2 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#11 0x00007f14df6bbbcf in fdb_transaction_set_option () from /lib/libfdb_c.so\n#12 0x00007f14df109b32 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#13 0x00007f14df0e5089 in fdb_run_network () from /lib/libfdb_c.so\n#14 0x0000559993b248d5 in runFdbNetwork ()\n#15 0x00007f14de0a7609 in start_thread (arg=&lt;optimized out&gt;) at pthread_create.c:477\n#16 0x00007f14dd5b8133 in clone () at ../sysdeps/unix/sysv/linux/x86_64/clone.S:95\n</code></pre>\n<p>There is a fdb parameter <code>FDB_TLS_CERTIFICATE_FILE</code>, but the stack shows <code>B_TLS_CERTIFICATE_FILE</code>.</p>\n<p>I referred to this issue <a href=\"https://github.com/grpc/grpc/issues/21990:\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Issues \u00b7 grpc/grpc \u00b7 GitHub</a></p>\n<blockquote>\n<p>it was a buffer overflow of the output variable.</p>\n</blockquote>\n<p>Please give me some suggestions, thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-01-03T08:11:13.017Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 76,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 384.4,
+        "yours": false,
+        "topic_id": 3716,
+        "topic_slug": "sigsegv-in-fdb-run-network",
+        "display_username": "madianjun",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/grpc/grpc/issues/21990:",
+            "internal": false,
+            "reflection": false,
+            "title": "Issues \u00b7 grpc/grpc \u00b7 GitHub",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1181,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/sigsegv-in-fdb-run-network/3716/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12620,
+        "name": "madianjun",
+        "username": "mdianjun",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png",
+        "created_at": "2023-03-22T07:30:07.975Z",
+        "cooked": "<aside class=\"onebox githubissue\" data-onebox-src=\"https://github.com/grpc/grpc/issues/21990\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/grpc/grpc/issues/21990\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com/grpc/grpc</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"github-row\">\n  <div class=\"github-icon-container\" title=\"Issue\">\n\t  <svg width=\"60\" height=\"60\" class=\"github-icon\" viewbox=\"0 0 14 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z\"></path></svg>\n  </div>\n\n  <div class=\"github-info-container\">\n    <h4>\n      <a href=\"https://github.com/grpc/grpc/issues/21990\" target=\"_blank\" rel=\"noopener nofollow ugc\">SIGSEGV at __GI_getenv (name= \"CALDOMAIN\") at getenv.c:84</a>\n    </h4>\n\n    <div class=\"github-info\">\n      <div class=\"date\">\n        opened <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2020-02-12\" data-time=\"05:53:40\" data-timezone=\"UTC\">05:53AM - 12 Feb 20 UTC</span>\n      </div>\n\n        <div class=\"date\">\n          closed <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2020-02-12\" data-time=\"06:14:16\" data-timezone=\"UTC\">06:14AM - 12 Feb 20 UTC</span>\n        </div>\n\n      <div class=\"user\">\n        <a href=\"https://github.com/syedtoah\" target=\"_blank\" rel=\"noopener nofollow ugc\">\n          <img alt=\"syedtoah\" src=\"https://global.discourse-cdn.com/foundationdb/original/2X/e/e6f8c64b524e45e15d22da6b96b720a00f2e9c20.png\" class=\"onebox-avatar-inline\" width=\"20\" height=\"20\">\n          syedtoah\n        </a>\n      </div>\n    </div>\n\n    <div class=\"labels\">\n    </div>\n  </div>\n</div>\n\n  <div class=\"github-row\">\n    <p class=\"github-body-container\">Hello All,\nI am seeing this seg fault, I have modified the existing example pro<span class=\"show-more-container\"><a href=\"\" rel=\"noopener\" class=\"show-more\">\u2026</a></span><span class=\"excerpt hidden\">gram and below is the details of my pgm and the proto file.\nCan you let me know what is the issue here? what am I doing wrong.\n\nBT\n\n```\nThread 1 \"mytest_async_clie\" received signal SIGSEGV, Segmentation fault.\n__GI_getenv (name=0x7ffff570eac1 \"CALDOMAIN\") at getenv.c:84\n84\tgetenv.c: No such file or directory.\n(gdb) where\n#0  __GI_getenv (name=0x7ffff570eac1 \"CALDOMAIN\") at getenv.c:84\n#1  0x00007ffff5706614 in ares_init_options () from /root/grpc/install/lib/libcares.so.2\n#2  0x00007ffff78a42a7 in grpc_ares_ev_driver_create_locked(grpc_ares_ev_driver**, grpc_pollset_set*, int, grpc_core::Combiner*, grpc_ares_request*) () from /root/grpc/install/lib/libgrpc.so.9\n#3  0x00007ffff78a54b4 in grpc_dns_lookup_ares_continue_after_check_localhost_and_ip_literals_locked(grpc_ares_request*, char const*, char const*, char const*, grpc_pollset_set*, int, grpc_core::Combiner*) ()\n   from /root/grpc/install/lib/libgrpc.so.9\n#4  0x00007ffff78a602f in ?? () from /root/grpc/install/lib/libgrpc.so.9\n#5  0x00007ffff78a2179 in ?? () from /root/grpc/install/lib/libgrpc.so.9\n#6  0x00007ffff7862f82 in grpc_core::ResolvingLoadBalancingPolicy::ResolvingLoadBalancingPolicy(grpc_core::LoadBalancingPolicy::Args, grpc_core::TraceFlag*, std::unique_ptr&lt;char, grpc_core::DefaultDeleteChar&gt;, bool (*)(void*, grpc_core::Resolver::Result const&amp;, char const**, grpc_core::RefCountedPtr&lt;grpc_core::LoadBalancingPolicy::Config&gt;*, grpc_error**), void*) () from /root/grpc/install/lib/libgrpc.so.9\n#7  0x00007ffff784f907 in ?? () from /root/grpc/install/lib/libgrpc.so.9\n#8  0x00007ffff77cac36 in grpc_combiner_continue_exec_ctx() () from /root/grpc/install/lib/libgrpc.so.9\n#9  0x00007ffff77d3ec3 in grpc_core::ExecCtx::Flush() () from /root/grpc/install/lib/libgrpc.so.9\n#10 0x00007ffff77f4eed in grpc_call_start_batch () from /root/grpc/install/lib/libgrpc.so.9\n#11 0x0000555555575f85 in grpc::internal::CallOpSet&lt;grpc::internal::CallOpSendInitialMetadata, grpc::internal::CallOpSendMessage, grpc::internal::CallOpClientSendClose, grpc::internal::CallOpRecvInitialMetadata, grpc::internal::CallOpRecvMessage&lt;benu_cp_pkts::ReceiveReport&gt;, grpc::internal::CallOpClientRecvStatus&gt;::ContinueFillOpsAfterInterception (this=0x5555557b6828)\n    at /root/grpc/install/include/grpcpp/impl/codegen/call_op_set.h:938\n#12 0x0000555555575d18 in grpc::internal::CallOpSet&lt;grpc::internal::CallOpSendInitialMetadata, grpc::internal::CallOpSendMessage, grpc::internal::CallOpClientSendClose, grpc::internal::CallOpRecvInitialMetadata, grpc::internal::CallOpRecvMessage&lt;benu_cp_pkts::ReceiveReport&gt;, grpc::internal::CallOpClientRecvStatus&gt;::FillOps (this=0x5555557b6828, call=0x5555557b67f0)\n    at /root/grpc/install/include/grpcpp/impl/codegen/call_op_set.h:868\n#13 0x0000555555566411 in grpc::internal::Call::PerformOps (this=0x5555557b67f0, ops=0x5555557b6828) at /root/grpc/install/include/grpcpp/impl/codegen/call.h:69\n#14 0x00005555555754ef in grpc_impl::ClientAsyncResponseReader&lt;benu_cp_pkts::ReceiveReport&gt;::Finish (this=0x5555557b67e0, msg=0x7fffffffd8f0, status=0x7fffffffd930, tag=0x1)\n    at /root/grpc/install/include/grpcpp/impl/codegen/async_unary_call_impl.h:150\n#15 0x000055555557a2fb in myTestCPClient::SendCPPacket (this=0x7fffffffdbc0, request=...) at benu_async_client.cc:100\n#16 0x0000555555579ab2 in main (argc=1, argv=0x7fffffffe488) at benu_async_client.cc:161\n\n```\nCode modified from greeter_async_client.cc\n\n```\n/*\n *\n * Copyright 2015 gRPC authors.\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n *     http://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an \"AS IS\" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n *\n */\n\n#include &lt;iostream&gt;\n#include &lt;memory&gt;\n#include &lt;string&gt;\n\n#include &lt;grpcpp/grpcpp.h&gt;\n#include &lt;grpc/support/log.h&gt;\n\n#ifdef BAZEL_BUILD\n#include \"examples/protos/helloworld.grpc.pb.h\"\n#else\n#include \"mytestTest.grpc.pb.h\"\n#endif\n\nusing grpc::Channel;\nusing grpc::ClientAsyncResponseReader;\nusing grpc::ClientContext;\nusing grpc::CompletionQueue;\nusing grpc::Status;\nusing mytest_cp_pkts::ReceiveReport;\nusing mytest_cp_pkts::CPProcessPkt;\nusing mytest_cp_pkts::CP_PACKETS_RX_TX;\nusing mytest_cp_pkts::PacketType;\nusing mytest_cp_pkts::EventType;\nusing mytest_cp_pkts::Report;\n\nclass myTestCPClient {\n public:\n  explicit myTestCPClient(std::shared_ptr&lt;Channel&gt; channel)\n      : stub_(CP_PACKETS_RX_TX::NewStub(channel)) {}\n\n  void string2hexString(char* input, char* output, size_t strLen)\n  {\n\t  int loop;\n\t  int i; \n\n\t  i=0;\n\t  loop=0;\n\n\t  //while(input[loop] != '\\0')\n\t  while(loop &lt; strLen)\n\t  {\n\t\t  sprintf((char*)(output+i),\"%02X\", input[loop]);\n\t\t  loop+=1;\n\t\t  i+=2;\n\t  }\n\t  //insert NULL at the end of the output string\n\t  output[i++] = '\\0';\n  }\n  // Assembles the client's payload, sends it and presents the response back\n  // from the server.\n  ReceiveReport * SendCPPacket(const CPProcessPkt&amp; request) {\n    // Data we are sending to the server.\n\n    // Container for the data we expect from the server.\n    //CPProcessPkt request;\n    ReceiveReport reply;\n\n    // Context for the client. It could be used to convey extra information to\n    // the server and/or tweak certain RPC behaviors.\n    ClientContext context;\n\n    // The producer-consumer queue we use to communicate asynchronously with the\n    // gRPC runtime.\n    CompletionQueue cq;\n\n    // Storage for the status of the RPC upon completion.\n    Status status;\n\n    // stub_-&gt;PrepareAsyncSayHello() creates an RPC object, returning\n    // an instance to store in \"call\" but does not actually start the RPC\n    // Because we are using the asynchronous API, we need to hold on to\n    // the \"call\" instance in order to get updates on the ongoing RPC.\n    std::unique_ptr&lt;ClientAsyncResponseReader&lt;ReceiveReport&gt; &gt; rpc(\n        stub_-&gt;PrepareAsyncPktRequest(&amp;context, request, &amp;cq));\n\n    // StartCall initiates the RPC call\n    rpc-&gt;StartCall();\n\n    // Request that, upon completion of the RPC, \"reply\" be updated with the\n    // server's response; \"status\" with the indication of whether the operation\n    // was successful. Tag the request with the integer 1.\n    rpc-&gt;Finish(&amp;reply, &amp;status, (void*)1);\n    void* got_tag;\n    bool ok = false;\n    // Block until the next result is available in the completion queue \"cq\".\n    // The return value of Next should always be checked. This return value\n    // tells us whether there is any kind of event or the cq_ is shutting down.\n    GPR_ASSERT(cq.Next(&amp;got_tag, &amp;ok));\n\n    // Verify that the result from \"cq\" corresponds, by its tag, our previous\n    // request.\n    GPR_ASSERT(got_tag == (void*)1);\n    // ... and that the request was completed successfully. Note that \"ok\"\n    // corresponds solely to the request for updates introduced by Finish().\n    GPR_ASSERT(ok);\n\n    // Act upon the status of the actual RPC.\n    if (status.ok()) {\n      return &amp;reply;\n    } else {\n      return NULL;\n    }\n  }\n\n private:\n  // Out of the passed in Channel comes the stub, stored here, our view of the\n  // server's exposed services.\n  std::unique_ptr&lt;CP_PACKETS_RX_TX::Stub&gt; stub_;\n};\n\nint main(int argc, char** argv) {\n  // Instantiate the client. It requires a channel, out of which the actual RPCs\n  // are created. This channel models a connection to an endpoint (in this case,\n  // localhost at port 50051). We indicate that the channel isn't authenticated\n  // (use of InsecureChannelCredentials()).\n  std::string server;                         \n  if (argc &gt;= 2)                              \n  {\n\t  server = argv[1] + std::string(\":50051\");\n  }\n  else                                        \n  {\n\t  server = \"localhost:50051\";              \n  }\n  myTestCPClient client(grpc::CreateChannel(\n      server.c_str(), grpc::InsecureChannelCredentials()));\n  char dhcp_req[] = \"0050568d52b1005056b561bc08004500017900010000402f5ef80aa000010d0c02b100006558ffffffffffff000003223341810000c808004500014f000100004011799e00000000ffffffff00440043013b00000101060001020304000000000000000000000000000000000000000000000322334100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000638253633501033604ac1c43013204ac1c430e5231011c30303a39303a38383a37373a36363a35363b4454482d535349443b6f021130303a39303a38383a37373a36363a3536ff\";\n\n  int dataLen = strlen(dhcp_req);\n\n  char output[1024] = {0};\n  client.string2hexString(dhcp_req, output, strlen(dhcp_req));\n\n  CPProcessPkt packet;\n\n  packet.set_packet_type(PacketType::DHCP);\n  packet.set_event(EventType::EVENT_NONE);\n  packet.set_dp_id(19);\n  packet.set_port_id(3);\n  packet.set_data(output);\n\n  std::string user(\"world\");\n  ReceiveReport *reply = client.SendCPPacket(packet);  // The actual RPC call!\n  std::cout &lt;&lt; \"CP_PACKETS_RX_TX received: \" &lt;&lt; reply-&gt;processed_pkt().port_id() &lt;&lt; \" dp: \" &lt;&lt; reply-&gt;processed_pkt().dp_id() &lt;&lt; std::endl;\n\n  return 0;\n}\n\n```\n\nmy proto file\n\n\n```\n// Copyright 2015 myTest\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//     http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\nsyntax = \"proto3\";\n\npackage myTest_cp_pkts;\n\n// Interface exported by the server.\nservice CP_PACKETS_RX_TX {\n  // A simple RPC.\n  //\n  // Sends the packet to and from CP and/or DP\n  rpc PktRequest(CPProcessPkt) returns (ReceiveReport) {}\n}\n\nenum PacketType {\n    DHCP = 0;\n\n    ARP = 1;\n\n    EVENT = 2;\n};\n\n// If PacketType is EVENT then the events can be of the following\n\nenum EventType {\n        EVENT_NONE = 0;\n};\n\nenum Report {\n    RECEIVE_OK = 0;\n\n    RECEIVE_FAIL = 1;\n};\n\nmessage CPProcessPkt {\n    PacketType packet_type = 1;\n\n    EventType event = 2;\n\n    int32 dp_id = 3;\n\n    int32 port_id = 4;\n\n    string data = 5;\n};\n\nmessage ReceiveReport {\n    Report report = 1;\n\n    CPProcessPkt processed_pkt = 2;\n};\n\n```</span></p>\n  </div>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-03-22T07:30:07.975Z",
+        "reply_count": 1,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 8.4,
+        "yours": false,
+        "topic_id": 3716,
+        "topic_slug": "sigsegv-in-fdb-run-network",
+        "display_username": "madianjun",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/grpc/grpc/issues/21990",
+            "internal": false,
+            "reflection": false,
+            "title": "SIGSEGV at __GI_getenv (name= \"CALDOMAIN\") at getenv.c:84 \u00b7 Issue #21990 \u00b7 grpc/grpc \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1181,
+          "username": "mdianjun",
+          "name": "madianjun",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1181,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/sigsegv-in-fdb-run-network/3716/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12621,
+        "name": "madianjun",
+        "username": "mdianjun",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png",
+        "created_at": "2023-03-22T07:31:32.080Z",
+        "cooked": "<p>This issue happens a lot:</p>\n<pre><code class=\"lang-auto\">(gdb) bt\n#0  __GI_getenv (name=0x7f192d2be022 \"B_TLS_VERIFY_PEERS\") at getenv.c:84\n#1  0x00007f192ceb0723 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#2  0x00007f192cecf910 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#3  0x00007f192ce7869e in fdb_transaction_set_option () from /lib/libfdb_c.so\n#4  0x00007f192c8dd5de in fdb_transaction_set_option () from /lib/libfdb_c.so\n#5  0x00007f192cd28228 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#6  0x00007f192cd2836b in fdb_transaction_set_option () from /lib/libfdb_c.so\n#7  0x00007f192cc584d0 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#8  0x00007f192ce7757e in fdb_transaction_set_option () from /lib/libfdb_c.so\n#9  0x00007f192c7b6ef2 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#10 0x00007f192cd20bcf in fdb_transaction_set_option () from /lib/libfdb_c.so\n#11 0x00007f192c76eb32 in fdb_transaction_set_option () from /lib/libfdb_c.so\n#12 0x00007f192c74a089 in fdb_run_network () from /lib/libfdb_c.so\n#13 0x000055579f696505 in runFdbNetwork ()\n#14 0x00007f192b465609 in start_thread (arg=&lt;optimized out&gt;) at pthread_create.c:477\n#15 0x00007f192a4db133 in clone () at ../sysdeps/unix/sysv/linux/x86_64/clone.S:95\n</code></pre>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-03-22T07:31:32.080Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 3.4,
+        "yours": false,
+        "topic_id": 3716,
+        "topic_slug": "sigsegv-in-fdb-run-network",
+        "display_username": "madianjun",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1181,
+          "username": "mdianjun",
+          "name": "madianjun",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1181,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/sigsegv-in-fdb-run-network/3716/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12179,
+      12620,
+      12621
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1023
+    ],
+    [
+      2,
+      945
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "SIGSEGV in fdb_run_network()",
+  "id": 3716,
+  "title": "SIGSEGV in fdb_run_network()",
+  "posts_count": 3,
+  "created_at": "2023-01-03T08:09:57.023Z",
+  "views": 436,
+  "reply_count": 3,
+  "like_count": 0,
+  "last_posted_at": "2023-03-22T07:31:32.080Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "sigsegv-in-fdb-run-network",
+  "category_id": 7,
+  "word_count": 381,
+  "deleted_at": null,
+  "user_id": 1181,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3716",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Run 7.2.0 fdbserver multitest has segmentation fault",
+      "id": 3743,
+      "title": "Run 7.2.0 fdbserver multitest has segmentation fault",
+      "slug": "run-7-2-0-fdbserver-multitest-has-segmentation-fault",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2023-01-18T13:47:46.362Z",
+      "last_posted_at": "2023-01-28T06:05:27.151Z",
+      "bumped": true,
+      "bumped_at": "2023-01-28T06:05:27.151Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 293,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 919,
+            "username": "Rjerk",
+            "name": "Rjerk",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjerk/{size}/1056_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Large spikes in memory usage on storage processes, 6.0.18",
+      "id": 2115,
+      "title": "Large spikes in memory usage on storage processes, 6.0.18",
+      "slug": "large-spikes-in-memory-usage-on-storage-processes-6-0-18",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_1024x320.png",
+      "created_at": "2020-05-12T19:17:47.329Z",
+      "last_posted_at": "2020-05-12T21:58:14.570Z",
+      "bumped": true,
+      "bumped_at": "2020-05-12T21:58:14.570Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 582,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FreeBSD support for FoundationDB",
+      "id": 357,
+      "title": "FreeBSD support for FoundationDB",
+      "slug": "freebsd-support-for-foundationdb",
+      "posts_count": 28,
+      "reply_count": 15,
+      "highest_post_number": 28,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/d398e4e4d091e9513c8c4b18d766da38a01f930e_2_1024x640.png",
+      "created_at": "2018-05-06T16:36:03.074Z",
+      "last_posted_at": "2018-08-01T02:53:16.728Z",
+      "bumped": true,
+      "bumped_at": "2018-08-01T02:53:16.728Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 4956,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 235,
+            "username": "wolfspider",
+            "name": "Jesse Bennett",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb seems keep reinitialising itself after client hang",
+      "id": 1437,
+      "title": "Foundationdb seems keep reinitialising itself after client hang",
+      "slug": "foundationdb-seems-keep-reinitialising-itself-after-client-hang",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-10T10:10:13.209Z",
+      "last_posted_at": "2019-06-26T18:08:03.629Z",
+      "bumped": true,
+      "bumped_at": "2019-06-26T18:08:03.629Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1222,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 602,
+            "username": "ppggff",
+            "name": "ppggff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ppggff/{size}/855_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "id": 516,
+      "title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "slug": "what-is-the-life-time-of-key-value-and-other-arguments-passed-to-fdb-transaction",
+      "posts_count": 11,
+      "reply_count": 4,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-06-18T18:28:57.904Z",
+      "last_posted_at": "2018-07-17T16:11:21.242Z",
+      "bumped": true,
+      "bumped_at": "2018-07-17T16:11:21.242Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2608,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1181,
+        "username": "mdianjun",
+        "name": "madianjun",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1181,
+      "username": "mdianjun",
+      "name": "madianjun",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png"
+    },
+    "last_poster": {
+      "id": 1181,
+      "username": "mdianjun",
+      "name": "madianjun",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mdianjun/{size}/1456_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/grpc/grpc/issues/21990",
+        "title": "SIGSEGV at __GI_getenv (name= \"CALDOMAIN\") at getenv.c:84 \u00b7 Issue #21990 \u00b7 grpc/grpc \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1181,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/grpc/grpc/issues/21990:",
+        "title": "Issues \u00b7 grpc/grpc \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 1181,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

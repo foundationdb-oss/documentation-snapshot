@@ -1,0 +1,672 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12485,
+        "name": "",
+        "username": "doublemax",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+        "created_at": "2023-02-23T20:56:12.758Z",
+        "cooked": "<p>Restoring a FDB backup fails after updating to FDB 7.1.</p>\n<p>Command line:</p>\n<pre><code class=\"lang-auto\">fdbrestore start --dest-cluster-file /etc/foundationdb/fdb.cluster -r file:///tmp/backup-2023-02-23-05-16-02.385417 --log\n</code></pre>\n<p><code>fdbrestore status</code> remains with <code>Blocks: 0/0</code>:</p>\n<pre><code class=\"lang-auto\">Tag: default  UID: e09b8486ccf722ebf0e69325cc8039a2  State: queued  Blocks: 0/0  BlocksInProgress: 0  Files: 0  BytesWritten: 0  CurrentVersion: -1 FirstConsistentVersion: 0  ApplyVersionLag: 0  LastError: None  URL: file:///tmp/backup-2023-02-23-05-16-02.385417  Range: ''-'\\xff'  AddPrefix: ''  RemovePrefix: ''  Version: 122929142753483\n</code></pre>\n<p>Logfile reports suspect <code>ConnectionTimedOut</code> errors:</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"10\" Time=\"1677185231.067122\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"Net2Starting\" ID=\"0000000000000000\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067845\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"ProgramStart\" ID=\"0000000000000000\" SourceVersion=\"dc4bd7ef6fcda345276073599ed6a2b28b089e90\" Version=\"7.1.27\" PackageName=\"7.1\" ActualTime=\"1677185231\" CommandLine=\"/usr/lib/foundationdb/backup_agent/backup_agent --cluster-file=/etc/foundationdb/fdb.cluster --logdir=/var/log/foundationdb\" MemoryLimit=\"8589934592\" ThreadID=\"9749452796639931957\" TrackLatestType=\"Original\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"ClientStart\" ID=\"0000000000000000\" SourceVersion=\"dc4bd7ef6fcda345276073599ed6a2b28b089e90\" Version=\"7.1.27\" PackageName=\"7.1\" ActualTime=\"1677185231\" ApiVersion=\"-1\" ClientLibrary=\"/usr/lib/foundationdb/backup_agent/backup_agent\" ImageOffset=\"(nil)\" Primary=\"1\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"MachineLoadDetail\" ID=\"0000000000000000\" User=\"1783166\" Nice=\"405237\" System=\"797197\" Idle=\"24908964\" IOWait=\"5692616\" IRQ=\"98209\" SoftIRQ=\"127443\" Steal=\"0\" Guest=\"0\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"Net2TLSConfig\" ID=\"0000000000000000\" CAPath=\"\" CertificatePath=\"/etc/foundationdb/fdb.pem\" KeyPath=\"/etc/foundationdb/fdb.pem\" HasPassword=\"0\" VerifyPeers=\"Check.Valid=1\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"NotifyAddressHealthy\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" Address=\"127.0.0.1:4500\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"DatabaseContextCreated\" ID=\"2b27a262ee255c07\" Backtrace=\"addr2line -e backup_agent.debug -p -C -f -i 0xee5d6c 0xaa1e41 0xaa62ac 0x562729 0x566365 0x54bbd0 0x7f1f5dff7d85\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"ConnectToDatabase\" ID=\"2b27a262ee255c07\" Version=\"7.1.27\" ClusterFile=\"file:///etc/foundationdb/fdb.cluster\" ConnectionString=\"vUJ6BoJN:eXcs6hFd9uVqmRQHZZE7jK9ovvLKFrX9@127.0.0.1:4500\" ClientLibrary=\"/usr/lib/foundationdb/backup_agent/backup_agent\" Primary=\"1\" Internal=\"1\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"CodeCoverage\" ID=\"0000000000000000\" File=\"/home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/ReadYourWrites.actor.cpp\" Line=\"1545\" Condition=\"true\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"StartingRunLoopProfilingThread\" ID=\"0000000000000000\" Interval=\"0.125\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"Net2Running\" ID=\"0000000000000000\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"ProcessTimeOffset\" ID=\"0000000000000000\" ProcessTime=\"1677185231.071075\" SystemTime=\"1677185231.071076\" OffsetFromSystemTime=\"-0.000000\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.071113\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"ConnectingTo\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" PeerAddr=\"127.0.0.1:4500\" PeerReferences=\"3\" FailureStatus=\"OK\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.071113\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"TaskBucketMetrics\" ID=\"15c1621fdf501ca2\" Elapsed=\"0\" DispatchSlotChecksStarted=\"0 -1 0\" DispatchErrors=\"0 -1 0\" DispatchDoTasks=\"0 -1 0\" DispatchEmptyTasks=\"0 -1 0\" DispatchSlotChecksComplete=\"0 -1 0\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1677185231.071113\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"N2_ConnectError\" ID=\"479af99e20ed30b4\" SuppressedEventCount=\"0\" ErrorCode=\"13\" Message=\"Permission denied\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.071113\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"ConnectionTimedOut\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" PeerAddr=\"127.0.0.1:4500\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1677185231.071113\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"ConnectionClosed\" ID=\"0000000000000000\" Error=\"connection_failed\" ErrorDescription=\"Network connection failed\" ErrorCode=\"1026\" SuppressedEventCount=\"0\" PeerAddr=\"127.0.0.1:4500\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1677185231.567337\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"Net2RunLoopTrace\" ID=\"0000000000000000\" TraceTime=\"1677185231.446502\" Trace=\"addr2line -e backup_agent.debug -p -C -f -i 0x7f1f5e394cf0 0x7f1f5e391a35 0xe7ea3d 0xe80ccd 0x9818c2 0x54b46b 0x7f1f5dff7d85 0x55d762\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1677185231.817405\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"Net2RunLoopTrace\" ID=\"0000000000000000\" TraceTime=\"1677185231.696634\" Trace=\"addr2line -e backup_agent.debug -p -C -f -i 0x7f1f5e394cf0 0x7f1f5e391a35 0xe7ea3d 0xe80ccd 0x9818c2 0x54b46b 0x7f1f5dff7d85 0x55d762\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1677185232.067270\" DateTime=\"2023-02-23T20:47:12Z\" Type=\"Net2RunLoopTrace\" ID=\"0000000000000000\" TraceTime=\"1677185231.946765\" Trace=\"addr2line -e backup_agent.debug -p -C -f -i 0x7f1f5e394cf0 0x7f1f5e391a35 0xe7ea3d 0xe80ccd 0x9818c2 0x54b46b 0x7f1f5dff7d85 0x55d762\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n[...]\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-02-23T20:57:43.681Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 57,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 291.0,
+        "yours": false,
+        "topic_id": 3830,
+        "topic_slug": "fdbrestore-with-fdb-7-1",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 419,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbrestore-with-fdb-7-1/3830/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12486,
+        "name": "",
+        "username": "doublemax",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+        "created_at": "2023-02-23T21:13:51.469Z",
+        "cooked": "<p>It works on a CentOS 7 - but fails on CentOS 8</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-02-23T21:13:51.469Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 10.8,
+        "yours": false,
+        "topic_id": 3830,
+        "topic_slug": "fdbrestore-with-fdb-7-1",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 419,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbrestore-with-fdb-7-1/3830/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12489,
+        "name": "mavenraven",
+        "username": "mavenraven",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mavenraven/{size}/1524_2.png",
+        "created_at": "2023-02-23T23:56:41.946Z",
+        "cooked": "<p>I would bet that this is some TLS issue between the agent and the cluster.</p>\n<p>Look at this error:</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"20\" Time=\"1677185231.071113\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"N2_ConnectError\" ID=\"479af99e20ed30b4\" SuppressedEventCount=\"0\" ErrorCode=\"13\" Message=\"Permission denied\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n</code></pre>\n<p>There\u2019s two places in the code base that emit a <code>N2_ConnectError</code> and this is one of them: <a href=\"https://github.com/apple/foundationdb/blob/33f8e90f9f5fc8c571b439d11199a0db0f09fcc9/flow/Net2.actor.cpp#L822-L868\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">foundationdb/Net2.actor.cpp at 33f8e90f9f5fc8c571b439d11199a0db0f09fcc9 \u00b7 apple/foundationdb \u00b7 GitHub</a>.</p>\n<p>I would guess that since you said in your other post that FDB 6.0 worked, at some point TLS was switched to being the default <img src=\"https://emoji.discourse-cdn.com/twitter/person_shrugging.png?v=12\" title=\":person_shrugging:\" class=\"emoji\" alt=\":person_shrugging:\" loading=\"lazy\" width=\"20\" height=\"20\"> ?</p>\n<p>edit: Just realized that this is a trace through the system:</p>\n<pre><code class=\"lang-auto\">\"Net2Starting\"\n\"ProgramStart\"\n\"ClientStart\"\n\"MachineLoadDetail\"\n\"Net2TLSConfig\"\n\"NotifyAddressHealthy\"\n\"DatabaseContextCreated\"\n\"ConnectToDatabase\"\n\"CodeCoverage\"\n\"StartingRunLoopProfilingThread\"\n\"Net2Running\"\n\"ProcessTimeOffset\"\n\"ConnectingTo\"\n\"TaskBucketMetrics\"\n\"N2_ConnectError\"\n\"ConnectionTimedOut\"\n\"ConnectionClosed\"\n\"Net2RunLoopTrace\"\n\"Net2RunLoopTrace\"\n\"Net2RunLoopTrace\"\n</code></pre>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"10\" Time=\"1677185231.067190\" DateTime=\"2023-02-23T20:47:11Z\" Type=\"Net2TLSConfig\" ID=\"0000000000000000\" CAPath=\"\" CertificatePath=\"/etc/foundationdb/fdb.pem\" KeyPath=\"/etc/foundationdb/fdb.pem\" HasPassword=\"0\" VerifyPeers=\"Check.Valid=1\" ThreadID=\"9749452796639931957\" Machine=\"127.0.0.1:45893\" LogGroup=\"default\" ClientDescription=\"primary-7.1.27-9749452796639931957\" /&gt;\n</code></pre>\n<p>It\u2019s trying load that pem file, and there\u2019s probably some issue with it. One thing that looks suspicious is that your CA path is blank. I would start there.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-02-24T00:22:22.389Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 15.6,
+        "yours": false,
+        "topic_id": 3830,
+        "topic_slug": "fdbrestore-with-fdb-7-1",
+        "display_username": "mavenraven",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/33f8e90f9f5fc8c571b439d11199a0db0f09fcc9/flow/Net2.actor.cpp#L822-L868",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/Net2.actor.cpp at 33f8e90f9f5fc8c571b439d11199a0db0f09fcc9 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1217,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbrestore-with-fdb-7-1/3830/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12485,
+      12486,
+      12489
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      971
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fdbrestore with FDB 7.1",
+  "id": 3830,
+  "title": "Fdbrestore with FDB 7.1",
+  "posts_count": 3,
+  "created_at": "2023-02-23T20:56:12.684Z",
+  "views": 445,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-02-23T23:56:41.946Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdbrestore-with-fdb-7-1",
+  "category_id": 7,
+  "word_count": 1264,
+  "deleted_at": null,
+  "user_id": 419,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3830",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Set up fdb to use TLS failure with N2_ConnectError",
+      "id": 3020,
+      "title": "Set up fdb to use TLS failure with N2_ConnectError",
+      "slug": "set-up-fdb-to-use-tls-failure-with-n2-connecterror",
+      "posts_count": 9,
+      "reply_count": 3,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-11-19T08:38:17.530Z",
+      "last_posted_at": "2021-11-23T00:53:27.886Z",
+      "bumped": true,
+      "bumped_at": "2021-11-23T05:48:39.795Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1054,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1029,
+            "username": "liuyan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/839c29/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Run fdbbackup/fdbrestore on a TLS-enabled cluster",
+      "id": 1851,
+      "title": "Run fdbbackup/fdbrestore on a TLS-enabled cluster",
+      "slug": "run-fdbbackup-fdbrestore-on-a-tls-enabled-cluster",
+      "posts_count": 10,
+      "reply_count": 7,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-12-18T22:45:53.439Z",
+      "last_posted_at": "2019-12-19T18:48:10.897Z",
+      "bumped": true,
+      "bumped_at": "2019-12-19T18:48:10.897Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1359,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 566,
+            "username": "fengqu",
+            "name": "Feng Qu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/85f322/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "&ldquo;backup failure: Could not create backup container: Operation timed out&rdquo; with version 6.3.9",
+      "id": 2703,
+      "title": "\"backup failure: Could not create backup container: Operation timed out\" with version 6.3.9",
+      "slug": "backup-failure-could-not-create-backup-container-operation-timed-out-with-version-6-3-9",
+      "posts_count": 7,
+      "reply_count": 1,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2021-05-17T11:07:44.747Z",
+      "last_posted_at": "2022-01-05T11:17:46.398Z",
+      "bumped": true,
+      "bumped_at": "2022-01-05T15:04:16.923Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1224,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 865,
+            "username": "manish-2014",
+            "name": "Manish Sharan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manish-2014/{size}/1002_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 949,
+            "username": "DenisBY",
+            "name": "Denis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/denisby/{size}/1104_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fatal Error: Backup error",
+      "id": 2061,
+      "title": "Fatal Error: Backup error",
+      "slug": "fatal-error-backup-error",
+      "posts_count": 17,
+      "reply_count": 10,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2020-04-13T22:20:13.202Z",
+      "last_posted_at": "2022-03-24T18:33:10.339Z",
+      "bumped": true,
+      "bumped_at": "2022-03-25T11:23:05.734Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1308,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 754,
+            "username": "theonlijuan",
+            "name": "Ian",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/838e76/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Issues with V6.2 TLS Cluster",
+      "id": 1904,
+      "title": "Issues with V6.2 TLS Cluster",
+      "slug": "issues-with-v6-2-tls-cluster",
+      "posts_count": 12,
+      "reply_count": 8,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-01-23T17:31:13.342Z",
+      "last_posted_at": "2020-01-28T16:35:52.821Z",
+      "bumped": true,
+      "bumped_at": "2020-01-28T16:35:52.821Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1620,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 419,
+        "username": "doublemax",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1217,
+        "username": "mavenraven",
+        "name": "mavenraven",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mavenraven/{size}/1524_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 419,
+      "username": "doublemax",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png"
+    },
+    "last_poster": {
+      "id": 1217,
+      "username": "mavenraven",
+      "name": "mavenraven",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mavenraven/{size}/1524_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/33f8e90f9f5fc8c571b439d11199a0db0f09fcc9/flow/Net2.actor.cpp#L822-L868",
+        "title": "foundationdb/Net2.actor.cpp at 33f8e90f9f5fc8c571b439d11199a0db0f09fcc9 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 1217,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

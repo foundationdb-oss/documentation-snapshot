@@ -1,0 +1,570 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13543,
+        "name": "Carlito",
+        "username": "COran",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png",
+        "created_at": "2023-11-27T08:56:37.676Z",
+        "cooked": "<p>During a gameday, we scaled down entirely one AZ on a cluster running in three_data_hall redundancy. After few hours of availability, the cluster started to became unavailable.<br>\nThe output of the command <code>fdbcli --exec \"status details\"</code> :</p>\n<pre><code class=\"lang-auto\">Could not communicate with all of the coordination servers.\n  The database will remain operational as long as we\n  can connect to a quorum of servers, however the fault\n  tolerance of the system is reduced as long as the\n  servers remain disconnected.\n\n  x.x.x.x:4500  (unreachable)\n  x.x.x.x:4500  (reachable)\n  x.x.x.x:4500  (reachable)\n  x.x.x.x:4500  (unreachable)\n  x.x.x.x:4500  (reachable)\n  x.x.x.x:4500  (reachable)\n  x.x.x.x:4500  (unreachable)\n  x.x.x.x:4500  (reachable)\n  x.x.x.x:4500  (reachable)\n\nLocking coordination state. Verify that a majority of coordination server\nprocesses are active.\n\nFetching consistency scan information timed out.\n</code></pre>\n<p>The cluster is running on 9 nodes in version 7.2, where we do have 9 coordinators.<br>\nIt seems that we still have a majority of our coordinators, even after the disruption. But the cluster seems blocked at the coordination state. Given this <a href=\"https://github.com/apple/foundationdb/blob/main/design/recovery-internals.md\" rel=\"noopener nofollow ugc\">doc</a>, the cluster may be blocked during a recovery where it was trying to recruit TLogs.</p>\n<p>When we are restoring the traffic on the failing zone, the cluster came back to available.</p>\n<p>Here my questions :</p>\n<ul>\n<li>is it expected to have a FoundationDb cluster unavailable in three_data_hall where only one zone is failing ?</li>\n<li>how can I monitor/troubleshoot properly a recovery ? For now I only checked the <code>cluster.generation</code> metric, but it\u2019s not clear to me when I should worry about the this value (is there a threshold, etc)</li>\n<li>is there a way to force recovery when the cluster is stucked by a recovery ?</li>\n<li>is there some trace that can explain the reason about why TLogs did not succeed to be recruited ?</li>\n</ul>\n<p>Thank you for your help,</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-11-27T08:56:37.676Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 28,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 145.2,
+        "yours": false,
+        "topic_id": 4255,
+        "topic_slug": "locking-coordination-state-after-losing-a-az-on-three-data-hall",
+        "display_username": "Carlito",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/design/recovery-internals.md",
+            "internal": false,
+            "reflection": false,
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 872,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/locking-coordination-state-after-losing-a-az-on-three-data-hall/4255/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13808,
+        "name": "Carlito",
+        "username": "COran",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png",
+        "created_at": "2024-02-28T10:03:14.406Z",
+        "cooked": "<p>BTW I forget to update the ticket : we resolved the issue by fixing a bug in the way we were choosing our coordinators. We did not filter the faulty nodes from the coordinator candidate list.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-02-28T10:03:14.406Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 8.0,
+        "yours": false,
+        "topic_id": 4255,
+        "topic_slug": "locking-coordination-state-after-losing-a-az-on-three-data-hall",
+        "display_username": "Carlito",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 872,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/locking-coordination-state-after-losing-a-az-on-three-data-hall/4255/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13543,
+      13808
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      695
+    ],
+    [
+      2,
+      602
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "&ldquo;Locking coordination state&rdquo; after losing a AZ on three_data_hall",
+  "id": 4255,
+  "title": "\"Locking coordination state\" after losing a AZ on three_data_hall",
+  "posts_count": 2,
+  "created_at": "2023-11-27T08:56:37.616Z",
+  "views": 241,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-02-28T10:03:14.406Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "locking-coordination-state-after-losing-a-az-on-three-data-hall",
+  "category_id": 7,
+  "word_count": 366,
+  "deleted_at": null,
+  "user_id": 872,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4255",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Cluster stuck with status &ldquo;Locked coordination state&rdquo; even when all coordination servers available",
+      "id": 2537,
+      "title": "Cluster stuck with status \"Locked coordination state\" even when all coordination servers available",
+      "slug": "cluster-stuck-with-status-locked-coordination-state-even-when-all-coordination-servers-available",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2021-02-01T09:27:01.598Z",
+      "last_posted_at": "2021-02-04T12:29:32.253Z",
+      "bumped": true,
+      "bumped_at": "2021-02-04T12:29:32.253Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 722,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 747,
+            "username": "ashishgupta",
+            "name": "Ashish Gupta",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Could not communicate with a quorum of coordination servers",
+      "id": 2000,
+      "title": "Could not communicate with a quorum of coordination servers",
+      "slug": "could-not-communicate-with-a-quorum-of-coordination-servers",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-03-03T22:43:21.635Z",
+      "last_posted_at": "2020-03-05T16:51:23.670Z",
+      "bumped": true,
+      "bumped_at": "2020-03-05T16:51:23.670Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2251,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Locking coordination state. Verify that a majority of coordinattion server process are active. Single machine",
+      "id": 2560,
+      "title": "Locking coordination state. Verify that a majority of coordinattion server process are active. Single machine",
+      "slug": "locking-coordination-state-verify-that-a-majority-of-coordinattion-server-process-are-active-single-machine",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2021-02-16T23:20:12.154Z",
+      "last_posted_at": "2021-03-08T20:52:08.046Z",
+      "bumped": true,
+      "bumped_at": "2021-03-08T20:52:08.046Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1182,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 885,
+            "username": "jds",
+            "name": "JD S",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/b19c9b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 448,
+            "username": "dongxinEric",
+            "name": "Xin Dong",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dongxineric/{size}/434_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "&lsquo;Locking coordination&rsquo; state after process removal",
+      "id": 1512,
+      "title": "'Locking coordination' state after process removal",
+      "slug": "locking-coordination-state-after-process-removal",
+      "posts_count": 8,
+      "reply_count": 6,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-07-10T07:07:29.075Z",
+      "last_posted_at": "2019-07-11T09:56:41.581Z",
+      "bumped": true,
+      "bumped_at": "2019-07-11T09:56:41.581Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2124,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 410,
+            "username": "Meai1",
+            "name": "Meai1",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meai1/{size}/541_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deleted All Active Coordinators, How Can I Reset?",
+      "id": 1589,
+      "title": "Deleted All Active Coordinators, How Can I Reset?",
+      "slug": "deleted-all-active-coordinators-how-can-i-reset",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-08-20T19:40:56.078Z",
+      "last_posted_at": "2019-08-20T20:23:44.043Z",
+      "bumped": true,
+      "bumped_at": "2019-08-20T20:23:44.043Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 831,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 872,
+        "username": "COran",
+        "name": "Carlito",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 872,
+      "username": "COran",
+      "name": "Carlito",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png"
+    },
+    "last_poster": {
+      "id": 872,
+      "username": "COran",
+      "name": "Carlito",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/main/design/recovery-internals.md",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 872,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

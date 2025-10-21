@@ -1,0 +1,640 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9030,
+        "name": "Matias Holte",
+        "username": "matiasholte",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+        "created_at": "2021-02-01T07:02:35.830Z",
+        "cooked": "<p>Hi<br>\nThe kubernetes operator shows this error, even though there is plenty of space.<br>\n<code>ERROR: This exclude may cause the total free space in the cluster to drop below 10%.\\nType 'exclude FORCE &lt;ADDRESS&gt;*' to exclude without checking free space.\\n</code><br>\nThis causes the operator never to reconcile the cluster.</p>\n<p><code>kubectl get foundationdbclusters.apps.foundationdb.org</code> reports<br>\n<code>NAME                           GENERATION   RECONCILED   HEALTHY</code><br>\n<code>foundationdb-cluster-1         3            2            true</code></p>\n<p>I got here after I ran a restore to a 50 storage node cluster (to make it go faster), and then I set the number of storage nodes back to 9. This triggered a lot of moving data, which eventually succeeded, but the (now) empty storage nodes were never removed from the cluster.</p>\n<p>It seems like <a href=\"https://github.com/apple/foundationdb/blob/8211cf7ab1c2da6b0201b771293388b0bb6cfd4f/fdbcli/fdbcli.actor.cpp#L2391\" rel=\"noopener nofollow ugc\">the code</a> makes the assumption that all nodes have the same amount of data as the worst node. Which is not true after the excluded nodes have been emptied and moved to the rest of the nodes.</p>\n<p>The cluster is fine and healthy. I also tried to kill all the empty excluded storage nodes, so they are gone now. And I tried to re-include the killed pods, so the exclusion list is empty. But the problem persists. Excluding even a single IP address gives the same 10% error.</p>\n<p>This was a test cluster, so we have no important data on it, but it would be nice to avoid this in the future, or at least know a way to get around it.</p>\n<p>Edit: This is from fdbcli status:</p>\n<details>\n<summary>\nfdbcli status</summary>\n<p>Configuration:<br>\nRedundancy mode        - triple<br>\nStorage engine         - ssd-2<br>\nCoordinators           - 5<br>\nDesired Proxies        - 3<br>\nDesired Resolvers      - 1<br>\nDesired Logs           - 6<br>\nUsable Regions         - 1</p>\n<p>Cluster:<br>\nFoundationDB processes - 18<br>\nZones                  - 18<br>\nMachines               - 18<br>\nMemory availability    - 14.6 GB per process on machine with least available<br>\nRetransmissions rate   - 1 Hz<br>\nFault Tolerance        - 2 machines<br>\nServer time            - 02/01/21 08:44:59</p>\n<p>Data:<br>\nReplication health     - Healthy<br>\nMoving data            - 0.000 GB<br>\nSum of key-value sizes - 1.007 TB<br>\nDisk space used        - 4.947 TB</p>\n<p>Operating space:<br>\nStorage server         - 394.8 GB free on most full server<br>\nLog server             - 1016.5 GB free on most full server</p>\n<p>Workload:<br>\nRead rate              - 2994 Hz<br>\nWrite rate             - 840 Hz<br>\nTransactions started   - 1490 Hz<br>\nTransactions committed - 5 Hz<br>\nConflict rate          - 0 Hz</p>\n<p>Backup and DR:<br>\nRunning backups        - 1<br>\nRunning DRs            - 0</p>\n<p>Client time: 02/01/21 08:44:59</p>\n</details>\n<p>Edit 2: from status json from what I believe is most full storage node:<br>\n\u201ckvstore_available_bytes\u201d : 454969856000,<br>\n\u201ckvstore_free_bytes\u201d : 104119144448,<br>\n\u201ckvstore_total_bytes\u201d : 1082125373440,<br>\n\u201ckvstore_used_bytes\u201d : 977125918512,</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-02-01T10:34:28.539Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 30,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 155.8,
+        "yours": false,
+        "topic_id": 2536,
+        "topic_slug": "error-scaling-down-due-to-free-space-calculation",
+        "display_username": "Matias Holte",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 5,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/8211cf7ab1c2da6b0201b771293388b0bb6cfd4f/fdbcli/fdbcli.actor.cpp#L2391",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbcli.actor.cpp at 8211cf7ab1c2da6b0201b771293388b0bb6cfd4f \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 746,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/error-scaling-down-due-to-free-space-calculation/2536/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 9043,
+        "name": "Robert Collins",
+        "username": "rbtcollins",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rbtcollins/{size}/941_2.png",
+        "created_at": "2021-02-03T21:22:26.668Z",
+        "cooked": "<p>If writes are still being accepted, scaling the cluster up to 50 new nodes should let the cluster recover and successfully kill off nodes; then I\u2019d be interested to know if scaling down to 25 works, and then down to 12. <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/issues/350\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Improve logging when exclusion is failing because of free space issues \u00b7 Issue #350 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a> seems related to this specific issue.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-02-03T21:22:26.668Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 9.4,
+        "yours": false,
+        "topic_id": 2536,
+        "topic_slug": "error-scaling-down-due-to-free-space-calculation",
+        "display_username": "Robert Collins",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/issues/350",
+            "internal": false,
+            "reflection": false,
+            "title": "Improve logging when exclusion is failing because of free space issues \u00b7 Issue #350 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 8
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 765,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/error-scaling-down-due-to-free-space-calculation/2536/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      9030,
+      9043
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1724
+    ],
+    [
+      2,
+      1721
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Error scaling down due to free space calculation",
+  "id": 2536,
+  "title": "Error scaling down due to free space calculation",
+  "posts_count": 2,
+  "created_at": "2021-02-01T07:02:35.752Z",
+  "views": 509,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-02-03T21:22:26.668Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "error-scaling-down-due-to-free-space-calculation",
+  "category_id": 16,
+  "word_count": 488,
+  "deleted_at": null,
+  "user_id": 746,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2536",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Large excludes failing repeatedly",
+      "id": 2555,
+      "title": "Large excludes failing repeatedly",
+      "slug": "large-excludes-failing-repeatedly",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-02-11T11:30:25.887Z",
+      "last_posted_at": "2021-02-11T15:32:44.940Z",
+      "bumped": true,
+      "bumped_at": "2021-02-11T15:32:44.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 466,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 724,
+            "username": "larshagen",
+            "name": "Lars Hagen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/larshagen/{size}/776_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 765,
+            "username": "rbtcollins",
+            "name": "Robert Collins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbtcollins/{size}/941_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage server running out of space",
+      "id": 1655,
+      "title": "Storage server running out of space",
+      "slug": "storage-server-running-out-of-space",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-09-28T02:44:46.227Z",
+      "last_posted_at": "2019-10-02T20:48:03.731Z",
+      "bumped": true,
+      "bumped_at": "2019-10-02T20:48:03.731Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 4053,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 612,
+            "username": "fzhjon",
+            "name": "Jon Fu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cluster unresponsive when some of the nodes have full disk",
+      "id": 2230,
+      "title": "Cluster unresponsive when some of the nodes have full disk",
+      "slug": "cluster-unresponsive-when-some-of-the-nodes-have-full-disk",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-07-07T01:29:20.165Z",
+      "last_posted_at": "2020-07-07T10:32:57.700Z",
+      "bumped": true,
+      "bumped_at": "2020-07-08T09:31:08.162Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 628,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Full disk on one machine results in 99% performance degradation",
+      "id": 850,
+      "title": "Full disk on one machine results in 99% performance degradation",
+      "slug": "full-disk-on-one-machine-results-in-99-performance-degradation",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-11-06T00:18:11.154Z",
+      "last_posted_at": "2018-11-08T00:02:29.123Z",
+      "bumped": true,
+      "bumped_at": "2018-11-08T00:02:29.123Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2223,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 421,
+            "username": "rbranson",
+            "name": "Rick Branson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbranson/{size}/406_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Newly added storage nodes have disk usage at 98%",
+      "id": 2291,
+      "title": "Newly added storage nodes have disk usage at 98%",
+      "slug": "newly-added-storage-nodes-have-disk-usage-at-98",
+      "posts_count": 16,
+      "reply_count": 10,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2020-08-12T15:46:02.359Z",
+      "last_posted_at": "2020-08-14T15:14:34.245Z",
+      "bumped": true,
+      "bumped_at": "2020-08-14T15:14:34.245Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 1436,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 746,
+        "username": "matiasholte",
+        "name": "Matias Holte",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 765,
+        "username": "rbtcollins",
+        "name": "Robert Collins",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rbtcollins/{size}/941_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 746,
+      "username": "matiasholte",
+      "name": "Matias Holte",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png"
+    },
+    "last_poster": {
+      "id": 765,
+      "username": "rbtcollins",
+      "name": "Robert Collins",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rbtcollins/{size}/941_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/issues/350",
+        "title": "Improve logging when exclusion is failing because of free space issues \u00b7 Issue #350 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 765,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/8211cf7ab1c2da6b0201b771293388b0bb6cfd4f/fdbcli/fdbcli.actor.cpp#L2391",
+        "title": "foundationdb/fdbcli.actor.cpp at 8211cf7ab1c2da6b0201b771293388b0bb6cfd4f \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 746,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

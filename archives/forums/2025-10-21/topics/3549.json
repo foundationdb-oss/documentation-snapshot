@@ -1,0 +1,622 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11732,
+        "name": "",
+        "username": "fumesover",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/fumesover/{size}/1325_2.png",
+        "created_at": "2022-09-15T09:30:19.988Z",
+        "cooked": "<p>Hi !</p>\n<p>I\u2019m trying to list keys in a range, with a given limit and either using the original or reversed order.</p>\n<p>Looking at the fdb traces, the original listing will mark for ReadConflict only the range that was consumed by the client (start \u2192 limit). But when I use the reverse getRange, the entire range is marked for ReadConflict (end \u2192 start), ignoring the limit indicator.</p>\n<p>I\u2019m creating a message here first to get a feedback on my testing approach, to be sure the problem is worth creating an issue on the github repository.</p>\n<p>My source used for tests &amp; with logs : <a href=\"https://gist.github.com/Fumesover/6c682624a85c5a5fb837d453a3c6dafe\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">FDB Reverse read conflicting ranges \u00b7 GitHub</a> (Testing using fdb &amp; bindings in versions 7.1.21 &amp; 6.3.23 / apiversion 710 &amp; 630).</p>\n<p>I\u2019m creating keys [32, 33, 34, \u2026 62, 63], then listing from [42 \u2192 51), with a limit of 5. The normal order locks [42 \u2192 46], but the reversed order will lock [42 \u2192 51).</p>\n<p>Thanks you for having a look <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-09-15T09:42:44.232Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 75,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 392.6,
+        "yours": false,
+        "topic_id": 3549,
+        "topic_slug": "issue-with-reverse-getrange-conflictrange-full-range-ignoring-limit-field",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://gist.github.com/Fumesover/6c682624a85c5a5fb837d453a3c6dafe",
+            "internal": false,
+            "reflection": false,
+            "title": "FDB Reverse read conflicting ranges \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1099,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/issue-with-reverse-getrange-conflictrange-full-range-ignoring-limit-field/3549/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11734,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2022-09-15T16:18:40.405Z",
+        "cooked": "<p>Welcome!</p>\n<p>I actually already discovered this issue: <a href=\"https://github.com/apple/foundationdb/issues/7317\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Read conflict range for reverse range read with a limit is too strict \u00b7 Issue #7317 \u00b7 apple/foundationdb \u00b7 GitHub</a>. It should be fixed by <a href=\"https://github.com/apple/foundationdb/pull/7329\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Fix bug in reverse range reads causing larger than desired conflict ranges by sfc-gh-ajbeamon \u00b7 Pull Request #7329 \u00b7 apple/foundationdb \u00b7 GitHub</a>, but I don\u2019t think that has made it into a release yet.</p>\n<p>As a work around for now, you can perform the reverse read at snapshot isolation and manually add the desired read conflict range based on the result. This is unfortunately kind of error-prone, but it looks like you\u2019re pretty well set up to test it out based on your linked test java program. We could probably get some traction behind cherry-picking this to release-7.1 if you\u2019re willing to wait a bit.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-09-15T16:18:40.405Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 2.4,
+        "yours": false,
+        "topic_id": 3549,
+        "topic_slug": "issue-with-reverse-getrange-conflictrange-full-range-ignoring-limit-field",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/7329",
+            "internal": false,
+            "reflection": false,
+            "title": "Fix bug in reverse range reads causing larger than desired conflict ranges by sfc-gh-ajbeamon \u00b7 Pull Request #7329 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 6
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/issues/7317",
+            "internal": false,
+            "reflection": false,
+            "title": "Read conflict range for reverse range read with a limit is too strict \u00b7 Issue #7317 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/issue-with-reverse-getrange-conflictrange-full-range-ignoring-limit-field/3549/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11732,
+      11734
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1133
+    ],
+    [
+      2,
+      1132
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Issue with reverse getRange / conflictRange full range ignoring limit field",
+  "id": 3549,
+  "title": "Issue with reverse getRange / conflictRange full range ignoring limit field",
+  "posts_count": 2,
+  "created_at": "2022-09-15T09:30:19.923Z",
+  "views": 412,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2022-09-15T16:18:40.405Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "issue-with-reverse-getrange-conflictrange-full-range-ignoring-limit-field",
+  "category_id": 7,
+  "word_count": 278,
+  "deleted_at": null,
+  "user_id": 1099,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3549",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Reverse range read in `fdbcli`",
+      "id": 2247,
+      "title": "Reverse range read in `fdbcli`",
+      "slug": "reverse-range-read-in-fdbcli",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-07-15T21:15:00.921Z",
+      "last_posted_at": "2020-08-03T15:08:44.255Z",
+      "bumped": true,
+      "bumped_at": "2020-08-03T15:08:44.255Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 519,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Understanding reverse argument of getRange API",
+      "id": 1687,
+      "title": "Understanding reverse argument of getRange API",
+      "slug": "understanding-reverse-argument-of-getrange-api",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-10-21T04:22:16.064Z",
+      "last_posted_at": "2019-10-21T08:54:47.433Z",
+      "bumped": true,
+      "bumped_at": "2019-10-21T08:54:47.433Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 880,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 545,
+            "username": "rishabh",
+            "name": "Rishabh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rishabh/{size}/540_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "id": 1355,
+      "title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "slug": "how-to-get-exact-range-of-keys-using-fdb-transaction-get-range-in-c-programming",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-05-09T12:22:07.878Z",
+      "last_posted_at": "2019-05-20T14:14:50.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-20T14:14:50.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1573,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "ReadConflict vs WriteConflict for locking a range?",
+      "id": 1070,
+      "title": "ReadConflict vs WriteConflict for locking a range?",
+      "slug": "readconflict-vs-writeconflict-for-locking-a-range",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-01-26T13:26:56.674Z",
+      "last_posted_at": "2019-02-02T05:07:53.900Z",
+      "bumped": true,
+      "bumped_at": "2019-02-02T05:07:53.900Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1354,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "SET_VERSIONSTAMPED_KEY and READ_YOUR_WRITES_DISABLE",
+      "id": 1443,
+      "title": "SET_VERSIONSTAMPED_KEY and READ_YOUR_WRITES_DISABLE",
+      "slug": "set-versionstamped-key-and-read-your-writes-disable",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-06-12T09:54:14.489Z",
+      "last_posted_at": "2019-06-14T00:33:51.058Z",
+      "bumped": true,
+      "bumped_at": "2019-06-14T00:33:51.058Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 735,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 605,
+            "username": "russell",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/50afbb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 14,
+        "username": "andrew.noyes",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1099,
+        "username": "fumesover",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/fumesover/{size}/1325_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1099,
+      "username": "fumesover",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/fumesover/{size}/1325_2.png"
+    },
+    "last_poster": {
+      "id": 14,
+      "username": "andrew.noyes",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/pull/7329",
+        "title": "Fix bug in reverse range reads causing larger than desired conflict ranges by sfc-gh-ajbeamon \u00b7 Pull Request #7329 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 14,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/issues/7317",
+        "title": "Read conflict range for reverse range read with a limit is too strict \u00b7 Issue #7317 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 14,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://gist.github.com/Fumesover/6c682624a85c5a5fb837d453a3c6dafe",
+        "title": "FDB Reverse read conflicting ranges \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1099,
+        "domain": "gist.github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,783 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 3890,
+        "name": "Ravilution",
+        "username": "ravilution",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+        "created_at": "2019-04-10T20:19:29.012Z",
+        "cooked": "<p>I want to increment and decrement int counter value using atomic operations. I am confused on how to use the <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.Add\" rel=\"nofollow noopener\">add</a> method in <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb\" rel=\"nofollow noopener\">GO Lang</a>. Can someone share an example? I am looking for something similar to Cassandra counter.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-04-10T20:19:29.012Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 504,
+        "reads": 56,
+        "readers_count": 55,
+        "score": 2531.2,
+        "yours": false,
+        "topic_id": 1297,
+        "topic_slug": "go-foundationdb-atomic-counter",
+        "display_username": "Ravilution",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.Add",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 18
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 538,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-foundationdb-atomic-counter/1297/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 3893,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-04-11T00:49:46.529Z",
+        "cooked": "<p>This was asked before, but the answer unfortunately ended up on on a <a href=\"https://github.com/apple/foundationdb/issues/266\">github issue</a> instead of on the forums, so let me reproduce it here for search ability:</p>\n<blockquote>\n<p>But to answer your question, the short answer is to use \u201cencoding/binary\u201d to encode a -1 (in little endian two\u2019s compliment). Adding a negative 1 is then the same as a 1. In two\u2019s complement, -1 is entirely 0xff bytes, so you can hard code that in, or you could do something like this:</p>\n<pre><code class=\"lang-auto\">func incrKey(tor fdb.Transactor, k fdb.Key) error {\n    _, e := tor.Transact(func (tr fdb.Transaction) (interface{}, error) {\n        buf := new(bytes.Buffer)\n        err := binary.Write(buf, binary.LittleEndian, int64(1))\n        if err != nil {\n            return nil, err\n        }\n        one := buf.Bytes()\n        tr.Add(k, one)\n        return nil, nil\n    })\n    return e\n}\n\nfunc decrKey(tor fdb.Transactor, k fdb.Key) error {\n    _, e := tor.Transact(func (tr fdb.Transaction) (interface{}, error) {\n        buf := new(bytes.Buffer)\n        err := binary.Write(buf, binary.LittleEndian, int64(-1))\n        if err != nil {\n            return nil, err\n        }\n        negativeOne := buf.Bytes()\n        tr.Add(k, negativeOne)\n        return nil, nil\n    })\n    return e\n}\n</code></pre>\n<p>Those two samples are very similar, but in the first, we increment the key by 1, and in the second we decrement by 1 (i.e., increment by -1). If we looked at the bytes, we would see that the first is a 1 byte followed by 7 0 bytes, and then the second is 8 0xff bytes.</p>\n<p>Here\u2019s a sample that reads the given key, as well as a little tester than tries to read the key and do some atomic updates:</p>\n<pre><code class=\"lang-auto\">func getKey(tor fdb.Transactor, k fdb.Key) (int64, error) {\n    val, e := tor.Transact(func (tr fdb.Transaction) (interface{}, error) {\n        return tr.Get(k).Get()\n    })\n    if e != nil {\n        return 0, e\n    }\n    if val == nil {\n        return 0, nil\n    }\n    byteVal := val.([]byte)\n    var numVal int64\n    readE := binary.Read(bytes.NewReader(byteVal), binary.LittleEndian, &amp;numVal)\n    if readE != nil {\n        return 0, readE\n    } else {\n        return numVal, nil\n    }\n}\n\nfunc run(db fdb.Database) {\n    var t tuple.Tuple\n    t = []tuple.TupleElement{\"foo\"}\n    var key fdb.Key\n    key = t.Pack()\n    db.Transact(func (tr fdb.Transaction) (interface{}, error) {\n        tr.Clear(key)\n        return nil, nil\n    })\n    v1, _ := getKey(db, key)\n    fmt.Printf(\"v1 = %d\\n\", v1)\n    incrKey(db, key)\n    v2, _ := getKey(db, key)\n    fmt.Printf(\"v2 = %d\\n\", v2)\n    decrKey(db, key)\n    v3, _ := getKey(db, key)\n    fmt.Printf(\"v3 = %d\\n\", v3)\n    incrKey(db, key)\n    v4, _ := getKey(db, key)\n    fmt.Printf(\"v1 = %d\\n\", v4)\n    incrKey(db, key)\n    v5, _ := getKey(db, key)\n    fmt.Printf(\"v2 = %d\\n\", v5)\n    decrKey(db, key)\n}\n</code></pre>\n<p>If I run this (passing a database for my local instance), I get:</p>\n<pre><code class=\"lang-auto\">v1 = 0\nv2 = 1\nv3 = 0\nv1 = 1\nv2 = 2\n</code></pre>\n<p>which is the desired behavior.</p>\n</blockquote>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-04-11T00:49:46.529Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 18,
+        "reads": 57,
+        "readers_count": 56,
+        "score": 131.4,
+        "yours": false,
+        "topic_id": 1297,
+        "topic_slug": "go-foundationdb-atomic-counter",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/266",
+            "internal": false,
+            "reflection": false,
+            "title": "golang subtract\uff0c Atomic_Add(key, -1) \u00b7 Issue #266 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 32
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-foundationdb-atomic-counter/1297/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 3894,
+        "name": "Ravilution",
+        "username": "ravilution",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+        "created_at": "2019-04-11T00:54:58.870Z",
+        "cooked": "<p>Thank you. I highly appreciate. Wow. For someone (me) new to Go and FoundationDB this looks super complicated. In Cassandra I have to call update with +1 or -1. <img src=\"https://emoji.discourse-cdn.com/twitter/cry.png?v=6\" title=\":cry:\" class=\"emoji\" alt=\":cry:\"></p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-04-11T00:54:58.870Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 49,
+        "readers_count": 48,
+        "score": 9.8,
+        "yours": false,
+        "topic_id": 1297,
+        "topic_slug": "go-foundationdb-atomic-counter",
+        "display_username": "Ravilution",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 538,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-foundationdb-atomic-counter/1297/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 3922,
+        "name": "Ravilution",
+        "username": "ravilution",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+        "created_at": "2019-04-13T16:51:16.634Z",
+        "cooked": "<p><a class=\"mention\" href=\"/u/alexmiller\">@alexmiller</a> The more I learn about <code>Go</code>, more respect and appreciation I have for your answer. Thank you _/\\_</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-04-13T16:51:16.634Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 47,
+        "readers_count": 46,
+        "score": 34.4,
+        "yours": false,
+        "topic_id": 1297,
+        "topic_slug": "go-foundationdb-atomic-counter",
+        "display_username": "Ravilution",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 538,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-foundationdb-atomic-counter/1297/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      3890,
+      3893,
+      3894,
+      3922
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2386
+    ],
+    [
+      4,
+      2383
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Go FoundationDB Atomic Counter",
+  "id": 1297,
+  "title": "Go FoundationDB Atomic Counter",
+  "posts_count": 4,
+  "created_at": "2019-04-10T20:19:28.923Z",
+  "views": 1641,
+  "reply_count": 0,
+  "like_count": 3,
+  "last_posted_at": "2019-04-13T16:51:16.634Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "go-foundationdb-atomic-counter",
+  "category_id": 5,
+  "word_count": 582,
+  "deleted_at": null,
+  "user_id": 538,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1297",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Atomic_Add(key, -1) can &ldquo;leak&rdquo; keys with value 0 if you are not careful",
+      "id": 148,
+      "title": "Atomic_Add(key, -1) can \"leak\" keys with value 0 if you are not careful",
+      "slug": "atomic-add-key-1-can-leak-keys-with-value-0-if-you-are-not-careful",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-20T19:00:47.495Z",
+      "last_posted_at": "2018-04-21T10:05:05.991Z",
+      "bumped": true,
+      "bumped_at": "2018-04-21T10:05:05.991Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 817,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 111,
+            "username": "andoma",
+            "name": "Andreas Smas",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andoma/{size}/78_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Example of subtract",
+      "id": 2526,
+      "title": "Example of subtract",
+      "slug": "example-of-subtract",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2021-01-23T06:50:51.971Z",
+      "last_posted_at": "2021-01-25T22:18:43.956Z",
+      "bumped": true,
+      "bumped_at": "2021-01-25T22:18:43.956Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 409,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 551,
+            "username": "falsandtru",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/falsandtru/{size}/546_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Go lang AddReadConflictKey AddWriteConflictKey",
+      "id": 1842,
+      "title": "Go lang AddReadConflictKey AddWriteConflictKey",
+      "slug": "go-lang-addreadconflictkey-addwriteconflictkey",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-12-16T07:17:17.187Z",
+      "last_posted_at": "2019-12-16T21:07:59.763Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T21:07:59.763Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 851,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to minimize transaction conflicts on atomic operations?",
+      "id": 1051,
+      "title": "How to minimize transaction conflicts on atomic operations?",
+      "slug": "how-to-minimize-transaction-conflicts-on-atomic-operations",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-01-24T15:30:28.527Z",
+      "last_posted_at": "2019-01-25T16:01:20.698Z",
+      "bumped": true,
+      "bumped_at": "2019-01-25T16:01:20.698Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 2181,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 323,
+            "username": "WolfDan",
+            "name": "Wolf Dan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfdan/{size}/806_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 538,
+        "username": "ravilution",
+        "name": "Ravilution",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 538,
+      "username": "ravilution",
+      "name": "Ravilution",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png"
+    },
+    "last_poster": {
+      "id": 538,
+      "username": "ravilution",
+      "name": "Ravilution",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/266",
+        "title": "golang subtract\uff0c Atomic_Add(key, -1) \u00b7 Issue #266 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 32,
+        "user_id": 13,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.Add",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 18,
+        "user_id": 538,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 538,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

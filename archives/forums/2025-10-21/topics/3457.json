@@ -1,0 +1,563 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11492,
+        "name": "\u6768\u9038\u98de",
+        "username": "YangEfei",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/yangefei/{size}/1378_2.png",
+        "created_at": "2022-07-19T15:45:20.314Z",
+        "cooked": "<p>Hi there. I read fdb paper in SIGMOD\u201921 these days. And I found it mentioned that at the end of chapter 2.4:</p>\n<blockquote>\n<p>When Sequencer accepts new transactions, the first is a specialrecovery transaction that informs StorageServers the RV sothat they can roll back any data larger than RV. The current FDBstorage engine consists of an unversioned SQLite [41] B-tree andin-memory multi-versioned redo log data. Only mutations leavingthe MVCC window (i.e., committed data) are written to SQLite. Therollback is simply discarding in-memory multi-versioned data inStorageServers. Then StorageServers pull any data larger thanversion \ud835\udc43\ud835\udc38\ud835\udc49 from new LogServers.</p>\n</blockquote>\n<p>The description here confuses me. So this MVCC window is the same window in Resovlers? Is this a transaction that has been in Resolvers or StorageServers for more than 5s are written to SQLite? If the latter, how does this mechanism ensure that the client does not read transactions that are actually uncommitted? (For example, a LogServer downed, and the entire transaction system needs to recovery. If the recovery time is more than 5s, the StorageServer may set some umcommitted data to committed state, and clients will read wrong data before the system rollback these data.)</p>\n<p>The paper doesn\u2019t seem to describe in detail how the StorageServer maintains these MVCC, so that led me to these questions. So is this 5s window only related to Resolvers, or do StorageServers need to maintain their own 5s window as well?</p>\n<p>Furthermore, when should Proxy reply client that the transaction has been committed? It mentions in the chapter 2.4.1:</p>\n<blockquote>\n<p>A transaction is considered committed after all designated LogServers have replied to the Proxy, which reports the committed version to the Sequencer (to ensure that later transactions\u2019 read versions are after this commit) and then replies to the client.</p>\n</blockquote>\n<p>What\u2019s the meaning of \u2018all designated LogServers\u2019 here? It means all LogServers in the Data Plane, or all LogServers which meet high availability requirements (i.e. <em>k</em> LogServers in the fdb, <em>k</em> is the replication degree.) I think if it\u2019s the latter, there will be problems in recovery.</p>\n<p>At last, if a Resolver returns abort to the Proxy, should this transaction log be sent to LogServers for persistence? This implementation detail does not seem to be mentioned in the paper. I think if it doesn\u2019t do that, the next transaction may take a previous LSN which is its commit version, it may cause some matters. In short, should the log of an abort transaction be durable in LogServers?</p>\n<p>Looking forward to your response, thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-07-20T09:54:27.181Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 32,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 162.8,
+        "yours": false,
+        "topic_id": 3457,
+        "topic_slug": "quesitons-about-fdb-paper-in-sigmod21",
+        "display_username": "\u6768\u9038\u98de",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1135,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/quesitons-about-fdb-paper-in-sigmod21/3457/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      11492
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1190
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Quesitons about FDB paper in SIGMOD&rsquo;21",
+  "id": 3457,
+  "title": "Quesitons about FDB paper in SIGMOD'21",
+  "posts_count": 1,
+  "created_at": "2022-07-19T15:45:20.248Z",
+  "views": 423,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-07-19T15:45:20.314Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "quesitons-about-fdb-paper-in-sigmod21",
+  "category_id": 5,
+  "word_count": 428,
+  "deleted_at": null,
+  "user_id": 1135,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3457",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Question about the FDB paper in Sigmod\u201921",
+      "id": 3438,
+      "title": "Question about the FDB paper in Sigmod\u201921",
+      "slug": "question-about-the-fdb-paper-in-sigmod-21",
+      "posts_count": 8,
+      "reply_count": 6,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2022-07-08T06:12:08.861Z",
+      "last_posted_at": "2022-07-14T16:39:12.432Z",
+      "bumped": true,
+      "bumped_at": "2022-07-14T16:39:12.432Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 404,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1135,
+            "username": "YangEfei",
+            "name": "\u6768\u9038\u98de",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/yangefei/{size}/1378_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions about the recently accepted FDB paper in Sigmod&rsquo;21",
+      "id": 2732,
+      "title": "Questions about the recently accepted FDB paper in Sigmod'21",
+      "slug": "questions-about-the-recently-accepted-fdb-paper-in-sigmod21",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2021-06-06T08:50:20.203Z",
+      "last_posted_at": "2021-10-01T03:27:42.741Z",
+      "bumped": true,
+      "bumped_at": "2021-10-01T03:27:42.741Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 904,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 857,
+            "username": "zydong",
+            "name": "ZhiyuanDong",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zydong/{size}/994_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 990,
+            "username": "baiwfg2",
+            "name": "Lewis Chan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Is fdb&rsquo;s recovery may drop committed transaction?",
+      "id": 2750,
+      "title": "Is fdb's recovery may drop committed transaction?",
+      "slug": "is-fdbs-recovery-may-drop-committed-transaction",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-06-13T15:14:11.611Z",
+      "last_posted_at": "2021-06-30T04:33:52.036Z",
+      "bumped": true,
+      "bumped_at": "2021-06-30T04:33:52.036Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 679,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 948,
+            "username": "ChinaXing",
+            "name": "chinaxing",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chinaxing/{size}/1102_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Technical overview of the database",
+      "id": 135,
+      "title": "Technical overview of the database",
+      "slug": "technical-overview-of-the-database",
+      "posts_count": 27,
+      "reply_count": 15,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-04-20T15:30:31.788Z",
+      "last_posted_at": "2019-01-11T23:25:47.462Z",
+      "bumped": true,
+      "bumped_at": "2019-01-11T23:25:47.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 64,
+      "views": 12958,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 96,
+            "username": "idiot",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 443,
+            "username": "junius",
+            "name": "junius",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f08c70/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction implement related doubt",
+      "id": 757,
+      "title": "Transaction implement related doubt",
+      "slug": "transaction-implement-related-doubt",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-10-09T11:25:07.598Z",
+      "last_posted_at": "2018-10-20T15:44:06.612Z",
+      "bumped": true,
+      "bumped_at": "2018-10-20T15:53:29.815Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1095,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 386,
+            "username": "zycHacker",
+            "name": "zycHacker",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zychacker/{size}/385_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1135,
+        "username": "YangEfei",
+        "name": "\u6768\u9038\u98de",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/yangefei/{size}/1378_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1135,
+      "username": "YangEfei",
+      "name": "\u6768\u9038\u98de",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/yangefei/{size}/1378_2.png"
+    },
+    "last_poster": {
+      "id": 1135,
+      "username": "YangEfei",
+      "name": "\u6768\u9038\u98de",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/yangefei/{size}/1378_2.png"
+    }
+  },
+  "bookmarks": []
+}

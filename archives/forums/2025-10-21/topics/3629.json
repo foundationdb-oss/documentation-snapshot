@@ -1,0 +1,624 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11938,
+        "name": "Omid Bakhshandeh",
+        "username": "omidb",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/omidb/{size}/925_2.png",
+        "created_at": "2022-10-27T17:47:43.887Z",
+        "cooked": "<p>Hi,</p>\n<p>I\u2019ve looked into extending the Record layer for other use cases and I found <a href=\"https://github.com/FoundationDB/fdb-record-layer/blob/main/docs/Extending.md\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-record-layer/Extending.md at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub</a></p>\n<p>I was wondering if there are any examples of extending the functionality of the system. For example, let\u2019s say I want to enable a query like this to work:</p>\n<pre><code class=\"lang-auto\">    RecordQuery query = RecordQuery.newBuilder()\n        .setRecordType(\"myRecord\")\n        .setFilter(Query.and(\n            Query.field(\"str_field\").equalsValue(\"hello!\"),\n            AComplexMathFunc(Query.field(\"num_field\")) &gt; 10 ))\n        .setSort(Key.Expressions.field(\"rec_no\"))\n        .build();\n</code></pre>\n<p>What are the steps that I have to take to achieve that?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-10-27T17:47:43.887Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 31,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 159.6,
+        "yours": false,
+        "topic_id": 3629,
+        "topic_slug": "extending-the-record-layer-query-and-planner",
+        "display_username": "Omid Bakhshandeh",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/blob/main/docs/Extending.md",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-record-layer/Extending.md at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 782,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/extending-the-record-layer-query-and-planner/3629/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11949,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2022-10-28T12:38:37.911Z",
+        "cooked": "<p>For that, you may want to look at the <code>FunctionKeyExpression</code> class: <a href=\"https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-core/src/main/java/com/apple/foundationdb/record/metadata/expressions/FunctionKeyExpression.java\" class=\"inline-onebox\">fdb-record-layer/FunctionKeyExpression.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub</a></p>\n<p>That key expression allows you to register an arbitrary function, and then it will evaluate your function as a part of indexing or querying. Registering the function is a little bit of work, but the easiest way is to register an associated <code>Factory</code> so that the service loader can pick up your custom implementation. For example, that\u2019s what we do with a few <code>FunctionKeyExpression</code>s we use internally, like this one which supports string collation: <a href=\"https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-icu/src/main/java/com/apple/foundationdb/record/icu/CollateFunctionKeyExpressionFactoryICU.java\" class=\"inline-onebox\">fdb-record-layer/CollateFunctionKeyExpressionFactoryICU.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub</a> (Note that the factory class is annotated with <code>@AutoService</code>.)</p>\n<p>To get the function to be used in a query, you can have your custom key expression definition implement <code>QueryableKeyExpression</code>: <a href=\"https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-core/src/main/java/com/apple/foundationdb/record/metadata/expressions/QueryableKeyExpression.java\" class=\"inline-onebox\">fdb-record-layer/QueryableKeyExpression.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub</a> It can then be used as predicate in a query in a manner like this:</p>\n<pre><code class=\"lang-java\">    RecordQuery query = RecordQuery.newBuilder()\n        .setRecordType(\"myRecord\")\n        .setFilter(Query.and(\n            Query.field(\"str_field\").equalsValue(\"hello!\"),\n            Query.keyExpression(Key.Expressions.function(\"a_complex_math_func\", Key.Expressions.field(\"num_field\")).greaterThan(10)))\n        .setSort(Key.Expressions.field(\"rec_no\"))\n        .build();\n</code></pre>\n<p>That being said, there are some limitations. The first is that, to my knowledge, the planner can only use this expression to match against an index. So, for example, you could satisfy the above query (if you removed the sort) with an index on <code>(str_field, a_complex_math_func(num_field))</code>, but it wouldn\u2019t be able to apply the predicate by scanning an index on, say, <code>(str_field, rec_no)</code> and then filtering out records where the function predicate wasn\u2019t matched. In theory, that is a valid plan, but the planner isn\u2019t quite smart enough to handle that yet.</p>\n<p>The planner itself is relatively difficult to extend without submitting a PR with planner changes yourself because it\u2019s not particularly modular. You could, potentially, craft the plan yourself if there is a query you can\u2019t get the planner to plan adequately, though that\u2019s a bit extreme. The other option would be to use the new Cascades-based planner, which is supposed to be more extensible with things like custom rule sets, though that planner is currently experimental/in active development, and so neither the plans nor the codebase is guaranteed to be stable.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-10-28T12:38:37.911Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 49.4,
+        "yours": false,
+        "topic_id": 3629,
+        "topic_slug": "extending-the-record-layer-query-and-planner",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-icu/src/main/java/com/apple/foundationdb/record/icu/CollateFunctionKeyExpressionFactoryICU.java",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-record-layer/CollateFunctionKeyExpressionFactoryICU.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-core/src/main/java/com/apple/foundationdb/record/metadata/expressions/FunctionKeyExpression.java",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-record-layer/FunctionKeyExpression.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-core/src/main/java/com/apple/foundationdb/record/metadata/expressions/QueryableKeyExpression.java",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-record-layer/QueryableKeyExpression.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/extending-the-record-layer-query-and-planner/3629/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11938,
+      11949
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1090
+    ],
+    [
+      2,
+      1089
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Extending the Record layer query and planner",
+  "id": 3629,
+  "title": "Extending the Record layer query and planner",
+  "posts_count": 2,
+  "created_at": "2022-10-27T17:47:43.828Z",
+  "views": 388,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2022-10-28T12:38:37.911Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "extending-the-record-layer-query-and-planner",
+  "category_id": 12,
+  "word_count": 522,
+  "deleted_at": null,
+  "user_id": 782,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3629",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FunctionKeyExpression is not honored when evaluating the QueryPlan",
+      "id": 1937,
+      "title": "FunctionKeyExpression is not honored when evaluating the QueryPlan",
+      "slug": "functionkeyexpression-is-not-honored-when-evaluating-the-queryplan",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-02-11T14:48:22.721Z",
+      "last_posted_at": "2020-03-04T06:45:04.928Z",
+      "bumped": true,
+      "bumped_at": "2020-03-04T06:45:04.928Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 960,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 653,
+            "username": "VibhutiD",
+            "name": "Vibhuti Dembi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vibhutid/{size}/668_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Mixed ascending/descending sort?",
+      "id": 1582,
+      "title": "Mixed ascending/descending sort?",
+      "slug": "mixed-ascending-descending-sort",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-08-12T21:35:24.255Z",
+      "last_posted_at": "2019-08-12T23:19:20.337Z",
+      "bumped": true,
+      "bumped_at": "2019-08-12T23:19:20.337Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1070,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "About the Record Layer category",
+      "id": 939,
+      "title": "About the Record Layer category",
+      "slug": "about-the-record-layer-category",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-12-06T20:43:53.135Z",
+      "last_posted_at": null,
+      "bumped": true,
+      "bumped_at": "2018-12-06T21:04:22.837Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": true,
+      "unpinned": null,
+      "excerpt": "Topics related to the FoundationDB Record Layer.",
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 882,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1,
+            "username": "davelester",
+            "name": "Dave Lester",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davelester/{size}/1927_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Full range scan performed in sort when not required",
+      "id": 1995,
+      "title": "Full range scan performed in sort when not required",
+      "slug": "full-range-scan-performed-in-sort-when-not-required",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-03-02T10:49:06.926Z",
+      "last_posted_at": "2020-03-03T10:16:53.281Z",
+      "bumped": true,
+      "bumped_at": "2020-03-03T10:16:53.281Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 987,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 737,
+            "username": "aymalik",
+            "name": "Aayushi Malik",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/aca169/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Record Layer query performance benchmarking against traditional RDBMS",
+      "id": 2082,
+      "title": "Record Layer query performance benchmarking against traditional RDBMS",
+      "slug": "record-layer-query-performance-benchmarking-against-traditional-rdbms",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-04-20T18:46:55.680Z",
+      "last_posted_at": "2020-04-22T15:51:53.223Z",
+      "bumped": true,
+      "bumped_at": "2020-04-22T15:51:53.223Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1528,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 782,
+        "username": "omidb",
+        "name": "Omid Bakhshandeh",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/omidb/{size}/925_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 782,
+      "username": "omidb",
+      "name": "Omid Bakhshandeh",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/omidb/{size}/925_2.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/blob/main/docs/Extending.md",
+        "title": "fdb-record-layer/Extending.md at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 782,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-core/src/main/java/com/apple/foundationdb/record/metadata/expressions/FunctionKeyExpression.java",
+        "title": "fdb-record-layer/FunctionKeyExpression.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/blob/main/fdb-record-layer-icu/src/main/java/com/apple/foundationdb/record/icu/CollateFunctionKeyExpressionFactoryICU.java",
+        "title": "fdb-record-layer/CollateFunctionKeyExpressionFactoryICU.java at main \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

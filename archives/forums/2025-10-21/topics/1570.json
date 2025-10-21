@@ -1,0 +1,566 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4824,
+        "name": "Andrew Rothstein",
+        "username": "andrewrothstein",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/db5fbb/{size}.png",
+        "created_at": "2019-08-07T15:18:00.338Z",
+        "cooked": "<p>The checksum at <a href=\"https://www.foundationdb.org/downloads/6.1.8/linux/fdb_6.1.8.tar.gz.sha256\" rel=\"nofollow noopener\">https://www.foundationdb.org/downloads/6.1.8/linux/fdb_6.1.8.tar.gz.sha256</a> changed between 19 and 7 days ago. Is this expected?</p>\n<pre><code class=\"lang-auto\"> fdb_checksums:\n   # https://www.foundationdb.org/downloads/6.1.8/linux/fdb_6.1.8.tar.gz.sha256\n-  '6.1.8': sha256:869c8051773591dd953fa2d106d4daeee9b865fe3e2df14b763e980692e80365\n+  '6.1.8': sha256:6f0c8d5645f4c1f2dd9714ecce84c3fd0f7b59d3dea13e7ea69d78fe7b561137\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-08-07T15:18:23.564Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 20,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 104.6,
+        "yours": false,
+        "topic_id": 1570,
+        "topic_slug": "checksum-changed",
+        "display_username": "Andrew Rothstein",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://www.foundationdb.org/downloads/6.1.8/linux/fdb_6.1.8.tar.gz.sha256",
+            "internal": false,
+            "reflection": false,
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 635,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/checksum-changed/1570/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4826,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-08-07T23:02:12.721Z",
+        "cooked": "<p>This is not expected, and thank you for bringing this to our attention.</p>\n<p>Digging through things, it appears that this tarball in particular is not a part of our builder\u2019s published artifacts, but is instead dynamically generated as part of deploying the website.</p>\n<p>According to the internal repository of artifacts for 6.1.8, the md5 hashes of the individual files in the tarball should be</p>\n<pre><code class=\"lang-auto\">943a23351d211b9491f59443261fc095  ./files/linux/bin/fdbrestore\ne7ec498cd1c3963afff3572fd699b9a3  ./files/linux/bin/fdbcli\n943a23351d211b9491f59443261fc095  ./files/linux/bin/dr_agent\n943a23351d211b9491f59443261fc095  ./files/linux/bin/backup_agent\n68b31c34168578f979958cce4f4b6c2d  ./files/linux/bin/fdbserver\n5b3c3772ca107b91a91125844374f0d2  ./files/linux/bin/fdbmonitor\n943a23351d211b9491f59443261fc095  ./files/linux/bin/fdbbackup\n943a23351d211b9491f59443261fc095  ./files/linux/bin/fdbdr\n</code></pre>\n<p>And I have verified that these hashes are still the same in the public tarball:</p>\n<pre><code class=\"lang-auto\">$ curl -O https://www.foundationdb.org/downloads/6.1.8/linux/fdb_6.1.8.tar.gz &amp;&amp; tar -xzf fdb_6.1.8.tar.gz &amp;&amp; cd fdb_binaries\n$ md5 *\nMD5 (backup_agent) = 943a23351d211b9491f59443261fc095\nMD5 (dr_agent) = 943a23351d211b9491f59443261fc095\nMD5 (fdbbackup) = 943a23351d211b9491f59443261fc095\nMD5 (fdbcli) = e7ec498cd1c3963afff3572fd699b9a3\nMD5 (fdbdr) = 943a23351d211b9491f59443261fc095\nMD5 (fdbmonitor) = 5b3c3772ca107b91a91125844374f0d2\nMD5 (fdbrestore) = 943a23351d211b9491f59443261fc095\nMD5 (fdbserver) = 68b31c34168578f979958cce4f4b6c2d\n</code></pre>\n<p>So it appears that we have mistakenly regenerated the tarball, and the hash of it has changed due to the embedded metadata being different.  I\u2019ve filed <a href=\"https://github.com/apple/foundationdb/issues/1970\" rel=\"nofollow noopener\">#1970</a> to track addressing this, as users of this file should always copy the hash rather than download it to guard against malicious replacement, and anything incentivizing doing the opposite is bad.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-08-07T23:20:16.172Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 4.0,
+        "yours": false,
+        "topic_id": 1570,
+        "topic_slug": "checksum-changed",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/1970",
+            "internal": false,
+            "reflection": false,
+            "title": "FDB Binaries tarball on the website can be spuriously regenerated \u00b7 Issue #1970 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/checksum-changed/1570/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4824,
+      4826
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2267
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Checksum changed",
+  "id": 1570,
+  "title": "Checksum changed",
+  "posts_count": 2,
+  "created_at": "2019-08-07T15:18:00.277Z",
+  "views": 352,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-08-07T23:02:12.721Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "checksum-changed",
+  "category_id": 7,
+  "word_count": 292,
+  "deleted_at": null,
+  "user_id": 635,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1570",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "A small utility for computingg checksums and comparing two fdb databases",
+      "id": 2238,
+      "title": "A small utility for computingg checksums and comparing two fdb databases",
+      "slug": "a-small-utility-for-computingg-checksums-and-comparing-two-fdb-databases",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2020-07-09T15:28:59.669Z",
+      "last_posted_at": "2020-07-09T15:28:59.746Z",
+      "bumped": true,
+      "bumped_at": "2020-07-09T15:28:59.746Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 398,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "The Download pages on foundationdb.org and apple.github.io/foundationdb are months out of sync",
+      "id": 1644,
+      "title": "The Download pages on foundationdb.org and apple.github.io/foundationdb are months out of sync",
+      "slug": "the-download-pages-on-foundationdb-org-and-apple-github-io-foundationdb-are-months-out-of-sync",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-09-23T15:29:45.561Z",
+      "last_posted_at": "2019-09-24T01:29:01.627Z",
+      "bumped": true,
+      "bumped_at": "2019-09-24T01:29:01.627Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 415,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 642,
+            "username": "arob",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9fc29f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB on NixOS: packaging, notes and questions",
+      "id": 251,
+      "title": "FoundationDB on NixOS: packaging, notes and questions",
+      "slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-24T20:01:29.570Z",
+      "last_posted_at": "2018-04-25T22:03:31.681Z",
+      "bumped": true,
+      "bumped_at": "2018-04-25T22:03:31.681Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2219,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fatal Error: Corrupted backup data",
+      "id": 1260,
+      "title": "Fatal Error: Corrupted backup data",
+      "slug": "fatal-error-corrupted-backup-data",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-03-26T10:17:46.267Z",
+      "last_posted_at": "2019-03-27T00:46:59.654Z",
+      "bumped": true,
+      "bumped_at": "2019-03-27T00:46:59.654Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1228,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Docker file in foundationdb/package/docker failed to download the tar bar ball",
+      "id": 3500,
+      "title": "Docker file in foundationdb/package/docker failed to download the tar bar ball",
+      "slug": "docker-file-in-foundationdb-package-docker-failed-to-download-the-tar-bar-ball",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2022-08-15T17:21:42.947Z",
+      "last_posted_at": "2022-08-16T11:33:13.354Z",
+      "bumped": true,
+      "bumped_at": "2022-08-16T11:33:13.354Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 291,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 890,
+            "username": "tangerine",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tangerine/{size}/1084_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 635,
+        "username": "andrewrothstein",
+        "name": "Andrew Rothstein",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/db5fbb/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 635,
+      "username": "andrewrothstein",
+      "name": "Andrew Rothstein",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/db5fbb/{size}.png"
+    },
+    "last_poster": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/1970",
+        "title": "FDB Binaries tarball on the website can be spuriously regenerated \u00b7 Issue #1970 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 13,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://www.foundationdb.org/downloads/6.1.8/linux/fdb_6.1.8.tar.gz.sha256",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 635,
+        "domain": "www.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

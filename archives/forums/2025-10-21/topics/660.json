@@ -1,0 +1,731 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1968,
+        "name": "Trevor Clinkenbeard",
+        "username": "trevor.clinkenbeard",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9fc29f/{size}.png",
+        "created_at": "2018-08-24T22:07:45.080Z",
+        "cooked": "<p>Hi, I am a software engineer for Snowflake Computing working on FoundationDB. My understanding of the calculation of the storage queue size is that it is based on pessimistic estimates. When a mutation is added to a storage server\u2019s mutation log, the size of the storage queue (<code>bytesInput - bytesDurable</code>, as reported to the ratekeeper) is incremented by <code>mvccStorageBytes(m)</code>:</p>\n<pre><code class=\"lang-auto\">static int mvccStorageBytes( MutationRef const&amp;amp; m )\n{\n    return VersionedMap&lt;KeyRef, ValueOrClearToRef&gt;::overheadPerItem * 2 +\n           (MutationRef::OVERHEAD_BYTES + m.param1.size() + m.param2.size()) * 2;\n}\n</code></pre>\n<p>This accounts for 8 128-byte PTree nodes being allocated for every mutation. However, this looks to be a worst case scenario, because each PTree insertion does not necessarily require the allocation of 4 128-byte nodes (even though <code>VersionedMap::overheadPerItem == 128*4</code>). Furthermore, applying each mutation sometimes only requires one insertion into the PTree (e.g. in the case of a <code>ClearRange</code> mutation), but the <code>mvccStorageBytes</code> calculation accounts for two insertions.</p>\n<p>I ran some tests tracking the number of allocations of <code>PTree</code> nodes in the storage queue under a variety of workloads, and there were significantly fewer allocations than what <code>bytesInput</code> reports. Is this a correct interpretation of how <code>bytesInput</code> is calculated, and if so, would it be safe to change to reporting a more exact storage queue size?</p>\n<p>Thank you.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-25T01:09:15.023Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 101,
+        "reads": 62,
+        "readers_count": 61,
+        "score": 517.4,
+        "yours": false,
+        "topic_id": 660,
+        "topic_slug": "storage-queue-size",
+        "display_username": "Trevor Clinkenbeard",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 362,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storage-queue-size/660/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1990,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-08-27T16:30:49.981Z",
+        "cooked": "<p>I haven\u2019t looked into the specifics of the <code>mvccStorageBytes</code> accounting, but I can say that <code>bytesInput</code> accounts for the memory used by each mutation as well as some extra overhead per version. It should be possible to make the version overhead relatively insignificant in a test by having each commit contain lots of mutations, but just make sure that you are accounting for that in your tests.</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/f8262a2f951ccae1f2cbc732bebeaf8e0a1f5889/fdbserver/storageserver.actor.cpp#L321\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/f8262a2f951ccae1f2cbc732bebeaf8e0a1f5889/fdbserver/storageserver.actor.cpp#L321\" target=\"_blank\">apple/foundationdb/blob/f8262a2f951ccae1f2cbc732bebeaf8e0a1f5889/fdbserver/storageserver.actor.cpp#L321</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"311\" style=\"counter-reset: li-counter 310 ;\">\n<li>\t\t// return existing version...</li>\n<li>\t\tauto m = mutationLog.find(v);</li>\n<li>\t\tif (m != mutationLog.end())</li>\n<li>\t\t\treturn m-&gt;second;</li>\n<li>\n</li>\n<li>\t\t// ...or create a new one</li>\n<li>\t\tauto&amp; u = mutationLog[v];</li>\n<li>\t\tu.version = v;</li>\n<li>\t\tif (lastArena.getSize() &gt;= 65536) lastArena = Arena(4096);</li>\n<li>\t\tu.arena() = lastArena;</li>\n<li class=\"selected\">\t\tcounters.bytesInput += VERSION_OVERHEAD;</li>\n<li>\t\treturn u;</li>\n<li>\t}</li>\n<li>\n</li>\n<li>\tMutationRef addMutationToMutationLog(Standalone&lt;VersionUpdateRef&gt; &amp;mLV, MutationRef const&amp; m){</li>\n<li>\t\tbyteSampleApplyMutation(m, mLV.version);</li>\n<li>\t\tcounters.bytesInput += mvccStorageBytes(m);</li>\n<li>\t\treturn mLV.mutations.push_back_deep( mLV.arena(), m );</li>\n<li>\t}</li>\n<li>\n</li>\n<li>\tStorageServerDisk storage;</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>I think if you are able to provide a better upper bound on the actual memory being used that is cheap to compute, then that sounds like a good change. I do recommend using an upper bound, though, because otherwise you may find that the storage server behaves poorly under some types of workloads.</p>\n<p>If you do make a change like that while keeping the same queue sizes, it would be somewhat similar to increasing the size of the queue in the current implementation. I don\u2019t have much experience running larger storage queues, but I\u2019m not aware of any reason why that would cause problems. If you wanted, you could experiment with it and make sure everything still performs well when the queues are full.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-27T16:30:49.981Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 56,
+        "readers_count": 55,
+        "score": 21.2,
+        "yours": false,
+        "topic_id": 660,
+        "topic_slug": "storage-queue-size",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/f8262a2f951ccae1f2cbc732bebeaf8e0a1f5889/fdbserver/storageserver.actor.cpp#L321",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/storageserver.actor.cpp at f8262a2f951ccae1f2cbc732bebeaf8e0a1f5889 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storage-queue-size/660/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1995,
+        "name": "Trevor Clinkenbeard",
+        "username": "trevor.clinkenbeard",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9fc29f/{size}.png",
+        "created_at": "2018-08-27T19:48:01.947Z",
+        "cooked": "<p>Thank you. The tests we ran kept accounting for the version overhead, and only changed the tracking of the number of versioned map nodes allocated. We will make sure that we continue to track an upper bound on storage queue size, and never underreport the size.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-27T19:48:01.947Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 48,
+        "readers_count": 47,
+        "score": 9.6,
+        "yours": false,
+        "topic_id": 660,
+        "topic_slug": "storage-queue-size",
+        "display_username": "Trevor Clinkenbeard",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 362,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storage-queue-size/660/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1968,
+      1990,
+      1995
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2615
+    ],
+    [
+      2,
+      2612
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Storage Queue Size",
+  "id": 660,
+  "title": "Storage Queue Size",
+  "posts_count": 3,
+  "created_at": "2018-08-24T22:07:45.005Z",
+  "views": 1097,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2018-08-27T19:48:01.947Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "storage-queue-size",
+  "category_id": 8,
+  "word_count": 467,
+  "deleted_at": null,
+  "user_id": 362,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_660",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "What do you monitor?",
+      "id": 184,
+      "title": "What do you monitor?",
+      "slug": "what-do-you-monitor",
+      "posts_count": 36,
+      "reply_count": 20,
+      "highest_post_number": 36,
+      "image_url": null,
+      "created_at": "2018-04-21T17:30:11.663Z",
+      "last_posted_at": "2022-09-26T15:33:11.453Z",
+      "bumped": true,
+      "bumped_at": "2022-09-26T15:33:11.453Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 55,
+      "views": 10060,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 43,
+            "username": "killertypo",
+            "name": "Mike McMahon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/killertypo/{size}/35_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to increase &ldquo;storage server MVCC memory&rdquo;?",
+      "id": 1505,
+      "title": "How to increase \"storage server MVCC memory\"?",
+      "slug": "how-to-increase-storage-server-mvcc-memory",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-07-03T20:26:26.617Z",
+      "last_posted_at": "2019-09-15T10:55:54.996Z",
+      "bumped": true,
+      "bumped_at": "2019-09-20T00:26:14.951Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 1780,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 597,
+            "username": "rayjcwu",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rayjcwu/{size}/602_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 651,
+            "username": "johnsmith101",
+            "name": "johnsmith101",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/7ba0ec/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Knobs/strategies to get around storage server write queue size error?",
+      "id": 996,
+      "title": "Knobs/strategies to get around storage server write queue size error?",
+      "slug": "knobs-strategies-to-get-around-storage-server-write-queue-size-error",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-01-04T05:49:33.775Z",
+      "last_posted_at": "2019-01-05T07:32:45.225Z",
+      "bumped": true,
+      "bumped_at": "2019-01-05T07:32:45.225Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 952,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to troubleshoot throughput performance degrade?",
+      "id": 1436,
+      "title": "How to troubleshoot throughput performance degrade?",
+      "slug": "how-to-troubleshoot-throughput-performance-degrade",
+      "posts_count": 36,
+      "reply_count": 24,
+      "highest_post_number": 36,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/9c9854ce87e53265f75154876f180812ee93f8ec.png",
+      "created_at": "2019-06-10T10:09:55.810Z",
+      "last_posted_at": "2019-06-20T21:36:30.209Z",
+      "bumped": true,
+      "bumped_at": "2019-06-20T21:36:30.209Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 4377,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 597,
+            "username": "rayjcwu",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rayjcwu/{size}/602_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 592,
+            "username": "nfeinberg",
+            "name": "Nicholas Feinberg",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/ba8739/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction size limit calculation",
+      "id": 811,
+      "title": "Transaction size limit calculation",
+      "slug": "transaction-size-limit-calculation",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-10-27T23:31:00.061Z",
+      "last_posted_at": "2019-01-26T01:12:16.191Z",
+      "bumped": true,
+      "bumped_at": "2019-01-26T01:12:16.191Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 362,
+        "username": "trevor.clinkenbeard",
+        "name": "Trevor Clinkenbeard",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9fc29f/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 362,
+      "username": "trevor.clinkenbeard",
+      "name": "Trevor Clinkenbeard",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9fc29f/{size}.png"
+    },
+    "last_poster": {
+      "id": 362,
+      "username": "trevor.clinkenbeard",
+      "name": "Trevor Clinkenbeard",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9fc29f/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/f8262a2f951ccae1f2cbc732bebeaf8e0a1f5889/fdbserver/storageserver.actor.cpp#L321",
+        "title": "foundationdb/storageserver.actor.cpp at f8262a2f951ccae1f2cbc732bebeaf8e0a1f5889 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

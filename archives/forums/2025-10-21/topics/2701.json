@@ -1,0 +1,712 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9410,
+        "name": "Russell Sears",
+        "username": "sears",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+        "created_at": "2021-05-14T22:42:58.402Z",
+        "cooked": "<p>We\u2019ve been working on a new chaos and performance testing infrastructure for FDB. Simulation has worked well for automated correctness testing, but we have been spending more and more time manually checking for performance regressions and confirming that FDB performs failure scenarios. Also, we\u2019d like to start comparing FDB\u2019s price/performance and latencies against other systems. As a first step, I\u2019ve been running YCSB workloads against a 240 disk Kubernetes cluster in Amazon EKS, with an 8TB YCSB database.</p>\n<p>We now have the ability to automatically create an FDB cluster in Kubernetes, load it with a YCSB data set, and then produce throughput/latency curves for each of the workloads. While the benchmarks are running we automatically gather perf flamegraphs for a subset of the processes. We try to obtain three profiles for each combination of roles in the system (so, if there are only two TLog processes that are also Coordinators, we\u2019ll only get two \u201ccoordinator, tlog\u201d profiles). Three is a nice number to grab, since it lets you tell which one is the outlier if the profiles don\u2019t match.</p>\n<p>The current setup has not been carefully tuned; I\u2019ve been focused on getting the tooling to work reliably. However, I\u2019d like to share these early results so that people can give feedback, and also to let the community know what we\u2019re up to. For the workloads (but not the initial load), I run the workload with target=0 (unthrottled) to obtain FDB\u2019s maximum throughput. Then, I run the same workload over and over again with target set to 10, 20, \u2026 90 percent of that value. I generate plots of all of these runs to confirm that performance is stable and that we\u2019re not suffering from warmup effects. I\u2019ve included plots for \u201cunthrottled\u201d, \u201c80% throughput\u201d and throughput-latency curves here.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8.png\" data-download-href=\"/uploads/short-url/tZW8bmmyd9WyuFju0f7s3wNehS0.png?dl=1\" title=\"BaselineYcsbRun\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8_2_690x252.png\" alt=\"BaselineYcsbRun\" data-base62-sha1=\"tZW8bmmyd9WyuFju0f7s3wNehS0\" width=\"690\" height=\"252\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8_2_690x252.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8_2_1035x378.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8_2_1380x504.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">BaselineYcsbRun</span><span class=\"informations\">3794\u00d71388 899 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>The most surprising result is the peak in the middle of each throughput/latency curve. Ideally, latencies would stay low until the system reaches ~ 100% throughput, and then rapidly increase because of queueing delay in FDB. Instead, we see peak latencies at 50-66% throughput with a gradual drop off as we approach 100%. This is likely due to some sort of batching or priority inversion bug. From what I can tell, most of these workloads are bound by proxy CPU. As a side effect of this issue, our tail latencies are ~ half a second for most of the experiments. That\u2019s much higher than we\u2019d like to see.</p>\n<p>Since we automatically gather flamegraphs for each data point, and for each role. we can easily drill down into the above results, and look at profiles for the suspected role type during the bad behavior. Since we\u2019re concerned about latency at medium throughputs, and suspect the proxies, here is a profile of a proxy during the 80% target throughput workload B data point. We can see that it spends most of its time in the Linux kernel, presumably sending and receiving small messages:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/9/973cba2595c2d22de113d7a20ea03680cec422df.jpeg\" data-download-href=\"/uploads/short-url/lzUcJh5s8Y4fuHIe2QDJNDvycNh.jpeg?dl=1\" title=\"flamegraph-workloada-80pct-target-sears-baseline3-baseline3-perf-stateless-12-proxy\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/9/973cba2595c2d22de113d7a20ea03680cec422df_2_690x437.jpeg\" alt=\"flamegraph-workloada-80pct-target-sears-baseline3-baseline3-perf-stateless-12-proxy\" data-base62-sha1=\"lzUcJh5s8Y4fuHIe2QDJNDvycNh\" width=\"690\" height=\"437\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/9/973cba2595c2d22de113d7a20ea03680cec422df_2_690x437.jpeg, https://global.discourse-cdn.com/foundationdb/optimized/2X/9/973cba2595c2d22de113d7a20ea03680cec422df_2_1035x655.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/9/973cba2595c2d22de113d7a20ea03680cec422df_2_1380x874.jpeg 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/9/973cba2595c2d22de113d7a20ea03680cec422df_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">flamegraph-workloada-80pct-target-sears-baseline3-baseline3-perf-stateless-12-proxy</span><span class=\"informations\">2396\u00d71520 805 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>We could continue to debug this issue by looking at FDB logs, which include latency probes, or by focusing directly on throughput, and addressing the excessive CPU utilization of the networking code.</p>\n<p>Over time, we plan to expand our testing to include more instrumentation, more workloads (and storage engines, like Redwood and RocksDB), and also to make various improvements to out test setup.</p>\n<p>Finally, this work is designed to compliment our chaos testing project; we\u2019ll write more about that later, but, for now, here\u2019s a graph of throughput and latency during an HA failover event in our chaos testing environment. This graph is from Zhe Wu, who combined our HA fault injection setup with our YCSB benchmarking infrastructure. It shows the throughput of a small HA FDB cluster during an HA failover and recovery:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/e/ef53c50e810f605108a7b0773461614dd4549ae4.png\" data-download-href=\"/uploads/short-url/y9bAEYpp2NDVRLvfjKAOesmlsfq.png?dl=1\" title=\"workloaddb-ha-throughput\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/ef53c50e810f605108a7b0773461614dd4549ae4_2_690x358.png\" alt=\"workloaddb-ha-throughput\" data-base62-sha1=\"y9bAEYpp2NDVRLvfjKAOesmlsfq\" width=\"690\" height=\"358\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/ef53c50e810f605108a7b0773461614dd4549ae4_2_690x358.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/e/ef53c50e810f605108a7b0773461614dd4549ae4_2_1035x537.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/e/ef53c50e810f605108a7b0773461614dd4549ae4.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/ef53c50e810f605108a7b0773461614dd4549ae4_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">workloaddb-ha-throughput</span><span class=\"informations\">1208\u00d7628 79.4 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>Now that our continuous integration environment can measure performance during such scenarios, we\u2019ll be able to track performance improvements and screen for regressions.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-05-14T22:42:58.402Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 237,
+        "reads": 61,
+        "readers_count": 60,
+        "score": 1362.2,
+        "yours": false,
+        "topic_id": 2701,
+        "topic_slug": "ycsb-baseline-runs",
+        "display_username": "Russell Sears",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/9/973cba2595c2d22de113d7a20ea03680cec422df.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "973cba2595c2d22de113d7a20ea03680cec422df.jpeg",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8.png",
+            "internal": false,
+            "reflection": false,
+            "title": "d23f69e741a3c864f2afe93d1f0bfdd396dd58b8.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/ef53c50e810f605108a7b0773461614dd4549ae4.png",
+            "internal": false,
+            "reflection": false,
+            "title": "ef53c50e810f605108a7b0773461614dd4549ae4.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 9
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 741,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ycsb-baseline-runs/2701/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10147,
+        "name": "Lewis Chan",
+        "username": "baiwfg2",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png",
+        "created_at": "2021-10-19T09:01:29.201Z",
+        "cooked": "<p>Nice work. I\u2019m also very eager to benchmark foundationdb and get initial performance data. But fdb seems hard for me to deploy an appropriate production cluster. Seems to have many tricks and tweaks on operation. (See <a href=\"https://www.youtube.com/watch?v=A3U8M8pt3Ks\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Managing FoundationDB at Scale - John Brownlee, Apple - YouTube</a> )</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-10-19T09:01:29.201Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 36,
+        "readers_count": 35,
+        "score": 7.2,
+        "yours": false,
+        "topic_id": 2701,
+        "topic_slug": "ycsb-baseline-runs",
+        "display_username": "Lewis Chan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://www.youtube.com/watch?v=A3U8M8pt3Ks",
+            "internal": false,
+            "reflection": false,
+            "title": "Managing FoundationDB at Scale - John Brownlee, Apple - YouTube",
+            "clicks": 13
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 990,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ycsb-baseline-runs/2701/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      9410,
+      10147
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1621
+    ],
+    [
+      2,
+      1464
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance",
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "YCSB Baseline Runs",
+  "id": 2701,
+  "title": "YCSB Baseline Runs",
+  "posts_count": 2,
+  "created_at": "2021-05-14T22:42:58.303Z",
+  "views": 1221,
+  "reply_count": 0,
+  "like_count": 9,
+  "last_posted_at": "2021-10-19T09:01:29.201Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "ycsb-baseline-runs",
+  "category_id": 10,
+  "word_count": 737,
+  "deleted_at": null,
+  "user_id": 741,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8_2_1024x374.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2701",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 3794,
+      "height": 1388,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 374,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d23f69e741a3c864f2afe93d1f0bfdd396dd58b8_2_1024x374.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Benchmarking FoundationDB on AWS",
+      "id": 410,
+      "title": "Benchmarking FoundationDB on AWS",
+      "slug": "benchmarking-foundationdb-on-aws",
+      "posts_count": 19,
+      "reply_count": 12,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2018-05-14T09:55:57.604Z",
+      "last_posted_at": "2018-10-30T16:01:15.283Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T16:01:15.283Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 9035,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 257,
+            "username": "cih.y2k",
+            "name": "cih.y2k",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cih.y2k/{size}/423_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Performance benchmark",
+      "id": 2884,
+      "title": "Performance benchmark",
+      "slug": "performance-benchmark",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2021-09-10T07:22:06.042Z",
+      "last_posted_at": "2021-10-05T18:16:48.549Z",
+      "bumped": true,
+      "bumped_at": "2021-10-05T18:16:48.549Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1716,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 989,
+            "username": "laita",
+            "name": "Lou",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/77aa72/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "ANN: benchmark FoundationDB with Go YCSB",
+      "id": 318,
+      "title": "ANN: benchmark FoundationDB with Go YCSB",
+      "slug": "ann-benchmark-foundationdb-with-go-ycsb",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-04-30T22:55:12.171Z",
+      "last_posted_at": "2018-05-06T18:42:59.159Z",
+      "bumped": true,
+      "bumped_at": "2018-05-06T18:42:59.159Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 3423,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 195,
+            "username": "siddontang",
+            "name": "Siddontang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/siddontang/{size}/155_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 146,
+            "username": "bigdata86",
+            "name": "Wangmeng",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/cdc98d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 232,
+            "username": "tekumara",
+            "name": "Oliver Mannion",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tekumara/{size}/201_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "id": 637,
+      "title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "slug": "scripts-to-deploy-benchmark-and-tinker-with-1m-operations-sec-foundationdb-cluster-on-aws",
+      "posts_count": 14,
+      "reply_count": 5,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2018-08-14T14:13:06.849Z",
+      "last_posted_at": "2018-11-06T16:58:50.747Z",
+      "bumped": true,
+      "bumped_at": "2018-11-06T16:58:50.747Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 4284,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 55,
+            "username": "bowlofstew",
+            "name": "Stewart Henderson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 409,
+            "username": "TommyLike",
+            "name": "Hu Sheng",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tommylike/{size}/395_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why doesn&rsquo;t my cluster performance scale when I double the number of machines?",
+      "id": 640,
+      "title": "Why doesn't my cluster performance scale when I double the number of machines?",
+      "slug": "why-doesnt-my-cluster-performance-scale-when-i-double-the-number-of-machines",
+      "posts_count": 21,
+      "reply_count": 16,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-08-15T09:26:47.588Z",
+      "last_posted_at": "2018-08-17T07:32:00.164Z",
+      "bumped": true,
+      "bumped_at": "2018-08-17T07:32:00.164Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 68,
+            "username": "daverosenthal",
+            "name": "Dave Rosenthal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daverosenthal/{size}/51_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 741,
+        "username": "sears",
+        "name": "Russell Sears",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 990,
+        "username": "baiwfg2",
+        "name": "Lewis Chan",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 741,
+      "username": "sears",
+      "name": "Russell Sears",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png"
+    },
+    "last_poster": {
+      "id": 990,
+      "username": "baiwfg2",
+      "name": "Lewis Chan",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png"
+    },
+    "links": [
+      {
+        "url": "https://www.youtube.com/watch?v=A3U8M8pt3Ks",
+        "title": "Managing FoundationDB at Scale - John Brownlee, Apple - YouTube",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 13,
+        "user_id": 990,
+        "domain": "www.youtube.com",
+        "root_domain": "youtube.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

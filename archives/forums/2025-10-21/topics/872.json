@@ -1,0 +1,574 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2668,
+        "name": "Taneea S Agrawaal",
+        "username": "TanSA05",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/f14d63/{size}.png",
+        "created_at": "2018-11-16T06:20:11.921Z",
+        "cooked": "<p>Hi,</p>\n<p>I am new to Foundationdb, and I had a query where I\u2019m interested to know the lifecycle of connections between the client and FDB processes (Couldn\u2019t find an answer in the documentation). Specifically, my query can be broken down into three questions as below:</p>\n<ol>\n<li>\n<p>How many connections does a client open while making a connection? And connections to what?  (If any of them are different from the ones mentioned <a href=\"https://forums.foundationdb.org/t/understanding-inter-communication/745\">here</a>)</p>\n</li>\n<li>\n<p>How long are these connections open for (per transaction or per client)?</p>\n</li>\n<li>\n<p>Does the client have to close the above connections or does it happen automatically?</p>\n</li>\n</ol>\n<p>I would love to understand this better and any help will be appreciated. Thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-16T06:29:26.939Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 116,
+        "reads": 46,
+        "readers_count": 45,
+        "score": 584.0,
+        "yours": false,
+        "topic_id": 872,
+        "topic_slug": "lifecycle-of-connections-between-client-and-fdb-processes",
+        "display_username": "Taneea S Agrawaal",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/understanding-inter-communication/745",
+            "internal": true,
+            "reflection": false,
+            "title": "Understanding inter communication",
+            "clicks": 13
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 425,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/lifecycle-of-connections-between-client-and-fdb-processes/872/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2669,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2018-11-16T07:47:37.055Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"TanSA05\" data-post=\"1\" data-topic=\"872\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/f14d63/48.png\" class=\"avatar\"> TanSA05:</div>\n<blockquote>\n<ol>\n<li>How many connections does a client open while making a connection? And connections to what? (If any of them are different from the ones mentioned <a href=\"https://forums.foundationdb.org/t/understanding-inter-communication/745\">here </a>)</li>\n</ol>\n</blockquote>\n</aside>\n<p>That actually is the thread that I was going to suggest you look at.  I believe we ended with a reasonably accurate diagram, and if you have further questions, you\u2019re welcome to ask.</p>\n<aside class=\"quote no-group\" data-username=\"TanSA05\" data-post=\"1\" data-topic=\"872\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/f14d63/48.png\" class=\"avatar\"> TanSA05:</div>\n<blockquote>\n<ol start=\"2\">\n<li>How long are these connections open for (per transaction or per client)?</li>\n<li>Does the client have to close the above connections or does it happen automatically?</li>\n</ol>\n</blockquote>\n</aside>\n<p>One connection is opened from the client, and once the connection is opened, it\u2019s maintained as open essentially indefinitely.  At some point, FDB will likely do a better job of closing connections that aren\u2019t being used, bit it will still be done transparently.</p>\n<p>To be clear, this isn\u2019t like MySQL/Postgres where you need to explicitly open, maintain, and reuse a connection.  All of that is handled for you, and multiple requests will be multiplexed over the same connection if destined for the same server.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-16T07:47:37.055Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 3,
+        "reads": 43,
+        "readers_count": 42,
+        "score": 23.4,
+        "yours": false,
+        "topic_id": 872,
+        "topic_slug": "lifecycle-of-connections-between-client-and-fdb-processes",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/lifecycle-of-connections-between-client-and-fdb-processes/872/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2668,
+      2669
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2532
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Lifecycle of connections between client and FDB Processes",
+  "id": 872,
+  "title": "Lifecycle of connections between client and FDB Processes",
+  "posts_count": 2,
+  "created_at": "2018-11-16T06:20:11.842Z",
+  "views": 1056,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2018-11-16T07:47:37.055Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "lifecycle-of-connections-between-client-and-fdb-processes",
+  "category_id": 8,
+  "word_count": 325,
+  "deleted_at": null,
+  "user_id": 425,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_872",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Connection management among fdb processes",
+      "id": 398,
+      "title": "Connection management among fdb processes",
+      "slug": "connection-management-among-fdb-processes",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-05-10T21:17:26.147Z",
+      "last_posted_at": "2018-05-10T21:17:26.231Z",
+      "bumped": true,
+      "bumped_at": "2018-05-10T21:17:26.231Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 519,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 243,
+            "username": "brb",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to connection pool requests for foundation db cluster",
+      "id": 1811,
+      "title": "How to connection pool requests for foundation db cluster",
+      "slug": "how-to-connection-pool-requests-for-foundation-db-cluster",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-12-04T21:00:43.972Z",
+      "last_posted_at": "2019-12-11T01:38:42.450Z",
+      "bumped": true,
+      "bumped_at": "2019-12-11T01:38:42.450Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 968,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 695,
+            "username": "nischalkumar",
+            "name": "nischal kumar",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/nischalkumar/{size}/933_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "DB connection opening/closing",
+      "id": 630,
+      "title": "DB connection opening/closing",
+      "slug": "db-connection-opening-closing",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-08-11T10:39:58.047Z",
+      "last_posted_at": "2018-08-13T16:32:55.477Z",
+      "bumped": true,
+      "bumped_at": "2018-08-13T16:32:55.477Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 631,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 351,
+            "username": "mmmdreg",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/9de053/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to improve connections count from client to server in go sdk or in c sdk",
+      "id": 223,
+      "title": "How to improve connections count from client to server in go sdk or in c sdk",
+      "slug": "how-to-improve-connections-count-from-client-to-server-in-go-sdk-or-in-c-sdk",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-23T15:43:18.969Z",
+      "last_posted_at": "2018-04-24T05:23:56.703Z",
+      "bumped": true,
+      "bumped_at": "2018-04-24T05:23:56.703Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1718,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 152,
+            "username": "shgxwxl",
+            "name": "Shgxwxl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/shgxwxl/{size}/127_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Single client performance",
+      "id": 1391,
+      "title": "Single client performance",
+      "slug": "single-client-performance",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-05-24T01:08:12.682Z",
+      "last_posted_at": "2019-07-18T19:15:20.415Z",
+      "bumped": true,
+      "bumped_at": "2019-07-18T21:34:41.053Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings",
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 815,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 296,
+            "username": "theos",
+            "name": "Daniil Gitelson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/theos/{size}/282_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 425,
+        "username": "TanSA05",
+        "name": "Taneea S Agrawaal",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/f14d63/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 425,
+      "username": "TanSA05",
+      "name": "Taneea S Agrawaal",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/f14d63/{size}.png"
+    },
+    "last_poster": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/understanding-inter-communication/745",
+        "title": "Understanding inter communication",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 13,
+        "user_id": 425,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

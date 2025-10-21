@@ -1,0 +1,619 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2657,
+        "name": "Tobad357",
+        "username": "tobad357",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/49beb7/{size}.png",
+        "created_at": "2018-11-14T03:22:43.806Z",
+        "cooked": "<p>Hi<br>\nWe are investigating running foundationdb in production on baremetal.<br>\nreading through his forum and the docs we can\u2019t really find recommended specs for servers.</p>\n<p>If we have a scenario of about 5k-10k writes per second and 10 range reads per second<br>\nwhat kind of hardware should we look at</p>\n<ol>\n<li>How many CPU cores are recommended per server?</li>\n<li>Should it always be one storage process per SSD device or can we have multiple based on testing?</li>\n<li>Is it possible to run tx log process on same server as storage process as long as using different devices?</li>\n<li>How much RAM is recommended per process?</li>\n<li>If we want to run triple redundancy, should we have at least 5 or 7 servers?</li>\n</ol>\n<p>Thanks</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-14T03:22:43.806Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 109,
+        "reads": 50,
+        "readers_count": 49,
+        "score": 570.0,
+        "yours": false,
+        "topic_id": 868,
+        "topic_slug": "production-hardware",
+        "display_username": "Tobad357",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 366,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/production-hardware/868/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2715,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-11-26T17:55:18.756Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"tobad357\" data-post=\"1\" data-topic=\"868\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/49beb7/48.png\" class=\"avatar\"> tobad357:</div>\n<blockquote>\n<p>How many CPU cores are recommended per server?</p>\n</blockquote>\n</aside>\n<p>I don\u2019t think there\u2019s any particular recommendation here. You could run a lot or a little as long as you have enough disks, memory, network bandwidth, etc. to support them all.</p>\n<aside class=\"quote no-group\" data-username=\"tobad357\" data-post=\"1\" data-topic=\"868\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/49beb7/48.png\" class=\"avatar\"> tobad357:</div>\n<blockquote>\n<p>Should it always be one storage process per SSD device or can we have multiple based on testing?</p>\n</blockquote>\n</aside>\n<p>You can run more than one storage process per disk. I think this can lead to some fragmentation issues that we\u2019ve previously seen manifest as poor performance when the data files get deleted (a rare event, and something that the software tries to deal with now by slowly truncating the file rather than deleting it outright). If you are CPU bound on the storage servers and have the cores to spare, running extra storage processes can be a reasonable choice. You should be careful though about running more processes that you have physical cores. If you end up saturating the machine CPU, that would be bad for performance.</p>\n<p>I should also note that I think you\u2019ll want to run the same number of processes across all of your disks. This is because data distribution tries to evenly distribute data to all of the processes, and if some processes have a whole disk and some only have half, the processes with a whole disk will be artificially limited.</p>\n<p>It can also be a bit of a challenge to change the number of processes you have running on a disk if you have a lot of data. For example, if you are changing from 2 to 1 processes per disk, the processes that remain are going to grow larger as the extras are removed. However, until the extras are actually removed, the growing processes might run out of space. The safest way to deal with this if your disks are somewhat full is to migrate to entirely new hardware that\u2019s setup in the way you want.</p>\n<aside class=\"quote no-group\" data-username=\"tobad357\" data-post=\"1\" data-topic=\"868\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/49beb7/48.png\" class=\"avatar\"> tobad357:</div>\n<blockquote>\n<p>Is it possible to run tx log process on same server as storage process as long as using different devices?</p>\n</blockquote>\n</aside>\n<p>A transaction log that shares a disk with a storage server is bad for performance, but if they use separate disks it\u2019s fine to have them on the same machine.</p>\n<aside class=\"quote no-group\" data-username=\"tobad357\" data-post=\"1\" data-topic=\"868\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/49beb7/48.png\" class=\"avatar\"> tobad357:</div>\n<blockquote>\n<p>How much RAM is recommended per process?</p>\n</blockquote>\n</aside>\n<p>The quoted minimum is 4GB, which may work ok if your load is light. I\u2019d generally favor having 8GB per process though.</p>\n<aside class=\"quote no-group\" data-username=\"tobad357\" data-post=\"1\" data-topic=\"868\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/49beb7/48.png\" class=\"avatar\"> tobad357:</div>\n<blockquote>\n<p>If we want to run triple redundancy, should we have at least 5 or 7 servers?</p>\n</blockquote>\n</aside>\n<p>For triple redundancy, you\u2019ll need at least 5 separate machines for your coordinators. You also need at least 3 machines to recruit your transaction logs, so having 5 affords you two faults for that purpose as well. Having more can be nice because it reduces the urgency of dealing with certain types of faults, but it isn\u2019t necessary.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-26T17:55:18.756Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 10,
+        "reads": 37,
+        "readers_count": 36,
+        "score": 72.4,
+        "yours": false,
+        "topic_id": 868,
+        "topic_slug": "production-hardware",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/production-hardware/868/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2657,
+      2715
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2534
+    ],
+    [
+      2,
+      2521
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Production Hardware",
+  "id": 868,
+  "title": "Production Hardware",
+  "posts_count": 2,
+  "created_at": "2018-11-14T03:22:43.738Z",
+  "views": 1026,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2018-11-26T17:55:18.756Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "production-hardware",
+  "category_id": 7,
+  "word_count": 645,
+  "deleted_at": null,
+  "user_id": 366,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_868",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FDB Server deployment resources?",
+      "id": 242,
+      "title": "FDB Server deployment resources?",
+      "slug": "fdb-server-deployment-resources",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-04-24T09:47:30.011Z",
+      "last_posted_at": "2018-05-05T23:07:13.885Z",
+      "bumped": true,
+      "bumped_at": "2018-05-05T23:07:13.885Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 2651,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 26,
+            "username": "mrz",
+            "name": "matthew zeier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mrz/{size}/26_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 11,
+            "username": "ral",
+            "name": "Richard Low",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f04885/{size}.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 43,
+            "username": "killertypo",
+            "name": "Mike McMahon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/killertypo/{size}/35_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Designing a new FoundationDB server",
+      "id": 4300,
+      "title": "Designing a new FoundationDB server",
+      "slug": "designing-a-new-foundationdb-server",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2023-12-13T19:29:00.410Z",
+      "last_posted_at": "2023-12-14T22:36:02.215Z",
+      "bumped": true,
+      "bumped_at": "2023-12-14T22:36:02.215Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 354,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 906,
+            "username": "mark_winn",
+            "name": "Mark",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/eb8c5e/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "WARNING: A single process is both a transaction log and a storage server",
+      "id": 1580,
+      "title": "WARNING: A single process is both a transaction log and a storage server",
+      "slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-08-11T17:20:33.378Z",
+      "last_posted_at": "2019-08-13T20:43:59.991Z",
+      "bumped": true,
+      "bumped_at": "2019-08-13T20:43:59.991Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1783,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "WARNING A single process is both a transaction log and a storage server",
+      "id": 1529,
+      "title": "WARNING A single process is both a transaction log and a storage server",
+      "slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-07-18T14:42:38.020Z",
+      "last_posted_at": "2023-01-31T06:35:46.426Z",
+      "bumped": true,
+      "bumped_at": "2023-01-31T06:36:10.430Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1910,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 919,
+            "username": "Rjerk",
+            "name": "Rjerk",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjerk/{size}/1056_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deploying storage-only servers",
+      "id": 1353,
+      "title": "Deploying storage-only servers",
+      "slug": "deploying-storage-only-servers",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-05-08T21:20:55.380Z",
+      "last_posted_at": "2019-05-10T18:22:19.831Z",
+      "bumped": true,
+      "bumped_at": "2019-05-10T18:22:19.831Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 678,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 17,
+            "username": "david.youngworth",
+            "name": "David Youngworth",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/david.youngworth/{size}/376_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 366,
+        "username": "tobad357",
+        "name": "Tobad357",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/49beb7/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 366,
+      "username": "tobad357",
+      "name": "Tobad357",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/49beb7/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    }
+  },
+  "bookmarks": []
+}

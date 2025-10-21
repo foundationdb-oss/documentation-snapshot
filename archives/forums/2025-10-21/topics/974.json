@@ -1,0 +1,1035 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2917,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2018-12-27T13:26:03.332Z",
+        "cooked": "<p>I\u2019m in the process of trying to optimize the bulk import of our data restore tool, and I\u2019m having trouble understanding what\u2019s happening under certain circumstances. To help me, I\u2019ve added support for all the new metrics available in <code>status json</code> in the recent versions, and it is showing me something unexpected.</p>\n<p>I have a small cluster with 3 hosts (ubuntu 18.04) and 5 processes each, splitted into <code>stateless</code>, <code>strorage</code> and <code>log</code> classes in order to maximize memory and disk usage per host. Two NVME ssd per host, one for the log, the other for the storage</p>\n<p><strong>Overview of the cluster topology:</strong><br>\n<em>note: sorry for the mess, still work in progress I\u2019m not sure which metric is usefull where, so it\u2019s a bit random</em><br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6.png\" title=\"image.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6_2_689x253.png\" alt=\"image\" width=\"689\" height=\"253\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6_2_689x253.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6_2_1033x379.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image.png</span><span class=\"informations\">1299\u00d7478 70.7 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>When running the import tool, it is maxxing out at 10 to 20 MB/s (~25 GB to import total). I\u2019ve doubled the throughput by changing the import from sequential to \u2018random\u2019 order, but I\u2019m still seeing weird hotspots in the storage nodes:</p>\n<p><strong>View of log and storage roles:</strong><br>\n<em>again, work in progress, need to find the best way to display things in this tab</em><br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7.png\" title=\"image.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7_2_689x194.png\" alt=\"image\" width=\"689\" height=\"194\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7_2_689x194.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7_2_1033x291.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/1X/f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image.png</span><span class=\"informations\">1299\u00d7366 58.8 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>You can see that in the list of storage roles, almost all the process on host .131 and .132 are at 75-85% CPU, and have 2.x GB data each (at the time of the screenshot), while the host .133 has only ~230 MB of stored_bytes, and is doing nothing (cpu, %disk, network, \u2026).</p>\n<p>Is this expected? I\u2019ve run the import multiple times, and I always see the same pattern: all the data a concentrated on the first twho hosts, and the third host does not see much action.</p>\n<p><strong>Edit:</strong> at a later stage in the import process, the load is about 33% read 66% write and I\u2019m still seeing the same  imbalance (though it is expected if all the data is on host 1 and 2)<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/25e31bc592fa07e837aaecabc340f5a98493f0f1.png\" title=\"image.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/25e31bc592fa07e837aaecabc340f5a98493f0f1_2_689x151.png\" alt=\"image\" width=\"689\" height=\"151\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/25e31bc592fa07e837aaecabc340f5a98493f0f1_2_689x151.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/25e31bc592fa07e837aaecabc340f5a98493f0f1_2_1033x226.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/1X/25e31bc592fa07e837aaecabc340f5a98493f0f1.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/25e31bc592fa07e837aaecabc340f5a98493f0f1_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image.png</span><span class=\"informations\">1299\u00d7286 38.1 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p><strong>Edit 2</strong> and this is the same cluster after being idle for ~20 hours<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/6ba85b378fb826ec7d8079246a0090217c0e4598.png\" title=\"image.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/original/1X/6ba85b378fb826ec7d8079246a0090217c0e4598.png\" alt=\"image\" width=\"689\" height=\"162\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/6ba85b378fb826ec7d8079246a0090217c0e4598_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image.png</span><span class=\"informations\">1299\u00d7305 34.8 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>There is slightly more data on the 3rd host now, but still imabalanced. It is only storing 15% of the data instead of expected 33%.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2018-12-28T08:50:42.970Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 89,
+        "reads": 63,
+        "readers_count": 62,
+        "score": 457.6,
+        "yours": false,
+        "topic_id": 974,
+        "topic_slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6.png",
+            "internal": false,
+            "reflection": false,
+            "title": "86dcf5016f536d13cdf7c90596e6b58cf6d315d6.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7.png",
+            "internal": false,
+            "reflection": false,
+            "title": "f51d94c438bccbd6ebafe8c28b38c9393fb6dcd7.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/25e31bc592fa07e837aaecabc340f5a98493f0f1.png",
+            "internal": false,
+            "reflection": false,
+            "title": "25e31bc592fa07e837aaecabc340f5a98493f0f1.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/6ba85b378fb826ec7d8079246a0090217c0e4598.png",
+            "internal": false,
+            "reflection": false,
+            "title": "6ba85b378fb826ec7d8079246a0090217c0e4598.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/how-to-troubleshoot-throughput-performance-degrade/1436/20",
+            "internal": true,
+            "reflection": true,
+            "title": "How to troubleshoot throughput performance degrade?",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/understanding-load-balancing-between-storage-processes-under-bulk-writes/974/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2923,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2018-12-28T16:45:31.485Z",
+        "cooked": "<p>I\u2019m not sure what happened, but after re-starting the import process one more time, the imbalance disappeared and now data are split 40/40/30% which is close enough for me.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/585c989e917ac4d3e5cf4bb02d2dcb19b737b477.png\" title=\"image.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/original/1X/585c989e917ac4d3e5cf4bb02d2dcb19b737b477.png\" alt=\"image\" width=\"689\" height=\"183\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/585c989e917ac4d3e5cf4bb02d2dcb19b737b477_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image.png</span><span class=\"informations\">1299\u00d7345 39.4 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2018-12-28T16:45:31.485Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 56,
+        "readers_count": 55,
+        "score": 21.2,
+        "yours": false,
+        "topic_id": 974,
+        "topic_slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/585c989e917ac4d3e5cf4bb02d2dcb19b737b477.png",
+            "internal": false,
+            "reflection": false,
+            "title": "585c989e917ac4d3e5cf4bb02d2dcb19b737b477.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/understanding-load-balancing-between-storage-processes-under-bulk-writes/974/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 2925,
+        "name": "Jeff Baker",
+        "username": "jwb",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jwb/{size}/413_2.png",
+        "created_at": "2018-12-28T18:03:14.710Z",
+        "cooked": "<p>That tool is dope.  Is the source available?</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2018-12-28T18:03:14.710Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 55,
+        "readers_count": 54,
+        "score": 46.0,
+        "yours": false,
+        "topic_id": 974,
+        "topic_slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+        "display_username": "Jeff Baker",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 53,
+          "username": "KrzysFR",
+          "name": "Christophe Chevalier",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 424,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/understanding-load-balancing-between-storage-processes-under-bulk-writes/974/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 2990,
+        "name": "Stewart Henderson",
+        "username": "bowlofstew",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+        "created_at": "2019-01-11T13:01:40.607Z",
+        "cooked": "<p>I second this comment!</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2019-01-11T13:01:40.607Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 45,
+        "readers_count": 44,
+        "score": 19.0,
+        "yours": false,
+        "topic_id": 974,
+        "topic_slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+        "display_username": "Stewart Henderson",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 424,
+          "username": "jwb",
+          "name": "Jeff Baker",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/jwb/{size}/413_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 55,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/understanding-load-balancing-between-storage-processes-under-bulk-writes/974/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 2991,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2019-01-11T14:14:30.331Z",
+        "cooked": "<p>The tool is <code>fdbtop</code> from this repo: <a href=\"https://github.com/Doxense/foundationdb-dotnet-client/\" rel=\"nofollow noopener\">https://github.com/Doxense/foundationdb-dotnet-client/</a></p>\n<p>Though the screenshots above are from the master branch that is not yet released, and still has some issues (manual build required on linux, some issues with differences between windows and linux console)</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2019-01-11T14:14:30.331Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 45,
+        "readers_count": 44,
+        "score": 14.0,
+        "yours": false,
+        "topic_id": 974,
+        "topic_slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/Doxense/foundationdb-dotnet-client/",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - Doxense/foundationdb-dotnet-client: C#/.NET Binding for FoundationDB Client API",
+            "clicks": 14
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/understanding-load-balancing-between-storage-processes-under-bulk-writes/974/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 2995,
+        "name": "Evan Tschannen",
+        "username": "Evan",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+        "created_at": "2019-01-11T23:16:33.076Z",
+        "cooked": "<p>We have noticed that write saturating workloads are able to get data distribution into a bad state if data distribution is not able to keep up with the traffic for a while. Based on what you have described, it is likely the same problem we have observed.</p>\n<p>We are in the middle of investigating the reason this happens, I will let you know once we figure out whats going on.</p>\n<p>Thanks for the report!</p>",
+        "post_number": 6,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2019-01-11T23:16:33.076Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 43,
+        "readers_count": 42,
+        "score": 13.6,
+        "yours": false,
+        "topic_id": 974,
+        "topic_slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+        "display_username": "Evan Tschannen",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/how-to-troubleshoot-throughput-performance-degrade/1436/23",
+            "internal": true,
+            "reflection": true,
+            "title": "How to troubleshoot throughput performance degrade?",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": false,
+        "staff": true,
+        "user_id": 54,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/understanding-load-balancing-between-storage-processes-under-bulk-writes/974/6",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2917,
+      2923,
+      2925,
+      2990,
+      2991,
+      2995
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2490
+    ],
+    [
+      2,
+      2489
+    ],
+    [
+      4,
+      2475
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Understanding load balancing between storage processes under bulk writes",
+  "id": 974,
+  "title": "Understanding load balancing between storage processes under bulk writes",
+  "posts_count": 6,
+  "created_at": "2018-12-27T13:26:03.231Z",
+  "views": 1835,
+  "reply_count": 2,
+  "like_count": 1,
+  "last_posted_at": "2019-01-11T23:16:33.076Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+  "category_id": 7,
+  "word_count": 557,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6_2_1023x376.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_974",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 6,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 4,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1299,
+      "height": 478,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1023,
+      "height": 376,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6_2_1023x376.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to troubleshoot throughput performance degrade?",
+      "id": 1436,
+      "title": "How to troubleshoot throughput performance degrade?",
+      "slug": "how-to-troubleshoot-throughput-performance-degrade",
+      "posts_count": 36,
+      "reply_count": 24,
+      "highest_post_number": 36,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/9c9854ce87e53265f75154876f180812ee93f8ec.png",
+      "created_at": "2019-06-10T10:09:55.810Z",
+      "last_posted_at": "2019-06-20T21:36:30.209Z",
+      "bumped": true,
+      "bumped_at": "2019-06-20T21:36:30.209Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 4377,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 597,
+            "username": "rayjcwu",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rayjcwu/{size}/602_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 592,
+            "username": "nfeinberg",
+            "name": "Nicholas Feinberg",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/ba8739/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Data distribution / Disk usage uneven: bifurcated at 2 tiers",
+      "id": 2270,
+      "title": "Data distribution / Disk usage uneven: bifurcated at 2 tiers",
+      "slug": "data-distribution-disk-usage-uneven-bifurcated-at-2-tiers",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2020-08-02T03:47:59.558Z",
+      "last_posted_at": "2020-08-06T06:17:39.778Z",
+      "bumped": true,
+      "bumped_at": "2020-08-06T06:17:39.778Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 537,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 741,
+            "username": "sears",
+            "name": "Russell Sears",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage queue limiting performance when initially loading data",
+      "id": 1135,
+      "title": "Storage queue limiting performance when initially loading data",
+      "slug": "storage-queue-limiting-performance-when-initially-loading-data",
+      "posts_count": 11,
+      "reply_count": 6,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-02-13T10:07:40.715Z",
+      "last_posted_at": "2019-10-14T16:11:25.098Z",
+      "bumped": true,
+      "bumped_at": "2019-10-14T16:11:25.098Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 2780,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 509,
+            "username": "qlees",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/q/ba8739/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 476,
+            "username": "dch",
+            "name": "Dave Cottlehuber",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 663,
+            "username": "atul",
+            "name": "Atul Gupta",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f14d63/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Best practices for bulk load",
+      "id": 422,
+      "title": "Best practices for bulk load",
+      "slug": "best-practices-for-bulk-load",
+      "posts_count": 8,
+      "reply_count": 6,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-05-16T17:25:44.677Z",
+      "last_posted_at": "2018-05-25T16:09:06.204Z",
+      "bumped": true,
+      "bumped_at": "2018-05-25T16:09:06.204Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 4449,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 230,
+            "username": "umpc",
+            "name": "Justin Lowery",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to speed up balancing?",
+      "id": 1565,
+      "title": "How to speed up balancing?",
+      "slug": "how-to-speed-up-balancing",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2019-08-06T08:49:50.107Z",
+      "last_posted_at": "2019-08-21T00:41:02.788Z",
+      "bumped": true,
+      "bumped_at": "2019-08-21T00:41:02.788Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1541,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 629,
+            "username": "Sraw",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/a88e57/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 54,
+        "username": "Evan",
+        "name": "Evan Tschannen",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "moderator": true,
+        "trust_level": 1
+      },
+      {
+        "id": 55,
+        "username": "bowlofstew",
+        "name": "Stewart Henderson",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 424,
+        "username": "jwb",
+        "name": "Jeff Baker",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jwb/{size}/413_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 54,
+      "username": "Evan",
+      "name": "Evan Tschannen",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/Doxense/foundationdb-dotnet-client/",
+        "title": "GitHub - Doxense/foundationdb-dotnet-client: C#/.NET Binding for FoundationDB Client API",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 14,
+        "user_id": 53,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/how-to-troubleshoot-throughput-performance-degrade/1436/23",
+        "title": "How to troubleshoot throughput performance degrade?",
+        "internal": true,
+        "attachment": false,
+        "reflection": true,
+        "clicks": 2,
+        "user_id": 597,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

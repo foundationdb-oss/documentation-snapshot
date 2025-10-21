@@ -1,0 +1,667 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13663,
+        "name": "",
+        "username": "simenl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/simenl/{size}/1671_2.png",
+        "created_at": "2024-01-10T10:13:20.296Z",
+        "cooked": "<p>There seems to be a bug with the <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/73270bac4f6fa7faab4f7820c64c618d5a5f1b11/docs/manual/replacements_and_deletions.md?plain=1#L27\" rel=\"noopener nofollow ugc\">maxConcurrentReplacements</a> option, in which the remaining updates (that require a replacement) will be updated with the deletion strategy.</p>\n<p><strong>Context</strong><br>\nAs a mitigation to storage roles being recruited to log processes [<a href=\"https://forums.foundationdb.org/t/never-assign-storage-role-to-log-processes/4294\">forum post</a>], we tried setting <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/73270bac4f6fa7faab4f7820c64c618d5a5f1b11/docs/manual/replacements_and_deletions.md?plain=1#L27\" rel=\"noopener nofollow ugc\">maxConcurrentReplacements</a> to reduce the number of concurrent exclusions.<br>\nHowever, this caused the <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/73270bac4f6fa7faab4f7820c64c618d5a5f1b11/docs/manual/replacements_and_deletions.md?plain=1#L27\" rel=\"noopener nofollow ugc\">Deletion strategy</a> to incorrectly be applied on the remaining processes, for updates that requires the Replacement strategy. Consequently this resulted in unschedulable pods, as we updated the node selector to an availability zone incompatible with the existing persistent volume on the process.</p>\n<p>We run FoundationDB on kubernetes through the <a href=\"https://github.com/foundationDB/fdb-kubernetes-operator\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator: v1.28.1</a>.<br>\nFoundationDB version: <a href=\"https://github.com/apple/foundationdb/blob/main/documentation/sphinx/source/release-notes/release-notes-710.rst#7143\" rel=\"noopener nofollow ugc\">7.1.43</a></p>\n<p>(The <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator</a> repository requires collaborator status to create an issue. My github ID is simenl)</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-01-10T10:13:20.296Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 14,
+        "reads": 9,
+        "readers_count": 8,
+        "score": 86.8,
+        "yours": false,
+        "topic_id": 4318,
+        "topic_slug": "maxconcurrentreplacements-causing-deletion-update-strategy",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/73270bac4f6fa7faab4f7820c64c618d5a5f1b11/docs/manual/replacements_and_deletions.md?plain=1#L27",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/docs/manual/replacements_and_deletions.md at 73270bac4f6fa7faab4f7820c64c618d5a5f1b11 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 5
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB",
+            "clicks": 1
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/never-assign-storage-role-to-log-processes/4294",
+            "internal": true,
+            "reflection": false,
+            "title": "Never assign Storage role to Log processes",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/foundationDB/fdb-kubernetes-operator",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/documentation/sphinx/source/release-notes/release-notes-710.rst#7143",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/documentation/sphinx/source/release-notes/release-notes-710.rst at main \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 715,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/maxconcurrentreplacements-causing-deletion-update-strategy/4318/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13665,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2024-01-10T16:41:50.885Z",
+        "cooked": "<p>CC <a class=\"mention\" href=\"/u/ammolitor\">@ammolitor</a> for adding GitHub access.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-01-10T16:41:50.885Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 9,
+        "readers_count": 8,
+        "score": 1.8,
+        "yours": false,
+        "topic_id": 4318,
+        "topic_slug": "maxconcurrentreplacements-causing-deletion-update-strategy",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/maxconcurrentreplacements-causing-deletion-update-strategy/4318/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13663,
+      13665
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      651
+    ],
+    [
+      2,
+      650
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "maxConcurrentReplacements causing deletion update strategy",
+  "id": 4318,
+  "title": "maxConcurrentReplacements causing deletion update strategy",
+  "posts_count": 2,
+  "created_at": "2024-01-10T10:13:20.233Z",
+  "views": 181,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2024-01-10T16:41:50.885Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "maxconcurrentreplacements-causing-deletion-update-strategy",
+  "category_id": 16,
+  "word_count": 230,
+  "deleted_at": null,
+  "user_id": 715,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4318",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Data loss during recovery from mass pod deletion during scale down",
+      "id": 3213,
+      "title": "Data loss during recovery from mass pod deletion during scale down",
+      "slug": "data-loss-during-recovery-from-mass-pod-deletion-during-scale-down",
+      "posts_count": 14,
+      "reply_count": 5,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2022-03-16T09:22:29.689Z",
+      "last_posted_at": "2022-03-25T13:33:41.750Z",
+      "bumped": true,
+      "bumped_at": "2022-03-25T13:33:41.750Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 711,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 724,
+            "username": "larshagen",
+            "name": "Lars Hagen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/larshagen/{size}/776_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB kubernetes operator continuously boucing processes",
+      "id": 2092,
+      "title": "FDB kubernetes operator continuously boucing processes",
+      "slug": "fdb-kubernetes-operator-continuously-boucing-processes",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-04-29T10:57:13.947Z",
+      "last_posted_at": "2020-05-03T07:18:12.844Z",
+      "bumped": true,
+      "bumped_at": "2020-05-03T07:18:12.844Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1013,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 724,
+            "username": "larshagen",
+            "name": "Lars Hagen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/larshagen/{size}/776_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Design Discussion - Automating Replacements",
+      "id": 2422,
+      "title": "Design Discussion - Automating Replacements",
+      "slug": "design-discussion-automating-replacements",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2020-11-04T16:47:55.545Z",
+      "last_posted_at": "2020-11-13T13:51:56.147Z",
+      "bumped": true,
+      "bumped_at": "2020-11-13T13:51:56.147Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 707,
+      "category_id": 15,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Killing 10% of Storage Servers Leads to Unknown Read Rate in FDB Status Report",
+      "id": 1435,
+      "title": "Killing 10% of Storage Servers Leads to Unknown Read Rate in FDB Status Report",
+      "slug": "killing-10-of-storage-servers-leads-to-unknown-read-rate-in-fdb-status-report",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-06-10T09:39:49.071Z",
+      "last_posted_at": "2019-06-10T18:59:33.850Z",
+      "bumped": true,
+      "bumped_at": "2019-06-10T18:59:33.850Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 709,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Upgrading FoundationDB",
+      "id": 191,
+      "title": "Upgrading FoundationDB",
+      "slug": "upgrading-foundationdb",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-04-21T23:51:26.311Z",
+      "last_posted_at": "2018-08-27T03:33:51.669Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T03:33:51.669Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 3852,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 133,
+            "username": "titanous",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/titanous/{size}/94_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 715,
+        "username": "simenl",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/simenl/{size}/1671_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 715,
+      "username": "simenl",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/simenl/{size}/1671_2.png"
+    },
+    "last_poster": {
+      "id": 849,
+      "username": "johscheuer",
+      "name": "Johannes Scheuermann",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/73270bac4f6fa7faab4f7820c64c618d5a5f1b11/docs/manual/replacements_and_deletions.md?plain=1#L27",
+        "title": "fdb-kubernetes-operator/docs/manual/replacements_and_deletions.md at 73270bac4f6fa7faab4f7820c64c618d5a5f1b11 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 715,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/never-assign-storage-role-to-log-processes/4294",
+        "title": "Never assign Storage role to Log processes",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 715,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator",
+        "title": "GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 715,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

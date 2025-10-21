@@ -1,0 +1,610 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13440,
+        "name": "",
+        "username": "nha",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/nha/{size}/1465_2.png",
+        "created_at": "2023-10-30T16:53:39.429Z",
+        "cooked": "<p>I am trying to follow the <a href=\"https://apple.github.io/foundationdb/client-testing.html#implementing-a-java-workload\" rel=\"noopener nofollow ugc\">client testing</a> guide, for the Java workloads.</p>\n<p>My java version:</p>\n<pre><code class=\"lang-auto\">java -version\nopenjdk version \"20.0.2\" 2023-07-18\nOpenJDK Runtime Environment Temurin-20.0.2+9 (build 20.0.2+9)\nOpenJDK 64-Bit Server VM Temurin-20.0.2+9 (build 20.0.2+9, mixed mode)\n</code></pre>\n<p>I did obtain the shared files, and I can pass a <code>classPath=...</code> which shows that the dynamic shared object is loading.<br>\nHowever there is a JNIError</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"10\" Time=\"66.230689\" DateTime=\"2023-10-30T08:58:16Z\" Type=\"TryAddToClassPath\" Machine=\"[abcd::3:4:3:1]:1\" ID=\"0000000000000000\" Path=\"/Users/nicolasha/repo/banksy/workload_test.jar\" ThreadID=\"34855\n\n82194721136708\" LogGroup=\"default\" Roles=\"TS\" /&gt;\n\n\n&lt;Event Severity=\"40\" ErrorKind=\"Unset\" Time=\"66.230689\" DateTime=\"2023-10-30T08:58:16Z\" Type=\"JNIError\" Machine=\"[abcd::3:4:3:1]:1\" ID=\"0000000000000000\" Location=\"/Users/nicolasha/repo/foundationdb/bindings/java/JavaWorkload.cpp:335\" Error=\"java.lang.NullPointerException: Cannot read field \"nameToModule\" because \"this\" is null\" ThreadID=\"3485582194721136708\" Backtrace=\"atos -o fdbserver.debug -arch x86_64 -l 0x104748000 0x10701fb90 0x10701ff1c 0x10701c86c 0x106003328 0x1060034c4 0x1060033b8 0x104778738 0x106eb81b0 0x106eb804c 0x10514a2e8 0x18fd7d0e0\" LogGroup=\"default\" Roles=\"TS\" /&gt;\n</code></pre>\n<p>I trace it back to this piece of code:</p><aside class=\"onebox githubblob\" data-onebox-src=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L347-L350\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L347-L350\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L347-L350\" target=\"_blank\" rel=\"noopener nofollow ugc\">apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L347-L350</a></h4>\n\n\n\n    <pre class=\"onebox\"><code class=\"lang-cpp\">\n      <ol class=\"start lines\" start=\"347\" style=\"counter-reset: li-counter 346 ;\">\n          <li>\t\tauto urlLoaderClass = getClass(\"java/net/URLClassLoader\");</li>\n          <li>\t\tenv-&gt;CallVoidMethod(classLoader, getMethod(urlLoaderClass, \"addURL\", \"(Ljava/net/URL;)V\"), url);</li>\n          <li>\t\tenv-&gt;DeleteLocalRef(classLoader);</li>\n          <li>\t\tcheckException();</li>\n      </ol>\n    </code></pre>\n\n\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>Which looks like it would work on Java 8, but not on Java 9+ <a href=\"https://stackoverflow.com/a/60775\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">java - How to load JAR files dynamically at Runtime? - Stack Overflow</a> ?</p>\n<p>So then I looked at this extract from the docs:</p>\n<blockquote>\n<p>You can set a class path through the JVM argument -Djava.class.path=\u2026</p>\n</blockquote>\n<p>But I have not found a way to pass this as arguments through my workload.txt. It doesn\u2019t seem like there is one</p>\n<aside class=\"onebox githubblob\" data-onebox-src=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L245\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L245\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L245\" target=\"_blank\" rel=\"noopener nofollow ugc\">apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L245</a></h4>\n\n\n\n    <pre class=\"onebox\"><code class=\"lang-cpp\">\n      <ol class=\"start lines\" start=\"235\" style=\"counter-reset: li-counter 234 ;\">\n          <li>\t\t}</li>\n          <li>\t}</li>\n          <li></li>\n          <li>\tJVM(FDBLogger* log) : log(log) {</li>\n          <li>\t\ttry {</li>\n          <li>\t\t\tlog-&gt;trace(FDBSeverity::Debug, \"InitializeJVM\", {});</li>\n          <li>\t\t\tJavaVMInitArgs args;</li>\n          <li>\t\t\targs.version = JNI_VERSION_1_6;</li>\n          <li>\t\t\targs.ignoreUnrecognized = JNI_TRUE;</li>\n          <li>\t\t\targs.nOptions = 0;</li>\n          <li class=\"selected\">\t\t\tsuccess(JNI_CreateJavaVM(&amp;jvm, reinterpret_cast&lt;void**&gt;(&amp;env), &amp;args));</li>\n          <li>\t\t\tlog-&gt;trace(debug, \"JVMCreated\", {});</li>\n          <li>\t\t\tthrowableClass = env-&gt;FindClass(\"java/lang/Throwable\");</li>\n          <li>\t\t} catch (JNIError&amp; e) {</li>\n          <li>\t\t\thealthy = false;</li>\n          <li>\t\t\tenv-&gt;ExceptionClear();</li>\n          <li>\t\t}</li>\n          <li>\t}</li>\n          <li></li>\n          <li>\t~JVM() {</li>\n          <li>\t\tlog-&gt;trace(debug, \"JVMDestruct\", {});</li>\n      </ol>\n    </code></pre>\n\n\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>Am I doing something incorrectly, or is it not possible at the moment to use the client testing on Java 9+?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-10-30T16:53:39.429Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 32.4,
+        "yours": false,
+        "topic_id": 4203,
+        "topic_slug": "client-testing-java-workload-on-java-9",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://stackoverflow.com/a/60775",
+            "internal": false,
+            "reflection": false,
+            "title": "java - How to load JAR files dynamically at Runtime? - Stack Overflow",
+            "clicks": 2
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/client-testing.html#implementing-a-java-workload",
+            "internal": false,
+            "reflection": false,
+            "title": "Client Testing \u2014 FoundationDB 7.1",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L347-L350",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L245",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1189,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/client-testing-java-workload-on-java-9/4203/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13441,
+        "name": "",
+        "username": "nha",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/nha/{size}/1465_2.png",
+        "created_at": "2023-10-30T17:00:46.542Z",
+        "cooked": "<p>I have attempted to hack into the Java workload cpp code. Changing addToClassPath from</p><aside class=\"onebox githubblob\" data-onebox-src=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L322\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L322\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L322\" target=\"_blank\" rel=\"noopener nofollow ugc\">apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L322</a></h4>\n\n\n\n    <pre class=\"onebox\"><code class=\"lang-cpp\">\n      <ol class=\"start lines\" start=\"312\" style=\"counter-reset: li-counter 311 ;\">\n          <li>#define getMethod(clazz, name, signature) getMethodImpl(__FILE__, __LINE__, clazz, name, signature)</li>\n          <li></li>\n          <li>\tjfieldID getFieldImpl(const char* file, int line, jclass clazz, const char* name, const char* signature) {</li>\n          <li>\t\tauto res = env-&gt;GetFieldID(clazz, name, signature);</li>\n          <li>\t\tcheckException();</li>\n          <li>\t\treturn res;</li>\n          <li>\t}</li>\n          <li></li>\n          <li>#define getField(clazz, name, signature) getFieldImpl(__FILE__, __LINE__, clazz, name, signature)</li>\n          <li></li>\n          <li class=\"selected\">\tvoid addToClassPath(const std::string&amp; path) {</li>\n          <li>\t\tlog-&gt;trace(info, \"TryAddToClassPath\", { { \"Path\", path } });</li>\n          <li>\t\tif (!env) {</li>\n          <li>\t\t\tthrow JNIError{};</li>\n          <li>\t\t}</li>\n          <li>\t\tif (classPath.count(path) &gt; 0) {</li>\n          <li>\t\t\t// already added</li>\n          <li>\t\t\treturn;</li>\n          <li>\t\t}</li>\n          <li>\t\tauto p = env-&gt;NewStringUTF(path.c_str());</li>\n          <li>\t\tcheckException();</li>\n      </ol>\n    </code></pre>\n\n\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n<p>\nto</p>\n<pre><code class=\"lang-auto\">void addToClassPath(const std::string&amp; path) {\n    log-&gt;trace(info, \"TryAddToClassPath\", { { \"Path\", path } });\n    if (!env) {\n      throw JNIError{};\n    }\n    if (classPath.count(path) &gt; 0) {\n      // already added\n      return;\n    }\n\n    auto p = env-&gt;NewStringUTF(path.c_str());\n    checkException();\n    auto fileClass = getClass(\"java/io/File\");\n    auto file = env-&gt;NewObject(fileClass, getMethod(fileClass, \"&lt;init&gt;\", \"(Ljava/lang/String;)V\"), p);\n    checkException();\n    auto uri = env-&gt;CallObjectMethod(file, env-&gt;GetMethodID(fileClass, \"toURI\", \"()Ljava/net/URI;\"));\n    checkException();\n    auto uriClass = getClass(\"java/net/URI\");\n    auto url = env-&gt;CallObjectMethod(uri, getMethod(uriClass, \"toURL\", \"()Ljava/net/URL;\"));\n    checkException();\n    auto classLoaderClass = getClass(\"java/lang/ClassLoader\");\n    auto sysLoaderMethod =\n        env-&gt;GetStaticMethodID(classLoaderClass, \"getSystemClassLoader\", \"()Ljava/lang/ClassLoader;\");\n    checkException();\n    auto classLoader = env-&gt;CallStaticObjectMethod(classLoaderClass, sysLoaderMethod);\n    checkException();\n\n    auto urlLoaderClass = getClass(\"java/net/URLClassLoader\");\n\n    // previous official impl.\n    // env-&gt;CallVoidMethod(classLoader, getMethod(urlLoaderClass, \"addURL\", \"(Ljava/net/URL;)V\"), url);\n\n  //START\n    // URLClassLoader is created with the new URL.\n    //  - Grab the current thread via Thread.currentThread().\n    //  - Set the context class loader of the current thread to the new URLClassLoader using Thread.setContextClassLoader(ClassLoader).\n    //  - This way, the URLClassLoader with the updated classpath is set as the context class loader for the current thread, which should be used for class loading in subsequent JNI calls.\n    auto urlArray = env-&gt;NewObjectArray(1, env-&gt;FindClass(\"java/net/URL\"), url);\n    checkException();\n\n    auto urlClassLoaderConstructor = env-&gt;GetMethodID(urlLoaderClass, \"&lt;init&gt;\", \"([Ljava/net/URL;Ljava/lang/ClassLoader;)V\");\n    checkException();\n\n    auto urlClassLoader = env-&gt;NewObject(urlLoaderClass, urlClassLoaderConstructor, urlArray, classLoader);\n    checkException();\n\n    auto threadClass = getClass(\"java/lang/Thread\");\n    auto currentThreadMethod = env-&gt;GetStaticMethodID(threadClass, \"currentThread\", \"()Ljava/lang/Thread;\");\n    checkException();\n\n    auto currentThread = env-&gt;CallStaticObjectMethod(threadClass, currentThreadMethod);\n    checkException();\n\n    auto setContextClassLoaderMethod = env-&gt;GetMethodID(threadClass, \"setContextClassLoader\", \"(Ljava/lang/ClassLoader;)V\");\n    checkException();\n\n    env-&gt;CallVoidMethod(currentThread, setContextClassLoaderMethod, urlClassLoader);\n  // END\n\n    checkException();\n    env-&gt;DeleteLocalRef(classLoader);\n\n    checkException();\n  }\n\n</code></pre>\n<p>I end up with another JNIError:</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"40\" ErrorKind=\"Unset\" Time=\"129.769316\" DateTime=\"2023-10-30T16:38:51Z\" Type=\"JNIError\" Machine=\"[abcd::3:4:3:3]:1\" ID=\"0000000000000000\" Location=\"/Users/nicolasha/repo/foundationdb/bindings/java/JavaWorkload.cpp:403\" Error=\"java.lang.NoClassDefFoundError: com/apple/foundationdb/testing/AbstractWorkload\" ThreadID=\"8147160290012382807\" Backtrace=\"atos -o fdbserver.debug -arch x86_64 -l 0x102b1c000 0x1053f3b90 0x1053f3f1c 0x1053f086c 0x1043d7328 0x1043d74c4 0x1043d73b8 0x102b4c738 0x10528c1b0 0x10528c04c 0x10351e2e8 0x18fd7d0e0\" LogGroup=\"default\" Roles=\"TS\" /&gt;\n</code></pre>\n<p>I think this indicates that the <code>addToClassPath</code> function succeeds, but then the classloader is not actually reused (?) resulting in <code>NoClassDefFoundError</code> down the line.</p>\n<p>This seems to support the hypothesis that the Java client testing does not work on Java 9+, but that my attempt is incorrect / incomplete: the classloader needs to be reused in all the subsequent calls.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-10-30T17:00:46.542Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 4203,
+        "topic_slug": "client-testing-java-workload-on-java-9",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/a7e21fa17cefe08456a244b1dfb2cf8e7d931771/bindings/java/JavaWorkload.cpp#L322",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1189,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/client-testing-java-workload-on-java-9/4203/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13440,
+      13441
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      722
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Client testing Java workload on Java 9+",
+  "id": 4203,
+  "title": "Client testing Java workload on Java 9+",
+  "posts_count": 2,
+  "created_at": "2023-10-30T16:53:39.350Z",
+  "views": 252,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-10-30T17:00:46.542Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "client-testing-java-workload-on-java-9",
+  "category_id": 7,
+  "word_count": 753,
+  "deleted_at": null,
+  "user_id": 1189,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4203",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Issue with FDB java: `Could not initialize class com.apple.foundationdb.FDB`",
+      "id": 1761,
+      "title": "Issue with FDB java: `Could not initialize class com.apple.foundationdb.FDB`",
+      "slug": "issue-with-fdb-java-could-not-initialize-class-com-apple-foundationdb-fdb",
+      "posts_count": 8,
+      "reply_count": 6,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-11-18T22:17:06.400Z",
+      "last_posted_at": "2019-12-03T17:39:59.820Z",
+      "bumped": true,
+      "bumped_at": "2019-12-03T17:39:59.820Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1792,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 660,
+            "username": "kc626",
+            "name": "Kevin Chan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/k/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Issues Using Java API on Long Running JVM",
+      "id": 693,
+      "title": "Issues Using Java API on Long Running JVM",
+      "slug": "issues-using-java-api-on-long-running-jvm",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-09-11T17:18:08.844Z",
+      "last_posted_at": "2018-09-12T18:23:10.519Z",
+      "bumped": true,
+      "bumped_at": "2018-09-12T18:23:10.519Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1013,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdb-java on macOS catalina throwing error Library not loaded: libfdb_c.dylib",
+      "id": 1894,
+      "title": "Fdb-java on macOS catalina throwing error Library not loaded: libfdb_c.dylib",
+      "slug": "fdb-java-on-macos-catalina-throwing-error-library-not-loaded-libfdb-c-dylib",
+      "posts_count": 14,
+      "reply_count": 5,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2020-01-22T17:58:20.286Z",
+      "last_posted_at": "2022-05-02T17:22:08.218Z",
+      "bumped": true,
+      "bumped_at": "2022-05-02T17:22:08.218Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 5438,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 307,
+            "username": "jwr",
+            "name": "Jan Rychter",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwr/{size}/302_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1098,
+            "username": "jacinpoz",
+            "name": "Jose Ignacio Acin Pozo",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jacinpoz/{size}/1324_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Running the FDB client on AWS Lambda",
+      "id": 1117,
+      "title": "Running the FDB client on AWS Lambda",
+      "slug": "running-the-fdb-client-on-aws-lambda",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-02-06T01:00:00.255Z",
+      "last_posted_at": "2019-02-06T01:31:12.943Z",
+      "bumped": true,
+      "bumped_at": "2019-02-06T01:31:12.943Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1601,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Loading native libraries without installing client packages",
+      "id": 798,
+      "title": "Loading native libraries without installing client packages",
+      "slug": "loading-native-libraries-without-installing-client-packages",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-10-23T13:43:51.362Z",
+      "last_posted_at": "2018-10-24T13:57:05.596Z",
+      "bumped": true,
+      "bumped_at": "2018-10-24T13:57:05.596Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1200,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 400,
+            "username": "CristiRO",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/7ba0ec/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1189,
+        "username": "nha",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/nha/{size}/1465_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1189,
+      "username": "nha",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/nha/{size}/1465_2.png"
+    },
+    "last_poster": {
+      "id": 1189,
+      "username": "nha",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/nha/{size}/1465_2.png"
+    },
+    "links": [
+      {
+        "url": "https://stackoverflow.com/a/60775",
+        "title": "java - How to load JAR files dynamically at Runtime? - Stack Overflow",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1189,
+        "domain": "stackoverflow.com",
+        "root_domain": "stackoverflow.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/client-testing.html#implementing-a-java-workload",
+        "title": "Client Testing \u2014 FoundationDB 7.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1189,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,720 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12876,
+        "name": "Andrew Noyes",
+        "username": "atn34",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/atn34/{size}/617_2.png",
+        "created_at": "2023-05-24T20:00:46.293Z",
+        "cooked": "<p>Hi folks! I\u2019m toying with a scheme to serve data derived from a read-only transaction from cache without re-deriving it or sacrificing linearizability. The scheme is roughly the following:</p>\n<ol>\n<li>Derive the data from a read-only transaction, and record the read snapshot and read conflict ranges of that transaction.</li>\n<li>Before serving from cache, validate the derived data by committing a transaction with the same read snapshot and read conflict ranges (and a dummy write conflict range to get the fdb client to actually send an rpc). If this commit is successful then you know that no transactions which could be known-committed before the request have changed the result of any of the reads involved in deriving the data.</li>\n</ol>\n<p>A few questions:</p>\n<ol>\n<li>Does this seem sound?</li>\n<li>Waiting for the transaction batch to become durable on tlogs is this biggest source of latency for validating with this scheme, but since these validation transactions have no mutations it seems unnecessary for the commit proxy to wait for logging before responding. However, it\u2019s not sound in general for commit proxies to reply to commit requests with no mutations before their commit version is durable, since a client could call getCommittedVersion and conclude incorrectly that mutations from any transactions with the same (or earlier) commit version are durable. Should we not expose a committed version for transactions with no mutations <sup class=\"footnote-ref\"><a href=\"#footnote-12876-1\" id=\"footnote-ref-12876-1\">[1]</a></sup>?</li>\n<li>Has anyone tried something like this before?</li>\n</ol>\n<p>Btw another source of transactions without mutations is the dummy transactions used in the native api to validate that transactions are not in-flight, so this could improve transaction latency in some failure scenarios.</p>\n<p>Edit: wacky idea: what if we present the largest known committed version as the commit version for transactions without mutations? Not sure if we can present a sensible versionstamp though since we wouldn\u2019t have a batch index.</p>\n<hr class=\"footnotes-sep\">\n\n<ol class=\"footnotes-list\">\n<li id=\"footnote-12876-1\" class=\"footnote-item\">\n<p>We already do this for transactions with no mutations and no write conflict ranges: <a href=\"https://github.com/apple/foundationdb/blob/8878de8c8f06ab7557b5edf40ffe6ae50a35ac19/fdbclient/NativeAPI.actor.cpp#L6816\" class=\"inline-onebox\">foundationdb/NativeAPI.actor.cpp at 8878de8c8f06ab7557b5edf40ffe6ae50a35ac19 \u00b7 apple/foundationdb \u00b7 GitHub</a> <a href=\"#footnote-ref-12876-1\" class=\"footnote-backref\">\u21a9\ufe0e</a></p>\n</li>\n</ol>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-05-24T20:05:20.067Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 33,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 170.2,
+        "yours": false,
+        "topic_id": 3977,
+        "topic_slug": "transactions-without-mutations",
+        "display_username": "Andrew Noyes",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/8878de8c8f06ab7557b5edf40ffe6ae50a35ac19/fdbclient/NativeAPI.actor.cpp#L6816",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/NativeAPI.actor.cpp at 8878de8c8f06ab7557b5edf40ffe6ae50a35ac19 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 569,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/transactions-without-mutations/3977/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12877,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2023-05-25T01:47:47.594Z",
+        "cooked": "<p>Even if changes aren\u2019t durable, it\u2019d still seem safe to return before TLog commit, as even if a recovery happens and some in-flight transactions get rolled back, none of them could have conflicted with your read-only transaction otherwise the resolver would have objected in the first place.  It\u2019d be super weird, as you\u2019d now have essentially a read version in a window of versions that was skipped by a recovery, but I can\u2019t immediately think of anything that\u2019d break.  I think you\u2019d basically just have to ask simulation <img src=\"https://emoji.discourse-cdn.com/twitter/confused.png?v=12\" title=\":confused:\" class=\"emoji\" alt=\":confused:\" loading=\"lazy\" width=\"20\" height=\"20\">.  I\u2019m not even convinced that a read-only transaction committing successfully and everything else around it getting rolled back post-recovery would be a linearizability serializability violation.</p>\n<p><a href=\"https://forums.foundationdb.org/t/layer-for-read-write-transactions-lasting-longer-than-5-seconds/1318/10\" class=\"inline-onebox\">Layer for read-write transactions lasting longer than 5 seconds - #10 by alexmiller</a> was a similar old discussion of ours for long-running read-write transactions, and I still similarly think that periodically re-validating the read set and bumping the read version up would work there too.  You\u2019d doubly similarly need to make sure that you re-validate your cache before 5s, otherwise you\u2019ll have to throw the entries away or re-read and compute the cached value.</p>\n<p>re: wacky idea, you have to go through the resolver anyway, so I think you\u2019re going to have to have already picked a sensible commit version to use anyway?  You\u2019d even have a batch index, it\u2019s just that you could reply early.  Trying to tack an extra commit read-only transaction onto an already-committed batch feels, I mean, maybe it could work?  But I\u2019m not even sure the resolver supports resolution up to some version other than the most recent?  This seems like a definitely harder direction to try and go.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-05-25T01:47:47.594Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 15.2,
+        "yours": false,
+        "topic_id": 3977,
+        "topic_slug": "transactions-without-mutations",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/layer-for-read-write-transactions-lasting-longer-than-5-seconds/1318/10",
+            "internal": true,
+            "reflection": false,
+            "title": "Layer for read-write transactions lasting longer than 5 seconds",
+            "clicks": 6
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/transactions-without-mutations/3977/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12885,
+        "name": "Andrew Noyes",
+        "username": "atn34",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/atn34/{size}/617_2.png",
+        "created_at": "2023-05-27T04:13:27.584Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"alexmiller\" data-post=\"2\" data-topic=\"3977\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/alexmiller/48/326_2.png\" class=\"avatar\"> alexmiller:</div>\n<blockquote>\n<p>It\u2019d be super weird, as you\u2019d now have essentially a read version in a window of versions that was skipped by a recovery, but I can\u2019t immediately think of anything that\u2019d break.</p>\n</blockquote>\n</aside>\n<p>If you actually used that read version to read, you might read uncommitted data.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-05-27T04:13:27.584Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 1,
+        "incoming_link_count": 0,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 4.6,
+        "yours": false,
+        "topic_id": 3977,
+        "topic_slug": "transactions-without-mutations",
+        "display_username": "Andrew Noyes",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 569,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/transactions-without-mutations/3977/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12876,
+      12877,
+      12885
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      881
+    ],
+    [
+      3,
+      879
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Transactions without mutations",
+  "id": 3977,
+  "title": "Transactions without mutations",
+  "posts_count": 3,
+  "created_at": "2023-05-24T20:00:46.212Z",
+  "views": 442,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2023-05-27T04:13:27.584Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "transactions-without-mutations",
+  "category_id": 7,
+  "word_count": 706,
+  "deleted_at": null,
+  "user_id": 569,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3977",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Why Read Version is necessary for read-write transactions?",
+      "id": 2386,
+      "title": "Why Read Version is necessary for read-write transactions?",
+      "slug": "why-read-version-is-necessary-for-read-write-transactions",
+      "posts_count": 13,
+      "reply_count": 10,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2020-10-12T05:42:44.091Z",
+      "last_posted_at": "2020-10-13T04:04:47.663Z",
+      "bumped": true,
+      "bumped_at": "2020-10-13T04:04:47.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2050,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 805,
+            "username": "roohitavaf",
+            "name": "Mohammad Roohitavaf",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/roohitavaf/{size}/1026_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Understanding inter communication",
+      "id": 745,
+      "title": "Understanding inter communication",
+      "slug": "understanding-inter-communication",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2018-10-05T00:51:33.531Z",
+      "last_posted_at": "2018-10-11T17:16:52.613Z",
+      "bumped": true,
+      "bumped_at": "2018-10-11T17:16:52.613Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 3588,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 384,
+            "username": "Chandru4u",
+            "name": "Chandrashekar",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/b487fb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "[Java] Validity of `tx.get()` futures not waiting to complete before `tx.commit()` being called",
+      "id": 598,
+      "title": "[Java] Validity of `tx.get()` futures not waiting to complete before `tx.commit()` being called",
+      "slug": "java-validity-of-tx-get-futures-not-waiting-to-complete-before-tx-commit-being-called",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-07-28T16:12:29.768Z",
+      "last_posted_at": "2018-08-09T16:55:29.882Z",
+      "bumped": true,
+      "bumped_at": "2018-08-09T16:55:29.882Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 708,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Layer for read-write transactions lasting longer than 5 seconds",
+      "id": 1318,
+      "title": "Layer for read-write transactions lasting longer than 5 seconds",
+      "slug": "layer-for-read-write-transactions-lasting-longer-than-5-seconds",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-04-18T17:25:43.958Z",
+      "last_posted_at": "2019-11-12T22:43:02.952Z",
+      "bumped": true,
+      "bumped_at": "2019-11-12T22:43:02.952Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2043,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 569,
+        "username": "atn34",
+        "name": "Andrew Noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/atn34/{size}/617_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 569,
+      "username": "atn34",
+      "name": "Andrew Noyes",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/atn34/{size}/617_2.png"
+    },
+    "last_poster": {
+      "id": 569,
+      "username": "atn34",
+      "name": "Andrew Noyes",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/atn34/{size}/617_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/layer-for-read-write-transactions-lasting-longer-than-5-seconds/1318/10",
+        "title": "Layer for read-write transactions lasting longer than 5 seconds",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 13,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

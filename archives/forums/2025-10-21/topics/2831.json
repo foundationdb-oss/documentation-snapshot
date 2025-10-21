@@ -1,0 +1,767 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9779,
+        "name": "Clement Pang",
+        "username": "panghy",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+        "created_at": "2021-08-02T10:46:02.736Z",
+        "cooked": "<p>Had been trying to find a good torture test for the the Lionrock gRPC facade for FoundationDB and decided to go down the path of building a gRPC Record Layer client: <a href=\"https://mvnrepository.com/artifact/io.github.panghy.lionrock/lionrock-fdb-record-layer-client\" rel=\"noopener nofollow ugc\">https://mvnrepository.com/artifact/io.github.panghy.lionrock/lionrock-fdb-record-layer-client</a> <strong>(it currently depends on a snapshot build of the record layer from my PR)</strong></p>\n<ol>\n<li>Needed to refactor RL to support non-native FoundationDB Java Client - <a href=\"https://github.com/FoundationDB/fdb-record-layer/pull/1344\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Refactor FDBDatabase and FDBDatabaseFactory by panghy \u00b7 Pull Request #1344 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub</a> (currently open) in the record-layer</li>\n<li>On my private branch, swapped the real FDBDatabaseFactory to the gRPC version - <a href=\"https://github.com/panghy/fdb-record-layer/commit/ccc6d16fa6cc0e3226a42b56e842d509f325d9be\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Hard-wire to test the record-layer with a locallly running lionrock s\u2026 \u00b7 panghy/fdb-record-layer@ccc6d16 \u00b7 GitHub</a>\n</li>\n<li>Ran the test, fix some bugs, repeat =p</li>\n<li>Only the following tests would fail (expectedly):\n<ul>\n<li>FDBDatabaseImplTest.performNoOpAgainstFakeCluster()</li>\n<li>FDBRecordContextTest.timeoutTalkingToFakeCluster()</li>\n</ul>\n</li>\n</ol>\n<p>Apart from the odd transaction_too_old exceptions from a couple of large tests (they are flaky due to the database responding slower than the real thing), all of the tests passes!</p>\n<p>Some flaky ones include:</p>\n<ul>\n<li>TextIndexTest.[4]Index{\u2018Simple$text_suffixes\u2019, text}<span class=\"hashtag\">#4</span>\n</li>\n<li>OnlineIndexerBuildRankIndexTest$Unsafe.addWhileBuildingParallelRank</li>\n</ul>\n<p>With that, one can connect the RL library to an FDB cluster over gRPC without native binaries. The tests passes normally in about 6-7 minutes but takes about 14-15 minutes via gRPC. That\u2019s mostly from the fact that there is no client-side caching (RYW or otherwise) and every get/getRange call needs to hit the network.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-08-02T16:59:39.148Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 45,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 229.8,
+        "yours": false,
+        "topic_id": 2831,
+        "topic_slug": "torture-test-grpc-facade-w-record-layer",
+        "display_username": "Clement Pang",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://mvnrepository.com/artifact/io.github.panghy.lionrock/lionrock-fdb-record-layer-client",
+            "internal": false,
+            "reflection": false,
+            "clicks": 8
+          },
+          {
+            "url": "https://github.com/panghy/fdb-record-layer/commit/ccc6d16fa6cc0e3226a42b56e842d509f325d9be",
+            "internal": false,
+            "reflection": false,
+            "title": "Hard-wire to test the record-layer with a locallly running lionrock s\u2026 \u00b7 panghy/fdb-record-layer@ccc6d16 \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/pull/1344",
+            "internal": false,
+            "reflection": false,
+            "title": "Refactor FDBDatabase and FDBDatabaseFactory by panghy \u00b7 Pull Request #1344 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 38,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/torture-test-grpc-facade-w-record-layer/2831/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 9780,
+        "name": "Scott Gray",
+        "username": "scgray",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+        "created_at": "2021-08-02T16:02:41.346Z",
+        "cooked": "<p>Hi Clement!</p>\n<p>Yes, thanks for the contribution for the refactoring of the <code>FDBDatabaseFactory</code> and <code>FDBDatabase</code>! I saw that <a class=\"mention\" href=\"/u/mmcm\">@MMcM</a> made some comments, and I\u2019m doing a pass as well (I\u2019ll try to get you some feedback over the next day or two).  I\u2019m not too surprised about the performance difference \u2013 as you noted, without a RYW cache sitting on the client, there is a lot of back-and-forth that wouldn\u2019t have otherwise been necessary and, obviously, each of these low level calls now involves a proxy through the RPC service and, when you get to large chained pipelines of work (for example, in complex queries), the latencies will be magnified.</p>\n<p>There had previously been some discussion about a formal RPC interface for FDB (<a href=\"https://github.com/apple/foundationdb/wiki/FoundationDB-RPC-Layer-Requirements\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">FoundationDB RPC Layer Requirements \u00b7 apple/foundationdb Wiki \u00b7 GitHub</a>) and I had had similar concerns over the resulting performance without a RYW cache in the client.  Even then, I think that for really complex operations, it would require something akin to a Record Layer Service to allow the complexity to be pushed closer to the database.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-08-02T16:02:41.346Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 34.4,
+        "yours": false,
+        "topic_id": 2831,
+        "topic_slug": "torture-test-grpc-facade-w-record-layer",
+        "display_username": "Scott Gray",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/wiki/FoundationDB-RPC-Layer-Requirements",
+            "internal": false,
+            "reflection": false,
+            "title": "FoundationDB RPC Layer Requirements \u00b7 apple/foundationdb Wiki \u00b7 GitHub",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 34,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/torture-test-grpc-facade-w-record-layer/2831/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 9781,
+        "name": "Clement Pang",
+        "username": "panghy",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+        "created_at": "2021-08-02T16:58:46.204Z",
+        "cooked": "<p>Thanks! Yeah, I was mulling about actually writing the cache in the client itself but that means keeping track of read ranges and layering that with mutations (and tracking keys that are invalid if read) given that one can turn RYWs on and off. That seemed a bit too dangerous (but we now have quite a bit of stress testing that can be applied against it at least =p).</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-08-02T16:58:46.204Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 4.4,
+        "yours": false,
+        "topic_id": 2831,
+        "topic_slug": "torture-test-grpc-facade-w-record-layer",
+        "display_username": "Clement Pang",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 34,
+          "username": "scgray",
+          "name": "Scott Gray",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 38,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/torture-test-grpc-facade-w-record-layer/2831/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      9779,
+      9780,
+      9781
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1541
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Torture test gRPC facade w/ Record Layer",
+  "id": 2831,
+  "title": "Torture test gRPC facade w/ Record Layer",
+  "posts_count": 3,
+  "created_at": "2021-08-02T10:46:02.669Z",
+  "views": 562,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2021-08-02T16:58:46.204Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "torture-test-grpc-facade-w-record-layer",
+  "category_id": 12,
+  "word_count": 486,
+  "deleted_at": null,
+  "user_id": 38,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2831",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Lionrock: A gRPC Facade for FoundationDB and more",
+      "id": 2786,
+      "title": "Lionrock: A gRPC Facade for FoundationDB and more",
+      "slug": "lionrock-a-grpc-facade-for-foundationdb-and-more",
+      "posts_count": 8,
+      "reply_count": 0,
+      "highest_post_number": 8,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/6/68980634f6c5f94b30ac528f6809da676e790dcd_2_1024x512.png",
+      "created_at": "2021-07-12T23:12:58.968Z",
+      "last_posted_at": "2021-07-29T08:33:41.156Z",
+      "bumped": true,
+      "bumped_at": "2021-07-29T08:33:41.156Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 17,
+      "views": 1573,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "gRPC binding / gateway",
+      "id": 1599,
+      "title": "gRPC binding / gateway",
+      "slug": "grpc-binding-gateway",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-08-28T14:21:46.509Z",
+      "last_posted_at": "2019-09-05T05:22:17.587Z",
+      "bumped": true,
+      "bumped_at": "2019-09-05T05:22:17.587Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2275,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 339,
+            "username": "Zatte",
+            "name": "Mikael Rapp ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zatte/{size}/344_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Record Layer query performance benchmarking against traditional RDBMS",
+      "id": 2082,
+      "title": "Record Layer query performance benchmarking against traditional RDBMS",
+      "slug": "record-layer-query-performance-benchmarking-against-traditional-rdbms",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-04-20T18:46:55.680Z",
+      "last_posted_at": "2020-04-22T15:51:53.223Z",
+      "bumped": true,
+      "bumped_at": "2020-04-22T15:51:53.223Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1528,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to scale foundation db reads",
+      "id": 1108,
+      "title": "How to scale foundation db reads",
+      "slug": "how-to-scale-foundation-db-reads",
+      "posts_count": 21,
+      "reply_count": 13,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2019-02-02T12:39:23.370Z",
+      "last_posted_at": "2019-03-18T16:32:32.430Z",
+      "bumped": true,
+      "bumped_at": "2019-03-18T16:32:32.430Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 6504,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 504,
+            "username": "preslavle",
+            "name": "Preslav Le",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9de0a6/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Clj-foundationdb - Clojure bindings over Java wrapper",
+      "id": 393,
+      "title": "Clj-foundationdb - Clojure bindings over Java wrapper",
+      "slug": "clj-foundationdb-clojure-bindings-over-java-wrapper",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-05-10T09:39:50.001Z",
+      "last_posted_at": "2018-05-10T16:00:56.888Z",
+      "bumped": true,
+      "bumped_at": "2018-05-10T16:00:56.888Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1013,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 231,
+            "username": "xtreak",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 38,
+        "username": "panghy",
+        "name": "Clement Pang",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 34,
+        "username": "scgray",
+        "name": "Scott Gray",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 38,
+      "username": "panghy",
+      "name": "Clement Pang",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png"
+    },
+    "last_poster": {
+      "id": 38,
+      "username": "panghy",
+      "name": "Clement Pang",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png"
+    },
+    "links": [
+      {
+        "url": "https://mvnrepository.com/artifact/io.github.panghy.lionrock/lionrock-fdb-record-layer-client",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 38,
+        "domain": "mvnrepository.com",
+        "root_domain": "mvnrepository.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/wiki/FoundationDB-RPC-Layer-Requirements",
+        "title": "FoundationDB RPC Layer Requirements \u00b7 apple/foundationdb Wiki \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 34,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/panghy/fdb-record-layer/commit/ccc6d16fa6cc0e3226a42b56e842d509f325d9be",
+        "title": "Hard-wire to test the record-layer with a locallly running lionrock s\u2026 \u00b7 panghy/fdb-record-layer@ccc6d16 \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 38,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/pull/1344",
+        "title": "Refactor FDBDatabase and FDBDatabaseFactory by panghy \u00b7 Pull Request #1344 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 38,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

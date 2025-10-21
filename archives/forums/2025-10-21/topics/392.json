@@ -1,0 +1,673 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1011,
+        "name": "",
+        "username": "xtreak",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png",
+        "created_at": "2018-05-10T05:13:03.571Z",
+        "cooked": "<p>I am developing Clojure bindings for FoundationDB and I came across a strange behavior where if I add a number to KeySelector it seems to go to the lowest value and then move from there if I give a number higher than the result set. The implementation is as below where I take a key and make it a tuple. Then I add the limit value to the keyselector object.</p>\n<p>Pseudo-code Java implementation of the Clojure code</p>\n<pre><code class=\"lang-auto\">function last-less-than (Transaction tr, string key, int limit) {\n  var begin = KeySelector.LastLessThan(ToTuple(key));\n  var end  = kv.add(limit);\n  var range = tr.getRange(begin, end);\n  return RangeToList(range);\n}\n</code></pre>\n<p>Test cases for last-less-than. Assume Keys are set with the given value i.e. [\u201cbar\u201d] =&gt; 1, [\u201cbar1\u201d] =&gt; 1, etc. Then to-search is the key passed along with the limit.</p>\n<p>Keys : [[\u201cbar\u201d] [\u201cbar1\u201d] [\u201cbar2\u201d] [\u201ccar\u201d]]<br>\nValue : 1<br>\nlimit : 1<br>\nto-search : bar1</p>\n<p>[[[\u201cbar\u201d] \u201c1\u201d]]</p>\n<p>Keys : [[\u201cbar\u201d] [\u201cbar1\u201d] [\u201cbar2\u201d] [\u201ccar\u201d]]<br>\nValue : 1<br>\nlimit : 2<br>\nto-search : bar1</p>\n<p>[[[\u201cbar\u201d] \u201c1\u201d] [[\u201cbar1\u201d] \u201c1\u201d]]</p>\n<p>Keys : [[\u201cbar\u201d] [\u201cbar1\u201d] [\u201cbar2\u201d] [\u201ccar\u201d]]<br>\nValue : 1<br>\nlimit : 2<br>\nto-search : bar1</p>\n<p>[[[\u201cbar\u201d] \u201c1\u201d] [[\u201cbar1\u201d] \u201c1\u201d] [[\u201cbar2\u201d] \u201c1\u201d]]</p>\n<pre><code class=\"lang-auto\">(defn last-less-than\n  \"Returns key and value pairs with keys less than the given key for the given limit\n  \"\n  ([tr key]\n   (last-less-than tr key 1))\n  ([tr key limit]\n   (let [key         (KeySelector/lastLessThan (key-&gt;packed-tuple key))\n         end         (.add key limit)\n         range-query (.getRange tr key end)]\n     (range-&gt;kv range-query))))\n</code></pre>\n<p>Some test cases</p>\n<pre><code class=\"lang-auto\">(let [fd (. FDB selectAPIVersion 510)\n      keys [[\"bar\"] [\"bar1\"] [\"bar2\"] [\"car\"]]\n      value \"1\"]\n  (with-open [db (.open fd)]\n    (tr! db (set-keys tr keys value))))\n\nnil\n\n(let [fd (. FDB selectAPIVersion 510)]\n  (with-open [db (.open fd)]\n    (tr! db (last-less-than \"bar1\"))))\n\n[[[\"bar\"] \"1\"]] ;; limit 1 by default\n\n(let [fd (. FDB selectAPIVersion 510)]\n  (with-open [db (.open fd)]\n    (tr! db (last-less-than tr \"bar1\" 2))))\n\n[[[\"bar\"] \"1\"] [[\"bar1\"] \"1\"]]  ;; Seems to go to last less than and then add from there\n\n(let [fd (. FDB selectAPIVersion 510)]\n  (with-open [db (.open fd)]\n    (tr! db (last-less-than tr \"bar1\" 3))))\n\n[[[\"bar\"] \"1\"] [[\"bar1\"] \"1\"] [[\"bar2\"] \"1\"]] ;; Goes to bar2\n\n(let [fd (. FDB selectAPIVersion 510)]\n  (with-open [db (.open fd)]\n    (tr! db (last-less-or-equal tr \"bar1\"))))\n\n[[\"bar1\" \"1\"]]\n\n(let [fd (. FDB selectAPIVersion 510)]\n  (with-open [db (.open fd)]\n    (tr! db (last-less-or-equal tr \"bar1\" 3))))\n\n[[[\"bar1\"] \"1\"] [[\"bar2\"] \"1\"] [[\"car\"] \"1\"]]\n\n(let [fd (. FDB selectAPIVersion 510)]\n  (with-open [db (.open fd)]\n    (tr! db (last-less-or-equal tr \"bar1\" 10))))\n\n[[[\"bar1\"] \"1\"] [[\"bar2\"] \"1\"] [[\"car\"] \"1\"] [[\"foo\"] 1]]\n\n(let [fd (. FDB selectAPIVersion 510)]\n  (with-open [db (.open fd)]\n    (tr! db (last-less-than  tr \"bar1\" 10))))\n\n[[[\"bar\"] \"1\"] [[\"bar1\"] \"1\"] [[\"bar2\"] \"1\"] [[\"car\"] \"1\"] [[\"foo\"] 1]]\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-05-10T05:13:03.571Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 121,
+        "reads": 52,
+        "readers_count": 51,
+        "score": 615.4,
+        "yours": false,
+        "topic_id": 392,
+        "topic_slug": "last-less-than-or-last-less-or-equal-with-limit-added-to-keyselector-returns-different-values",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 231,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/last-less-than-or-last-less-or-equal-with-limit-added-to-keyselector-returns-different-values/392/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1012,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2018-05-10T06:29:18.855Z",
+        "cooked": "<p>I guess my question is what is the behavior you are expecting and how does actual behavior differ from expectations?</p>\n<p>The easiest way to think of key selectors when used within range queries is that they go to (are resolved to) the given key for both the begin and end, and then the range is scanned from the first resolved-to key (inclusive) to the second resolved-to key (exclusive). So:</p>\n<pre><code class=\"lang-java\">public AsyncIterable&lt;KeyValue&gt; lastLessThan(byte[] x, int limit) {\n  KeySelector begin = KeySelector.lastLessThan(x);\n  KeySelector end = begin.add(limit);\n  return tr.getRange(begin, end);\n}\n</code></pre>\n<p>Will do a range read from the first key (strictly) before x to the first key that is <code>limit</code> greater than x (stopping before it gets there). So, let\u2019s say you had keys <code>k1</code>, <code>k2</code>, <code>k3</code>, and <code>k4</code> in the database. Then if you give it <code>k2</code> and 3 as <code>x</code> and <code>limit</code>, it will evaluate <code>begin</code> to <code>k1</code> and <code>end</code> to <code>k4</code> (it being three greater than <code>k1</code>), and then then the keys returned in the rage will be <code>k1</code>, <code>k2</code>, and <code>k3</code>.</p>\n<p>Judging by the comments, it sounds like what you want is to get <code>limit</code> keys less than the given key. Then I think you want something like this:</p>\n<pre><code class=\"lang-java\">public AsyncIterable&lt;KeyValue&gt; lastLessThan(byte[] x, int limit) {\n  KeySelector end = KeySelector.firstGreaterThanOrEqual(x);\n  KeySelector begin = end.add(-1 * limit);\n  return tr.getRange(begin, end);\n}\n</code></pre>\n<p>Then giving it, say, <code>k3</code> and 2 will resolve the <code>end</code> key selector to <code>k3</code> and the <code>begin</code> key selector to <code>k1</code>, so it will return <code>k1</code> and <code>k2</code>. You could also do:</p>\n<pre><code class=\"lang-java\">public AsyncIterable&lt;KeyValue&gt; lastLessThan(byte[] x, int limit) {\n  return tr.getRange(new byte[0], x, /* limit = */ limit, /* reverse = */ true);\n}\n</code></pre>\n<p>This will read (exclusively) from the given key backwards through the database and return the first <code>limit</code> keys it returns. The only difference (return value wise) from the other option I gave is that the keys will come back in reverse (descending) order.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-05-10T06:29:18.855Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 48,
+        "reads": 46,
+        "readers_count": 45,
+        "score": 269.2,
+        "yours": false,
+        "topic_id": 392,
+        "topic_slug": "last-less-than-or-last-less-or-equal-with-limit-added-to-keyselector-returns-different-values",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/last-less-than-or-last-less-or-equal-with-limit-added-to-keyselector-returns-different-values/392/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1013,
+        "name": "",
+        "username": "xtreak",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png",
+        "created_at": "2018-05-10T06:40:07.295Z",
+        "cooked": "<p>Thanks <a class=\"mention\" href=\"/u/alloc\">@alloc</a> . That clears it up. I didn\u2019t know that using <code>lastLessThan</code> returns a range with last less than key as the beginning to which adding given limits makes sense. Yes, I need to use negative limits to restrict the keys being less than the pivotal key passed. I didn\u2019t know you can iterate a range in reverse. I can add this to my API. Thanks again for the code and pointers.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-05-10T06:40:07.295Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 42,
+        "readers_count": 41,
+        "score": 28.4,
+        "yours": false,
+        "topic_id": 392,
+        "topic_slug": "last-less-than-or-last-less-or-equal-with-limit-added-to-keyselector-returns-different-values",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 8,
+          "username": "alloc",
+          "name": "Alec Grieser",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 231,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/last-less-than-or-last-less-or-equal-with-limit-added-to-keyselector-returns-different-values/392/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1011,
+      1012,
+      1013
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2722
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Last less than or last less or equal with limit added to keyselector returns different values",
+  "id": 392,
+  "title": "Last less than or last less or equal with limit added to keyselector returns different values",
+  "posts_count": 3,
+  "created_at": "2018-05-10T05:13:03.437Z",
+  "views": 1008,
+  "reply_count": 1,
+  "like_count": 2,
+  "last_posted_at": "2018-05-10T06:40:07.295Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "last-less-than-or-last-less-or-equal-with-limit-added-to-keyselector-returns-different-values",
+  "category_id": 7,
+  "word_count": 858,
+  "deleted_at": null,
+  "user_id": 231,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_392",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Another API for querying and KeySelector",
+      "id": 2492,
+      "title": "Another API for querying and KeySelector",
+      "slug": "another-api-for-querying-and-keyselector",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-12-19T09:10:53.452Z",
+      "last_posted_at": "2021-01-31T14:06:58.669Z",
+      "bumped": true,
+      "bumped_at": "2021-01-31T14:06:58.669Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1178,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Use KeySelector.firstGreaterThan or just skip one KeyValue during iteration?",
+      "id": 378,
+      "title": "Use KeySelector.firstGreaterThan or just skip one KeyValue during iteration?",
+      "slug": "use-keyselector-firstgreaterthan-or-just-skip-one-keyvalue-during-iteration",
+      "posts_count": 14,
+      "reply_count": 7,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2018-05-08T07:52:22.261Z",
+      "last_posted_at": "2018-05-12T00:34:14.837Z",
+      "bumped": true,
+      "bumped_at": "2018-05-12T00:34:14.837Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1929,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 244,
+            "username": "notxcain",
+            "name": "Denis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/notxcain/{size}/213_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "id": 1355,
+      "title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "slug": "how-to-get-exact-range-of-keys-using-fdb-transaction-get-range-in-c-programming",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-05-09T12:22:07.878Z",
+      "last_posted_at": "2019-05-20T14:14:50.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-20T14:14:50.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1573,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Limiting the cardinality of a key range",
+      "id": 665,
+      "title": "Limiting the cardinality of a key range",
+      "slug": "limiting-the-cardinality-of-a-key-range",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-08-26T18:47:07.288Z",
+      "last_posted_at": "2018-08-27T17:05:16.467Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T17:05:16.467Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1248,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 251,
+            "username": "George",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Ranges without explicit end (Go)",
+      "id": 773,
+      "title": "Ranges without explicit end (Go)",
+      "slug": "ranges-without-explicit-end-go",
+      "posts_count": 13,
+      "reply_count": 10,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2018-10-15T21:10:57.504Z",
+      "last_posted_at": "2018-10-25T14:38:53.425Z",
+      "bumped": true,
+      "bumped_at": "2018-10-25T14:38:53.425Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 3281,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 391,
+            "username": "atombender",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/atombender/{size}/688_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 378,
+            "username": "num",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/db5fbb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 231,
+        "username": "xtreak",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 231,
+      "username": "xtreak",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png"
+    },
+    "last_poster": {
+      "id": 231,
+      "username": "xtreak",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

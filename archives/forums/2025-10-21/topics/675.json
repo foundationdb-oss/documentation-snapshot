@@ -1,0 +1,706 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2014,
+        "name": "Austin Seipp",
+        "username": "aseipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "created_at": "2018-08-31T17:20:31.847Z",
+        "cooked": "<p>There\u2019s been some talk on recent threads about the management of <code>fdb.cluster</code> files, but here\u2019s a question I have: would it be possible for the client APIs to support a mode where, rather than reading the initial cluster information from a file, it could simply be passed as a string, and any \u201crewrites\u201d of that file just happen in-memory? As well as the ability to retrieve that information?</p>\n<p>Here\u2019s a more concrete use case with a bit more specifics (though you don\u2019t need to focus on them too much): due to the fact that the FoundationDB client library (for all realistic purposes) is single threaded (in just about every language binding), a multi-processing approach with stateless processes is often necessary for clients to scale out reads/writes when deploying a service on a single machine. In my theoretical scenario, I have a server built on FDB, that offers something like an HTTP API. Upon startup, it forks itself into multiple processes to scale out (in this specific case, I\u2019m using <code>SO_REUSEPORT</code> on Linux 3.x to round-robin load balance incoming TCP connections across a set of processes all listening on the same port \u2013 <code>SO_REUSEPORT</code> ensures the balancing is fair)</p>\n<p>Now, each process needs to connect to the cluster, but in order to do so it must do it through an <code>fdb.cluster</code> file. This seems like a waste, because:</p>\n<ul>\n<li>\n<p>I now need to write out a file for each client somewhere (having multiple processes synchronize on one <code>fdb.cluster</code> file may be safe, but gives me the spooks, still.) So I need something to copy it, or maybe copy it before <code>fork()</code>ing in my own code, or something else\u2026</p>\n</li>\n<li>\n<p>You often already have completely fixed connection information anyway. In a lot of orchestration tools, you\u2019re going to do something like allocate fixed IPs to your FoundationDB coordinators, ensuring that the coordinator IPs never change, even if the underlying machines do. The durability of the <code>fdb.cluster</code> file seems much less useful in a scenario like this, because A) I will always know the exact coordination/DB info, and B) an ops person is (hopefully) going to step in if something like a coordinator explodes. Actual permanent changes to coordinator topology seem like relatively controlled events. In the case of something like a rack exploding and taking down a coordinator, I\u2019d presumably just migrate the elastic IP address to a new server and move on, not actually rewrite it on-the-spot.</p>\n</li>\n</ul>\n<p>So really in a case like this, having a durable cluster file at the <em>client level</em> is just kind of annoying. Ideally, my machines running client applications would be nearly 100% stateless, and just do something like pull the cluster connection information out of e.g. EC2 instance metadata. This can be done directly in my application, and I can do something like (in pseudo-Java):</p>\n<pre><code class=\"lang-auto\">void go() {\n  FDB fdb = FDB.selectAPIVersion(...);\n  String clusterInfo = grabEc2Metadata(\"fdb.cluster.info\"); // HTTP request to EC2 instance metadata IP\n  // clusterInfo = \"xxxxxxxx:yyyyyyyy@192.168.xxx.yyy,...\n\n  try (Database db = fdb.connect(clusterInfo)) {\n    // network thread started, connects, opens database\n  }\n}\n</code></pre>\n<p>In this case, if the cluster configuration changes (say my ops person deploys another coordinator), then, assuming the above client is actively connected in a healthy manner, it will just rewrite its in-memory copy of the information. In the event I started a new process \u2013 well, no fixes needed (assuming my ops person also updated the EC2 metadata!)</p>\n<hr>\n<p>In fact, for Linux, you can actually kind of get around this pretty easily: you use <code>open(\"/tmp\", O_TMPFILE | O_EXCL | O_RDWR | O_CLOEXEC)</code> in order to get a file descriptor (say <code>fd = 20</code>) that doesn\u2019t exist in the physical file system and closes and is unlinked upon exit, <em>except</em>, while the process is running, there is a \u201clogical\u201d path under <code>/proc/self/fd/20</code> file, which can only be read from that process and its children (hence <code>O_CLOEXEC</code>, to avoid leaking it into children as well). So you could wrap all this up in a 20 line function that looks something like this (pseudo-ish):</p>\n<pre><code class=\"lang-auto\">void connect(const char* cluster_info) {\n  // private file, read and write, cannot be linked into filesystem (O_EXCL), and\n  // is _not_ shared by children (O_CLOEXEC) -- they may outlive the parent,\n  // leaking an fd, and/or open their own private files\n  int fd = open(\"/tmp\", O_TMPFILE | O_RDWR | O_EXCL | O_CLOEXEC);\n\n  write(fd, cluster_info, strlen(cluster_info)); // assume write(2) succeeds\n\n  char fd_path[PATH_MAX+1] = {0,};\n  snprintf(fd_path, PATH_MAX-1, \"/proc/self/fd/%d\", fd);\n  fdb_database_t database = fdb_open(fd_path); // open, using the hidden file\n\n  // go on with life. the private fdb.cluster file will magically\n  // disappear when the process exits.\n  return database;\n}\n</code></pre>\n<hr>\n<p>But I think something like this might be generally useful given that you can often make coordinator info very \u201cstatic\u201d. Also, you ideally might want to get the cluster configuration back, but I\u2019m not sure if there\u2019s a simple API call for this; you could of course query the <code>\\xff\\xff\\status\\json</code> key or whatever it is, I suppose\u2026</p>\n<p>Thoughts? I might be willing to write a patch for this if it doesn\u2019t seem too hard.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-31T17:25:50.007Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 205,
+        "reads": 48,
+        "readers_count": 47,
+        "score": 1034.6,
+        "yours": false,
+        "topic_id": 675,
+        "topic_slug": "allowing-client-apis-to-use-an-in-memory-fdb-cluster-file",
+        "display_username": "Austin Seipp",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/6-1-fdb-create-database-without-fdb-cluster/1237/2",
+            "internal": true,
+            "reflection": true,
+            "title": "6.1: 'fdb_create_database()' without 'fdb.cluster'",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 158,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/allowing-client-apis-to-use-an-in-memory-fdb-cluster-file/675/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2016,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2018-09-01T00:29:17.004Z",
+        "cooked": "<p>I believe there is an issue to that affect here, with no one assigned: <a href=\"https://github.com/apple/foundationdb/issues/567\">https://github.com/apple/foundationdb/issues/567</a></p>\n<p>There\u2019s also some discussion about that in this forum post: <a href=\"https://forums.foundationdb.org/t/proposal-dont-identify-a-coordinator-based-on-its-ip/502/2\">Proposal: Don\u2019t identify a coordinator based on its IP</a></p>\n<p>I think something like that sounds reasonable enough for the reasons you\u2019ve outlined above. I noticed that in your example, you are proposing connecting to some kind of config-vending solution rather than hard-coding the connection information into memory. I\u2019m of two minds about this. The first is that that is probably necessary in many deploys where you might need to respond to a changing cluster file (when, for example, the coordinators change) but you also find that each time your instance is brought up, it might be on a random host from <em>tabula rasa</em>. But the second is that it also means that now your service is dependent on your config-vending solution being highly available. which seems suboptimal. Perhaps there is a middle ground where you have a default cluster configuration string that you default to if you cannot communicate with your config-vendor after some timeout?</p>\n<p>But this is somewhat of a digression.</p>\n<p>I think we\u2019d probably not want to use temporary, in-memory files in the solution if possible (though maybe it\u2019d be fine). In particular, I think the concern would be that it might not be easily portable to other systems. I will add that internally, most things already use what is known as the \u201ccluster config string\u201d (i.e., the cluster file <em>contents</em>) rather than the cluster file path (or file handle) as the way they connect to server processes. So I suspect that it probably wouldn\u2019t be that hard to refactor the parts that do use the file to instead let you use a string and then most of the code probably doesn\u2019t change that much.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-09-01T00:29:17.004Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 44,
+        "readers_count": 43,
+        "score": 33.8,
+        "yours": false,
+        "topic_id": 675,
+        "topic_slug": "allowing-client-apis-to-use-an-in-memory-fdb-cluster-file",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/567",
+            "internal": false,
+            "reflection": false,
+            "title": "Providing a connection string without a cluster file \u00b7 Issue #567 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 28
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/proposal-dont-identify-a-coordinator-based-on-its-ip/502/2",
+            "internal": true,
+            "reflection": false,
+            "title": "Proposal: Don't identify a coordinator based on its IP",
+            "clicks": 10
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/allowing-client-apis-to-use-an-in-memory-fdb-cluster-file/675/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 2020,
+        "name": "Austin Seipp",
+        "username": "aseipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "created_at": "2018-09-01T21:58:12.317Z",
+        "cooked": "<blockquote>\n<p>I think something like that sounds reasonable enough for the reasons you\u2019ve outlined above. I noticed that in your example, you are proposing connecting to some kind of config-vending solution rather than hard-coding the connection information into memory. I\u2019m of two minds about this. The first is that that is probably necessary in many deploys where you might need to respond to a changing cluster file (when, for example, the coordinators change) but you also find that each time your instance is brought up, it might be on a random host from  <em>tabula rasa</em> . But the second is that it also means that now your service is dependent on your config-vending solution being highly available. which seems suboptimal. Perhaps there is a middle ground where you have a default cluster configuration string that you default to if you cannot communicate with your config-vendor after some timeout?</p>\n</blockquote>\n<p>Right, there\u2019s definitely the aspect that making your system require the interaction between complex components (such as EC2 metadata) dramatically increases your surface area and failure rate. Ideally I\u2019d just get away with FoundationDB and nothing else, but in practice I still need to rely on things like S3 for backups, hosting APIs for querying information about my nodes (not even directly, but through tools like Terraform, etc), and all manner of stuff.</p>\n<p>In a sense, given how rigorously FoundationDB is tested compared to most other software \u2013 databases or not \u2013 (which, in all my experience, seems to be quite evident, given how it\u2019s impossible to get it \u201cstuck\u201d), I sort of think of it like: I\u2019m already relying on provisioning tools, my cloud provider, etc, to be stable. Sometimes they aren\u2019t. If the EC2 metadata service isn\u2019t working, for example, a lot of my services are going to fall over probably (such as adjacent policy services, any kind of node bringup, etc). I always already going to risk that possibility, by using EC2 \u2013 so it\u2019s not like I\u2019m taking on substantially more risk than I would, otherwise. FoundationDB doesn\u2019t magically add \u201cnegative complexity\u201d, but it doesn\u2019t add substantially more failure modes than I\u2019d have to deal with otherwise, I feel, had I chose another datastore.</p>\n<p>For example, as you suggest, a hard-coded cluster configuration put somewhere in the binary, on the filesystem, etc, as a backup in case the metadata service is down is probably something worth implementing! But I was always going to have to implement that, probably, regardless of which underlying data store I chose. (I just don\u2019t have to worry about FoundationDB becoming inconsistent like other offerings\u2026)</p>\n<p>(Here\u2019s another example, to maybe elaborate more. One major aspect of FoundationDB\u2019s design \u2013 which I completely agree with \u2013 is the lack of any sort of sophisticated policy authorization at the database level. This is a good design choice, but it also means policy and authorization decisions often will get shoved into a layer above the database, where they\u2019re handled best. But in my experience policy authorization almost <em>always</em> requires some sort of external integration, lest you replicate policy methods in a lot of places, and get it wrong to the detriment of your security and users. As a concrete example, I want to use <a href=\"https://vaultproject.io/\" rel=\"noopener nofollow ugc\">Vault</a> next to my FoundationDB cluster to control things like access to keys, which are managed by server administrators, not developers, and Vault can enforce access policies. So my layer will use a short-term, revokable access token, pass that to Vault, and get back a key, do its work, and throw the key away. Doing this in my own layer, or even writing a Vault clone, seems like a recipe for disaster unless you are extremely cautious. In a sense, even though Vault it\u2019s not as well oiled as FoundationDB, and increases my surface area \u2013 not using it is likely to <em>increase</em> my failure rate even more and cause disastrous errors, unless I\u2019m extremely cautious. It seems like many sorts of interactions like this are largely unavoidable.)</p>\n<p>Anyway, I agree this is all a bit adjacent to the topic, but it is fun to think about a bit. <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<blockquote>\n<p>I think we\u2019d probably not want to use temporary, in-memory files in the solution if possible (though maybe it\u2019d be fine). In particular, I think the concern would be that it might not be easily portable to other systems. I will add that internally, most things already use what is known as the \u201ccluster config string\u201d (i.e., the cluster file  <em>contents</em> ) rather than the cluster file path (or file handle) as the way they connect to server processes. So I suspect that it probably wouldn\u2019t be that hard to refactor the parts that do use the file to instead let you use a string and then most of the code probably doesn\u2019t change that much.</p>\n</blockquote>\n<p>Right, the Linux <code>O_TMPFILE</code> example was just to show doing it now is possible as a sort of gimmicky-workaround, not a suggestion that any such feature should actually <em>use</em> that trick, as you note.</p>\n<p>I figured, but hadn\u2019t checked, that the cluster <em>file</em> read/write paths were probably pretty limited and most of the codebase used the internal string instead as you mention, so the real code changes wouldn\u2019t be very hard. Good to hear it directly from the horses mouth!</p>\n<hr>\n<p>So then the <em>real</em> question is one of bikeshedding: what should the API look like? In particular it has to be added to every language binding in order to be useful at all.</p>\n<p>I think <code>connect()</code> is an <em>okay</em> name but it\u2019s not particularly unique or evocative (vs <code>open</code> for, example). I\u2019m open to suggestions here.</p>\n<p>Also, ideally, it would be nice to <em>retrieve</em> the cluster information from a connected database. As I mentioned, if you have a handle to the DB, you can basically do this through some sifting of the <code>\\xff\\xff\\status\\json</code> key, but it would be nice if there was something like a <code>getConnectedInfo</code> on a database handle that returned this information directly to you in a nice way. So I\u2019m guessing this piece would just be a matter of returning the cluster string. Or maybe it should return some kind of object with properties on it, which can easily be turned <em>into</em> the cluster string representation\u2026</p>\n<hr>\n<p>Anyway, I think I\u2019ll take a stab at writing a patch for this if it seems useful. Minor API reworks/bikeshedding would probably be most of the work, given the patch seems like it should be relatively easy to author, otherwise, without any substantial internal changes.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-09-01T22:00:34.271Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 43,
+        "readers_count": 42,
+        "score": 25.6,
+        "yours": false,
+        "topic_id": 675,
+        "topic_slug": "allowing-client-apis-to-use-an-in-memory-fdb-cluster-file",
+        "display_username": "Austin Seipp",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://vaultproject.io/",
+            "internal": false,
+            "reflection": false,
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 8,
+          "username": "alloc",
+          "name": "Alec Grieser",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 158,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/allowing-client-apis-to-use-an-in-memory-fdb-cluster-file/675/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2014,
+      2016,
+      2020
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2608
+    ],
+    [
+      3,
+      2607
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Allowing client APIs to use an &ldquo;in-memory&rdquo; fdb.cluster file?",
+  "id": 675,
+  "title": "Allowing client APIs to use an \"in-memory\" fdb.cluster file?",
+  "posts_count": 3,
+  "created_at": "2018-08-31T17:20:31.703Z",
+  "views": 1755,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2018-09-01T21:58:12.317Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "allowing-client-apis-to-use-an-in-memory-fdb-cluster-file",
+  "category_id": 8,
+  "word_count": 2319,
+  "deleted_at": null,
+  "user_id": 158,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_675",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Deployment with custom fdb.cluster file",
+      "id": 592,
+      "title": "Deployment with custom fdb.cluster file",
+      "slug": "deployment-with-custom-fdb-cluster-file",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-07-26T23:00:18.994Z",
+      "last_posted_at": "2018-07-27T23:44:31.722Z",
+      "bumped": true,
+      "bumped_at": "2018-07-27T23:44:31.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 4329,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Doubts regarding fdb.cluster file",
+      "id": 1109,
+      "title": "Doubts regarding fdb.cluster file",
+      "slug": "doubts-regarding-fdb-cluster-file",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-02-02T16:02:47.335Z",
+      "last_posted_at": "2019-02-07T17:17:38.271Z",
+      "bumped": true,
+      "bumped_at": "2019-02-07T17:17:38.271Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2739,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "6.1: &lsquo;fdb_create_database()&rsquo; without &lsquo;fdb.cluster&rsquo;",
+      "id": 1237,
+      "title": "6.1: 'fdb_create_database()' without 'fdb.cluster'",
+      "slug": "6-1-fdb-create-database-without-fdb-cluster",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-03-19T17:39:38.119Z",
+      "last_posted_at": "2019-03-19T19:29:57.937Z",
+      "bumped": true,
+      "bumped_at": "2019-03-19T19:29:57.937Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1022,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proposal: Don&rsquo;t identify a coordinator based on its IP",
+      "id": 502,
+      "title": "Proposal: Don't identify a coordinator based on its IP",
+      "slug": "proposal-dont-identify-a-coordinator-based-on-its-ip",
+      "posts_count": 26,
+      "reply_count": 13,
+      "highest_post_number": 26,
+      "image_url": null,
+      "created_at": "2018-06-09T13:09:51.305Z",
+      "last_posted_at": "2019-08-06T20:24:41.013Z",
+      "bumped": true,
+      "bumped_at": "2019-08-06T20:24:41.013Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 8425,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 302,
+            "username": "basgys",
+            "name": "Bastien Gysler",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/basgys/{size}/291_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 339,
+            "username": "Zatte",
+            "name": "Mikael Rapp ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zatte/{size}/344_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 545,
+            "username": "rishabh",
+            "name": "Rishabh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rishabh/{size}/540_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 614,
+            "username": "qrpike",
+            "name": "Quinton Pike",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/qrpike/{size}/618_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to configure fdb",
+      "id": 518,
+      "title": "How to configure fdb",
+      "slug": "how-to-configure-fdb",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-06-19T13:10:32.406Z",
+      "last_posted_at": "2018-06-21T22:18:36.722Z",
+      "bumped": true,
+      "bumped_at": "2018-06-21T22:18:36.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3365,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 275,
+            "username": "vmanukyan",
+            "name": "Vruyr Manukyan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vmanukyan/{size}/329_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 158,
+        "username": "aseipp",
+        "name": "Austin Seipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 158,
+      "username": "aseipp",
+      "name": "Austin Seipp",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png"
+    },
+    "last_poster": {
+      "id": 158,
+      "username": "aseipp",
+      "name": "Austin Seipp",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/567",
+        "title": "Providing a connection string without a cluster file \u00b7 Issue #567 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 28,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/proposal-dont-identify-a-coordinator-based-on-its-ip/502/2",
+        "title": "Proposal: Don't identify a coordinator based on its IP",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 10,
+        "user_id": 8,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://vaultproject.io/",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 158,
+        "domain": "vaultproject.io",
+        "root_domain": "vaultproject.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

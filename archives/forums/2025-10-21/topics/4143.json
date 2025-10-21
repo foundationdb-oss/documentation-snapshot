@@ -1,0 +1,627 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13254,
+        "name": "Brian Breniser",
+        "username": "brianbreniser",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png",
+        "created_at": "2023-09-06T19:47:55.377Z",
+        "cooked": "<p>Hi all,</p>\n<p>I\u2019m looking for some extra information on optimizing the foundation db operator running on kubernetes. I\u2019m looking for some general recommendations instead of the specifics for my cluster. It\u2019s up to me to handle minutia around our systems, and I don\u2019t expect anyone else to debug our systems for us.</p>\n<p>I have found this page: <a href=\"https://apple.github.io/foundationdb/performance.html\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Performance \u2014 FoundationDB 7.1</a> but it\u2019s a bit high level, I\u2019m looking for cluster configuration help specifically with the operator (Or differences between VMs and operator configuration). If there is an FAQ, or a common issues with performance guide, or some other performance guide that I can look into, that would be much appreciated. Anyone with informal tips can help out too.</p>\n<p>Also if there is any generic information about the performance characterizations between the vm based solution and the kubernetes based solution would be helpful. I\u2019m seeing a 60% reduction in performance using the operator vs on VMs raw, but again, I\u2019m not asking anyone to specifically debug my situation, but point me towards a guide I can use to make sure I\u2019ve crossed the t\u2019s and dotted the eyes in terms of operator parameters.</p>\n<p>Thanks in advance for any pointers.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-09-06T19:47:55.377Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 193,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 961.0,
+        "yours": false,
+        "topic_id": 4143,
+        "topic_slug": "looking-to-tweak-fdb-performance-on-kubernetes-with-the-fdb-operator",
+        "display_username": "Brian Breniser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/performance.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Performance \u2014 FoundationDB 7.1",
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1286,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/looking-to-tweak-fdb-performance-on-kubernetes-with-the-fdb-operator/4143/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13285,
+        "name": "Ivan Yurochko",
+        "username": "iyuroch",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/iyuroch/{size}/1311_2.png",
+        "created_at": "2023-09-18T11:45:40.999Z",
+        "cooked": "<p>We run FDB in single kubernetes cluster in multiple az. Some stuff that can be handy:</p>\n<ol>\n<li>Set cpu request to 1 and no limit (fdb is single threaded no need for more)</li>\n<li>Set memory for pods same as fdb expects</li>\n<li>Try running in single zone (if concern about resiliency level and read latency in other zones check into satellite logs to have clusters in different zones)</li>\n<li>Due 1. use separate pods for separate components (tlog, storage). We are using snapshot backup feature so we also have coordinator separately</li>\n<li>We spread specific process groups with node and zone topologyspread to have our resiliency level</li>\n<li>Check gp3 ebs type (default gp2 is much slower), we have plans to have nvme prefer read cache in future and this can improve it even more</li>\n<li>We use sidecar log collector and investigate issue &gt;30 severity level, we have our own fdb exporter and dashboard that also aids us</li>\n</ol>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-09-18T11:45:40.999Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 20.6,
+        "yours": false,
+        "topic_id": 4143,
+        "topic_slug": "looking-to-tweak-fdb-performance-on-kubernetes-with-the-fdb-operator",
+        "display_username": "Ivan Yurochko",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1089,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/looking-to-tweak-fdb-performance-on-kubernetes-with-the-fdb-operator/4143/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13254,
+      13285
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      776
+    ],
+    [
+      2,
+      764
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Looking to tweak FDB performance on Kubernetes with the FDB Operator",
+  "id": 4143,
+  "title": "Looking to tweak FDB performance on Kubernetes with the FDB Operator",
+  "posts_count": 2,
+  "created_at": "2023-09-06T19:47:55.313Z",
+  "views": 532,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-09-18T11:45:40.999Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "looking-to-tweak-fdb-performance-on-kubernetes-with-the-fdb-operator",
+  "category_id": 17,
+  "word_count": 372,
+  "deleted_at": null,
+  "user_id": 1286,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4143",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Announcing a FoundationDB Kubernetes Operator",
+      "id": 1766,
+      "title": "Announcing a FoundationDB Kubernetes Operator",
+      "slug": "announcing-a-foundationdb-kubernetes-operator",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-11-18T23:30:04.348Z",
+      "last_posted_at": "2019-12-13T15:52:08.887Z",
+      "bumped": true,
+      "bumped_at": "2019-12-13T15:52:08.887Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 11,
+      "views": 2706,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Understanding about testing class and performance tuning in Foundationdb",
+      "id": 3806,
+      "title": "Understanding about testing class and performance tuning in Foundationdb",
+      "slug": "understanding-about-testing-class-and-performance-tuning-in-foundationdb",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2023-02-15T04:24:24.161Z",
+      "last_posted_at": "2023-02-15T07:32:17.497Z",
+      "bumped": true,
+      "bumped_at": "2023-02-16T06:45:06.166Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 606,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 970,
+            "username": "mason",
+            "name": "mason",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationdDB Cluster Performance Issues",
+      "id": 2105,
+      "title": "FoundationdDB Cluster Performance Issues",
+      "slug": "foundationddb-cluster-performance-issues",
+      "posts_count": 12,
+      "reply_count": 6,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-05-06T16:01:40.124Z",
+      "last_posted_at": "2020-10-21T15:20:11.071Z",
+      "bumped": true,
+      "bumped_at": "2020-10-21T15:20:11.071Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance",
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1317,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 765,
+            "username": "rbtcollins",
+            "name": "Robert Collins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbtcollins/{size}/941_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Request for FAQs about running FoundationDB in production",
+      "id": 1670,
+      "title": "Request for FAQs about running FoundationDB in production",
+      "slug": "request-for-faqs-about-running-foundationdb-in-production",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-10-06T16:46:56.073Z",
+      "last_posted_at": "2019-10-15T20:04:49.660Z",
+      "bumped": true,
+      "bumped_at": "2019-10-15T20:04:49.660Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 965,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 661,
+            "username": "tristanz",
+            "name": "Tristan Zajonc",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tristanz/{size}/685_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 545,
+            "username": "rishabh",
+            "name": "Rishabh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rishabh/{size}/540_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1089,
+        "username": "iyuroch",
+        "name": "Ivan Yurochko",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/iyuroch/{size}/1311_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1286,
+        "username": "brianbreniser",
+        "name": "Brian Breniser",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1286,
+      "username": "brianbreniser",
+      "name": "Brian Breniser",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png"
+    },
+    "last_poster": {
+      "id": 1089,
+      "username": "iyuroch",
+      "name": "Ivan Yurochko",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/iyuroch/{size}/1311_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/performance.html",
+        "title": "Performance \u2014 FoundationDB 7.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 1286,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

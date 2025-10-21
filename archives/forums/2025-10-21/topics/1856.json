@@ -1,0 +1,585 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5894,
+        "name": "Victor Istratenko",
+        "username": "ivvist",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/da6949/{size}.png",
+        "created_at": "2019-12-26T14:05:22.923Z",
+        "cooked": "<p>Hi, I am trying very base thing:</p>\n<ol>\n<li>Ran official foundationdb/foundationdb docker image on ubuntu 18.4, using command</li>\n</ol>\n<p><strong>docker run --name fdb foundationdb/foundationdb</strong></p>\n<ol start=\"2\">\n<li>Came in the docker container to create database</li>\n</ol>\n<p><strong>docker exec -it  fdb fdbcli</strong><br>\n<strong>fdb&gt; configure new single memory</strong><br>\n<strong>fdb&gt;status details</strong></p>\n<p>fdbi&gt; status gives me some good values:<br>\n\u2026<br>\n172.17.0.2:4500 (reachable)<br>\n\u2026</p>\n<ol start=\"3\">\n<li>On Host machine I create new [file path]/myfdb.cluster<br>\n<strong>HUIGHOIU:HHKJ@172.17.0.2:4500</strong>\n</li>\n</ol>\n<p>4 .Now I try to connect to the database from host machine to my db in docker container using that file<br>\n<strong>fdbcli -C \"[file path]/myfdb.cluster\"</strong></p>\n<p>And I get the followig error:</p>\n<p><strong>The database is unavalable;\u2026</strong></p>\n<p><strong>fdb&gt; status details</strong>   gives me:</p>\n<p>Configuration:<br>\nRedundancy mode        - unknown<br>\nStorage engine         - unknown<br>\nCoordinators           - unknown</p>\n<p>Cluster:<br>\nFoundationDB processes - unknown<br>\nZones                  - unknown<br>\nMachines               -<br>\nMachines               - unknown</p>\n<p>Data:<br>\nReplication health     - unknown<br>\nMoving data            - unknown<br>\nSum of key-value sizes - unknown<br>\nDisk space used        - unknown</p>\n<p>Operating space:<br>\nUnable to retrieve operating space status</p>\n<p>Workload:<br>\nRead rate              - unknown<br>\nWrite rate             - unknown<br>\nTransactions started   - unknown<br>\nTransactions committed - unknown<br>\nConflict rate          - unknown</p>\n<p>Backup and DR:<br>\nRunning backups        - 0<br>\nRunning DRs            - 0</p>\n<p>Process performance details:</p>\n<p>Coordination servers:<br>\n172.17.0.2:4500  (reachable)</p>\n<p><strong>Please give me a clue what I am doing wrong.</strong></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-12-27T11:50:46.836Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 544,
+        "reads": 51,
+        "readers_count": 50,
+        "score": 2732.2,
+        "yours": false,
+        "topic_id": 1856,
+        "topic_slug": "can-not-connect-to-foundationdb-docker-container",
+        "display_username": "Victor Istratenko",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 674,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/can-not-connect-to-foundationdb-docker-container/1856/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5898,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-12-31T00:12:32.627Z",
+        "cooked": "<p>I would expect that this is again a case of host&lt;-&gt;docker NAT\u2019d networks.  See <a href=\"https://forums.foundationdb.org/t/fdbcli-access-external-docker/1069/\" class=\"inline-onebox\">fdbcli access external [docker]</a> for another instance, and your solution is going to be to run your host client in the same docker network that your server is running in.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-12-31T00:12:32.627Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 8,
+        "reads": 40,
+        "readers_count": 39,
+        "score": 48.0,
+        "yours": false,
+        "topic_id": 1856,
+        "topic_slug": "can-not-connect-to-foundationdb-docker-container",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/fdbcli-access-external-docker/1069",
+            "internal": true,
+            "reflection": false,
+            "title": "fdbcli access external [docker]",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/can-not-connect-to-foundationdb-docker-container/1856/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5894,
+      5898
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2126
+    ],
+    [
+      2,
+      2122
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Can not connect to foundationdb docker container",
+  "id": 1856,
+  "title": "Can not connect to foundationdb docker container",
+  "posts_count": 2,
+  "created_at": "2019-12-26T14:05:22.848Z",
+  "views": 1550,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-12-31T00:12:32.627Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "can-not-connect-to-foundationdb-docker-container",
+  "category_id": 7,
+  "word_count": 262,
+  "deleted_at": null,
+  "user_id": 674,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1856",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "fdbcli access external [docker]",
+      "id": 1069,
+      "title": "fdbcli access external [docker]",
+      "slug": "fdbcli-access-external-docker",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-01-25T23:19:08.807Z",
+      "last_posted_at": "2019-11-25T09:37:22.513Z",
+      "bumped": true,
+      "bumped_at": "2019-11-25T09:37:22.513Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2427,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 493,
+            "username": "timephy",
+            "name": "Tim Guggenmos",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 689,
+            "username": "HugoTigre",
+            "name": "Hugo Tigre",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/5e9695/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundation + docker public access",
+      "id": 1658,
+      "title": "Foundation + docker public access",
+      "slug": "foundation-docker-public-access",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/4d5841377939ca99f304e342c8427c3bfeb88bb1.jpeg",
+      "created_at": "2019-09-30T16:19:04.968Z",
+      "last_posted_at": "2019-10-03T06:21:08.155Z",
+      "bumped": true,
+      "bumped_at": "2019-10-03T06:21:08.155Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1299,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 650,
+            "username": "Karthikn6793",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/karthikn6793/{size}/748_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Trying to make docker image; fdbcli says database not created",
+      "id": 157,
+      "title": "Trying to make docker image; fdbcli says database not created",
+      "slug": "trying-to-make-docker-image-fdbcli-says-database-not-created",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-04-20T22:06:18.472Z",
+      "last_posted_at": "2019-02-12T13:13:54.630Z",
+      "bumped": true,
+      "bumped_at": "2019-02-12T13:13:54.630Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 3095,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 110,
+            "username": "jwatte",
+            "name": "Jon Watte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwatte/{size}/77_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 476,
+            "username": "dch",
+            "name": "Dave Cottlehuber",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 506,
+            "username": "shane",
+            "name": "Shane",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/dbc845/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Unable to connect fdb and go app running in separate docker containers",
+      "id": 3903,
+      "title": "Unable to connect fdb and go app running in separate docker containers",
+      "slug": "unable-to-connect-fdb-and-go-app-running-in-separate-docker-containers",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2023-04-14T10:10:00.167Z",
+      "last_posted_at": "2023-04-14T10:12:03.010Z",
+      "bumped": true,
+      "bumped_at": "2023-04-14T10:12:03.010Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 278,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1240,
+            "username": "pragyan",
+            "name": "pragyan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pragyan/{size}/1571_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1241,
+            "username": "pkkh2000",
+            "name": "Prateek Khandelwal",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/9e8a1a/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Connecting to the database using `fdbcli` results in an error",
+      "id": 1841,
+      "title": "Connecting to the database using `fdbcli` results in an error",
+      "slug": "connecting-to-the-database-using-fdbcli-results-in-an-error",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-12-14T07:23:08.203Z",
+      "last_posted_at": "2019-12-17T15:06:03.064Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T15:06:03.064Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2426,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 674,
+        "username": "ivvist",
+        "name": "Victor Istratenko",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/da6949/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 674,
+      "username": "ivvist",
+      "name": "Victor Istratenko",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/da6949/{size}.png"
+    },
+    "last_poster": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    }
+  },
+  "bookmarks": []
+}

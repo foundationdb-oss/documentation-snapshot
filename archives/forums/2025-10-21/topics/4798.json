@@ -1,0 +1,651 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14753,
+        "name": "Jon Chambers",
+        "username": "jon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "created_at": "2025-03-06T13:27:35.458Z",
+        "cooked": "<p>I\u2019m trying to figure out how to get trace logs from <code>fdbserver</code> processes running in Kubernetes with the FDB Kubernetes operator to a remote logging aggregator. I found an <a href=\"https://forums.foundationdb.org/t/capturing-trace-logs-in-kubernetes/2353\">older thread discussing the same issue</a>, and the punchline there was:</p>\n<blockquote>\n<p>The operator sends the trace logs from the fdbserver processes to a directory that is mapped to an emptyDir volume. This is designed so that if you want to export the trace logs to another system, you could add a custom sidecar container that accesses that volume and exports the logs.</p>\n</blockquote>\n<p>That makes sense to me on the surface, but how can we actually add a custom sidecar container? The most plausible-sounding hook I\u2019ve found so far is <code>podTemplate</code> in <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/cluster_spec.md#processsettings\" rel=\"noopener nofollow ugc\"><code>ProcessSettings</code></a>, but that says:</p>\n<blockquote>\n<p>If a container image with a tag is specified the operator will throw an error and stop processing the cluster.</p>\n</blockquote>\n<p>\u2026so it sounds like that\u2019s meant to discourage exactly what I\u2019m trying to do.</p>\n<p>Given the constraints, what\u2019s the best way to add a sidecar container to export trace logs? Or is the idea that we replace the existing sidecar image with our own custom image?</p>\n<p>Thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-03-06T13:27:35.458Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 31,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 147.8,
+        "yours": false,
+        "topic_id": 4798,
+        "topic_slug": "additional-sidecar-containers-for-exporting-trace-logs-with-the-kubernetes-operator",
+        "display_username": "Jon Chambers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/cluster_spec.md#processsettings",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/docs/cluster_spec.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/capturing-trace-logs-in-kubernetes/2353",
+            "internal": true,
+            "reflection": false,
+            "title": "Capturing trace logs in kubernetes",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1505,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/additional-sidecar-containers-for-exporting-trace-logs-with-the-kubernetes-operator/4798/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14759,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2025-03-07T16:31:31.969Z",
+        "cooked": "<p>You were on the right track with adding an additional container with the ProcessSettings, we actually have an example in our docs: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/customization.md#customizing-your-pods\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/docs/manual/customization.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a>. The statement</p>\n<blockquote>\n<p>If a container image with a tag is specified the operator will throw an error and stop processing the cluster.</p>\n</blockquote>\n<p>Was referring to the main container and sidecar container as those versions (tags) are managed by the operator. We should adjust the wording here. Could you open a GitHub issue to improve the wording here (and if you want you can also file a PR, happy to review it).</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-03-07T16:31:31.969Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 22.6,
+        "yours": false,
+        "topic_id": 4798,
+        "topic_slug": "additional-sidecar-containers-for-exporting-trace-logs-with-the-kubernetes-operator",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/customization.md#customizing-your-pods",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/docs/manual/customization.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/additional-sidecar-containers-for-exporting-trace-logs-with-the-kubernetes-operator/4798/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14760,
+        "name": "Jon Chambers",
+        "username": "jon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "created_at": "2025-03-07T16:34:52.903Z",
+        "cooked": "<p>Excellent; thanks kindly! I\u2019ll follow up with an issue shortly and a PR as soon as I\u2019m confident in my understanding.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-03-07T16:34:52.903Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 2.4,
+        "yours": false,
+        "topic_id": 4798,
+        "topic_slug": "additional-sidecar-containers-for-exporting-trace-logs-with-the-kubernetes-operator",
+        "display_username": "Jon Chambers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 849,
+          "username": "johscheuer",
+          "name": "Johannes Scheuermann",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1505,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/additional-sidecar-containers-for-exporting-trace-logs-with-the-kubernetes-operator/4798/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14753,
+      14759,
+      14760
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      229
+    ],
+    [
+      2,
+      228
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Additional sidecar containers (for exporting trace logs) with the Kubernetes operator?",
+  "id": 4798,
+  "title": "Additional sidecar containers (for exporting trace logs) with the Kubernetes operator?",
+  "posts_count": 3,
+  "created_at": "2025-03-06T13:27:35.403Z",
+  "views": 83,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2025-03-07T16:34:52.903Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "additional-sidecar-containers-for-exporting-trace-logs-with-the-kubernetes-operator",
+  "category_id": 16,
+  "word_count": 353,
+  "deleted_at": null,
+  "user_id": 1505,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4798",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Capturing trace logs in kubernetes",
+      "id": 2353,
+      "title": "Capturing trace logs in kubernetes",
+      "slug": "capturing-trace-logs-in-kubernetes",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-09-22T15:40:25.124Z",
+      "last_posted_at": "2020-09-22T17:08:50.151Z",
+      "bumped": true,
+      "bumped_at": "2020-09-22T17:08:50.151Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 542,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "KEP-753 SidecarContainers and FDB Kubernetes Operator",
+      "id": 4058,
+      "title": "KEP-753 SidecarContainers and FDB Kubernetes Operator",
+      "slug": "kep-753-sidecarcontainers-and-fdb-kubernetes-operator",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2023-07-13T04:52:03.945Z",
+      "last_posted_at": "2023-07-13T06:00:04.080Z",
+      "bumped": true,
+      "bumped_at": "2023-07-13T06:00:04.080Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 271,
+      "category_id": 15,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 946,
+            "username": "rajivr",
+            "name": "Rajiv M Ranganath",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Initial kubectl fdb plugin",
+      "id": 2476,
+      "title": "Initial kubectl fdb plugin",
+      "slug": "initial-kubectl-fdb-plugin",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2020-12-08T17:16:29.387Z",
+      "last_posted_at": "2020-12-08T17:16:29.444Z",
+      "bumped": true,
+      "bumped_at": "2020-12-08T17:16:29.444Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 608,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB kubernetes operator continuously boucing processes",
+      "id": 2092,
+      "title": "FDB kubernetes operator continuously boucing processes",
+      "slug": "fdb-kubernetes-operator-continuously-boucing-processes",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-04-29T10:57:13.947Z",
+      "last_posted_at": "2020-05-03T07:18:12.844Z",
+      "bumped": true,
+      "bumped_at": "2020-05-03T07:18:12.844Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1013,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 724,
+            "username": "larshagen",
+            "name": "Lars Hagen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/larshagen/{size}/776_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Running backups on tls-enabled cluster",
+      "id": 2036,
+      "title": "Running backups on tls-enabled cluster",
+      "slug": "running-backups-on-tls-enabled-cluster",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-03-30T15:38:49.682Z",
+      "last_posted_at": "2020-04-01T10:14:45.052Z",
+      "bumped": true,
+      "bumped_at": "2020-04-01T10:14:45.052Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 776,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 746,
+            "username": "matiasholte",
+            "name": "Matias Holte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1505,
+        "username": "jon",
+        "name": "Jon Chambers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1505,
+      "username": "jon",
+      "name": "Jon Chambers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png"
+    },
+    "last_poster": {
+      "id": 1505,
+      "username": "jon",
+      "name": "Jon Chambers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/customization.md#customizing-your-pods",
+        "title": "fdb-kubernetes-operator/docs/manual/customization.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/cluster_spec.md#processsettings",
+        "title": "fdb-kubernetes-operator/docs/cluster_spec.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1505,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

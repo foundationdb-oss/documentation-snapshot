@@ -1,0 +1,526 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12261,
+        "name": "Jay Edwards",
+        "username": "meangrape",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/meangrape/{size}/1230_2.png",
+        "created_at": "2023-01-19T18:21:47.377Z",
+        "cooked": "<p>I have two storage processes on one physical server continually restarting themselves with no errors seen.</p>\n<p>I have a two-node dev cluster. I noticed that the fdb directory on one machine (laptop A) was not growing in size while loading data.</p>\n<p>Checking grafana where I monitor <code>fdb_is_storage</code> I saw that the number of storage servers fluctuates between 2 and 4 about every 30 seconds. (The other two storage servers are on another machine.)</p>\n<p>Checking server A\u2019s data directories I can see the sqlite files for the storage servers being deleted and recreated.</p>\n<p>There are no Sev 40s in the log files. And the only 30s are for</p>\n<pre><code class=\"lang-auto\">  \"Type\": \"MasterRecoveryDuration\",\n  \"Type\": \"TraceEventThrottle_TransactionMetrics\",\n</code></pre>\n<p>I\u2019m perplexed as to how to start troubleshooting this.</p>\n<pre><code class=\"lang-auto\">Configuration:\n  Redundancy mode        - single\n  Storage engine         - ssd-2\n  Coordinators           - 1\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 11\n  Zones                  - 2\n  Machines               - 2\n  Memory availability    - 1.3 GB per process on machine with least available\n                           &gt;&gt;&gt;&gt;&gt; (WARNING: 4.0 GB recommended) &lt;&lt;&lt;&lt;&lt;\n  Fault Tolerance        - 0 machines\n  Server time            - 01/19/23 13:07:08\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 145.083 GB\n  Disk space used        - 170.650 GB\n\nOperating space:\n  Storage server         - 499.6 GB free on most full server\n  Log server             - 374.6 GB free on most full server\n\nWorkload:\n  Read rate              - 49 Hz\n  Write rate             - 571 Hz\n  Transactions started   - 90 Hz\n  Transactions committed - 14 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n  100.99.239.86:9994     (  1% cpu; 22% machine; 0.000 Gbps;  3% disk IO;395.2 GB / 1.3 GB RAM  )\n  100.99.239.86:9995     (  3% cpu; 22% machine; 0.000 Gbps;  4% disk IO;391.2 GB / 1.3 GB RAM  )\n  100.99.239.86:9996     (  1% cpu; 22% machine; 0.000 Gbps;  3% disk IO;395.2 GB / 1.3 GB RAM  )\n  100.99.239.86:9997     (  2% cpu; 22% machine; 0.000 Gbps;  3% disk IO;391.1 GB / 1.3 GB RAM  )\n  100.99.239.86:9998     ( 14% cpu; 22% machine; 0.000 Gbps;  3% disk IO;391.0 GB / 1.3 GB RAM  )\n  100.99.239.86:9999     (  1% cpu; 22% machine; 0.000 Gbps;  3% disk IO;390.6 GB / 1.3 GB RAM  )\n  100.105.51.93:9994     (  3% cpu; 21% machine; 0.041 Gbps;  0% disk IO; 7.3 GB / 1.8 GB RAM  )\n  100.105.51.93:9995     (  3% cpu; 21% machine; 0.041 Gbps;  0% disk IO; 0.4 GB / 1.8 GB RAM  )\n  100.105.51.93:9996     (  3% cpu; 21% machine; 0.041 Gbps;  0% disk IO; 6.3 GB / 1.8 GB RAM  )\n  100.105.51.93:9997     (  3% cpu; 21% machine; 0.041 Gbps;  0% disk IO; 0.2 GB / 1.8 GB RAM  )\n  100.105.51.93:9998     ( 29% cpu; 21% machine; 0.041 Gbps;  0% disk IO; 0.2 GB / 1.8 GB RAM  )\n\nCoordination servers:\n  100.99.239.86:9999  (reachable)\n\nClient time: 01/19/23 13:07:07\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-01-19T18:21:47.377Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 7.6,
+        "yours": false,
+        "topic_id": 3751,
+        "topic_slug": "storage-servers-restarting",
+        "display_username": "Jay Edwards",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1028,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storage-servers-restarting/3751/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12261
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1006
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Storage servers restarting",
+  "id": 3751,
+  "title": "Storage servers restarting",
+  "posts_count": 1,
+  "created_at": "2023-01-19T18:21:47.317Z",
+  "views": 280,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-01-19T18:21:47.377Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "storage-servers-restarting",
+  "category_id": 7,
+  "word_count": 509,
+  "deleted_at": null,
+  "user_id": 1028,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3751",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "WARNING: A single process is both a transaction log and a storage server",
+      "id": 1580,
+      "title": "WARNING: A single process is both a transaction log and a storage server",
+      "slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-08-11T17:20:33.378Z",
+      "last_posted_at": "2019-08-13T20:43:59.991Z",
+      "bumped": true,
+      "bumped_at": "2019-08-13T20:43:59.991Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1783,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB processes - 2 (less 0 excluded; 1 with errors)",
+      "id": 2008,
+      "title": "FoundationDB processes - 2 (less 0 excluded; 1 with errors)",
+      "slug": "foundationdb-processes-2-less-0-excluded-1-with-errors",
+      "posts_count": 8,
+      "reply_count": 8,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-03-13T03:55:51.229Z",
+      "last_posted_at": "2020-03-13T05:57:38.007Z",
+      "bumped": true,
+      "bumped_at": "2020-03-13T05:57:38.007Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 895,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 718,
+            "username": "Cliicy",
+            "name": "Dragon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/47e85d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage server running out of space",
+      "id": 1655,
+      "title": "Storage server running out of space",
+      "slug": "storage-server-running-out-of-space",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-09-28T02:44:46.227Z",
+      "last_posted_at": "2019-10-02T20:48:03.731Z",
+      "bumped": true,
+      "bumped_at": "2019-10-02T20:48:03.731Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 4053,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 612,
+            "username": "fzhjon",
+            "name": "Jon Fu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Full disk on one machine results in 99% performance degradation",
+      "id": 850,
+      "title": "Full disk on one machine results in 99% performance degradation",
+      "slug": "full-disk-on-one-machine-results-in-99-performance-degradation",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-11-06T00:18:11.154Z",
+      "last_posted_at": "2018-11-08T00:02:29.123Z",
+      "bumped": true,
+      "bumped_at": "2018-11-08T00:02:29.123Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2223,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 421,
+            "username": "rbranson",
+            "name": "Rick Branson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbranson/{size}/406_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deploying storage-only servers",
+      "id": 1353,
+      "title": "Deploying storage-only servers",
+      "slug": "deploying-storage-only-servers",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-05-08T21:20:55.380Z",
+      "last_posted_at": "2019-05-10T18:22:19.831Z",
+      "bumped": true,
+      "bumped_at": "2019-05-10T18:22:19.831Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 678,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 17,
+            "username": "david.youngworth",
+            "name": "David Youngworth",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/david.youngworth/{size}/376_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1028,
+        "username": "meangrape",
+        "name": "Jay Edwards",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/meangrape/{size}/1230_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1028,
+      "username": "meangrape",
+      "name": "Jay Edwards",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/meangrape/{size}/1230_2.png"
+    },
+    "last_poster": {
+      "id": 1028,
+      "username": "meangrape",
+      "name": "Jay Edwards",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/meangrape/{size}/1230_2.png"
+    }
+  },
+  "bookmarks": []
+}

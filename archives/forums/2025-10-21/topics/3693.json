@@ -1,0 +1,483 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12125,
+        "name": "BoLee",
+        "username": "libo-sober",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "created_at": "2022-12-14T02:09:31.573Z",
+        "cooked": "<p>After I delete some storage processes, the cluster is unavailable.<br>\nOur cluster redundancy mode is 3dc. There are 6 machines in each DC, 4 ssd in each machine, and 4 processes in each ssd.<br>\nThe current cluster status is\uff1a</p>\n<pre><code class=\"lang-auto\"> fdbcli\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nThe database is unavailable; type `status' for more information.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; status\n\nWARNING: Long delay (Ctrl-C to interrupt)\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nUnable to read database configuration.\n\nConfiguration:\n  Redundancy mode        - unknown\n  Storage engine         - unknown\n  Coordinators           - unknown\n  Usable Regions         - unknown\n\nCluster:\n  FoundationDB processes - 865\n  Zones                  - 18\n  Machines               - 18\n  Memory availability    - 6.8 GB per process on machine with least available\n  Retransmissions rate   - 64 Hz\n  Server time            - 12/14/22 01:51:10\n\nData:\n  Replication health     - unknown\n  Moving data            - unknown\n  Sum of key-value sizes - unknown\n  Disk space used        - unknown\n\nOperating space:\n  Unable to retrieve operating space status\n\nWorkload:\n  Read rate              - unknown\n  Write rate             - unknown\n  Transactions started   - unknown\n  Transactions committed - unknown\n  Conflict rate          - unknown\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 12/14/22 01:51:01\n\nfdb&gt;\n\n</code></pre>\n<p>details</p>\n<pre><code class=\"lang-auto\">fdb&gt; status details\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nUnable to read database configuration.\n\nConfiguration:\n  Redundancy mode        - unknown\n  Storage engine         - unknown\n  Coordinators           - unknown\n  Usable Regions         - unknown\n\nCluster:\n  FoundationDB processes - 865\n  Zones                  - 18\n  Machines               - 18\n  Memory availability    - 6.8 GB per process on machine with least available\n  Retransmissions rate   - 153 Hz\n  Server time            - 12/14/22 01:51:36\n\nData:\n  Replication health     - unknown\n  Moving data            - unknown\n  Sum of key-value sizes - unknown\n  Disk space used        - unknown\n\nOperating space:\n  Unable to retrieve operating space status\n\nWorkload:\n  Read rate              - unknown\n  Write rate             - unknown\n  Transactions started   - unknown\n  Transactions committed - unknown\n  Conflict rate          - unknown\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n  xxxx:5500     (  1% cpu;  7% machine; 0.024 Gbps;  7% disk IO; 0.8 GB / 7.1 GB RAM  )\n  xxxx:5501     (  1% cpu;  7% machine; 0.024 Gbps;  7% disk IO; 1.0 GB / 7.1 GB RAM  )\n  xxxx:5502     (  1% cpu;  7% machine; 0.024 Gbps;  7% disk IO; 0.8 GB / 7.1 GB RAM  )\n\nxxxxxx\n\n  xxxx:7501     (  0% cpu;  9% machine; 0.028 Gbps;  0% disk IO; 0.1 GB / 7.1 GB RAM  )\n  xxxx:7502     (  6% cpu;  9% machine; 0.028 Gbps;  0% disk IO; 0.2 GB / 7.1 GB RAM  )\n  xxxx:8500     (  0% cpu;  9% machine; 0.028 Gbps;  0% disk IO; 0.1 GB / 7.1 GB RAM  )\n\nCoordination servers:\n  xxxx:5542  (reachable)\n  xxxx:7500  (reachable)\n  xxxx:5516  (reachable)\n  xxxx:5530  (reachable)\n  xxxx:5531  (reachable)\n  xxxx:5515  (reachable)\n  xxxx:7500  (reachable)\n\nClient time: 12/14/22 01:51:29\n\n</code></pre>\n<p>All processes and coordinators are normal.<br>\nRecovery status:</p>\n<pre><code class=\"lang-auto\">recovery_state_description=\"Accepting commits. All logs recruited.\"\nrecovery_state_name=\"all_logs_recruited\",\n</code></pre>\n<p>status.json</p>\n<pre><code class=\"lang-auto\">xxx\n\n      ],\n            \"quorum_reachable\" : true\n        },\n        \"database_status\" : {\n            \"available\" : false,\n            \"healthy\" : false\n        },\n        \"messages\" : [\n        ],\n        \"timestamp\" : 1670983581\n    },\n    \"cluster\" : {\n        \"active_tss_count\" : 0,\n        \"bounce_impact\" : {\n            \"can_clean_bounce\" : false,\n            \"reason\" : \"cluster hasn't fully recovered yet\"\n        },\n\nxxx\n\n         \"versions\" : 0\n        },\n        \"degraded_processes\" : 0,\n        \"generation\" : 806,\n        \"incompatible_connections\" : [\n        ],\n        \"layers\" : {\n            \"_error\" : \"configurationMissing\",\n            \"_valid\" : false\n        },\n        \"machines\" : {\n\nxxx\n\n       \"protocol_version\" : \"fdb00b071010000\",\n        \"recovery_state\" : {\n            \"active_generations\" : 29,\n            \"description\" : \"Accepting commits. All logs recruited.\",\n            \"name\" : \"all_logs_recruited\",\n            \"seconds_since_last_recovered\" : 60227.800000000003\n        }\n    }\n}\n\n</code></pre>\n<p>View the roles of processes in the cluster and find that there is no commit_proxy and grv_proxy .</p>\n<p>I need your help. Thank you very much!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-12-14T02:22:04.596Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 172,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 866.0,
+        "yours": false,
+        "topic_id": 3693,
+        "topic_slug": "configurationmissing-unable-to-read-database-configuration",
+        "display_username": "BoLee",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/unexpected-cluster-state-unable-to-read-database-configuration/1107/3",
+            "internal": true,
+            "reflection": true,
+            "title": "Unexpected cluster state - Unable to read database configuration",
+            "clicks": 20
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1175,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/configurationmissing-unable-to-read-database-configuration/3693/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12125
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1043
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "configurationMissing&ndash;Unable to read database configuration",
+  "id": 3693,
+  "title": "configurationMissing--Unable to read database configuration",
+  "posts_count": 1,
+  "created_at": "2022-12-14T02:09:31.501Z",
+  "views": 632,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-12-14T02:09:31.573Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "configurationmissing-unable-to-read-database-configuration",
+  "category_id": 7,
+  "word_count": 545,
+  "deleted_at": null,
+  "user_id": 1175,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3693",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Unexpected cluster state - Unable to read database configuration",
+      "id": 1107,
+      "title": "Unexpected cluster state - Unable to read database configuration",
+      "slug": "unexpected-cluster-state-unable-to-read-database-configuration",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-02-02T09:22:05.963Z",
+      "last_posted_at": "2022-12-14T10:02:23.374Z",
+      "bumped": true,
+      "bumped_at": "2022-12-14T10:03:01.415Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1492,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1175,
+            "username": "libo-sober",
+            "name": "BoLee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Connecting to the database using `fdbcli` results in an error",
+      "id": 1841,
+      "title": "Connecting to the database using `fdbcli` results in an error",
+      "slug": "connecting-to-the-database-using-fdbcli-results-in-an-error",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-12-14T07:23:08.203Z",
+      "last_posted_at": "2019-12-17T15:06:03.064Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T15:06:03.064Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2426,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Trying out redundancy mode &lsquo;double&rsquo; on a single macOS machine",
+      "id": 376,
+      "title": "Trying out redundancy mode 'double' on a single macOS machine",
+      "slug": "trying-out-redundancy-mode-double-on-a-single-macos-machine",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-05-08T07:37:40.052Z",
+      "last_posted_at": "2018-05-08T19:05:18.144Z",
+      "bumped": true,
+      "bumped_at": "2018-05-08T19:05:18.144Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1203,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 243,
+            "username": "brb",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB processes - 2 (less 0 excluded; 1 with errors)",
+      "id": 2008,
+      "title": "FoundationDB processes - 2 (less 0 excluded; 1 with errors)",
+      "slug": "foundationdb-processes-2-less-0-excluded-1-with-errors",
+      "posts_count": 8,
+      "reply_count": 8,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-03-13T03:55:51.229Z",
+      "last_posted_at": "2020-03-13T05:57:38.007Z",
+      "bumped": true,
+      "bumped_at": "2020-03-13T05:57:38.007Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 895,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 718,
+            "username": "Cliicy",
+            "name": "Dragon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/47e85d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB @ Kubernetes having &ldquo;issues&rdquo;",
+      "id": 383,
+      "title": "FoundationDB @ Kubernetes having \"issues\"",
+      "slug": "foundationdb-kubernetes-having-issues",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-09T10:17:53.797Z",
+      "last_posted_at": "2018-05-11T17:28:05.081Z",
+      "bumped": true,
+      "bumped_at": "2018-05-11T17:28:05.081Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2031,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1175,
+        "username": "libo-sober",
+        "name": "BoLee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1175,
+      "username": "libo-sober",
+      "name": "BoLee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png"
+    },
+    "last_poster": {
+      "id": 1175,
+      "username": "libo-sober",
+      "name": "BoLee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/unexpected-cluster-state-unable-to-read-database-configuration/1107/3",
+        "title": "Unexpected cluster state - Unable to read database configuration",
+        "internal": true,
+        "attachment": false,
+        "reflection": true,
+        "clicks": 20,
+        "user_id": 1175,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

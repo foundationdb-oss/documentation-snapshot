@@ -1,0 +1,1036 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11258,
+        "name": "Eloi D\u00e9molis",
+        "username": "Wonshtrum",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png",
+        "created_at": "2022-06-15T19:05:16.838Z",
+        "cooked": "<p>Hi, I am working with <a class=\"mention\" href=\"/u/pierrez\">@PierreZ</a> on the integration of a Rust Workload in the fdbserver simulation. To do so I wrote a C++ shared object (<code>libcppwrapper.so</code>) to be loaded in the ExternalWorkload of the fdbserver. The C++ workload exposes bindings that I can then use in Rust. In the end I simply call <code>fdbserver -r simulation -f ./test.txt</code> with <code>test.txt</code> as follow:</p>\n<pre><code class=\"lang-auto\">testTitle=MyTest\n  testName=External\n  workloadName=TestWorkload\n  libraryPath=path/to/lib/\n  libraryName=cppwrapper\n</code></pre>\n<p>This scheme can already link the methods of ExternalWorkload (<code>init</code>, <code>setup</code>, <code>start</code>, <code>check</code> and <code>getMetrics</code>) to a Rust implementation. Two things are currently not working: I can\u2019t call the logger <code>trace</code> method (either through a <code>FDBLogger</code> instance or a <code>FDBWorkloadContext</code> instance) and calling most C bindings from <code>libfdb_c.so</code> results in segmentation faults. I simplified the project by removing the Rust part. C++ calls directly the logger and the C bindings, but I get the exact same errors.</p>\n<p>Here is the github repository (<a href=\"https://github.com/PierreZ/test-fdb-workload\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">GitHub - PierreZ/test-fdb-workload</a>) with all the code and a CI that reproduces the situation I\u2019m describing.</p>\n<p>Do you know what might be the cause of this?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2022-06-15T19:05:16.838Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 124,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 634.0,
+        "yours": false,
+        "topic_id": 3380,
+        "topic_slug": "cpp-implementation-of-an-externalworkload",
+        "display_username": "Eloi D\u00e9molis",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/PierreZ/test-fdb-workload",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - PierreZ/test-fdb-workload",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1121,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cpp-implementation-of-an-externalworkload/3380/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11259,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2022-06-15T20:59:34.846Z",
+        "cooked": "<p>One problem I see so far is that you need to call fdb_select_api_version. See <a href=\"https://apple.github.io/foundationdb/api-c.html#api-versioning\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">C API \u2014 FoundationDB 7.1</a>.</p>\n<p>There is an example external workload here that seems to work: <a href=\"https://github.com/apple/foundationdb/blob/1328c343231e447c1822ba1edea8c315c194955e/bindings/c/test/workloads/SimpleWorkload.cpp\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">foundationdb/SimpleWorkload.cpp at 1328c343231e447c1822ba1edea8c315c194955e \u00b7 apple/foundationdb \u00b7 GitHub</a>. It does get compiled and linked with some very specific flags (which you can see if you build with <code>ninja -v</code> or <code>make VERBOSE=1</code>), and it\u2019s possible that some of them are necessary to work properly.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2022-06-15T20:59:44.266Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 9.2,
+        "yours": false,
+        "topic_id": 3380,
+        "topic_slug": "cpp-implementation-of-an-externalworkload",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/1328c343231e447c1822ba1edea8c315c194955e/bindings/c/test/workloads/SimpleWorkload.cpp",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/SimpleWorkload.cpp at 1328c343231e447c1822ba1edea8c315c194955e \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 13
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/api-c.html#api-versioning",
+            "internal": false,
+            "reflection": false,
+            "title": "C API \u2014 FoundationDB 7.1",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cpp-implementation-of-an-externalworkload/3380/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11269,
+        "name": "Eloi D\u00e9molis",
+        "username": "Wonshtrum",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png",
+        "created_at": "2022-06-17T09:27:20.783Z",
+        "cooked": "<p>Thanks for the quick answer. Indeed, adding <code>fdb_select_api_version</code> has fixed some problems and C bindings like <code>fdb_get_client_version</code> now work correctly. Although it didn\u2019t fix everything, the <code>trace</code> method of the logger still produces invalid behavior and more complex C bindings like <code>fdb_future_block_until_ready</code> crash fdbserver. From what we can see, it seems that most of the pointers passed between ExternalWorkload and our workload implementation are somewhat sensitive. As you suggested, we also think this is due to differences in compilation on both sides. But we can\u2019t make sense of the compilation commands in (for example) SimpleWorkload.cpp:</p>\n<pre><code class=\"lang-auto\">\n/opt/rh/devtoolset-8/root/usr/bin/c++ -DBOOST_ERROR_CODE_HEADER_ONLY -DBOOST_SYSTEM_NO_DEPRECATED -DNO_INTELLISENSE -Dc_workloads_EXPORTS -I/root/foundationdb -I. -Ibindings/c -I/root/foundationdb/bindings/c -Ibindings/c/foundationdb -O3 -DNDEBUG -fPIC -DCMAKE_BUILD -ggdb -fno-omit-frame-pointer -mavx -Wno-pragmas -Wno-attributes -Wno-error=format -Wunused-variable -Wno-deprecated -fvisibility=hidden -Wreturn-type -fPIC -Wclass-memaccess -DHAVE_OPENSSL -std=gnu++17 -MD -MT bindings/c/CMakeFiles/c_workloads.dir/test/workloads/SimpleWorkload.cpp.o -MF bindings/c/CMakeFiles/c_workloads.dir/test/workloads/SimpleWorkload.cpp.o.d -o bindings/c/CMakeFiles/c_workloads.dir/test/workloads/SimpleWorkload.cpp.o -c /root/foundationdb/bindings/c/test/workloads/SimpleWorkload.cpp\n\n&amp;&amp; /opt/rh/devtoolset-8/root/usr/bin/c++ -fPIC -O3 -DNDEBUG -static-libstdc++ -static-libgcc -Wl,--version-script=/root/foundationdb/bindings/c/external_workload.map,-z,nodelete -shared -Wl,-soname,libc_workloads.so -o share/foundationdb/libc_workloads.so bindings/c/CMakeFiles/c_workloads.dir/test/workloads/workloads.cpp.o bindings/c/CMakeFiles/c_workloads.dir/test/workloads/SimpleWorkload.cpp.o -Wl,-rpath,/root/build_output/lib lib/libfdb_c.so &amp;&amp; :\n\n</code></pre>\n<p>Using github actions we created two branches:</p>\n<ul>\n<li>\n<p>one trying to use the logger: <a href=\"https://github.com/PierreZ/test-fdb-workload/tree/traces\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">GitHub - PierreZ/test-fdb-workload at traces</a></p>\n</li>\n<li>\n<p>one trying to use the C bindings: <a href=\"https://github.com/PierreZ/test-fdb-workload/tree/c_bindings\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">GitHub - PierreZ/test-fdb-workload at c_bindings</a></p>\n</li>\n</ul>\n<p>You can see the results and log files on their respective CI pipeline.</p>\n<p>We have separated the two cases for isolation purposes, but we believe the two problems are related.</p>\n<aside class=\"quote no-group\" data-username=\"andrew.noyes\" data-post=\"2\" data-topic=\"3380\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/andrew.noyes/48/443_2.png\" class=\"avatar\"> andrew.noyes:</div>\n<blockquote>\n<p>There is an example external workload here that seems to work:</p>\n</blockquote>\n</aside>\n<p>We tried to compiled it and make it work locally but couldn\u2019t. First it seems this example is incomplete as <code>FDBWorkloadFactoryImpl::create</code> searches for the name of the workload in a static <code>_factories</code> map but SimpleWorkload don\u2019t seem to be registered there. And manually instantiating SimpleWorkload yields later the same errors (bad trace logging and segfaults on C bindings) as our workload implementation. Which further supports the theory of a compilation difference.</p>\n<p>Do you see any other possible cause for these problems? Do you think they are related? And if it is a compilation difference, can you see why?</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2022-06-17T09:27:20.783Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 1,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 13.8,
+        "yours": false,
+        "topic_id": 3380,
+        "topic_slug": "cpp-implementation-of-an-externalworkload",
+        "display_username": "Eloi D\u00e9molis",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/PierreZ/test-fdb-workload/tree/c_bindings",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - PierreZ/test-fdb-workload at c_bindings",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/PierreZ/test-fdb-workload/tree/traces",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - PierreZ/test-fdb-workload at traces",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1121,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cpp-implementation-of-an-externalworkload/3380/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11396,
+        "name": "Pierre Zemb",
+        "username": "PierreZ",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+        "created_at": "2022-07-05T06:46:50.383Z",
+        "cooked": "<p>Any idea why we are experiencing <a href=\"https://github.com/PierreZ/test-fdb-workload/pull/6/checks#step:14:201\" rel=\"noopener nofollow ugc\">SIGNAL: Segmentation fault (11)</a> in this <a href=\"https://github.com/PierreZ/test-fdb-workload/blob/c_bindings/src/workload.cpp#L28-L48\" rel=\"noopener nofollow ugc\">block</a>?</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2022-07-05T06:46:50.383Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 2.6,
+        "yours": false,
+        "topic_id": 3380,
+        "topic_slug": "cpp-implementation-of-an-externalworkload",
+        "display_username": "Pierre Zemb",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/PierreZ/test-fdb-workload/blob/c_bindings/src/workload.cpp#L28-L48",
+            "internal": false,
+            "reflection": false,
+            "title": "test-fdb-workload/workload.cpp at c_bindings \u00b7 PierreZ/test-fdb-workload \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/PierreZ/test-fdb-workload/pull/6/checks#step:14:201",
+            "internal": false,
+            "reflection": false,
+            "title": "Simple FDB C bindings test by Wonshtrum \u00b7 Pull Request #6 \u00b7 PierreZ/test-fdb-workload \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1121,
+          "username": "Wonshtrum",
+          "name": "Eloi D\u00e9molis",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 534,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cpp-implementation-of-an-externalworkload/3380/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11465,
+        "name": "Eloi D\u00e9molis",
+        "username": "Wonshtrum",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png",
+        "created_at": "2022-07-13T12:57:42.812Z",
+        "cooked": "<p>Hi, we have started working on this project again and found a lot of new things and would really appreciate confirmation of some points as many were \u201creversed engineered\u201d.</p>\n<p>First of all, for the compilation problem we haven\u2019t identified why exactly this happens but found a temporary fix by simply compiling in the official foundationdb container. Apart from replacing \u201cg++\u201d by \u201cc++\u201d, our Makefile remains unchanged, so the problem is not due to compiler arguments.</p>\n<p>With a logger and database finally working, we started working on the Rust bindings again. After many hours of debugging, we arrived at this mental representation of what\u2019s going on:</p>\n<ul>\n<li>\n<p>fdb calls the <code>setup</code> method of the workload</p>\n</li>\n<li>\n<p>fdb can\u2019t do anything until <code>setup</code> returns, i.e. any future created in <code>setup</code> won\u2019t be resolved until we exit, thus waiting for a future in <code>setup</code> results in a deadlock</p>\n</li>\n<li>\n<p>fdb won\u2019t call <code>start</code> until the GenericPromise <code>done</code> is resolved, so if no boolean is ever sent to <code>done</code> it results in a deadlock</p>\n</li>\n<li>\n<p>once <code>done</code> is resolved, fdb calls <code>starts</code> and the database can move in memory, so any callback set by <code>setup</code>, running after this point and holding on the previous database pointer will most likely crash when trying to use it</p>\n</li>\n<li>\n<p><code>done</code> is a GenericPromise and holds a smart pointer to a FDBPromise, if its last reference is dropped fdb knows and throws a \u201cbroken_promise\u201d error, so we have to be carefull when passing it between C++ and Rust (through a C interface)</p>\n</li>\n</ul>\n<p>It also seems that <code>start</code> and <code>check</code> behave exactly the same way. More generally it seems that whenever execution is granted to the workload (either in a \u201cstep method\u201d like <code>setup</code> or a callback we defined), fdb is paused (we assume this is done to preserve determinism). So we have to chain callbacks every time we want to block on actions that return a future.</p>\n<p>As it is very verbose to write (and we would like to use foundationdb-rs which abstracts the raw bindings and uses Rust Futures) we tried to use <code>async/await</code> in a blocking runtime in a separate thread:</p>\n<pre><code class=\"lang-auto\">fn setup(&amp;mut self, db: Database, done: GenericPromise&lt;bool&gt;) {\n    std::thread::spawn(move || {\n        // on separate thread, create and poll futures\n        runtime.block_on(async {\n            // it crashes here, as we use db\n            let trx = db.create_trx().unwrap();\n            trx.set_read_version(42);\n            // sets a callback and wait for it to be called\n            // similar to fdb_future_block_until_ready\n            let version1 = trx.get_read_version().await.unwrap();\n            // \"chained future\"\n            let version2 = trx.get_read_version().await.unwrap();\n            done.send(true);\n        });\n    });\n    // returns execution to fdb so futures will be resolved\n}\n</code></pre>\n<p>but this crashes as soon as we try to use db and it seems to be due to running on a thread that is not managed by fdb.</p>\n<p>The \u201cpseudo code\u201d of a working version of the above example would be something like:</p>\n<pre><code class=\"lang-auto\">fn setup(&amp;mut self, db: Database, done: GenericPromise&lt;bool&gt;) {\n    let trx = db.create_trx()\n    let f = fdb_transaction_get_read_version(trx);\n    fdb_future_set_callback(f, callback1, CallbackData { trx, done });\n}\nfn callback1(f: *mut FDBFuture, data: CallbackData) {\n    let mut version1;\n    fdb_future_get_int64(f, &amp;mut version1);\n    let f = fdb_transaction_get_read_version(data.trx);\n    fdb_future_set_callback(f, callback2, data);\n}\nfn callback2(f: *mut FDBFuture, data: CallbackData) {\n    let mut version2;\n    fdb_future_get_int64(f, &amp;mut version2);\n    data.done.send(true);\n}\n</code></pre>\n<p>We think we can emulate the second code by writting our own runtime, that will simplify code to:</p>\n<pre><code class=\"lang-auto\">fn setup(&amp;mut self, db: Database, done: GenericPromise&lt;bool&gt;) {\n    our_runtime_callback(async {\n        let trx = db.create_trx().unwrap();\n        trx.set_read_version(42);\n        let version1 = trx.get_read_version().await.unwrap();\n        let version2 = trx.get_read_version().await.unwrap();\n        done.send(true);\n    });\n}\n</code></pre>\n<p>But we would like being sure we really understand how we are supposed to use the simulator before sinking more hours in it and potentially finding out that it simply can\u2019t work like that because we overlook something. So, did we understand correctly so far how it works? Are we wrong on some points? And can you think of some important points we didn\u2019t mentionned?</p>\n<p>On a side note, I had some troubles passing along the <code>done</code> GenericPromise. The solution I got working is the following (in the C++ wrapper):</p>\n<pre><code class=\"lang-cpp\">struct RustWorkload;\n\ntemplate&lt;typename T&gt;\nstruct Wrapper {\n        T inner;\n};\n\nextern \"C\" void rust_setup(\n    RustWorkload*,\n    FDBDatabase*,\n    Wrapper&lt;GenericPromise&lt;bool&gt;&gt;*\n);\n\nclass WorkloadTranslater: public FDBWorkload {\n    private:\n        RustWorkload* rustWorkload;\n    public:\n        virtual void setup(\n            FDBDatabase* db,\n            GenericPromise&lt;bool&gt; done\n        ) override {\n            // this increments the ref counter as done is copied\n            auto wrapped = new Wrapper&lt;GenericPromise&lt;bool&gt;&gt; { done };\n            rust_setup(this-&gt;rustWorkload, db, wrapped);\n        } // the ref counter is decremented as done goes out of scope\n};\n</code></pre>\n<p>and Rust can call <code>FDBPromise_send_bool</code> which is defined in C++:</p>\n<pre><code class=\"lang-cpp\">extern \"C\" void FDBPromise_send_bool(\n    Wrapper&lt;GenericPromise&lt;bool&gt;&gt;* promise,\n    bool val\n) {\n        promise-&gt;inner.send(val);\n        delete promise;\n}\n</code></pre>\n<p>Does this seem reasonable? Or can you think of a better/simpler solution?</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2022-07-13T12:57:42.812Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 7.8,
+        "yours": false,
+        "topic_id": 3380,
+        "topic_slug": "cpp-implementation-of-an-externalworkload",
+        "display_username": "Eloi D\u00e9molis",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1121,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cpp-implementation-of-an-externalworkload/3380/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11592,
+        "name": "Pierre Zemb",
+        "username": "PierreZ",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+        "created_at": "2022-08-18T08:53:10.968Z",
+        "cooked": "<p>Just letting you know, <a class=\"mention\" href=\"/u/wonshtrum\">@Wonshtrum</a> managed to make it work <img src=\"https://emoji.discourse-cdn.com/twitter/tada.png?v=12\" title=\":tada:\" class=\"emoji\" alt=\":tada:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<p>We now have an interface/trait:</p>\n<pre><code class=\"lang-auto\">pub trait RustWorkload {\n    fn description(&amp;self) -&gt; String;\n    fn init(&amp;mut self, context: WorkloadContext) -&gt; bool;\n    fn setup(&amp;'static mut self, db: SimDatabase, done: Promise);\n    fn start(&amp;'static mut self, db: SimDatabase, done: Promise);\n    fn check(&amp;'static mut self, db: SimDatabase, done: Promise);\n    fn get_metrics(&amp;self) -&gt; Vec&lt;FDBPerfMetric&gt;;\n    fn get_check_timeout(&amp;self) -&gt; f64;\n}\n</code></pre>\n<p>that we can implement the trait and create transactions like so:</p>\n<pre><code class=\"lang-auto\">impl RustWorkload for MyWorkload {\n    // ...\n    fn setup(&amp;'static mut self, db: SimDatabase, mut done: Promise) {\n        fdb_rt(async move {\n            let trx = db.create_trx().expect(\"cannot create a transaction\");\n            let setup_key = &amp;(\"setup_ok\").pack_to_vec();\n            trx.set(setup_key, \"true\".as_ref());\n            trx.commit().await.expect(\"could not commit\");\n\n            self.context.trace(\n                FDBSeverity::Info,\n                \"Successfully setup workload\".to_string(),\n                vec![(\"Uuid\".to_string(), self.uuid.to_string())],\n            );\n\n            println!(\"setup({}) done\", &amp;self.uuid);\n            done.send(true);\n        })\n    }\n</code></pre>\n<p>This is still early, but we will open-source it once we are actually using it to validate our internal layer-sdk <img src=\"https://emoji.discourse-cdn.com/twitter/upside_down_face.png?v=12\" title=\":upside_down_face:\" class=\"emoji\" alt=\":upside_down_face:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>",
+        "post_number": 6,
+        "post_type": 1,
+        "posts_count": 6,
+        "updated_at": "2022-08-18T10:09:30.261Z",
+        "reply_count": 0,
+        "reply_to_post_number": 5,
+        "quote_count": 0,
+        "incoming_link_count": 157,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 787.0,
+        "yours": false,
+        "topic_id": 3380,
+        "topic_slug": "cpp-implementation-of-an-externalworkload",
+        "display_username": "Pierre Zemb",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1121,
+          "username": "Wonshtrum",
+          "name": "Eloi D\u00e9molis",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 534,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cpp-implementation-of-an-externalworkload/3380/6",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11258,
+      11259,
+      11269,
+      11396,
+      11465,
+      11592
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1224
+    ],
+    [
+      3,
+      1223
+    ],
+    [
+      4,
+      1205
+    ],
+    [
+      5,
+      1196
+    ],
+    [
+      6,
+      1161
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Cpp implementation of an ExternalWorkload",
+  "id": 3380,
+  "title": "Cpp implementation of an ExternalWorkload",
+  "posts_count": 6,
+  "created_at": "2022-06-15T19:05:16.764Z",
+  "views": 779,
+  "reply_count": 2,
+  "like_count": 1,
+  "last_posted_at": "2022-08-18T08:53:10.968Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "cpp-implementation-of-an-externalworkload",
+  "category_id": 7,
+  "word_count": 1731,
+  "deleted_at": null,
+  "user_id": 1121,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3380",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 6,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "ExternalWorkload segmentation fault in 7.3",
+      "id": 4375,
+      "title": "ExternalWorkload segmentation fault in 7.3",
+      "slug": "externalworkload-segmentation-fault-in-7-3",
+      "posts_count": 10,
+      "reply_count": 4,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2024-03-07T13:28:10.313Z",
+      "last_posted_at": "2024-11-05T16:38:41.601Z",
+      "bumped": true,
+      "bumped_at": "2024-11-05T16:38:41.601Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 415,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1121,
+            "username": "Wonshtrum",
+            "name": "Eloi D\u00e9molis",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 910,
+            "username": "ammolitor",
+            "name": "Aaron Molitor",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ammolitor/{size}/1050_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Creating New Bindings",
+      "id": 207,
+      "title": "Creating New Bindings",
+      "slug": "creating-new-bindings",
+      "posts_count": 9,
+      "reply_count": 3,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-22T20:30:53.215Z",
+      "last_posted_at": "2018-04-27T11:57:09.813Z",
+      "bumped": true,
+      "bumped_at": "2018-04-27T11:57:09.813Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2729,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 63,
+            "username": "fire",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/fire/{size}/1480_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 168,
+            "username": "hasseily",
+            "name": "Henri Asseily",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hasseily/{size}/131_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "[Rust] Rust bindings",
+      "id": 344,
+      "title": "[Rust] Rust bindings",
+      "slug": "rust-rust-bindings",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-05-04T18:29:36.807Z",
+      "last_posted_at": "2018-05-04T18:29:36.920Z",
+      "bumped": true,
+      "bumped_at": "2018-05-04T18:29:36.920Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 903,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 226,
+            "username": "bluejekyll",
+            "name": "Benjamin Fry",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bluejekyll/{size}/195_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FreeBSD support for FoundationDB",
+      "id": 357,
+      "title": "FreeBSD support for FoundationDB",
+      "slug": "freebsd-support-for-foundationdb",
+      "posts_count": 28,
+      "reply_count": 15,
+      "highest_post_number": 28,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/d398e4e4d091e9513c8c4b18d766da38a01f930e_2_1024x640.png",
+      "created_at": "2018-05-06T16:36:03.074Z",
+      "last_posted_at": "2018-08-01T02:53:16.728Z",
+      "bumped": true,
+      "bumped_at": "2018-08-01T02:53:16.728Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 4956,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 235,
+            "username": "wolfspider",
+            "name": "Jesse Bennett",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Porting FoundationDB to Power (ppc64le)",
+      "id": 1115,
+      "title": "Porting FoundationDB to Power (ppc64le)",
+      "slug": "porting-foundationdb-to-power-ppc64le",
+      "posts_count": 23,
+      "reply_count": 9,
+      "highest_post_number": 23,
+      "image_url": null,
+      "created_at": "2019-02-05T10:43:39.843Z",
+      "last_posted_at": "2019-09-20T22:27:07.374Z",
+      "bumped": true,
+      "bumped_at": "2019-09-20T22:27:07.374Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2372,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 505,
+            "username": "seth-priya",
+            "name": "Priya Seth",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/db5fbb/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1121,
+        "username": "Wonshtrum",
+        "name": "Eloi D\u00e9molis",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 534,
+        "username": "PierreZ",
+        "name": "Pierre Zemb",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 14,
+        "username": "andrew.noyes",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1121,
+      "username": "Wonshtrum",
+      "name": "Eloi D\u00e9molis",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/e36b37/{size}.png"
+    },
+    "last_poster": {
+      "id": 534,
+      "username": "PierreZ",
+      "name": "Pierre Zemb",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/1328c343231e447c1822ba1edea8c315c194955e/bindings/c/test/workloads/SimpleWorkload.cpp",
+        "title": "foundationdb/SimpleWorkload.cpp at 1328c343231e447c1822ba1edea8c315c194955e \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 13,
+        "user_id": 14,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/PierreZ/test-fdb-workload",
+        "title": "GitHub - PierreZ/test-fdb-workload",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1121,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/PierreZ/test-fdb-workload/blob/c_bindings/src/workload.cpp#L28-L48",
+        "title": "test-fdb-workload/workload.cpp at c_bindings \u00b7 PierreZ/test-fdb-workload \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 534,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/PierreZ/test-fdb-workload/tree/c_bindings",
+        "title": "GitHub - PierreZ/test-fdb-workload at c_bindings",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 1121,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/api-c.html#api-versioning",
+        "title": "C API \u2014 FoundationDB 7.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 14,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://github.com/PierreZ/test-fdb-workload/pull/6/checks#step:14:201",
+        "title": "Simple FDB C bindings test by Wonshtrum \u00b7 Pull Request #6 \u00b7 PierreZ/test-fdb-workload \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 534,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

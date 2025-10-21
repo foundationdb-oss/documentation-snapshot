@@ -1,0 +1,800 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4588,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2019-06-28T17:24:23.175Z",
+        "cooked": "<p>Debugging transaction conflicts is currently fairly difficult. The best way I\u2019ve found so far (other than thinking really hard about what happened) is to (1) enable client trace logs on all operations and (2) enabling transaction logging on all transactions (3) processing client logs and manually running the conflict algorithm for all of the transactions found (which requires having all available transactions to get it correct). This is problematic as, especially in real environments, one might not have access to all conflict ranges from all transactions (as that can be a lot of data for reasonable workloads).</p>\n<p>One proposed solution that I\u2019d kind of like to see if people have any thoughts on is to return conflict information from the resolver back to the client. I believe the heart of the conflict resolution happens here:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/a4f12a19a3a24bd68676bef8e629d6e855c4702c/fdbserver/SkipList.cpp#L825-L828\" target=\"_blank\" rel=\"nofollow noopener\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/a4f12a19a3a24bd68676bef8e629d6e855c4702c/fdbserver/SkipList.cpp#L825-L828\" target=\"_blank\" rel=\"nofollow noopener\">apple/foundationdb/blob/a4f12a19a3a24bd68676bef8e629d6e855c4702c/fdbserver/SkipList.cpp#L825-L828</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"825\" style=\"counter-reset: li-counter 824 ;\">\n<li>\t\t\t\t\t\t\tif (nextS-&gt;length() == start.value.size() &amp;&amp; !memcmp(nextS-&gt;value(), start.value.begin(), start.value.size()))</li>\n<li>\t\t\t\t\t\t\t\treturn noConflict();</li>\n<li>\t\t\t\t\t\t\telse</li>\n<li>\t\t\t\t\t\t\t\treturn conflict();</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>At this point, the resolver knows (1) the failing read conflict range from this transaction, (2) the read version, (3) the commit version at which the range was changed, and (4) an upper bound of the mutation range that caused the operation to fail. I think all of those would be useful in debugging transaction conflicts (except maybe the transaction read version, though the client already should know that).</p>\n<p>Knowing the failing read conflict range would be a big help by itself. Then the user can use this information to debug what might have happened based on domain knowledge of their data model. For example, in the Record Layer, knowing which range failed might be useful in determining whether it was a single record in the read set that was updated that caused the failure, or if concurrent writes would have caused a uniqueness constraint to be violated, or if the store header was updated due to some meta-data upgrade.</p>\n<p>Knowing the commit version and mutation range can then be useful for correlating what happened to other operations going on at the same time. This is especially true if all transactions are being logged, but they have their uses in other instances as well.</p>\n<p>The next question would be how to expose this to the user. The quickest way would be to log it in the client trace logs, maybe only if the user has set the \u201cdebug ID\u201d option. Then it is up to the user to actually enable that logging. This has the disadvantage that the information must then be fished out of the log, but it would be available <em>somewhere</em> and wouldn\u2019t require any API changes at the FDB client level.</p>\n<p>All else being equal, the \u201cbest\u201d option would be to make the exception class in each bindings beefier to include additional information. For transaction conflicts, you could then include this information as methods in the exception (maybe lazily marshaling from the C client?). This doesn\u2019t quite gel with how those classes are structured at the moment though.</p>\n<p>You could also imagine methods on the transaction object that allowed the user to query the transaction for what happened (and then do\u2026something when the transaction hasn\u2019t committed yet or the transaction succeeded). You could imagine a higher-level layer on top of the key-value store bindings would then package up the information from those methods with a transaction conflict exception so that the user could ask the exception for more details into what happened.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-06-28T17:24:23.175Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 248,
+        "reads": 59,
+        "readers_count": 58,
+        "score": 1296.8,
+        "yours": false,
+        "topic_id": 1499,
+        "topic_slug": "returning-conflicting-read-write-conflict-ranges-after-transaction-conflict",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/a4f12a19a3a24bd68676bef8e629d6e855c4702c/fdbserver/SkipList.cpp#L825-L828",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/SkipList.cpp at a4f12a19a3a24bd68676bef8e629d6e855c4702c \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 3
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/returning-conflicting-read-write-conflict-ranges-after-transaction-conflict/1499/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11263,
+        "name": "zhongyan",
+        "username": "zhongyan",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/cab0a1/{size}.png",
+        "created_at": "2022-06-16T09:22:27.981Z",
+        "cooked": "<p>Hi Alec,<br>\nI\u2019m curious if your proposed solution is implemented in current FDB release? we are investigating a conflict transaction issue, trying to find out what is the keyrange causing the conflict. Anyone know an easy way?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2022-06-16T09:22:27.981Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 59.2,
+        "yours": false,
+        "topic_id": 1499,
+        "topic_slug": "returning-conflicting-read-write-conflict-ranges-after-transaction-conflict",
+        "display_username": "zhongyan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1059,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/returning-conflicting-read-write-conflict-ranges-after-transaction-conflict/1499/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11264,
+        "name": "zhongyan",
+        "username": "zhongyan",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/cab0a1/{size}.png",
+        "created_at": "2022-06-16T09:59:37.979Z",
+        "cooked": "<p>I got the answer from here: <a href=\"https://github.com/apple/foundationdb/pull/2257\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Report conflicting keys by zjuLcg \u00b7 Pull Request #2257 \u00b7 apple/foundationdb \u00b7 GitHub</a></p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2022-06-16T09:59:37.979Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 14.2,
+        "yours": false,
+        "topic_id": 1499,
+        "topic_slug": "returning-conflicting-read-write-conflict-ranges-after-transaction-conflict",
+        "display_username": "zhongyan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/2257",
+            "internal": false,
+            "reflection": false,
+            "title": "Report conflicting keys by zjuLcg \u00b7 Pull Request #2257 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 23
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1059,
+          "username": "zhongyan",
+          "name": "zhongyan",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/cab0a1/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1059,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/returning-conflicting-read-write-conflict-ranges-after-transaction-conflict/1499/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11266,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2022-06-16T16:07:11.271Z",
+        "cooked": "<p><a href=\"https://apple.github.io/foundationdb/special-keys.html#transaction-module\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Special Keys \u2014 FoundationDB 7.1</a> has some more detail about how to use this - also see the report_conflicting_keys transaction option. Edit: also make sure api version is at least 630.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2022-06-16T16:08:08.872Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 9.2,
+        "yours": false,
+        "topic_id": 1499,
+        "topic_slug": "returning-conflicting-read-write-conflict-ranges-after-transaction-conflict",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/special-keys.html#transaction-module",
+            "internal": false,
+            "reflection": false,
+            "title": "Special Keys \u2014 FoundationDB 7.1",
+            "clicks": 23
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 1059,
+          "username": "zhongyan",
+          "name": "zhongyan",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/cab0a1/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/returning-conflicting-read-write-conflict-ranges-after-transaction-conflict/1499/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4588,
+      11263,
+      11264,
+      11266
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2307
+    ],
+    [
+      2,
+      1224
+    ],
+    [
+      4,
+      1223
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Returning conflicting read/write conflict ranges after transaction conflict",
+  "id": 1499,
+  "title": "Returning conflicting read/write conflict ranges after transaction conflict",
+  "posts_count": 4,
+  "created_at": "2019-06-28T17:24:23.090Z",
+  "views": 1199,
+  "reply_count": 2,
+  "like_count": 3,
+  "last_posted_at": "2022-06-16T16:07:11.271Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "returning-conflicting-read-write-conflict-ranges-after-transaction-conflict",
+  "category_id": 5,
+  "word_count": 657,
+  "deleted_at": null,
+  "user_id": 8,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1499",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Reading your own write conflict range",
+      "id": 2097,
+      "title": "Reading your own write conflict range",
+      "slug": "reading-your-own-write-conflict-range",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2020-05-01T17:01:26.015Z",
+      "last_posted_at": "2020-05-04T16:53:08.629Z",
+      "bumped": true,
+      "bumped_at": "2020-05-04T16:53:08.629Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1180,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "ReadConflict vs WriteConflict for locking a range?",
+      "id": 1070,
+      "title": "ReadConflict vs WriteConflict for locking a range?",
+      "slug": "readconflict-vs-writeconflict-for-locking-a-range",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-01-26T13:26:56.674Z",
+      "last_posted_at": "2019-02-02T05:07:53.900Z",
+      "bumped": true,
+      "bumped_at": "2019-02-02T05:07:53.900Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1354,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Java Bindings: Additional methods on the ReadTransaction interface to manage read conflict ranges",
+      "id": 37,
+      "title": "Java Bindings: Additional methods on the ReadTransaction interface to manage read conflict ranges",
+      "slug": "java-bindings-additional-methods-on-the-readtransaction-interface-to-manage-read-conflict-ranges",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-04-13T18:03:39.089Z",
+      "last_posted_at": "2018-04-13T18:03:39.200Z",
+      "bumped": true,
+      "bumped_at": "2018-04-13T18:08:43.919Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 879,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Inducing a Read Conflict",
+      "id": 1850,
+      "title": "Inducing a Read Conflict",
+      "slug": "inducing-a-read-conflict",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-12-17T20:19:47.478Z",
+      "last_posted_at": "2019-12-19T20:29:26.296Z",
+      "bumped": true,
+      "bumped_at": "2019-12-19T20:29:26.296Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 875,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions regarding FDB transaction conflict on two concurrent transactions",
+      "id": 2913,
+      "title": "Questions regarding FDB transaction conflict on two concurrent transactions",
+      "slug": "questions-regarding-fdb-transaction-conflict-on-two-concurrent-transactions",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2021-09-28T06:26:34.642Z",
+      "last_posted_at": "2021-10-28T08:17:02.264Z",
+      "bumped": true,
+      "bumped_at": "2021-10-28T09:13:59.130Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2185,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1059,
+        "username": "zhongyan",
+        "name": "zhongyan",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/cab0a1/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 14,
+        "username": "andrew.noyes",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "last_poster": {
+      "id": 14,
+      "username": "andrew.noyes",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/special-keys.html#transaction-module",
+        "title": "Special Keys \u2014 FoundationDB 7.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 23,
+        "user_id": 14,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/pull/2257",
+        "title": "Report conflicting keys by zjuLcg \u00b7 Pull Request #2257 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 23,
+        "user_id": 1059,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/a4f12a19a3a24bd68676bef8e629d6e855c4702c/fdbserver/SkipList.cpp#L825-L828",
+        "title": "foundationdb/SkipList.cpp at a4f12a19a3a24bd68676bef8e629d6e855c4702c \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

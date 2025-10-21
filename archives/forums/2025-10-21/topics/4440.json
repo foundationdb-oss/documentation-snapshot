@@ -1,0 +1,626 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13960,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2024-04-17T09:29:58.472Z",
+        "cooked": "<p>We\u2019ve got an oddity here that we\u2019re trying to fix in our code but I\u2019m also looking at things I could do within FDB itself.</p>\n<p>We\u2019re running FDB 7.1 currently. We\u2019ve got a relatively small range of keys that are very heavily read from and <em>quite</em> heavily written to. Querying the FDB metrics keyspace seems to show that all of those keys are in the same shard.</p>\n<p>Looking at our overall sharding breakdown, we\u2019ve got several prefixes that we know are quite large (and also have quite large values) and have been split across shards, but those prefixes tend to be \u2018write once, read almost never\u2019. It\u2019s basically audit/accounting data that isn\u2019t used by the rest of the system day-to-day.</p>\n<p>But it looks like all of our (surprisingly small) amount of data that is used currently by the primary application has ended up in the same shard. Or <em>maybe</em> 2 shards. We\u2019ve basically got a shard from <code>\"\"</code> to <code>&lt;some_value_1&gt;</code>, a whole load of shards from <code>&lt;some_value_1&gt;</code> through to <code>&lt;some_value_2&gt;</code> that all have the same common prefix (as in they all start <code>X Y</code>, but the first might be <code>X Y</code> through to <code>X Y C</code> and the second is <code>X Y D</code> \u2026 etc) that encapsulate all that accounting data, and then a shard from <code>&lt;some_value_2&gt;</code> through to <code>\\xFF</code>.</p>\n<p>When we run application load tests we see 2 FDB storage nodes getting absolutely <em>hammered</em> and their durability lag spiking massively, which I <em>think</em> is because it\u2019s the processes hosting those first and last shards (or maybe even just replicas of one of them), so they\u2019re getting a whole load of writes <em>and</em> all the reads.</p>\n<p>My understanding is that a shard can\u2019t be split across processes (it has to be split into multiple shards first), and a process can host multiple shards. I\u2019d really love to be able to force certain key prefixes to be in separate shards, even if for the time being they end up hosted on the same process.</p>\n<p>Because of the structure and size of our data currently, I think that even if we generate random/interned values for the prefixes we run the risk of all of the \u2018core\u2019 data being co-located in the same shard. Is there any way I can prod FDB into where <em>I</em> think data should be sharded beyond just ensuring there is no common prefix? I\u2019d be happy for FDB to add <em>more</em> shards if necessary, but I\u2019d like to be able to make it not aggregate certain keys into the <em>same</em> shard.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-04-17T09:29:58.472Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 73,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 369.6,
+        "yours": false,
+        "topic_id": 4440,
+        "topic_slug": "can-i-force-key-prefixes-into-different-shards",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/can-i-force-key-prefixes-into-different-shards/4440/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13974,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2024-04-18T04:34:22.973Z",
+        "cooked": "<p>Good news, FDB can do what you want but you\u2019ll have to upgrade to FDB 7.3.  In 7.3 you can use the <code>rangeconfig</code> command to set different options for different key ranges which effectively injects explicit shard boundaries chosen by you.  You can also increase the replication factor for a range.  The range config rules are used as hints by DataDistribution to make shard splitting and team assignment decisions.  Any adjacent key ranges which have different configurations will be split to different shards.  If a configured key range is (or grows to) larger than a shard should be then the cluster will still split it further but the range config rule remains the same.</p>\n<p>Note that this does not guarantee that each range you configure lives on a different storage servers, but they likely will especially since traffic metrics used for shard movement decisions would be separate for each range.  Also note that you can\u2019t <em>decrease</em> the replication factor for a range lower than the cluster\u2019s replication mode.  If you don\u2019t wish to increase the replication factor for any ranges, just set your different targeted ranges to different <code>teamID</code> values and that will ensure they exist as different shards.</p>\n<p>The <code>rangeconfig</code> command in <code>fdbcli</code> has help text which you can see in code <a href=\"https://github.com/apple/foundationdb/blob/release-7.3/fdbcli/RangeConfigCommand.actor.cpp#L145\">here</a>.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-04-18T04:36:19.876Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 11,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 73.8,
+        "yours": false,
+        "topic_id": 4440,
+        "topic_slug": "can-i-force-key-prefixes-into-different-shards",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/release-7.3/fdbcli/RangeConfigCommand.actor.cpp#L145",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbcli/RangeConfigCommand.actor.cpp at release-7.3 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 29
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/can-i-force-key-prefixes-into-different-shards/4440/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13960,
+      13974
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      553
+    ],
+    [
+      2,
+      552
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Can I force key prefixes into different shards?",
+  "id": 4440,
+  "title": "Can I force key prefixes into different shards?",
+  "posts_count": 2,
+  "created_at": "2024-04-17T09:29:58.381Z",
+  "views": 237,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2024-04-18T04:34:22.973Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "can-i-force-key-prefixes-into-different-shards",
+  "category_id": 7,
+  "word_count": 676,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4440",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Keyspace partitions &amp; performance",
+      "id": 168,
+      "title": "Keyspace partitions & performance",
+      "slug": "keyspace-partitions-performance",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-21T05:03:54.670Z",
+      "last_posted_at": "2018-04-22T03:29:31.049Z",
+      "bumped": true,
+      "bumped_at": "2018-04-22T03:29:31.049Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 5892,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "As a table grows, is it automatically split into multiple tablets",
+      "id": 212,
+      "title": "As a table grows, is it automatically split into multiple tablets",
+      "slug": "as-a-table-grows-is-it-automatically-split-into-multiple-tablets",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-04-23T05:24:46.403Z",
+      "last_posted_at": "2018-04-24T22:58:50.515Z",
+      "bumped": true,
+      "bumped_at": "2018-04-24T22:58:50.515Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1753,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 146,
+            "username": "bigdata86",
+            "name": "Wangmeng",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/cdc98d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Shard marker for log-like data structures",
+      "id": 1772,
+      "title": "Shard marker for log-like data structures",
+      "slug": "shard-marker-for-log-like-data-structures",
+      "posts_count": 16,
+      "reply_count": 12,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-11-19T20:59:06.598Z",
+      "last_posted_at": "2020-07-13T15:18:48.203Z",
+      "bumped": true,
+      "bumped_at": "2020-07-13T15:18:48.203Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2315,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Uneven load distribution for different value types",
+      "id": 489,
+      "title": "Uneven load distribution for different value types",
+      "slug": "uneven-load-distribution-for-different-value-types",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-06-05T12:44:48.848Z",
+      "last_posted_at": "2018-06-08T07:12:16.030Z",
+      "bumped": true,
+      "bumped_at": "2018-06-08T07:12:16.030Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 598,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 297,
+            "username": "imukhin",
+            "name": "Ivan Mukhin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/b19c9b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Store in datacenters by key range",
+      "id": 2171,
+      "title": "Store in datacenters by key range",
+      "slug": "store-in-datacenters-by-key-range",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2020-06-08T15:46:06.015Z",
+      "last_posted_at": "2020-06-08T15:46:06.074Z",
+      "bumped": true,
+      "bumped_at": "2020-06-08T15:46:06.074Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 415,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 749,
+            "username": "abird",
+            "name": "Alan Bird",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abird/{size}/805_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/release-7.3/fdbcli/RangeConfigCommand.actor.cpp#L145",
+        "title": "foundationdb/fdbcli/RangeConfigCommand.actor.cpp at release-7.3 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 29,
+        "user_id": 7,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

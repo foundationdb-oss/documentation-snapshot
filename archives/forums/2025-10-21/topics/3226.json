@@ -1,0 +1,636 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10849,
+        "name": "",
+        "username": "pmalamy",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/96bed5/{size}.png",
+        "created_at": "2022-03-23T11:04:30.228Z",
+        "cooked": "<p>Hi!</p>\n<p>We flawlessly run several FoundationDB clusters on IPv6 only network with TLS. One of our future workloads will involve IPv4 only clients as well which would imply those clusters to support dual stack IP.</p>\n<p>Note: in the following examples, IPv6 documentation prefix and IPv4 RF1918 are used on purpose.</p>\n<p>Our current IPv6 only configuration looks like the following:</p>\n<ul>\n<li>foundationdb.conf (needless to say that <code>locality_machineid</code> is different on each member of a cluster):</li>\n</ul>\n<pre><code class=\"lang-auto\">[fdbmonitor]\nuser = foundationdb\ngroup = foundationdb\n\n[general]\nrestart_delay = 60\ncluster_file = /etc/foundationdb/fdb.cluster\n\n[fdbserver]\ncommand = /usr/sbin/fdbserver\npublic_address = auto:$ID:tls\nlisten_address = public\ndatadir = /var/lib/foundationdb/data/$ID\nlogdir = /var/log/foundationdb/fdbserver\nlocality_machineid = hostN.fqdn.tld\nlocality_dcid = gv2\ntrace_format = json\ntls_certificate_file = /etc/foundationdb/ssl/cert.pem\ntls_key_file = /etc/foundationdb/ssl/key.pem\ntls_verify_peers = &lt;redacted&gt;\ntls_password = \ntls_ca_file = /etc/foundationdb/ssl/ca.pem\nknob_tls_cert_refresh_delay_seconds = 3600\n\n[fdbserver.4600]\n</code></pre>\n<ul>\n<li>fdb.cluster</li>\n</ul>\n<pre><code class=\"lang-auto\">store_fdb_pp_gv2:TWwLTw1STKgEnix1p3jAadSZWDoKLIof@[2001:0db8::41d:18ff:fe00:d27]:4600:tls,[2001:0db8::47c:aaff:fe00:13ed]:4600:tls,[2001:0db8::4a5:38ff:fe00:1313]:4600:tls,[2001:0db8::4c4:66ff:fe00:46]:4600:tls,[2001:0db8::4cd:5eff:fe00:124d]:4600:tls\n</code></pre>\n<ul>\n<li>Detailed status output of such cluster:</li>\n</ul>\n<pre><code class=\"lang-auto\">$ fdbcli --exec 'status details'\n[...]\nConfiguration:\n  Redundancy mode        - triple\n  Storage engine         - ssd-2\n  Coordinators           - 5\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 5\n  Zones                  - 5\n  Machines               - 5\n[...]\nData:\n  Replication health     - Healthy\n[...]\nProcess performance details: \n  [2001:0db8::41d:18ff:fe00:d27]:4600:tls (&lt;redacted&gt;) \n  [2001:0db8::47c:aaff:fe00:13ed]:4600:tls (&lt;redacted&gt;) \n  [2001:0db8::4a5:38ff:fe00:1313]:4600:tls (&lt;redacted&gt;) \n  [2001:0db8::4c4:66ff:fe00:46]:4600:tls (&lt;redacted&gt;) \n  [2001:0db8::4cd:5eff:fe00:124d]:4600:tls (&lt;redacted&gt;) \n\nCoordination servers:\n  [2001:0db8::41d:18ff:fe00:d27]:4600:tls  (reachable)\n  [2001:0db8::47c:aaff:fe00:13ed]:4600:tls  (reachable)\n  [2001:0db8::4a5:38ff:fe00:1313]:4600:tls  (reachable)\n  [2001:0db8::4c4:66ff:fe00:46]:4600:tls  (reachable)\n  [2001:0db8::4cd:5eff:fe00:124d]:4600:tls  (reachable)\n</code></pre>\n<p>In an attempt to make a cluster dual stacked, we changed the configuration file <code>foundationdb.conf</code> in order to specify IPv6 and ipv4 addresses instead of using <code>auto</code> and <code>public</code>, not setting TLS on IPv4 on purpose:</p>\n<pre><code class=\"lang-diff\"> [fdbserver]\n command = /usr/sbin/fdbserver\n-public_address = auto:$ID:tls\n-listen_address = public\n+public_address = [2001:0db8::41d:18ff:fe00:d27]:$ID:tls,172.20.9.17:$ID\n+listen_address = [2001:0db8::41d:18ff:fe00:d27]:$ID:tls,172.20.9.17:$ID\n datadir = /var/lib/foundationdb/data/$ID\n logdir = /var/log/foundationdb/fdbserver\n locality_machineid = hostN.fqdn.tld\n</code></pre>\n<p>and we updated the <code>fdb.cluster</code> file accordingly:</p>\n<pre><code class=\"lang-auto\">store_fdb_pp_gv2:TsmKlq7cqUsuTkbbfFTDjeG4lBJRPHpj@172.20.8.18:4600,172.20.9.17:4600,172.20.9.183:4600,172.20.9.233:4600,172.20.10.236:4600,[2001:0db8::41d:18ff:fe00:d27]:4600:tls,[2001:0db8::47c:aaff:fe00:13ed]:4600:tls,[2001:0db8::4a5:38ff:fe00:1313]:4600:tls,[2001:0db8::4c4:66ff:fe00:46]:4600:tls,[2001:0db8::4cd:5eff:fe00:124d]:4600:tls\n</code></pre>\n<p>Those changes made on each member of the cluster with their very own IP addresses, the cluster starts and <strong>seems</strong> to run:</p>\n<ul>\n<li>Detailed status output of such cluster:</li>\n</ul>\n<pre><code class=\"lang-auto\">Configuration:\n  Redundancy mode        - triple\n  Storage engine         - ssd-2\n  Coordinators           - 10\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 5\n  Zones                  - 5\n  Machines               - 5\n[...]\nData:\n  Replication health     - Healthy\n[...]\nProcess performance details:\n  [2001:0db8::41d:18ff:fe00:d27]:4600:tls (&lt;redacted&gt;)\n  [2001:0db8::47c:aaff:fe00:13ed]:4600:tls (&lt;redacted&gt;)\n  [2001:0db8::4a5:38ff:fe00:1313]:4600:tls (&lt;redacted&gt;)\n  [2001:0db8::4c4:66ff:fe00:46]:4600:tls (&lt;redacted&gt;)\n  [2001:0db8::4cd:5eff:fe00:124d]:4600:tls (&lt;redacted&gt;)\n\nCoordination servers:\n  172.20.8.18:4600  (reachable)\n  172.20.9.17:4600  (reachable)\n  172.20.9.183:4600  (reachable)\n  172.20.9.233:4600  (reachable)\n  172.20.10.236:4600  (reachable)\n  [2001:0db8::41d:18ff:fe00:d27]:4600:tls  (reachable)\n  [2001:0db8::47c:aaff:fe00:13ed]:4600:tls  (reachable)\n  [2001:0db8::4a5:38ff:fe00:1313]:4600:tls  (reachable)\n  [2001:0db8::4c4:66ff:fe00:46]:4600:tls  (reachable)\n  [2001:0db8::4cd:5eff:fe00:124d]:4600:tls  (reachable)\n</code></pre>\n<p>Although it seems to work, I think something is not right. First, the coordinators number has doubled from 5 to 10. Then, the processes are IPv6 only. I can paste/upload output of <code>status json</code> if needed.</p>\n<p>I would like to know if dual stack FDB cluster configuration can be done, if we are heading in the right direction to achieve it or completely lost <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"> I welcome all recommendations related the topic!</p>\n<p>Thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-03-23T11:04:30.228Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 66,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 379.6,
+        "yours": false,
+        "topic_id": 3226,
+        "topic_slug": "dual-stack-cluster-configuration",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 3
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1081,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dual-stack-cluster-configuration/3226/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10860,
+        "name": "",
+        "username": "pmalamy",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/96bed5/{size}.png",
+        "created_at": "2022-03-25T14:49:33.792Z",
+        "cooked": "<p>Update on our dual stack experiments.<br>\nFirst, I realized that I have forgotten to write that we currently run version 6.3.23 of FoundationDB binaries.</p>\n<p>Second, with the configuration posted above, even though the coordinators quorum is reached, all of them being reachable and the database considered healthy, I\u2019ve noticed that the <code>Fault Tolerance</code> is decreased from 2 zones to 0. Meaning that the redundancy is not assured anymore.</p>\n<p>I also tried to fiddle with the <code>public_address</code> and <code>listen_address</code> parameters (like using <code>[::]:$ID:tls</code> among other tests), but did not succeed in obtaining a satisfying state. Even though <code>fdbserver</code> process is bound to the two IP:PORT declared in configuration, the FDB processes are still only accessible via IPv6.</p>\n<pre><code class=\"lang-auto\">ss -lpent '( sport = :4600 )'\nState       Recv-Q      Send-Q                                     Local Address:Port             Peer Address:Port      Process                                                                                                                  \nLISTEN      0           128                                          172.20.9.17:4600                  0.0.0.0:*          users:((\"fdbserver\",pid=144018,fd=14)) uid:1425 ino:139280706 sk:21 &lt;-&gt;                                                 \nLISTEN      0           128               [2001:0db8::41d:18ff:fe00:d27]:4600                     [::]:*          users:((\"fdbserver\",pid=144018,fd=15)) uid:1425 ino:139280708 sk:23 v6only:1 &lt;-&gt;   \n</code></pre>\n<p>I really wonder if there is a way to obtain a cluster that would be fully dual stack and if not, what would be the needed changes to be done on the source side.</p>\n<p>Any ideas?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-03-25T15:08:46.152Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 53.8,
+        "yours": false,
+        "topic_id": 3226,
+        "topic_slug": "dual-stack-cluster-configuration",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1081,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dual-stack-cluster-configuration/3226/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 10904,
+        "name": "Pierre-Yves Ritschard",
+        "username": "pyr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pyr/{size}/1040_2.png",
+        "created_at": "2022-04-04T13:42:21.950Z",
+        "cooked": "<p>I am running into the same issue, and would be interested in any developments here</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-04-04T13:42:21.950Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 18.2,
+        "yours": false,
+        "topic_id": 3226,
+        "topic_slug": "dual-stack-cluster-configuration",
+        "display_username": "Pierre-Yves Ritschard",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1081,
+          "username": "pmalamy",
+          "name": "",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/96bed5/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 905,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dual-stack-cluster-configuration/3226/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10849,
+      10860,
+      10904
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1308
+    ],
+    [
+      2,
+      1306
+    ],
+    [
+      3,
+      1296
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Dual stack cluster configuration",
+  "id": 3226,
+  "title": "Dual stack cluster configuration",
+  "posts_count": 3,
+  "created_at": "2022-03-23T11:04:30.136Z",
+  "views": 486,
+  "reply_count": 1,
+  "like_count": 6,
+  "last_posted_at": "2022-04-04T13:42:21.950Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "dual-stack-cluster-configuration",
+  "category_id": 7,
+  "word_count": 970,
+  "deleted_at": null,
+  "user_id": 1081,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3226",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Issues with V6.2 TLS Cluster",
+      "id": 1904,
+      "title": "Issues with V6.2 TLS Cluster",
+      "slug": "issues-with-v6-2-tls-cluster",
+      "posts_count": 12,
+      "reply_count": 8,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-01-23T17:31:13.342Z",
+      "last_posted_at": "2020-01-28T16:35:52.821Z",
+      "bumped": true,
+      "bumped_at": "2020-01-28T16:35:52.821Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1620,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deployment with custom fdb.cluster file",
+      "id": 592,
+      "title": "Deployment with custom fdb.cluster file",
+      "slug": "deployment-with-custom-fdb-cluster-file",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-07-26T23:00:18.994Z",
+      "last_posted_at": "2018-07-27T23:44:31.722Z",
+      "bumped": true,
+      "bumped_at": "2018-07-27T23:44:31.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 4329,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Setting up a cluster with 5 servers",
+      "id": 769,
+      "title": "Setting up a cluster with 5 servers",
+      "slug": "setting-up-a-cluster-with-5-servers",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-10-15T15:44:11.291Z",
+      "last_posted_at": "2018-10-15T19:20:58.342Z",
+      "bumped": true,
+      "bumped_at": "2018-10-15T19:20:58.342Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2223,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 264,
+            "username": "dkoston",
+            "name": "Dave Koston",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dkoston/{size}/264_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Unable to fake multiple &ldquo;machine_id&rdquo; on the same host for testing",
+      "id": 970,
+      "title": "Unable to fake multiple \"machine_id\" on the same host for testing",
+      "slug": "unable-to-fake-multiple-machine-id-on-the-same-host-for-testing",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-12-21T18:38:14.904Z",
+      "last_posted_at": "2018-12-21T22:34:28.427Z",
+      "bumped": true,
+      "bumped_at": "2018-12-21T22:34:28.427Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1358,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Changing public address of (non-coordinator) fdbserver corrupted cluster",
+      "id": 2602,
+      "title": "Changing public address of (non-coordinator) fdbserver corrupted cluster",
+      "slug": "changing-public-address-of-non-coordinator-fdbserver-corrupted-cluster",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-03-12T08:26:07.697Z",
+      "last_posted_at": "2021-03-16T23:03:07.029Z",
+      "bumped": true,
+      "bumped_at": "2021-03-16T23:14:47.032Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1914,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1081,
+        "username": "pmalamy",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/96bed5/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 905,
+        "username": "pyr",
+        "name": "Pierre-Yves Ritschard",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pyr/{size}/1040_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1081,
+      "username": "pmalamy",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/96bed5/{size}.png"
+    },
+    "last_poster": {
+      "id": 905,
+      "username": "pyr",
+      "name": "Pierre-Yves Ritschard",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pyr/{size}/1040_2.png"
+    }
+  },
+  "bookmarks": []
+}

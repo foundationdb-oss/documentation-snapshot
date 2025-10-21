@@ -1,0 +1,1470 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12296,
+        "name": "Rajiv M Ranganath",
+        "username": "rajivr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "created_at": "2023-01-26T02:34:01.400Z",
+        "cooked": "<p>For the past few months, I\u2019ve been working on a Record Layer-like crate (library) for Rust.</p>\n<p>Thanks to the help provided by <a class=\"mention\" href=\"/u/mmcm\">@MMcM</a> and <a class=\"mention\" href=\"/u/alloc\">@alloc</a>, the design of some of the foundational types and traits (\u201cinterfaces\u201d in Java/Go) are now done. While there is still a lot of work ahead to make the Rust library usable, I\u2019ve opened the <a href=\"https://github.com/rajivr/fdb-rl-wip\" rel=\"noopener nofollow ugc\">repository</a> and the <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/index.html\" rel=\"noopener nofollow ugc\">documentation</a>.</p>\n<p>I wanted to share my learning thus far, as I think it can be helpful to others who might be embarking on writing layers on top of FoundationDB. This post is written from a beginners perspective. It my view that understanding them will help in developing a more functional style code on top of FoundationDB irrespective of the programming language that you might be using.</p>\n<p>I would really appreciate corrections and feedback from FoundationDB and Record Layer developers on this post.</p>\n<h1>\n<a name=\"motivation-1\" class=\"anchor\" href=\"#motivation-1\"></a>Motivation</h1>\n<p>When developing layers on top of FoundationDB, after learning about the <a href=\"https://apple.github.io/foundationdb/api-python.html\" rel=\"noopener nofollow ugc\">APIs</a> and working through the <a href=\"https://apple.github.io/foundationdb/tutorials.html\" rel=\"noopener nofollow ugc\">tutorials</a>, we will discover two things about FoundationDB which is different from other databases.</p>\n<ul>\n<li><a href=\"https://apple.github.io/foundationdb/developer-guide.html#throughput-requires-concurrency\" rel=\"noopener nofollow ugc\">Throughput requires concurrency</a></li>\n<li><a href=\"https://apple.github.io/foundationdb/known-limitations.html\" rel=\"noopener nofollow ugc\">Known Limitations</a></li>\n</ul>\n<p>In other systems, the concurrency issue would typically be partitioned into application side concurrency and database side concurrency.</p>\n<ol>\n<li>Application side concurrency would be handled by the application or web framework along with an ORM.</li>\n<li>Database side concurrency would be dependent on the database that we would be using. For example with PostgreSQL, we would use a connection pooler like <a href=\"https://www.pgbouncer.org/features.html\" rel=\"noopener nofollow ugc\">PgBouncer</a> and based on our workload, increase <a href=\"https://stackoverflow.com/a/32584211\" rel=\"noopener nofollow ugc\"><code>max_connections</code></a> parameter.</li>\n</ol>\n<p>In case of FoundationDB, the binding layer authors would have done most of the heavy lifting required to integrate the C library with the language specific async runtime for handling concurrency. <em>However</em>, the responsibility for working around FoundationDB limitations falls on layers that use the binding layer.</p>\n<p>Most of the information contained in this post, is about the infrastructure and design that the Record Layer uses to work around the FoundationDB limitations.</p>\n<p>There are three main limitations that we will need to keep in mind.</p>\n<ol>\n<li><a href=\"https://apple.github.io/foundationdb/known-limitations.html#long-transactions\" rel=\"noopener nofollow ugc\">5s transaction limit</a></li>\n<li><a href=\"https://apple.github.io/foundationdb/known-limitations.html#large-keys-and-values\" rel=\"noopener nofollow ugc\">Key-value size limit</a></li>\n<li><a href=\"https://apple.github.io/foundationdb/known-limitations.html#large-transactions\" rel=\"noopener nofollow ugc\">Transaction size limit</a></li>\n</ol>\n<p>Record Layer provides well designed APIs to handle the 5s transaction time limit and to ensure that value size limit of 100KB cannot be exceeded.</p>\n<p>It does not provide APIs to check the key size limit of 10KB nor does it provide APIs to check the 10MB mutation size limit. You will need to benchmark your applications to ensure that you are not exceeding these limits. In any case you need to be aware of <a href=\"https://apple.github.io/foundationdb/developer-guide.html#key-and-value-sizes\" rel=\"noopener nofollow ugc\">performance considerations</a> with regards to key and value size.</p>\n<p>On the topic of performance, we should also aggressively exploit any opportunity that might exist to do <a href=\"https://youtu.be/HLE8chgw6LI?t=636\" rel=\"noopener nofollow ugc\">pipelining</a> within a transaction. I won\u2019t touch on pipelining in this post. However I would like to briefly mention that we would need to use some form of sub-task mechanism within the async runtime to implement it (in Tokio/Rust it would be a <a href=\"https://rajivr.github.io/fdb-rl-wip/tokio/task/struct.JoinSet.html\" rel=\"noopener nofollow ugc\">JoinSet</a>).</p>\n<h1>\n<a name=\"design-2\" class=\"anchor\" href=\"#design-2\"></a>Design</h1>\n<h2>\n<a name=\"cursor-3\" class=\"anchor\" href=\"#cursor-3\"></a>Cursor</h2>\n<p>Every major database has a notion of a <a href=\"https://www.ibm.com/docs/en/ims/13.1.0?topic=SSEPH2_13.1.0/com.ibm.ims13.doc.apr/ims_sql_declarecursor.html\" rel=\"noopener nofollow ugc\">Cursor</a> (Here I am linking to IBM IMS database and COBOL just to make the point that the idea of cursor goes back to some of the earliest databases, much before the advent of relational databases).</p>\n<p>Today, as application developers, we seldom encounter a database cursor directly in our code. So, it might be foreign to us. However, they are still present and used when writing <a href=\"https://www.postgresql.org/docs/current/plpgsql-cursors.html\" rel=\"noopener nofollow ugc\">stored procedures</a> for relational databases.</p>\n<p>The idea of a cursor is very generic and can be used at different levels of abstraction within a database system. In fact at the lowest level, the SQLite B-tree used by FoundationDB storage servers to store and retrieve key-values also uses cursors. (See <code>struct BtCursor</code> in <a href=\"https://github.com/apple/foundationdb/blob/7.2.3/contrib/sqlite/sqlite3.amalgamation.c\" rel=\"noopener nofollow ugc\">this</a> file).</p>\n<p>The first important aspect of a cursor is that it is an abstraction that can be <em>composed</em>. Primitive cursors can be composed to build more complex and useful cursors.</p>\n<p>Java RecordLayer uses this to provide multiple types of cursor. In Rust RecordLayer, at the moment we only have a primitive <code>KeyValueCursor</code>, but we have the infrastructure to implement additional types of cursors in the future.</p>\n<p>The Record Layer implements a cursor API which like normal database cursors returns some value.</p>\n<p>The second important aspect that is <em>specific</em> to Record Layer cursor API implementation is its ability to be aware of the FoundationDB limitations.</p>\n<p>In the APIs the terminology of <em>out-of-band</em> error is used to indicate error conditions that might occur due to FoundationDB limitations.</p>\n<p>The third important aspect of the Cursor API is its support for <em>continuations</em>. A continuation can be used to rebuild the cursor state across transactions.</p>\n<p>Here are links to the documentation for</p>\n<ul>\n<li>Cursor (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/trait.Cursor.html\" rel=\"noopener nofollow ugc\">Rust</a>)</li>\n<li>Continuation (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorContinuation.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/trait.Continuation.html\" rel=\"noopener nofollow ugc\">Rust</a>)</li>\n</ul>\n<p>Once we have a composable cursor that is aware of out-of-band limits and returns a continuation in addition to the cursor value, the process of working around FoundationDB limitations becomes tractable and embed-able within the <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/enum.NoNextReason.html\" rel=\"noopener nofollow ugc\">type system</a>.</p>\n<p>We can now write our code easily and confidently because we will get errors at compile time, in case we are not correctly handling the out-of-band limit conditions.</p>\n<p>In summary, following are the key aspects of Record Layer cursors.</p>\n<ol>\n<li>Compos-ability of cursors.</li>\n<li>Ability to handle out-of-band limit conditions and leveraging the type system.</li>\n<li>Continuations which can be used to recreate the cursor state in a different transactions.</li>\n</ol>\n<p>Now that I\u2019ve motivated the need for Record Layer cursor, we can look into its implementation.</p>\n<p>The only primitive that we have to read data from FoundationDB is a <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb/transaction/trait.ReadTransaction.html#tymethod.get_range\" rel=\"noopener nofollow ugc\">range read</a>. All reads are built on top of this primitive including our cursors.</p>\n<p>So in-order to build our cursor, we need a way to combine range reads and FoundatonDB limits. Record Layer does this using <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.ScanLimiter.html\" rel=\"noopener nofollow ugc\"><code>ScanLimiter</code></a> type.</p>\n<p>There are three types of scan limiters within the Record Layer.</p>\n<ol>\n<li>\n<code>TimeScanLimiter</code> (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/TimeScanLimiter.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.TimeScanLimiter.html\" rel=\"noopener nofollow ugc\">Rust</a>)</li>\n<li>\n<code>ByteScanLimiter</code>(<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/ByteScanLimiter.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.ByteScanLimiter.html\" rel=\"noopener nofollow ugc\">Rust</a>)</li>\n<li>\n<code>RecordScanLimiter</code>(<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordScanLimiter.html\" rel=\"noopener nofollow ugc\">Java</a>), <code>KeyValueScanLimiter</code>(<a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.KeyValueScanLimiter.html\" rel=\"noopener nofollow ugc\">Rust</a>). Rust RecordLayer does not implement a semantic equivalent of Java <code>RecordScanLimiter</code>.</li>\n</ol>\n<p>Of the three scan limiters, the most important one is the <code>TimeScanLimiter</code> as it helps us work around the 5s transaction time limit.</p>\n<p>When the cursor is asked to produce a value, there can be two situations.</p>\n<ul>\n<li>On success (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorResult.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/type.CursorResult.html\" rel=\"noopener nofollow ugc\">Rust</a>) it produces a value and continuation</li>\n<li>On error, a <code>NoNextReason</code> (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.NoNextReason.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/enum.NoNextReason.html\" rel=\"noopener nofollow ugc\">Rust</a>) is provided along with a continuation.</li>\n</ul>\n<p>You will notice that there is a correspondence between the <code>NoNextReason</code> and scan limiter types.</p>\n<p>At the lowest level, range reads in FoundationDB is specified using <code>KeySelectors</code>. The <a href=\"https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/KeySelector.html\" rel=\"noopener nofollow ugc\">documentation</a> for <code>KeySelectors</code> mentions: \u201cNote that the way the key selectors are resolved is somewhat non-intuitive, so users who wish to use a key selector other than the default ones described below should probably consult that documentation before proceeding.\u201d</p>\n<p>Correctly constructing <code>KeySelectors</code> in the presence of continuations to build range read future can be very tricky. To avoid burdening users with this complexity, Record Layer provides two very useful types that are used in <code>KeyValueCursorBuilder</code> (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/KeyValueCursor.Builder.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/struct.KeyValueCursorBuilder.html\" rel=\"noopener nofollow ugc\">Rust</a>).</p>\n<ul>\n<li>\n<code>KeyRange</code> (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/KeyRange.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/range/struct.KeyRange.html\" rel=\"noopener nofollow ugc\">Rust</a>)</li>\n<li>\n<code>TupleRange</code> (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/TupleRange.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/range/struct.TupleRange.html\" rel=\"noopener nofollow ugc\">Rust</a>)</li>\n</ul>\n<p>These two types provide a much easier to use APIs for working with ranges.</p>\n<p>Just to highlight how subtle the problem with <code>KeySelector</code> and continuations can be, in Rust RecordLayer we have <a href=\"https://github.com/rajivr/fdb-rl-wip/blob/main/examples/test/cursor/key_value_cursor/KeyValueCursorBuilder/build_range.rs\" rel=\"noopener nofollow ugc\">158 integration tests</a> to exhaustively test this code path. An important side benefit of this approach is that <a href=\"https://apple.github.io/foundationdb/known-limitations.html#dont-use-key-selectors-for-paging\" rel=\"noopener nofollow ugc\">\u201cKey selectors with large offsets are slow\u201d</a> limitation is naturally taken care of.</p>\n<p>Since continuation encapsulates the state of a cursor so it can be reconstructed at a later time, we need a mechanism to serialize continuation state. Java RecordLayer uses <a href=\"https://github.com/FoundationDB/fdb-record-layer/blob/3.3.326.0/fdb-record-layer-core/src/main/proto/record_cursor.proto\" rel=\"noopener nofollow ugc\">protobuf</a> for this. In Rust RecordLayer we use <a href=\"https://github.com/rajivr/fdb-rl-wip/blob/main/avro/Continuation/KeyValueContinuation/v0/avdl/KeyValueContinuation.avdl\" rel=\"noopener nofollow ugc\">avro</a>.</p>\n<h2>\n<a name=\"split-helper-4\" class=\"anchor\" href=\"#split-helper-4\"></a>Split Helper</h2>\n<p>While cursor helps us address the read side limitations of FoundationDB, split helper helps us address the write side limitations with an intuitive API.</p>\n<p>Here is the documentation of split helper <a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/SplitHelper.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/index.html\" rel=\"noopener nofollow ugc\">Rust</a>.</p>\n<p>The split helper provides an API that splits value byte array into 100KB chunks across multiple keys for <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/index.html\" rel=\"noopener nofollow ugc\">writes</a> and <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/fn.delete.html\" rel=\"noopener nofollow ugc\">deletes</a>. These chunks are then reassembled correctly for <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/fn.load.html\" rel=\"noopener nofollow ugc\">reads</a>. Since we already have the cursor abstraction available with us, we can <a href=\"https://github.com/rajivr/fdb-rl-wip/blob/bc9c397080b87f2b91d196d3fc0d2c504dccc317/src/split_helper.rs#L323-L354\" rel=\"noopener nofollow ugc\">use</a> it for reads.</p>\n<p>Split helper API also introduces the <code>RecordVersion</code> type (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/FDBRecordVersion.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordVersion.html\" rel=\"noopener nofollow ugc\">Rust</a>).</p>\n<p>When we write the value byte array using split helper, at the tuple offset of <code>-1</code> of the key subspace, we also <a href=\"https://github.com/rajivr/fdb-rl-wip/blob/bc9c397080b87f2b91d196d3fc0d2c504dccc317/src/split_helper.rs#L231-L248\" rel=\"noopener nofollow ugc\">store</a> the versionstamp using <code>RecordVersion</code>.</p>\n<p>Having versionstamp information allows us to reason about the order of writes within a transaction and also about order of transactions within a cluster. In the event we need to debug an issue, having this information available with us can be very helpful (we can also do something similar for our secondary indexes).</p>\n<p>In Rust <code>RecordVersion</code> implementation, we also track the \u201cincarnation version\u201d, so the ordering can be preserved as the value moves between FoundationDB clusters.</p>\n<h2>\n<a name=\"recordcontext-5\" class=\"anchor\" href=\"#recordcontext-5\"></a>RecordContext</h2>\n<p>The <code>RecordContext</code> type (<a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/FDBRecordContext.html\" rel=\"noopener nofollow ugc\">Java</a>, <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html\" rel=\"noopener nofollow ugc\">Rust</a>) stores transaction specific state information. By centralizing transaction specific state information within one type, the rest of the APIs in the Record Layer can be written in a functional style.</p>\n<p>We can see examples of this functional approach in the design of cursor and split helper APIs.</p>\n<p>In the cursor API, we only specify <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.TimeScanLimiter.html\" rel=\"noopener nofollow ugc\">time limit</a>. The cursor API is not really aware of \u201c5s\u201d limit. Depending on when the cursor is created, its time limit could vary.</p>\n<p>But we still need to track the elapsed time for our transaction, so the time limit for our cursors can be correctly specified. This <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html#method.get_transaction_age\" rel=\"noopener nofollow ugc\">information</a> is maintained in record context.</p>\n<p>Similarly, with split helper and record version, we need a way to maintain the cluster <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html#method.get_incarnation_version\" rel=\"noopener nofollow ugc\">incarnation version</a> and and transaction <a href=\"https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html#method.claim_local_version\" rel=\"noopener nofollow ugc\">local version</a>. Once again this is done using record context.</p>\n<p>In essence, record context is what enables us to write our cursor, split helper and other record layer APIs in a functional style.</p>\n<h2>\n<a name=\"conclusion-6\" class=\"anchor\" href=\"#conclusion-6\"></a>Conclusion</h2>\n<p>I\u2019ve covered a lot of information in this post and I hope it would be helpful in developing a deeper understanding of the Record Layer.</p>\n<p>I also wanted to have the design written up in this form because it can be something that we can point new contributors to Record Layer to.</p>\n<p>Once again, I would really appreciate any feedback and corrections.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-01-26T02:56:56.686Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1011,
+        "reads": 43,
+        "readers_count": 42,
+        "score": 5128.6,
+        "yours": false,
+        "topic_id": 3765,
+        "topic_slug": "rust-fdb-record-layer-work-in-progress-repository",
+        "display_username": "Rajiv M Ranganath",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/rajivr/fdb-rl-wip",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - rajivr/fdb-rl-wip",
+            "clicks": 218
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#throughput-requires-concurrency",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB 7.2",
+            "clicks": 32
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/index.html",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb_rl - Rust",
+            "clicks": 28
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/known-limitations.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Known Limitations \u2014 FoundationDB 7.2",
+            "clicks": 16
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/known-limitations.html#long-transactions",
+            "internal": false,
+            "reflection": false,
+            "title": "Known Limitations \u2014 FoundationDB 7.2",
+            "clicks": 15
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/known-limitations.html#large-keys-and-values",
+            "internal": false,
+            "reflection": false,
+            "title": "Known Limitations \u2014 FoundationDB 7.2",
+            "clicks": 10
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/trait.Cursor.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Cursor in fdb_rl::cursor - Rust",
+            "clicks": 10
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/known-limitations.html#large-transactions",
+            "internal": false,
+            "reflection": false,
+            "clicks": 9
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordContext in fdb_rl - Rust",
+            "clicks": 7
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordCursor (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 6
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/tutorials.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Tutorials \u2014 FoundationDB 7.2",
+            "clicks": 6
+          },
+          {
+            "url": "https://github.com/rajivr/fdb-rl-wip/blob/main/avro/Continuation/KeyValueContinuation/v0/avdl/KeyValueContinuation.avdl",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-rl-wip/KeyValueContinuation.avdl at main \u00b7 rajivr/fdb-rl-wip \u00b7 GitHub",
+            "clicks": 5
+          },
+          {
+            "url": "https://youtu.be/HLE8chgw6LI?t=636",
+            "internal": false,
+            "reflection": false,
+            "title": "FoundationDB Record Layer: Open Source Structured Storage on FoundationDB - Nicholas Schiefer, Apple - YouTube",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/rajivr/fdb-rl-wip/blob/bc9c397080b87f2b91d196d3fc0d2c504dccc317/src/split_helper.rs#L231-L248",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-rl-wip/split_helper.rs at bc9c397080b87f2b91d196d3fc0d2c504dccc317 \u00b7 rajivr/fdb-rl-wip \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/SplitHelper.html",
+            "internal": false,
+            "reflection": false,
+            "title": "SplitHelper (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 4
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/index.html",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb_rl::split_helper - Rust",
+            "clicks": 4
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/FDBRecordContext.html",
+            "internal": false,
+            "reflection": false,
+            "title": "FDBRecordContext (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 4
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/range/struct.KeyRange.html",
+            "internal": false,
+            "reflection": false,
+            "title": "KeyRange in fdb_rl::range - Rust",
+            "clicks": 4
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/enum.NoNextReason.html",
+            "internal": false,
+            "reflection": false,
+            "title": "NoNextReason in fdb_rl::cursor - Rust",
+            "clicks": 4
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordVersion.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordVersion in fdb_rl - Rust",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/blob/3.3.326.0/fdb-record-layer-core/src/main/proto/record_cursor.proto",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-record-layer/record_cursor.proto at 3.3.326.0 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 3
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.ScanLimiter.html",
+            "internal": false,
+            "reflection": false,
+            "title": "ScanLimiter in fdb_rl::scan - Rust",
+            "clicks": 3
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.TimeScanLimiter.html",
+            "internal": false,
+            "reflection": false,
+            "title": "TimeScanLimiter in fdb_rl::scan - Rust",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/rajivr/fdb-rl-wip/blob/main/examples/test/cursor/key_value_cursor/KeyValueCursorBuilder/build_range.rs",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-rl-wip/build_range.rs at main \u00b7 rajivr/fdb-rl-wip \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordScanLimiter.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordScanLimiter (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 2
+          },
+          {
+            "url": "https://www.pgbouncer.org/features.html",
+            "internal": false,
+            "reflection": false,
+            "title": "PgBouncer features",
+            "clicks": 2
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/7.2.3/contrib/sqlite/sqlite3.amalgamation.c",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/sqlite3.amalgamation.c at 7.2.3 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorContinuation.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordCursorContinuation (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 2
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/trait.Continuation.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Continuation in fdb_rl::cursor - Rust",
+            "clicks": 2
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/api-python.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Python API \u2014 FoundationDB 7.2",
+            "clicks": 2
+          },
+          {
+            "url": "https://www.postgresql.org/docs/current/plpgsql-cursors.html",
+            "internal": false,
+            "reflection": false,
+            "clicks": 2
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/TimeScanLimiter.html",
+            "internal": false,
+            "reflection": false,
+            "title": "TimeScanLimiter (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 2
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/tokio/task/struct.JoinSet.html",
+            "internal": false,
+            "reflection": false,
+            "title": "JoinSet in tokio::task - Rust",
+            "clicks": 1
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/type.CursorResult.html",
+            "internal": false,
+            "reflection": false,
+            "title": "CursorResult in fdb_rl::cursor - Rust",
+            "clicks": 1
+          },
+          {
+            "url": "https://www.ibm.com/docs/en/ims/13.1.0?topic=SSEPH2_13.1.0/com.ibm.ims13.doc.apr/ims_sql_declarecursor.html",
+            "internal": false,
+            "reflection": false,
+            "clicks": 1
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/KeyValueCursor.Builder.html",
+            "internal": false,
+            "reflection": false,
+            "title": "KeyValueCursor.Builder (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 1
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#key-and-value-sizes",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB 7.2",
+            "clicks": 1
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.NoNextReason.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordCursor.NoNextReason (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 1
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/ByteScanLimiter.html",
+            "internal": false,
+            "reflection": false,
+            "title": "ByteScanLimiter (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 1
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/KeySelector.html",
+            "internal": false,
+            "reflection": false,
+            "title": "KeySelector (FoundationDB Java Client API)",
+            "clicks": 1
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorResult.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordCursorResult (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 1
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.KeyValueScanLimiter.html",
+            "internal": false,
+            "reflection": false,
+            "title": "KeyValueScanLimiter in fdb_rl::scan - Rust",
+            "clicks": 1
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb/transaction/trait.ReadTransaction.html#tymethod.get_range",
+            "internal": false,
+            "reflection": false,
+            "title": "ReadTransaction in fdb::transaction - Rust",
+            "clicks": 1
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.ByteScanLimiter.html",
+            "internal": false,
+            "reflection": false,
+            "title": "ByteScanLimiter in fdb_rl::scan - Rust",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/rajivr/fdb-rl-wip/blob/bc9c397080b87f2b91d196d3fc0d2c504dccc317/src/split_helper.rs#L323-L354",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-rl-wip/split_helper.rs at bc9c397080b87f2b91d196d3fc0d2c504dccc317 \u00b7 rajivr/fdb-rl-wip \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://stackoverflow.com/a/32584211",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html#method.claim_local_version",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordContext in fdb_rl - Rust",
+            "clicks": 0
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/fn.delete.html",
+            "internal": false,
+            "reflection": false,
+            "title": "delete in fdb_rl::split_helper - Rust",
+            "clicks": 0
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html#method.get_transaction_age",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordContext in fdb_rl - Rust",
+            "clicks": 0
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/FDBRecordVersion.html",
+            "internal": false,
+            "reflection": false,
+            "title": "FDBRecordVersion (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 0
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/struct.KeyValueCursorBuilder.html",
+            "internal": false,
+            "reflection": false,
+            "title": "KeyValueCursorBuilder in fdb_rl::cursor - Rust",
+            "clicks": 0
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/KeyRange.html",
+            "internal": false,
+            "reflection": false,
+            "title": "KeyRange (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 0
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/known-limitations.html#dont-use-key-selectors-for-paging",
+            "internal": false,
+            "reflection": false,
+            "title": "Known Limitations \u2014 FoundationDB 7.2",
+            "clicks": 0
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/TupleRange.html",
+            "internal": false,
+            "reflection": false,
+            "title": "TupleRange (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 0
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html#method.get_incarnation_version",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordContext in fdb_rl - Rust",
+            "clicks": 0
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/range/struct.TupleRange.html",
+            "internal": false,
+            "reflection": false,
+            "title": "TupleRange in fdb_rl::range - Rust",
+            "clicks": 0
+          },
+          {
+            "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/fn.load.html",
+            "internal": false,
+            "reflection": false,
+            "title": "load in fdb_rl::split_helper - Rust",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 5
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 946,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/rust-fdb-record-layer-work-in-progress-repository/3765/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12297,
+        "name": "Garren Smith",
+        "username": "garrensmith",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png",
+        "created_at": "2023-01-26T08:51:56.674Z",
+        "cooked": "<p>Awesome work <a class=\"mention\" href=\"/u/rajivr\">@rajivr</a> and a really interesting writeup into parts of the record layer.<br>\nThanks for sharing this</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-01-26T08:51:56.674Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 21.4,
+        "yours": false,
+        "topic_id": 3765,
+        "topic_slug": "rust-fdb-record-layer-work-in-progress-repository",
+        "display_username": "Garren Smith",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 499,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/rust-fdb-record-layer-work-in-progress-repository/3765/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12296,
+      12297
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1000
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Rust FDB Record Layer Work-in-progress Repository",
+  "id": 3765,
+  "title": "Rust FDB Record Layer Work-in-progress Repository",
+  "posts_count": 2,
+  "created_at": "2023-01-26T02:34:01.051Z",
+  "views": 1593,
+  "reply_count": 0,
+  "like_count": 5,
+  "last_posted_at": "2023-01-26T08:51:56.674Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "rust-fdb-record-layer-work-in-progress-repository",
+  "category_id": 9,
+  "word_count": 2562,
+  "deleted_at": null,
+  "user_id": 946,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3765",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Record Layer Design Questions",
+      "id": 3468,
+      "title": "Record Layer Design Questions",
+      "slug": "record-layer-design-questions",
+      "posts_count": 22,
+      "reply_count": 16,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2022-07-27T05:43:33.408Z",
+      "last_posted_at": "2023-07-20T14:19:37.434Z",
+      "bumped": true,
+      "bumped_at": "2023-07-20T14:19:37.434Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 1688,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 946,
+            "username": "rajivr",
+            "name": "Rajiv M Ranganath",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Record Layer query performance benchmarking against traditional RDBMS",
+      "id": 2082,
+      "title": "Record Layer query performance benchmarking against traditional RDBMS",
+      "slug": "record-layer-query-performance-benchmarking-against-traditional-rdbms",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-04-20T18:46:55.680Z",
+      "last_posted_at": "2020-04-22T15:51:53.223Z",
+      "bumped": true,
+      "bumped_at": "2020-04-22T15:51:53.223Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1528,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Key-val sizes in the Record Layer",
+      "id": 1481,
+      "title": "Key-val sizes in the Record Layer",
+      "slug": "key-val-sizes-in-the-record-layer",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-06-23T09:20:30.497Z",
+      "last_posted_at": "2020-07-15T12:46:20.435Z",
+      "bumped": true,
+      "bumped_at": "2020-07-15T12:46:20.435Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2204,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 388,
+            "username": "amarjeet000",
+            "name": "Amarjeet",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/e19adc/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 790,
+            "username": "shubham4060",
+            "name": "Shubham",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/0ea827/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How Record Layer Provides APIs to Handle Large Range Scan Longer Than 5 seconds",
+      "id": 2400,
+      "title": "How Record Layer Provides APIs to Handle Large Range Scan Longer Than 5 seconds",
+      "slug": "how-record-layer-provides-apis-to-handle-large-range-scan-longer-than-5-seconds",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-10-21T09:53:59.939Z",
+      "last_posted_at": "2020-12-16T17:43:49.426Z",
+      "bumped": true,
+      "bumped_at": "2020-12-16T17:43:49.426Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1805,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 775,
+            "username": "iamquang95",
+            "name": "Quang Le Hong",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/iamquang95/{size}/889_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "`fdb_transaction_get_range` API and `limit`",
+      "id": 3680,
+      "title": "`fdb_transaction_get_range` API and `limit`",
+      "slug": "fdb-transaction-get-range-api-and-limit",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2022-12-02T03:55:36.069Z",
+      "last_posted_at": "2022-12-02T03:55:36.139Z",
+      "bumped": true,
+      "bumped_at": "2022-12-02T03:55:36.139Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 298,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 946,
+            "username": "rajivr",
+            "name": "Rajiv M Ranganath",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 499,
+        "username": "garrensmith",
+        "name": "Garren Smith",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 946,
+        "username": "rajivr",
+        "name": "Rajiv M Ranganath",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 946,
+      "username": "rajivr",
+      "name": "Rajiv M Ranganath",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png"
+    },
+    "last_poster": {
+      "id": 499,
+      "username": "garrensmith",
+      "name": "Garren Smith",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/rajivr/fdb-rl-wip",
+        "title": "GitHub - rajivr/fdb-rl-wip",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 218,
+        "user_id": 946,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/developer-guide.html#throughput-requires-concurrency",
+        "title": "Developer Guide \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 32,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/index.html",
+        "title": "fdb_rl - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 28,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/known-limitations.html",
+        "title": "Known Limitations \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 16,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/known-limitations.html#long-transactions",
+        "title": "Known Limitations \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/trait.Cursor.html",
+        "title": "Cursor in fdb_rl::cursor - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 10,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/known-limitations.html#large-keys-and-values",
+        "title": "Known Limitations \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 10,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/known-limitations.html#large-transactions",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordContext.html",
+        "title": "RecordContext in fdb_rl - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/tutorials.html",
+        "title": "Tutorials \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.html",
+        "title": "RecordCursor (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://github.com/rajivr/fdb-rl-wip/blob/main/avro/Continuation/KeyValueContinuation/v0/avdl/KeyValueContinuation.avdl",
+        "title": "fdb-rl-wip/KeyValueContinuation.avdl at main \u00b7 rajivr/fdb-rl-wip \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 946,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/SplitHelper.html",
+        "title": "SplitHelper (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://youtu.be/HLE8chgw6LI?t=636",
+        "title": "FoundationDB Record Layer: Open Source Structured Storage on FoundationDB - Nicholas Schiefer, Apple - YouTube",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 946,
+        "domain": "youtu.be",
+        "root_domain": "youtu.be"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/split_helper/index.html",
+        "title": "fdb_rl::split_helper - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/range/struct.KeyRange.html",
+        "title": "KeyRange in fdb_rl::range - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://github.com/rajivr/fdb-rl-wip/blob/bc9c397080b87f2b91d196d3fc0d2c504dccc317/src/split_helper.rs#L231-L248",
+        "title": "fdb-rl-wip/split_helper.rs at bc9c397080b87f2b91d196d3fc0d2c504dccc317 \u00b7 rajivr/fdb-rl-wip \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 946,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/FDBRecordContext.html",
+        "title": "FDBRecordContext (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/enum.NoNextReason.html",
+        "title": "NoNextReason in fdb_rl::cursor - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/blob/3.3.326.0/fdb-record-layer-core/src/main/proto/record_cursor.proto",
+        "title": "fdb-record-layer/record_cursor.proto at 3.3.326.0 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 946,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.ScanLimiter.html",
+        "title": "ScanLimiter in fdb_rl::scan - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.TimeScanLimiter.html",
+        "title": "TimeScanLimiter in fdb_rl::scan - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/struct.RecordVersion.html",
+        "title": "RecordVersion in fdb_rl - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordScanLimiter.html",
+        "title": "RecordScanLimiter (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/TimeScanLimiter.html",
+        "title": "TimeScanLimiter (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/trait.Continuation.html",
+        "title": "Continuation in fdb_rl::cursor - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://github.com/rajivr/fdb-rl-wip/blob/main/examples/test/cursor/key_value_cursor/KeyValueCursorBuilder/build_range.rs",
+        "title": "fdb-rl-wip/build_range.rs at main \u00b7 rajivr/fdb-rl-wip \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/api-python.html",
+        "title": "Python API \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://www.pgbouncer.org/features.html",
+        "title": "PgBouncer features",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "www.pgbouncer.org",
+        "root_domain": "pgbouncer.org"
+      },
+      {
+        "url": "https://www.postgresql.org/docs/current/plpgsql-cursors.html",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "www.postgresql.org",
+        "root_domain": "postgresql.org"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/7.2.3/contrib/sqlite/sqlite3.amalgamation.c",
+        "title": "foundationdb/sqlite3.amalgamation.c at 7.2.3 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorContinuation.html",
+        "title": "RecordCursorContinuation (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.KeyValueScanLimiter.html",
+        "title": "KeyValueScanLimiter in fdb_rl::scan - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://www.ibm.com/docs/en/ims/13.1.0?topic=SSEPH2_13.1.0/com.ibm.ims13.doc.apr/ims_sql_declarecursor.html",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "www.ibm.com",
+        "root_domain": "ibm.com"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorResult.html",
+        "title": "RecordCursorResult (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.NoNextReason.html",
+        "title": "RecordCursor.NoNextReason (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/KeySelector.html",
+        "title": "KeySelector (FoundationDB Java Client API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/KeyValueCursor.Builder.html",
+        "title": "KeyValueCursor.Builder (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/developer-guide.html#key-and-value-sizes",
+        "title": "Developer Guide \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/ByteScanLimiter.html",
+        "title": "ByteScanLimiter (fdb-record-layer-core-pb3 2.10.164.0 API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "javadoc.io",
+        "root_domain": "javadoc.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/cursor/type.CursorResult.html",
+        "title": "CursorResult in fdb_rl::cursor - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb/transaction/trait.ReadTransaction.html#tymethod.get_range",
+        "title": "ReadTransaction in fdb::transaction - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/tokio/task/struct.JoinSet.html",
+        "title": "JoinSet in tokio::task - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      },
+      {
+        "url": "https://rajivr.github.io/fdb-rl-wip/fdb_rl/scan/struct.ByteScanLimiter.html",
+        "title": "ByteScanLimiter in fdb_rl::scan - Rust",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 946,
+        "domain": "rajivr.github.io",
+        "root_domain": "rajivr.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

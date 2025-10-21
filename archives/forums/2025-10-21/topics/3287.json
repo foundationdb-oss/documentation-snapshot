@@ -1,0 +1,561 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11020,
+        "name": "Ning Xu",
+        "username": "xuning97",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/xuning97/{size}/1051_2.png",
+        "created_at": "2022-04-28T03:54:14.446Z",
+        "cooked": "<p>Hi, I\u2019ve got a requirement to perform incremental backup of a fdb cluster, and later to incrementally perform the restore to another fdb cluster.</p>\n<p>Is it possible in current implementation of fdbbackup, fdbrestore, etc?</p>\n<p>I checked the code of fdbbackup.</p>\n<p>From backup.actor.cpp, runRestore\u2019s Main workflow</p>\n<ul>\n<li>Step1: decide targetVersion (by Parameter or targetTimeStamp)</li>\n<li>Step2: openBackupContainer as bc</li>\n<li>Step3: maximum restorable version (bc-&gt;describeBackup) if targetVersion is invalid</li>\n<li>Step4: perform restore with backupAgent.restore or quit if not restorable</li>\n</ul>\n<p>I chose FileBackupAgent.actor.cpp as the path to get familiar with the logic.<br>\nThis way leads to StartFullRestoreTaskFunc,   but before that, in submitRestore, there is a check to ensure there is no existing rows in the restore range.</p>\n<pre><code class=\"lang-auto\">for (index = 0; index &lt; restoreRanges.size(); index++) {\n\t\t\tKeyRange restoreIntoRange = KeyRangeRef(restoreRanges[index].begin, restoreRanges[index].end)\n\t\t\t                                .removePrefix(removePrefix)\n\t\t\t                                .withPrefix(addPrefix);\n\t\t\tRangeResult existingRows = wait(tr-&gt;getRange(restoreIntoRange, 1));\n\t\t\tif (existingRows.size() &gt; 0 &amp;&amp; !onlyApplyMutationLogs) {\n\t\t\t\tthrow restore_destination_not_empty();\n\t\t\t}\n\t\t}\n</code></pre>\n<p>Is the mainly because the restore comes both from snapshot and mutationlogs?</p>\n<p>It\u2019s to avoid such kind of scenarios<br>\n\u201cSomeone deleted a key \u201cAAA\u201d at the src site.  The delete op has been applied to storage server, so  it\u2019s no longer part of mutationlogs. During restore, we can only get the snapshot of storage server and mutationlogs. Neither the snapshot nor the log can reflect the delete of key AAA. if we restore without the emptiness of destination side, this delete op will not be executed on the destination side. And AAA will be left on the destination site\u201d</p>\n<p>And if this description is correct, any plan or design to support incremental restore without the need to clear dest site.<br>\nNew to fdb, thanks a lot for your help.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-04-28T03:54:14.446Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 92,
+        "reads": 36,
+        "readers_count": 35,
+        "score": 467.2,
+        "yours": false,
+        "topic_id": 3287,
+        "topic_slug": "about-incremental-backup-and-restore-for-fdb-dr",
+        "display_username": "Ning Xu",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 912,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/about-incremental-backup-and-restore-for-fdb-dr/3287/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11031,
+        "name": "Ning Xu",
+        "username": "xuning97",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/xuning97/{size}/1051_2.png",
+        "created_at": "2022-05-01T02:48:13.892Z",
+        "cooked": "<p>Not sure about this understanding: backup data contains two parts, one is from tlog, another is from storage server. I got this impression somewhere. But when I check the code today, I can only find the logic to pull data from TLog system in BackupWorker.actor.cpp</p>\n<pre><code class=\"lang-auto\">ACTOR Future&lt;Void&gt; pullAsyncData(BackupData* self) {\n</code></pre>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-05-01T02:48:13.892Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 10.6,
+        "yours": false,
+        "topic_id": 3287,
+        "topic_slug": "about-incremental-backup-and-restore-for-fdb-dr",
+        "display_username": "Ning Xu",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 912,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/about-incremental-backup-and-restore-for-fdb-dr/3287/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11020,
+      11031
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1273
+    ],
+    [
+      2,
+      1270
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "About incremental backup and restore for fdb dr",
+  "id": 3287,
+  "title": "About incremental backup and restore for fdb dr",
+  "posts_count": 2,
+  "created_at": "2022-04-28T03:54:14.375Z",
+  "views": 496,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-05-01T02:48:13.892Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "about-incremental-backup-and-restore-for-fdb-dr",
+  "category_id": 5,
+  "word_count": 338,
+  "deleted_at": null,
+  "user_id": 912,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3287",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Backup /restore fdb",
+      "id": 1637,
+      "title": "Backup /restore fdb",
+      "slug": "backup-restore-fdb",
+      "posts_count": 22,
+      "reply_count": 17,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2019-09-19T17:04:18.878Z",
+      "last_posted_at": "2019-10-05T04:45:51.663Z",
+      "bumped": true,
+      "bumped_at": "2019-10-05T04:45:51.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2729,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Design and Implementation of a Performant Restore System in FDB",
+      "id": 1277,
+      "title": "Design and Implementation of a Performant Restore System in FDB",
+      "slug": "design-and-implementation-of-a-performant-restore-system-in-fdb",
+      "posts_count": 24,
+      "reply_count": 21,
+      "highest_post_number": 24,
+      "image_url": null,
+      "created_at": "2019-04-02T23:35:14.946Z",
+      "last_posted_at": "2020-12-08T12:50:31.915Z",
+      "bumped": true,
+      "bumped_at": "2020-12-08T12:50:31.915Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 3171,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why FoudationDB can&rsquo;t restore data to a non-empty database",
+      "id": 2005,
+      "title": "Why FoudationDB can't restore data to a non-empty database",
+      "slug": "why-foudationdb-cant-restore-data-to-a-non-empty-database",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-03-05T09:15:52.634Z",
+      "last_posted_at": "2020-03-09T09:38:15.859Z",
+      "bumped": true,
+      "bumped_at": "2020-03-09T09:38:15.859Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 986,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 739,
+            "username": "nguyenduybinh",
+            "name": "Nguyen Duy Binh",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/5f9b8f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Lots of questions about backup and restore",
+      "id": 2888,
+      "title": "Lots of questions about backup and restore",
+      "slug": "lots-of-questions-about-backup-and-restore",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2021-09-16T10:52:07.595Z",
+      "last_posted_at": "2021-09-28T13:29:08.267Z",
+      "bumped": true,
+      "bumped_at": "2021-09-28T13:29:08.267Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 786,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 602,
+            "username": "ppggff",
+            "name": "ppggff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ppggff/{size}/855_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Point in time restore after a cold dr-based backup",
+      "id": 2543,
+      "title": "Point in time restore after a cold dr-based backup",
+      "slug": "point-in-time-restore-after-a-cold-dr-based-backup",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2021-02-04T11:59:42.899Z",
+      "last_posted_at": "2021-02-04T11:59:42.989Z",
+      "bumped": true,
+      "bumped_at": "2021-02-04T12:23:02.732Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 587,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 912,
+        "username": "xuning97",
+        "name": "Ning Xu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/xuning97/{size}/1051_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 912,
+      "username": "xuning97",
+      "name": "Ning Xu",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/xuning97/{size}/1051_2.png"
+    },
+    "last_poster": {
+      "id": 912,
+      "username": "xuning97",
+      "name": "Ning Xu",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/xuning97/{size}/1051_2.png"
+    }
+  },
+  "bookmarks": []
+}

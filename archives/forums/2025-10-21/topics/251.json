@@ -1,0 +1,1097 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 530,
+        "name": "Austin Seipp",
+        "username": "aseipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "created_at": "2018-04-24T20:01:30.013Z",
+        "cooked": "<p>Hello *,</p>\n<p>First, sorry for the long post in advance. But I\u2019d like to say that, as of yesterday, I\u2019ve added a FoundationDB package to the <a href=\"https://nixos.org\" rel=\"nofollow noopener\">NixOS Linux distribution</a>, as well as a module for using FoundationDB in a declarative manner on NixOS.[1] I\u2019m a software engineer and NixOS package maintainer, so I figure I\u2019d drop by and announce it and ask some questions concerning packaging for \u201cnon-standard\u201d Linux distributions.</p>\n<p>I also think NixOS is perhaps the first distro to pick up a working FoundationDB build (made easier for reasons explained below), and I hope this can help other developers get it working where needed, for the time being.</p>\n<hr>\n<h4>Some background</h4>\n<p>NixOS is Linux distribution built on a declarative package management. Rather than running sets of commands to bring a system to some state, by modifying the existing state \u2013 you write a <em>declaration</em> specifying how you would like your machine to work, which is then realized for you. Multiple system states can co-exist, and you switch between them to go from one to another. The results of this design decision are profound in practice, including atomic system upgrades, transactional system rollbacks, reproducible builds (that properly track dependencies), supporting conflicting/multiple library versions, and more.</p>\n<p>This turns out to be extremely useful for FoundationDB which has an\u2026 interesting build process, to say the least.</p>\n<p>For example, the declarative <em>description</em> <a href=\"https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/default.nix\" rel=\"nofollow noopener\">of the FoundationDB package for NixOS</a> may end up as a better starting point for building it yourself[2] on foreign systems, vs something like the Docker image, once you learn to read it. In particular, this description:</p>\n<ul>\n<li>\n<p>Correctly captures build requirements. If a build requirement is not listed in the declarative description (under the name <code>buildInputs</code>), it is not available during compilation/build time. Thus, removal of \u2018gawk\u2019 means the \u2018awk\u2019 command will not be available, and the build will fail. This means <em>every build dependency must be explicitly listed</em>, and there are no cases where this would fail (for example, by failing to suggest to a user to <code>apt-get install</code> something.) Networking is removed, all builds are sandboxed with filesystem namespaces, and more.</p>\n</li>\n<li>\n<p>Handles odd version dependencies. For example, the FoundationDB build includes a copy of Boost 1.52.0, as a header package. This package is private to the FoundationDB build and never exposed to any other packages, as it is otherwise too old to support. While Nix actually supports as far back as Boost 1.55, 1.52 is too old to use with our generalized Boost build infrastructure. Creating a custom variant of Boost is extremely easy.<br>\nSimilarly, NixOS natively handles multiple GCC versions, and the FoundationDB build is overridden explicitly to GCC 4.9 this in all configurations, as that\u2019s what it supports.</p>\n</li>\n<li>\n<p>Tells you precisely how results are installed; for example, you must build <code>all</code> and <code>fdb_c</code> in the Makefile targets, and then copy the resulting files out of a few different places.</p>\n</li>\n<li>\n<p>Atomic. Any updates to any dependencies for FoundationDB (or the dependencies of its dependencies) will imply a rebuild of FoundationDB. Because every package, every dependency, is described is controlled in this single git repository, this effectively means Nix provides a nearly-transparent, completely reproducible build environment for FoundationDB. This is something not even Docker can easily provide, as even a single <code>apt get install &lt;foo&gt;</code> from an un-pinned source at any point in the creation of the image can be fatal. (This is why people typically standardize on Docker <em>images</em> and not Docker <em>files</em> \u2013 because all too often Dockerfiles are not actually reproducible and are poisoned like this.)</p>\n</li>\n<li>\n<p>Tells you what needs patching. For example, Nix removes all <code>.git</code> directories from the source code when performing builds (it\u2019s may be prohibitively large anyway), and many other build systems/CI systems for Linux distros tend to strip this as well \u2013 preferring explicitly packaged tarballs. This required a patch to the FoundationDB build system to not search for <code>.git</code>, as it otherwise required it for determining version revision information.</p>\n</li>\n</ul>\n<hr>\n<h4>FoundationDB on NixOS</h4>\n<p>Using FoundationDB with the included NixOS module is pretty easy. With the latest <code>master</code> version of NixOS, you can enable it automatically on boot in just a few lines. For example, here\u2019s a copy of my configuration, running FoundationDB on a 1950X ThreadRipper with 64GB of RAM (~5GB per process).</p>\n<pre><code class=\"lang-auto\">  services.foundationdb = {\n    enable = true;\n    dataDir = \"/data/fdb/data\";\n    logDir  = \"/data/fdb/logs\";\n    serverProcesses = 12;\n    backupProcesses = 6;\n    extraReadWritePaths = [ \"/data/fdb/backups/\" ];\n  };\n</code></pre>\n<p>That\u2019s it, and FoundationDB will automatically be installed \u2013 binary packages will be downloaded, put into place, and system services started all at once. This simple declaration has a lot of logic behind it[2]:</p>\n<ul>\n<li>\n<code>fdbmonitor</code> and all <code>fdbserver</code> processes are controlled by a single systemd unit, called <code>foundationdb.service</code>, which is available via <code>systemctl</code>. It\u2019s correctly started after networking interfaces are available and the system is booted.</li>\n<li>Data directories and log directories are pointed explicitly onto fast NVMe drives (but default to <code>/var/log/foundationdb</code> and <code>/var/lib/foundationdb</code> like usual).</li>\n<li>Auto-mouting semantics. Thanks to systemd\u2019s <code>RequiresMountsFor=</code> directive, when FoundationDB is started, any filesystem mounts along the path of the data or log directories are automatically mounted upon server start, and a systemd dependency is implicitly added to ensure this mount happens first and succeeds. For my server, my main OS partition is on an NVMe boot drive, while my FoundationDB data is on a completely separate NVMe drive. This feature ensures the NVMe mount point is always available prior to server initialization.</li>\n<li>The FoundationDB processes are heavily sandboxed, with explicit paths to read/write to (e.g. for backups, or for <code>/etc/foundationdb</code>). All forms of new permission elevation are denied, <code>/dev</code> is restricted, and <code>/tmp</code> is privately mounted in a way that is isolated from all other units. This is done through the use of systemd security features to put FoundationDB in its own control group and namespace on Linux. For example, the <em>entire</em> Linux system is effectively marked read-only from the POV of FoundationDB; any attempts to read or write outside of the log directory, data directory, or backup paths results in an explicit error. Further paths (like <code>/boot</code>) are not even readable at all. This is a security feature (which NixOS takes more seriously now), but also a sanity one to ensure FoundationDB is \u201cbeing a good citizen\u201d in a hostile world.</li>\n<li>As expected, a new database (<code>configure new single ssd</code>) is also initialized at first startup.</li>\n</ul>\n<p>The remaining options have sensible defaults, mostly following the ordinary default FoundationDB parameters. For example, you can also configure process class, storage memory, locality (zone/machine/dc/hall IDs), and more.[3]</p>\n<p>You never need to run individual edits to an fdbmonitor configuration file, it\u2019s all controlled here. Like Nix package builds, changes to this FoundationDB description are are atomic: any change either results in a restarted FoundationDB service, or, if the service fails (say, due to an invalid configuration parameter), the results are rolled back.</p>\n<p>For NixOS users, I have also <a href=\"https://inner-haven.net/~aseipp/nix/fdb-manual/index.html#module-foundationdb\" rel=\"nofollow noopener\">written a section in the manual</a> about FoundationDB usage[4], which may be relevant or interesting to people here \u2013 I\u2019d appreciate feedback! (Currently using a local copy I built myself, but this documentation will appear on <a href=\"https://nixos.org\" rel=\"nofollow noopener\">https://nixos.org</a> soon enough.)</p>\n<hr>\n<h4>Some questions</h4>\n<ul>\n<li>\n<p>Is there any timeframe on support for newer GCC/boost libraries? Right now, while NixOS keeps copies of GCC 4.9, and the FoundationDB package provides Boost 1.52.0 (headers only), it would be nice to eliminate these hard dependencies. One reason is that GCC 4.9 is effectively on life support in NixOS; in fact there is almost nothing else that seems to <em>explicitly</em> require it. Had I not added FoundationDB recently, it\u2019s possible GCC 4.9 would have been axed before too long, making adding it much harder.</p>\n<p>The other reason is just maintainabiliy; lots of specific workarounds ultimately hurt long-term maintainability for us, so working with upstreams to fix these problems is often desireable. (NixOS recently switched to GCC 7.3.0 as the default compiler, although 5.x and 6.x are also available.)</p>\n</li>\n<li>\n<p>Is the above security policy for the FoundationDB server \u201ccorrect\u201d? In particular, while I prefer to enhance security of NixOS services where-ever possible that doesn\u2019t break functionality (which has not seemed to happen with FDB), I\u2019d like to ask if this is OK. More generally: In practice, having been an OSS maintainer of big projects, and a Linux distro maintainer, I know both sides of this: deviating from upstream policy enough is likely to create its own issues. However, these issues <em>almost always</em> make their way back upstream, not through the package maintainer. This creates an unfortunate series of events where primary upstream developers have to sort through downstream users, downstream packages, and downstream setup choices \u2013 and this isn\u2019t always a good use of time on behalf of the developers.</p>\n<p>So I\u2019d like to know if I\u2019m doing something wrong or something you consider bad. If I am, I\u2019ll gladly change this to be more in-line with what upstream expects, and it will be easier for everyone.</p>\n<p>In particular, FoundationDB does not seem to offer systemd unit descriptions for its packages (rather, it offers <code>init.d</code>-style scripts, which systemd distros such as recent RHEL, Ubuntu etc can transparently handle), so it\u2019s possible none of this is wrong, but simply unfamiliar. (If you\u2019d like, I\u2019d be more than willing to help contribute upstream unit files, if you would like to provide them.)</p>\n</li>\n<li>\n<p>Is there any explicit support policy on 3rd party distro packages? In a prior life, I developed and worked on proprietary Linux software that was sold to customers in a variety of (bizarre, horrifying) settings, so I understand the need for things like singular, static binaries, etc. This leads into a lot of the weird stuff in the build system, such as libc++ frobnication (something to do with symbol versioning?) and recent plans I read elsewhere to use <code>__asm__</code> to mark glibc memcpy versions to link against.</p>\n<p>Of course, there\u2019s nothing wrong with that! You have to do serious QA on a piece of software like FDB. But then the question is: what about packages you did not compile in this controlled environment? Should there be a notice \u201cthis isn\u2019t an official upstream package\u201d? Should there be <em>any</em> notice? Should downstream say something? Or should you say \u201cOnly packages provided by <a href=\"http://foundationdb.org\" rel=\"nofollow noopener\">foundationdb.org</a> have undergone our quality assurance, on these systems:\u201d on the homepage? I\u2019m not sure.</p>\n<p>I\u2019m afraid my prior experience never lead into a proprietary project becoming OSS, so I\u2019m not sure I can offer any guidance here on what to do. You\u2019ve still got customers to support so you can\u2019t just exactly obliterate all the stuff you have in place for this, but it adds a bit of tension between (formerly) proprietary product users and OSS users.</p>\n</li>\n<li>\n<p>There is a lot of weird stuff going on in the build systems, relating to static libraries. I had to <a href=\"https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/ldflags.patch\" rel=\"nofollow noopener\">write a patch</a> in order to fix this; in particular, it would seem as if the makefiles put <code>ld</code> flags like <code>-lstdc++</code> inside of <code>_LIBS</code> variables for individual subprojects; <em>but this is wrong</em>, because <code>_LIBS</code> is for tracking <em>files that will be generated by rules in the build system</em>, not the actual flags that are needed at link time. That\u2019s <code>_LDFLAGS</code>, and as you can see from the patch, it essentially just moves a bunch of <code>xxx_LIBS += -lfoo</code> to <code>xxx_LDFLAGS += -lfoo</code> in order to get things working.</p>\n<p>Without this patch, the net effect is that the build system will immediately fail; for example, Make will try to build <code>fdbcli</code>, but <code>fdbcli</code> needs the <code>_LIBS</code> dependencies to be built first. However, it has no idea how to build <code>-ldl</code> or whatnot  because that\u2019s not a rule, that\u2019s a link-time flag. So you get a mysterious error <code>\"Error: cannot make dependency \"-ldl\", needed for bin/fdbcli\"</code> or whatnot.</p>\n<p>I do not know why this is needed. Of course, you all wrote the build system! So maybe my understanding of <code>_LIBS</code> is wrong. Perhaps I missed a subtle build dependency. Do <code>_LIBS</code> get transformed into <code>_LDFLAGS</code> by something? If so, where? If not, why does the build system list <code>-ldl</code> in <code>_LIBS</code> \u2013 when it seems to contain rule dependencies, not link flags? Should everything really be in <code>_LDFLAGS</code> like my patch has done? Has some subtle semantics of Make or the build tools changed? It\u2019s unclear to me why this is needed, but it\u2019s fishy.</p>\n</li>\n</ul>\n<hr>\n<h4>Some suggestions</h4>\n<p>This list is incomplete, just a set of thoughts.</p>\n<ul>\n<li>\n<p>Please add a <code>make install</code> target. This should not rely on any particular packaging file, it should just run <code>install</code> on the files in the right places. Unless I completely missed it (I don\u2019t think I did?), this is an oversight that makes 3rd party packaging much more annoying. In one particular annoyance, <code>fdbrestore</code>, <code>fdbdr</code>, <code>dr_agent</code> etc are all actual symlinks to one binary (<code>backup_agent</code>), and determine their operation based on the exe name. I didn\u2019t realize this until I had dug in and read the source code! So instead I had to \u2018extract\u2019 the fdb .dpkg and look at the filesystem hierarchy. Then I mostly replicated that. But <code>make install</code> would have done it for me\u2026</p>\n<p>Please note that <strong>it is essential</strong> that a command like <code>make install</code> respect the traditional <code>PREFIX=</code> and <code>DESTDIR=</code> environment variables, so that maintainers can install them into arbitrary places, which is vital. These environment variables <em>do not</em> need to have any special meaning to the FoundationDB source code, they merely need to exist, and be respected, when finally copying files around during <code>make install</code>. (FDB, as far as I can see, doesn\u2019t rely so much on fixed hardcoded paths outside of <code>/etc/foundationdb</code>, and even that is fixable in the fdbmonitor file.) I\u2019m sure you\u2019re aware of it, but I only mention it because adding <code>make install</code> but <em>not</em> adding that will just have distro maintainers right back here. <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=5\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"></p>\n</li>\n<li>\n<p>Please make libstdc++ frobnication, <code>link-validate.sh</code>, etc optional during build. First, on a system like NixOS, and, indeed, almost any Linux distro based around compiling packages for users, and shipping them those packages \u2013 validating symbol names is meaningless, because there is only one global glibc, and it is explicitly compiled against. There will never be <em>older</em> versions that mysteriously appear out of nowhere, only newer ones. Second, the particulars of frobnication aren\u2019t the same everywhere, for example, in NixOS I just sheepishly hacked <code>libstdc++_pic</code> and replaced it with <code>libstdc++</code> in the Makefile, because the <code>_pic</code> variant is an Ubuntu specific anomaly! Then I just disabled the link-validate check.</p>\n<p>These are surely vital for officially sanctioned static binary packages for your customers/users, but for distro maintainers, being able to turn this off would be excellent.</p>\n</li>\n<li>\n<p>Please make the existence of <code>.git</code> optional at build time. Many distros and packaging systems prefer to use tarballs (with optional signatures or hashes) instead of direct git repositories, so <code>.git</code> is not always going to be available. This causes FoundationDB\u2019s build to fail since it requires it. For prior projects, one way we did this was to add a <code>sdist</code> target to create a tarball of the source code without git, for every release. Then, put a <code>.release-version</code> file <em>inside</em> the tarball containing the actual versioning information, as part of <code>make sdist</code>.</p>\n</li>\n<li>\n<p>The FoundationDB Documentation site map is missing many important pages, for example, such as the \u201cAdministration\u201d page and \u201cTLS\u201d page, which do not seem to be available. The TLS page simply doesn\u2019t seem to <em>exist</em> anywhere but the repo, while the Administration page can at least be found on the current documentation using the \u201cSearch\u201d bar. But neither are linked from \u201cSite Map\u201d!</p>\n</li>\n<li>\n<p>Please don\u2019t use <code>-Werror</code>, anywhere, under any circumstances. In fact I suggest forgetting that flag has ever existed (as a distro maintainer, I almost wish it didn\u2019t). <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=5\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"> Ideally <code>-Werror</code> could be <em>injected</em> into the build system, for example during CI on systems you perfectly control, or FoundationDB developer machines. It\u2019s basically always wrong otherwise, though, and using it should require a dance on part of the person doing it. I had to patch this out of <code>./Makefile</code> for things to work.</p>\n<p>In particular, for NixOS, while the C++ compiler is GCC 4.9, i.e. old, glibc is <em>far newer</em>. That\u2019s unsurprising: there can only be one glibc, but many compilers. This results in GCC throwing warnings (errors) due to more modern glibc headers than the one that the build system/CI system currently tests against. (For example, glibc headers over time have been augmented with things like <code>warn_unused_result</code>, meaning perfectly warning-free code can become warning-laden, without even touching the compiler, only glibc.)</p>\n<p>While the compiler version is fixed, you can pretty much never guarantee the glibc version is fixed. Maybe NixOS is using glibc 2.25 with GCC 4.9, while another system is only using 2.23 with 4.9. Unless you test every possible combination of  a specific compiler version against an array of glibcs.</p>\n</li>\n</ul>\n<p>In particular, fixing these few issues would make the NixOS FoundationDB package <em>far</em> simpler, and it would allow me to remove several of my patches.</p>\n<hr>\n<h4>Testing, limitations</h4>\n<p>I\u2019ve tested FoundationDB-on-NixOS with a 9 node cluster split 3x3 in geographically distinct data centers (Amsterdam, New York, Bangalore) with proper locality settings, in triple datacenter mode. Autocoordination automatically promoted 7 coordinators out of the 9 nodes in distinct datacenters to achieve this (odd numbers: 2 coords in 2 of these regions, 3 coords in the last region). This cluster then had inserts (<code>fdbcli --no-status --exec 'writemode on; set fooX barX</code>\u2019, for many <code>X</code> values) performed on it repeatedly while taking nodes and coordinators offline at random intervals for random periods. (Nothing fancy to stress things, more like \u201cI hit some commands at random intervals while watching Netflix to see what would happen\u201d).</p>\n<p>There are currently several limitations. The biggest one is that TLS support is <strong>NOT</strong> supported in the NixOS configuration right now. This isn\u2019t due to a bug, just lack of time over the past weekend on my part. (The above 9-node/3-DC test was in fact encrypted \u2013 but using <a href=\"https://www.wireguard.com\" rel=\"nofollow noopener\">Wireguard</a> as an overlay VPN in order to transparently encrypt data-in-flight. As a bonus, the <code>wg</code> command on any node gives a hand indication of the raw network bandwidth use between any two nodes). I expect to enable this soon after some testing of <code>FDBLibTLS.so</code></p>\n<p>The second major limitation is that only the C bindings are installed, not the Python, Ruby, Java, or Go bindings. Each of these will likely require help from fellow NixOS maintainers to properly maintain and build, as language-specific packages and bindings often require bespoke setup. I\u2019m a C/Haskell programmer however, so I admit I\u2019m unlikely to get to this soon without cajoling, since my needs are met\u2026</p>\n<p>NixOS just recently had its latest release, version 18.03, in late March. I have no plans to backport FoundationDB packages in any form to NixOS 18.03. The next release is NixOS 18.09, due around September, and I expect NixOS\u2019s FoundationDB support will be quite featureful and ready by this time, and there is nothing to suggest its reversion. Until then, the semantics and default configurations may change!</p>\n<p>DR mode, PITR for active clusters, recovery etc has not been tested extensively (I did not set up a second cluster in my tests), but ideally should work fine, as <code>backup_agent</code> seems to work fine too on my local machines.</p>\n<p>There are probably some other bugs and problems I\u2019ve missed, surely.</p>\n<hr>\n<h4>Links</h4>\n<p>[1] <a href=\"https://nixos.org\" rel=\"nofollow noopener\">https://nixos.org</a><br>\n[2] <a href=\"https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/default.nix\" rel=\"nofollow noopener\">https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/default.nix</a><br>\n[3] <a href=\"https://github.com/NixOS/nixpkgs/blob/18f28a6413e33416576f632367f0a4816c74c188/nixos/modules/services/databases/foundationdb.nix\" rel=\"nofollow noopener\">https://github.com/NixOS/nixpkgs/blob/18f28a6413e33416576f632367f0a4816c74c188/nixos/modules/services/databases/foundationdb.nix</a><br>\n[4] <a href=\"https://inner-haven.net/~aseipp/nix/fdb-manual/index.html#module-foundationdb\" rel=\"nofollow noopener\">https://inner-haven.net/~aseipp/nix/fdb-manual/index.html#module-foundationdb</a></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-04-24T20:07:04.397Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 617,
+        "reads": 83,
+        "readers_count": 82,
+        "score": 3237.6,
+        "yours": false,
+        "topic_id": 251,
+        "topic_slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+        "display_username": "Austin Seipp",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/default.nix",
+            "internal": false,
+            "reflection": false,
+            "title": "nixpkgs/default.nix at 617db2df96a75f7808d544b57aa97d9859377e84 \u00b7 NixOS/nixpkgs \u00b7 GitHub",
+            "clicks": 21
+          },
+          {
+            "url": "https://inner-haven.net/~aseipp/nix/fdb-manual/index.html#module-foundationdb",
+            "internal": false,
+            "reflection": false,
+            "title": "NixOS Manual",
+            "clicks": 10
+          },
+          {
+            "url": "https://nixos.org",
+            "internal": false,
+            "reflection": false,
+            "title": "NixOS Linux",
+            "clicks": 8
+          },
+          {
+            "url": "https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/ldflags.patch",
+            "internal": false,
+            "reflection": false,
+            "title": "nixpkgs/ldflags.patch at 617db2df96a75f7808d544b57aa97d9859377e84 \u00b7 NixOS/nixpkgs \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://www.wireguard.com",
+            "internal": false,
+            "reflection": false,
+            "title": "WireGuard: fast, modern, secure VPN tunnel",
+            "clicks": 2
+          },
+          {
+            "url": "http://foundationdb.org",
+            "internal": false,
+            "reflection": false,
+            "clicks": 2
+          },
+          {
+            "url": "https://github.com/NixOS/nixpkgs/blob/18f28a6413e33416576f632367f0a4816c74c188/nixos/modules/services/databases/foundationdb.nix",
+            "internal": false,
+            "reflection": false,
+            "title": "nixpkgs/foundationdb.nix at 18f28a6413e33416576f632367f0a4816c74c188 \u00b7 NixOS/nixpkgs \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 6
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 158,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-on-nixos-packaging-notes-and-questions/251/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 540,
+        "name": "David Scherer",
+        "username": "dave",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+        "created_at": "2018-04-24T23:36:17.439Z",
+        "cooked": "<p>Fantastic work!</p>\n<p>I like the principles behind NixOS a lot, at least by comparison to the insanity that is a \u201cnormal\u201d Linux distribution.</p>\n<p>I would guess that a PR to make newer compiler and/or boost versions work would be welcome.</p>\n<p>I don\u2019t think a contribution of systemd unit descriptions would be a bad idea, but realistically to include them the Apple team (who are the only ones in a position to do serious CI at the moment) will have to do some work to build and maintain tests.  So I don\u2019t know if they will be up for that.</p>\n<p>In a perfect universe, every distro would build and package FoundationDB from source, <em>and</em> all of them would build byte-for-byte the exact same fdbserver binary that Apple builds and runs zillions of tests on.  That would give everyone the best of all worlds.  I\u2019m not sure where this dream falls on the spectrum of challenging to impossible.  It seems like it should be easier for NixOS than for most.</p>\n<p>Failing that, running binaries from <a href=\"http://fdbserver.org\" rel=\"nofollow noopener\">fdbserver.org</a> will probably be the safest thing for production.</p>\n<p>Is it really impossible to take a build dependency on a particular glibc header version?  I ask because it sounds like that would resolve a number of your issues, make the build much more similar to the one that Apple is doing, and be at least a baby step toward the exact-same-binary world.  It sounds like the official build is moving in the direction of building with a modern glibc and explicitly requesting old symbols as necessary, rather than building with an ancient glibc, so it wouldn\u2019t be a matter of trying to pin an ancient version, just of trying to pin something other than the exact version of the actual .so your distribution uses.</p>\n<p>I don\u2019t know what\u2019s going on with _LIBS vs _LDFLAGS; if it\u2019s as broken as you say why does it build for anyone?</p>\n<p>+1 on make install; I think this more or less \u201cbelongs\u201d to packagers and maybe you should even write it and submit a PR</p>\n<p>-0 on a build option to disable lowest-common-denominator build targeting features. I agree that this is not really necessary when the result of the build is intended to be used in the environment it\u2019s built in. But it\u2019s not clear to me that these things do any harm, and I prefer the ideal of everyone building the same binary unless they specifically want to do something different</p>\n<p>+1 on make sdist or something similar</p>\n<p>-1 on suppressing warnings during builds. I think the reasons you give why \u201cperfectly warning-free code can become warning-laden\u201d are, mutatis mutandis, reasons why \u201cperfectly bug-free code can become bug-laden\u201d, and thus why we should pin header versions.  If the build is truly deterministic, only developers (and maintainers, but no one said it was an easy job) should see new warnings.</p>\n<p>In terms of distro testing, I would make sure you are actually testing the C bindings.  IIRC fdbcli doesn\u2019t use them (it statically links the client).  I guess backup_agent probably does, though.</p>\n<p>I would think a little about what Nix \u201crollbacks\u201d mean with respect to the data files. For example, it will not in general be possible to downgrade FoundationDB versions.  Try to make sure that the worst case is temporary unavailability rather than, say, deleting data files or something.</p>\n<p>I don\u2019t speak for the team at Apple; this is all just, like, my opinion, man.</p>\n<p>Dave</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-04-24T23:36:17.439Z",
+        "reply_count": 2,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 54,
+        "readers_count": 53,
+        "score": 70.8,
+        "yours": false,
+        "topic_id": 251,
+        "topic_slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+        "display_username": "David Scherer",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "http://fdbserver.org",
+            "internal": false,
+            "reflection": false,
+            "clicks": 24
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 22,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-on-nixos-packaging-notes-and-questions/251/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 548,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2018-04-25T02:06:06.899Z",
+        "cooked": "<p>Yay for a NixOS package! <img src=\"https://emoji.discourse-cdn.com/twitter/tada.png?v=12\" title=\":tada:\" class=\"emoji\" alt=\":tada:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<p>Below are responses to some of your questions.  The ones I didn\u2019t answer (largely around policies), are simply because I don\u2019t have answers.</p>\n<blockquote>\n<p>FoundationDB build includes a copy of Boost 1.52.0</p>\n</blockquote>\n<p>There was a recent PR which fixed the couple issues needed to support boost &gt; 1.52.0.  Our internal testing hasn\u2019t been upgraded to use a newer boost, but you can probably fit in with your generalized boost infrastructure just fine now.</p>\n<blockquote>\n<p>I\u2019d be more than willing to help contribute upstream unit files</p>\n</blockquote>\n<p>There was actually an open request for this in <a href=\"https://github.com/apple/foundationdb/issues/241\">#241</a>.</p>\n<blockquote>\n<p>Is there any timeframe on support for newer GCC/boost libraries?</p>\n</blockquote>\n<p>A PR was already merged to add support for boost &gt;1.52.0, so if you pull master, you should be fine.  I validated the build against 1.67.0.</p>\n<p>Newer GCC/clang is a project that\u2019s a background task of mine, so it\u2019ll probably happen sometime in the next month or two, but I make no promises.  If you have any patch (full or partial), I\u2019d be happy to accept a PR.</p>\n<blockquote>\n<p>So maybe my understanding of _LIBS is wrong.</p>\n</blockquote>\n<p>Probably not.  There\u2019s probably some strange mixup of LIBS and LDFLAGS within the internals of the build system, and there\u2019s not really anyone that enjoys touching it.  I feel like I hit weird issues when trying to integrate statically linked libraries into the TLS Plugin build, but I didn\u2019t stare at it for too long.</p>\n<blockquote>\n<p>libstdc++ frobnication, link-validate, etc.</p>\n</blockquote>\n<p>I think there\u2019s an argument to be made that we should make a stronger separation between release and non-release builds.  For the binaries that get offered from <a href=\"http://www.foundationdb.org\">www.foundationdb.org</a>, we\u2019d like all those checks to pass, and to make sure that the binary can run on even ancient platforms.  If you\u2019re just building for your local machine, then all the extra effort likely doesn\u2019t produce an observable difference.</p>\n<p>I think we\u2019d potentially want to consider having three different build modes: Developer, Distro, and Release.  Developer would probably default to <code>-g -Wall -Werror</code> and none of the build strictness shenanigans (and this would be the default), Distro would drop <code>-g -Werror</code> and the dependencies on having a checkout, and release would be with all bells and whistles enabled.</p>\n<p>I don\u2019t really have well developed thoughts or opinions surrounding this though.</p>\n<blockquote>\n<p>For NixOS users, I have also written a section in the manual about FoundationDB usage</p>\n</blockquote>\n<p>I\u2019m unclear if there\u2019s any value in users having backup agents running by default, and I mean this as a genuine question.  I suppose it might change depending on if your default install is geared towards being networked into a larger cluster or used for local testing and development.</p>\n<p>And it\u2019d be great if you wouldn\u2019t mind filing issues for:</p>\n<ul>\n<li>make install target</li>\n<li>Optionally disable binary portability</li>\n<li>Admin and TLS pages unfindable</li>\n<li>libraries should be listed in _LIBS and not _LDFLAGS</li>\n</ul>\n<hr>\n<blockquote>\n<p>-0 on a build option to disable lowest-common-denominator build targeting features. [snip] it\u2019s not clear to me that these things do any harm</p>\n</blockquote>\n<p>I think there\u2019s a trade off here of how close to the release build a normal developer build is versus how many hoops one might have to jump through to get a building and testable <code>fdbserver</code>.  I\u2019d be a bit sad and disappointed if potential contributors get turned away because they don\u2019t use the provided Dockerfile as a build image, and end up getting stuck on e.g. stdlibc++ frobnication.  It seems a bit strange to me to do so much effort to support old glibc versions in a build for distro packaging, when one could easily slap on a glibc&gt;2.14 dependency for the package instead.</p>\n<p>That said, my view comes from not having as clear of a picture of what our distro story should be as your perfect universe outlines.  If the goal is for everyone to generate the byte-for-byte same binary, it seems like enforcing Docker as The One True Way To Build would be a good idea.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-04-25T02:06:06.899Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 11,
+        "reads": 52,
+        "readers_count": 51,
+        "score": 65.4,
+        "yours": false,
+        "topic_id": 251,
+        "topic_slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/241",
+            "internal": false,
+            "reflection": false,
+            "title": "create systemd init script \u00b7 Issue #241 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "http://www.foundationdb.org",
+            "internal": false,
+            "reflection": false,
+            "title": "FoundationDB | Home",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-on-nixos-packaging-notes-and-questions/251/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 588,
+        "name": "Austin Seipp",
+        "username": "aseipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "created_at": "2018-04-25T18:52:54.782Z",
+        "cooked": "<blockquote>\n<p>I don\u2019t think a contribution of systemd unit descriptions would be a bad idea, but realistically to include them the Apple team (who are the only ones in a position to do serious CI at the moment) will have to do some work to build and maintain tests. So I don\u2019t know if they will be up for that.</p>\n</blockquote>\n<p>In practice I guess it sort of depends on the scope of the unit file in question. Things like security enhancements generally need to be carefully reviewed by developers so they don\u2019t impact functionality in some unforseen way; for example, filesystem path restrictions. On the other hand, the basic logic behind the current init script is very easy to replicate (maybe 10/15 lines of a unit file, which is much more readable/reviewable than <code>init.d</code> scripts) and probably would be low impact.</p>\n<p>There is the argument that actually running under systemd could introduce other issues; that\u2019s possible, but realistically I\u2019m going to guess you would have found them by now: in practice on every modern Linux distro (RHEL 7, Ubuntu 16.04 and beyond) you are actually running FoundationDB under systemd <em>already</em>, it\u2019s just the init script is run as a compatibility measure so you don\u2019t see it. But the old style stuff is just for compatibility.</p>\n<blockquote>\n<p>Failing that, running binaries from <a href=\"http://fdbserver.org\" rel=\"noopener nofollow ugc\">fdbserver.org</a> 4 will probably be the safest thing for production.</p>\n</blockquote>\n<p>So, it\u2019s actually possible using some magic to install non-NixOS compiled binaries on NixOS. This is <em>generally</em> frowned upon when source is available however, for a number of reasons (including source auditing, better package integration if patches need to be applied to work around small deficiencies like FHS differences, better reliability since failures can often happen in a test suite or at compile time, e.g. from dependency updates, rather than at runtime in odd ways, etc). I imagine most Linux distros will adopt this exact same stance.</p>\n<p>There is a policy in NixOS where <em>some</em> packages actually do have two versions: the NixOS compiled version, and a binary package directly from the upstream developers. For example, there are two variants of Firefox under this distinction (one compiled by us, another from <a href=\"http://mozilla.org\" rel=\"noopener nofollow ugc\">mozilla.org</a>). It\u2019s unclear to me if this is the right path for FoundationDB on NixOS. I am not sure about other distros, but I think some of them have similar policies.</p>\n<blockquote>\n<p>In a perfect universe, every distro would build and package FoundationDB from source, and all of them would build byte-for-byte the exact same fdbserver binary that Apple builds and runs zillions of tests on. That would give everyone the best of all worlds. I\u2019m not sure where this dream falls on the spectrum of challenging to impossible. It seems like it should be easier for NixOS than for most.</p>\n</blockquote>\n<p>So there are two things here, from my POV:</p>\n<ul>\n<li>Can we achieve deterministic results in NixOS, or &lt;arbitrary distro XYZ&gt;?</li>\n<li>Can we achieve deterministic results <em>that are the same as the Apple team would have</em>?</li>\n</ul>\n<p>The answer to 1 is \u201cyes, and fundamentally NixOS is very well designed for this, but it\u2019s still ongoing work\u201d (you only need see the work Debian, etc have paved the way with \u2013 <a href=\"http://reproducible-builds.org\" rel=\"noopener nofollow ugc\">reproducible-builds.org</a>). Many others are also working towards it. NixOS has perfect reproducibility for a limited subset of things (including the kernel for a while now, I think) but there\u2019s always more things to work on\u2026</p>\n<p>The answer to 2 is \u201cimpossible\u201d. In fact, it\u2019s <em>more impossible</em> for NixOS than other distributions, despite its design allowing perfectly hermetic, controlled build environments. Why? Because NixOS does not have a standard FHS layout, like 99% of all Linux distributions. Most crucially, this also applies to things like dynamic libraries.</p>\n<p>This means that, barring every other possible technical challenge, the binaries can <em>never</em> be the same. You can trivially see this by just running <code>ldd</code> on <code>fdbcli</code>:</p>\n<pre><code class=\"lang-auto\">root@link&gt; ldd $(which fdbcli) | grep ld\n        /nix/store/27x7pinqdsl9f3rpbm8bsszd9fhwq266-glibc-2.27/lib/ld-linux-x86-64.so.2 =&gt; /nix/store/27x7pinqdsl9f3rpbm8bsszd9fhwq266-glibc-2.27/lib64/ld-linux-x86-64.so.2 (0x00007f5133319000)\n</code></pre>\n<p>That is, the dynamic linker <code>ld-so</code> is fundamentally in a different place than any Linux distribution. And things like this are part of the ELF header; it\u2019s also not possible to \u201cquotient\u201d these changes out of the binaries in general since any string, in general, can affect buffer layout, alignment in the resulting object file, etc etc.</p>\n<p>So any attempt to get bit-for-bit reproducibility is DOA, I\u2019m afraid. That said, many Linux distributions are converging on reproducible builds, a la point 1. So what\u2019s more likely is that individual <em>distros</em> will each be able to guarantee their FDB builds are fully deterministic, as well as the official FDB packages by the Apple team are. But none of these will match. Thus, it\u2019s more like a family of reproducible binaries, rather than a singular one.</p>\n<p>(The very short version of this for bystanders is that: when Nix compiles something, it hashes the thing it\u2019s going to compile, as well as all the input dependencies to compile it. The results from the build are then installed into a directory which is keyed by this hash (<code>27x7pinqdsl9f3rpbm8bsszd9fhwq266</code>, in the case of <code>glibc-2.27</code>). This is how coexistance works; you can even have <em>two</em> copies of glibc 2.27 installed, for example, if one had a patch applied and the other didn\u2019t \u2013 because they would result in two separate hashes.)</p>\n<blockquote>\n<p>Is it really impossible to take a build dependency on a particular glibc header version?</p>\n</blockquote>\n<p>It\u2019s not impossible in theory, just more work and nothing in NixOS really does this right now as it stands, I think. NixOS could do it easier than most others, again, but even despite effectively being superpowered, we have limits to what we accept (or feel is acceptable). I think many people would frown upon it relative to just patching out <code>-Werror</code> (or whatever). Plus, all of these hacks do at some level have ongoing costs for someone (for example, me, and anyone else who helps maintain the packages, or you, the developers); it\u2019s mostly just a matter of where the complexity should go.</p>\n<p>For things like this, I\u2019d say (with my maintainer hat on, not a developer one) that issues like this are best resolved upstream for FOSS projects. This is so that the actual fixes are localized, and so half-baked fixes do not proliferate among downstreams, or at least for no longer than absolutely necessary. This is, IME, the majority view for most distro maintainers, who tend to get involved upstream.</p>\n<p>So there\u2019s a dynamic that people are going to author packages, even without explicitly detailing everything as I\u2019ve done on the forum. Some will probably even use my work as a basis; but their tools may not be as good. So vendoring glibc headers is way harder, or they have to do workarounds like this will proliferate among downstream users. There are a lot of negatives to this, that may not align with your vision of the project. But it will also require maintenance on your part. Drawing that line is hard, and it\u2019s not even a technical problem, all the actual technical specifies are pretty easy otherwise\u2026</p>\n<blockquote>\n<p>I don\u2019t know what\u2019s going on with _LIBS vs _LDFLAGS; if it\u2019s as broken as you say why does it build for anyone?</p>\n</blockquote>\n<p>My notebook just has the word \u201cGHOSTS\u201d scribbled on a single page with a red marker in big, capital letters, and I\u2019ve nothing else to go on right now I\u2019m afraid.</p>\n<blockquote>\n<p>-0 on a build option to disable lowest-common-denominator build targeting features. I agree that this is not really necessary when the result of the build is intended to be used in the environment it\u2019s built in. But it\u2019s not clear to me that these things do any harm, and I prefer the ideal of everyone building the same binary unless they specifically want to do something different</p>\n</blockquote>\n<p>At the end of the day though I don\u2019t really think any downstream ever <em>will</em> get the same binary (for reasons alluded to above), but I can understand this point in the sense anyone who checks out the code should use the same process you do.</p>\n<blockquote>\n<p>-1 on suppressing warnings during builds. I think the reasons you give why \u201cperfectly warning-free code can become warning-laden\u201d are, mutatis mutandis, reasons why \u201cperfectly bug-free code can become bug-laden\u201d, and thus why we should pin header versions. If the build is truly deterministic, only developers (and maintainers, but no one said it was an easy job) should see new warnings.</p>\n</blockquote>\n<p>Mmm, following the last point \u2013 there could be a basic trade off here, right? In particular, rather than patching a Makefile which is a bit annoying and error prone, maybe there could be a file like <code>build/local-build.mk</code> that is optionally sourced by the Makefiles with some specific settings? And the default could be the current settings.</p>\n<p>For example, by default -Werror could be enabled, but you could alternatively let the user do something like:</p>\n<pre><code class=\"lang-auto\">$ cat 'EXTRA_CFLAGS = -Wno-werror=&lt;some minor warning that is benign&gt;' &gt; build/local-build.mk\n$ make # build as usual\n</code></pre>\n<p>This would mean overrides are opt-in. So I could just do this instead in the build expression for NixOS, rather than sheepishly hack around it blindly. Thoughts?</p>\n<blockquote>\n<p>In terms of distro testing, I would make sure you are actually testing the C bindings. IIRC fdbcli doesn\u2019t use them (it statically links the client). I guess backup_agent probably does, though.</p>\n</blockquote>\n<p>I do have some small app I\u2019m working on that <em>seems</em> to work fine but admittedly I\u2019m currently writing some C++ wrapper code that\u2019s distracted me a bit. <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"> I\u2019ll post any issues I might have later.</p>\n<blockquote>\n<p>I would think a little about what Nix \u201crollbacks\u201d mean with respect to the data files. For example, it will not in general be possible to downgrade FoundationDB versions. Try to make sure that the worst case is temporary unavailability rather than, say, deleting data files or something.</p>\n</blockquote>\n<p>In general this is no different than any other database; Nix doesn\u2019t fundamentally change the fact you have to do migrations carefully, it just gives you tools to ensure careful rollback of system packages \u2013 but not necessarily the data. Backups, etc etc etc. But the vast majority of rollbacks are really something like \u201cI accidentally mistyped a config file parameter and the server got mad and errored out on startup, so I rolled back\u201d. In general any data administrator will have to be careful here, though\u2026</p>\n<p>But I\u2019ll be sure to test this and write something in the manual to this effect; \u201cHow to upgrade FoundationDB\u201d.</p>\n<p>Also we should certainly support multiple major release branch versions of FDB in NixOS, and we already do this for most database packages. For example, we\u2019ll certainly want multiple <code>foundationdb51</code> for 5.1.x, <code>foundationdb60</code> for 6.0.x branches etc, and in the NixOS configuration users pick what package they want \u2013 so users can carefully control what version they use, and where they\u2019ll upgrade it, independent of the actual system (this is how Postgres works for example, in NixOS, and some people still even use PostgreSQL 9.3 happily, with the very new-and-latest NixOS versions). So I\u2019ll put this on my TODO list.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-04-25T18:52:54.782Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 49,
+        "readers_count": 48,
+        "score": 39.8,
+        "yours": false,
+        "topic_id": 251,
+        "topic_slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+        "display_username": "Austin Seipp",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "http://fdbserver.org",
+            "internal": false,
+            "reflection": false,
+            "clicks": 1
+          },
+          {
+            "url": "http://mozilla.org",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          },
+          {
+            "url": "http://reproducible-builds.org",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 22,
+          "username": "dave",
+          "name": "David Scherer",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 158,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-on-nixos-packaging-notes-and-questions/251/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 593,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2018-04-25T22:03:31.681Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"aseipp\" data-post=\"4\" data-topic=\"251\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/aseipp/48/124_2.png\" class=\"avatar\"> aseipp:</div>\n<blockquote>\n<p>There is a policy in NixOS where some packages actually do have two versions: the NixOS compiled version, and a binary package directly from the upstream developers.</p>\n</blockquote>\n</aside>\n<p>I put some thought into this last night, and this is where I ended up as well.  I think having a developer-oriented package that builds from source and sets up a local FDB instance to use is great.  It\u2019d be good to have an additional package (or option on the former package) that just downloads the binary from <a href=\"http://foundationdb.org\">foundationdb.org</a> and sets up the configuration, with a note that the binary package is preferred for production use because the precise binary being used has going through a stricter QA process.</p>\n<aside class=\"quote no-group\" data-username=\"dave\" data-post=\"2\" data-topic=\"251\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/dave/48/89_2.png\" class=\"avatar\"> dave:</div>\n<blockquote>\n<p>In a perfect universe, every distro would build and package FoundationDB from source, and all of them would build byte-for-byte the exact same fdbserver binary that Apple builds and runs zillions of tests on.</p>\n</blockquote>\n</aside>\n<p>I think this could be interpreted better as the .text sections of the ELF files would be identical, and not the entire ELF file itself.  I believe that works around the counter-arguments that you laid out above.</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-04-25T22:03:31.681Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 2,
+        "incoming_link_count": 2,
+        "reads": 38,
+        "readers_count": 37,
+        "score": 17.6,
+        "yours": false,
+        "topic_id": 251,
+        "topic_slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "http://foundationdb.org",
+            "internal": false,
+            "reflection": false,
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-on-nixos-packaging-notes-and-questions/251/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      530,
+      540,
+      548,
+      588,
+      593
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2737
+    ],
+    [
+      4,
+      2736
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FoundationDB on NixOS: packaging, notes and questions",
+  "id": 251,
+  "title": "FoundationDB on NixOS: packaging, notes and questions",
+  "posts_count": 5,
+  "created_at": "2018-04-24T20:01:29.570Z",
+  "views": 2219,
+  "reply_count": 2,
+  "like_count": 6,
+  "last_posted_at": "2018-04-25T22:03:31.681Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+  "category_id": 5,
+  "word_count": 6880,
+  "deleted_at": null,
+  "user_id": 158,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_251",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FreeBSD support for FoundationDB",
+      "id": 357,
+      "title": "FreeBSD support for FoundationDB",
+      "slug": "freebsd-support-for-foundationdb",
+      "posts_count": 28,
+      "reply_count": 15,
+      "highest_post_number": 28,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/d398e4e4d091e9513c8c4b18d766da38a01f930e_2_1024x640.png",
+      "created_at": "2018-05-06T16:36:03.074Z",
+      "last_posted_at": "2018-08-01T02:53:16.728Z",
+      "bumped": true,
+      "bumped_at": "2018-08-01T02:53:16.728Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 4956,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 235,
+            "username": "wolfspider",
+            "name": "Jesse Bennett",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Package/Download questions",
+      "id": 2037,
+      "title": "Package/Download questions",
+      "slug": "package-download-questions",
+      "posts_count": 10,
+      "reply_count": 7,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-03-30T18:38:14.115Z",
+      "last_posted_at": "2020-05-11T20:08:52.461Z",
+      "bumped": true,
+      "bumped_at": "2020-05-11T20:08:52.461Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1683,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 500,
+            "username": "wohali",
+            "name": "Joan Touzet",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wohali/{size}/773_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Porting FoundationDB to Power (ppc64le)",
+      "id": 1115,
+      "title": "Porting FoundationDB to Power (ppc64le)",
+      "slug": "porting-foundationdb-to-power-ppc64le",
+      "posts_count": 23,
+      "reply_count": 9,
+      "highest_post_number": 23,
+      "image_url": null,
+      "created_at": "2019-02-05T10:43:39.843Z",
+      "last_posted_at": "2019-09-20T22:27:07.374Z",
+      "bumped": true,
+      "bumped_at": "2019-09-20T22:27:07.374Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2372,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 505,
+            "username": "seth-priya",
+            "name": "Priya Seth",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/db5fbb/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proposal: Dropping MSVC",
+      "id": 1939,
+      "title": "Proposal: Dropping MSVC",
+      "slug": "proposal-dropping-msvc",
+      "posts_count": 13,
+      "reply_count": 8,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2020-02-12T01:24:59.706Z",
+      "last_posted_at": "2020-02-13T20:00:39.983Z",
+      "bumped": true,
+      "bumped_at": "2020-02-13T20:00:39.983Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 1644,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 323,
+            "username": "WolfDan",
+            "name": "Wolf Dan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfdan/{size}/806_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 500,
+            "username": "wohali",
+            "name": "Joan Touzet",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wohali/{size}/773_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB Usage Poll",
+      "id": 460,
+      "title": "FoundationDB Usage Poll",
+      "slug": "foundationdb-usage-poll",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-23T21:22:03.664Z",
+      "last_posted_at": "2018-05-31T08:36:51.660Z",
+      "bumped": true,
+      "bumped_at": "2019-06-12T11:28:30.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1905,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 230,
+            "username": "umpc",
+            "name": "Justin Lowery",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 158,
+        "username": "aseipp",
+        "name": "Austin Seipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 22,
+        "username": "dave",
+        "name": "David Scherer",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 158,
+      "username": "aseipp",
+      "name": "Austin Seipp",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png"
+    },
+    "last_poster": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    },
+    "links": [
+      {
+        "url": "http://fdbserver.org",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 25,
+        "user_id": 22,
+        "domain": "fdbserver.org",
+        "root_domain": "fdbserver.org"
+      },
+      {
+        "url": "https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/default.nix",
+        "title": "nixpkgs/default.nix at 617db2df96a75f7808d544b57aa97d9859377e84 \u00b7 NixOS/nixpkgs \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 21,
+        "user_id": 158,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://inner-haven.net/~aseipp/nix/fdb-manual/index.html#module-foundationdb",
+        "title": "NixOS Manual",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 10,
+        "user_id": 158,
+        "domain": "inner-haven.net",
+        "root_domain": "inner-haven.net"
+      },
+      {
+        "url": "https://nixos.org",
+        "title": "NixOS Linux",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 158,
+        "domain": "nixos.org",
+        "root_domain": "nixos.org"
+      },
+      {
+        "url": "https://github.com/NixOS/nixpkgs/blob/617db2df96a75f7808d544b57aa97d9859377e84/pkgs/servers/foundationdb/ldflags.patch",
+        "title": "nixpkgs/ldflags.patch at 617db2df96a75f7808d544b57aa97d9859377e84 \u00b7 NixOS/nixpkgs \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 158,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/issues/241",
+        "title": "create systemd init script \u00b7 Issue #241 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 13,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "http://foundationdb.org",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 13,
+        "domain": "foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://www.wireguard.com",
+        "title": "WireGuard: fast, modern, secure VPN tunnel",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 158,
+        "domain": "www.wireguard.com",
+        "root_domain": "wireguard.com"
+      },
+      {
+        "url": "https://github.com/NixOS/nixpkgs/blob/18f28a6413e33416576f632367f0a4816c74c188/nixos/modules/services/databases/foundationdb.nix",
+        "title": "nixpkgs/foundationdb.nix at 18f28a6413e33416576f632367f0a4816c74c188 \u00b7 NixOS/nixpkgs \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 158,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "http://www.foundationdb.org",
+        "title": "FoundationDB | Home",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 13,
+        "domain": "www.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

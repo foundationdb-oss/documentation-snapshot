@@ -1,0 +1,633 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14031,
+        "name": "v",
+        "username": "avi",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+        "created_at": "2024-05-09T15:19:42.492Z",
+        "cooked": "<p>I am not able to get fbd running on my macOS. I got the pkg from the github downloads of version 7.3.27 (with avx enabled). I am on intel mac, running Monterey 12.6.7.</p>\n<p>After installation, when I run <code>fdbcli</code>, it is very slow to respond. It printed:</p>\n<pre><code class=\"lang-auto\">$ fdbcli\n\nUsing cluster file `/usr/local/etc/foundationdb/fdb.cluster'.\n\nThe database is unavailable; type `status' for more information.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt;\nfdb&gt; status\n\nWARNING: Long delay (Ctrl-C to interrupt)\n\nUsing cluster file `/usr/local/etc/foundationdb/fdb.cluster'.\n\nTimed out fetching cluster status.\n\nConfiguration:\n  Redundancy mode        - unknown\n  Storage engine         - unknown\n  Log engine             - unknown\n  Encryption at-rest     - disabled\n  Coordinators           - unknown\n  Usable Regions         - unknown\n\nCluster:\n  FoundationDB processes - unknown\n  Zones                  - unknown\n  Machines               -\n  Machines               - unknown\n\nData:\n  Replication health     - unknown\n  Moving data            - unknown\n  Sum of key-value sizes - unknown\n  Disk space used        - unknown\n\nOperating space:\n  Unable to retrieve operating space status\n\nWorkload:\n  Read rate              - unknown\n  Write rate             - unknown\n  Transactions started   - unknown\n  Transactions committed - unknown\n  Conflict rate          - unknown\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 05/09/24 20:31:48\n</code></pre>\n<p>I created a database, then I can see status:</p>\n<pre><code class=\"lang-auto\">fdb&gt; configure new single memory\nDatabase created\nfdb&gt;\nfdb&gt;\nfdb&gt; status\n\nUsing cluster file `/usr/local/etc/foundationdb/fdb.cluster'.\n\nUnable to start batch priority transaction after 5 seconds.\n\nConfiguration:\n  Redundancy mode        - single\n  Storage engine         - memory\n  Log engine             - ssd-2\n  Encryption at-rest     - disabled\n  Coordinators           - 1\n  Desired Commit Proxies - 3\n  Desired GRV Proxies    - 1\n  Desired Resolvers      - 1\n  Desired Logs           - 3\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 1\n  Zones                  - 1\n  Machines               - 1\n  Memory availability    - 0.1 GB per process on machine with least available\n                           &gt;&gt;&gt;&gt;&gt; (WARNING: 4.0 GB recommended) &lt;&lt;&lt;&lt;&lt;\n  Fault Tolerance        - 0 machines\n  Server time            - 05/09/24 20:37:28\n\nData:\n  Replication health     - (Re)initializing automatic data distribution\n  Moving data            - unknown (initializing)\n  Sum of key-value sizes - unknown\n  Disk space used        - 105 MB\n\nOperating space:\n  Storage server         - 1.0 GB free on most full server\n  Log server             - 0.0 GB free on most full server\n\nWorkload:\n  Read rate              - 21 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 8 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n  Performance limited by server 1845f04aa0093344: Log server MVCC memory.\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 05/09/24 20:37:23\n</code></pre>\n<p>Then I tried to write something and it failed:</p>\n<pre><code class=\"lang-auto\">fdb&gt; writemode on\nfdb&gt; set myKey vvv\n\nWARNING: Long delay (Ctrl-C to interrupt)\n\nThe database is unavailable; type `status' for more information.\n</code></pre>\n<p>Now if I do status, it is broken:</p>\n<pre><code class=\"lang-auto\">status\n\nWARNING: Long delay (Ctrl-C to interrupt)\n\nUsing cluster file `/usr/local/etc/foundationdb/fdb.cluster'.\n\nTimed out fetching cluster status.\n\nConfiguration:\n  Redundancy mode        - unknown\n  Storage engine         - unknown\n  Log engine             - unknown\n  Encryption at-rest     - disabled\n  Coordinators           - unknown\n  Usable Regions         - unknown\n\nCluster:\n  FoundationDB processes - unknown\n  Zones                  - unknown\n  Machines               -\n  Machines               - unknown\n\nData:\n  Replication health     - unknown\n  Moving data            - unknown\n  Sum of key-value sizes - unknown\n  Disk space used        - unknown\n\nOperating space:\n  Unable to retrieve operating space status\n\nWorkload:\n  Read rate              - unknown\n  Write rate             - unknown\n  Transactions started   - unknown\n  Transactions committed - unknown\n  Conflict rate          - unknown\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 05/09/24 20:41:05\n</code></pre>\n<p>I restarted doing</p>\n<pre><code class=\"lang-auto\">sudo launchctl unload /Library/LaunchDaemons/com.foundationdb.fdbmonitor.plist\n\nsudo launchctl load /Library/LaunchDaemons/com.foundationdb.fdbmonitor.plist\n</code></pre>\n<p>Right after restart I was able to get status:</p>\n<pre><code class=\"lang-auto\">fdbcli --exec 'status json'\n{\n    \"client\" : {\n        \"cluster_file\" : {\n            \"path\" : \"/usr/local/etc/foundationdb/fdb.cluster\",\n            \"up_to_date\" : true\n        },\n        \"coordinators\" : {\n            \"coordinators\" : [\n                {\n                    \"address\" : \"127.0.0.1:4689\",\n                    \"protocol\" : \"0fdb00b073000000\",\n                    \"reachable\" : true\n                }\n            ],\n            \"quorum_reachable\" : true\n        },\n        \"database_status\" : {\n            \"available\" : true,\n            \"healthy\" : false\n        },\n        \"messages\" : [\n        ],\n        \"timestamp\" : 1715267904\n    },\n    \"cluster\" : {\n        \"active_primary_dc\" : \"\",\n        \"active_tss_count\" : 0,\n        \"bounce_impact\" : {\n            \"can_clean_bounce\" : false,\n            \"reason\" : \"cluster hasn't fully recovered yet\"\n        },\n        \"clients\" : {\n            \"count\" : 2,\n            \"supported_versions\" : [\n                {\n                    \"client_version\" : \"7.3.27\",\n                    \"connected_clients\" : [\n                        {\n                            \"address\" : \"127.0.0.1:51124\",\n                            \"log_group\" : \"default\"\n                        },\n                        {\n                            \"address\" : \"127.0.0.1:51125\",\n                            \"log_group\" : \"default\"\n                        }\n                    ],\n                    \"count\" : 2,\n                    \"max_protocol_clients\" : [\n                        {\n                            \"address\" : \"127.0.0.1:51124\",\n                            \"log_group\" : \"default\"\n                        },\n                        {\n                            \"address\" : \"127.0.0.1:51125\",\n                            \"log_group\" : \"default\"\n                        }\n                    ],\n                    \"max_protocol_count\" : 2,\n                    \"protocol_version\" : \"fdb00b073000000\",\n                    \"source_version\" : \"57ccdb8fee6d0e5d4488fbc964d7c64909fe0dc2\"\n                }\n            ]\n        },\n        \"cluster_controller_timestamp\" : 1715267909,\n        \"configuration\" : {\n            \"backup_worker_enabled\" : 0,\n            \"blob_granules_enabled\" : 0,\n            \"commit_proxies\" : 3,\n            \"coordinators_count\" : 1,\n            \"encryption_at_rest_mode\" : \"disabled\",\n            \"excluded_servers\" : [\n            ],\n            \"grv_proxies\" : 1,\n            \"log_engine\" : \"ssd-2\",\n            \"log_spill\" : 2,\n            \"logs\" : 3,\n            \"perpetual_storage_wiggle\" : 0,\n            \"perpetual_storage_wiggle_engine\" : \"none\",\n            \"perpetual_storage_wiggle_locality\" : \"0\",\n            \"proxies\" : 4,\n            \"redundancy_mode\" : \"single\",\n            \"resolvers\" : 1,\n            \"storage_engine\" : \"memory\",\n            \"storage_migration_type\" : \"disabled\",\n            \"tenant_mode\" : \"disabled\",\n            \"usable_regions\" : 1\n        },\n        \"configuration_database\" : {\n            \"commits\" : [\n            ],\n            \"last_compacted_version\" : 0,\n            \"most_recent_version\" : 0,\n            \"mutations\" : [\n            ],\n            \"snapshot\" : {\n            }\n        },\n        \"connection_string\" : \"777gAbyb:LzikpdSo@127.0.0.1:4689\",\n        \"data\" : {\n            \"least_operating_space_bytes_log_server\" : 0,\n            \"least_operating_space_bytes_storage_server\" : 973725696,\n            \"state\" : {\n                \"description\" : \"(Re)initializing automatic data distribution\",\n                \"name\" : \"initializing\"\n            },\n            \"total_disk_used_bytes\" : 104976384\n        },\n        \"database_available\" : true,\n        \"database_lock_state\" : {\n            \"locked\" : false\n        },\n        \"datacenter_lag\" : {\n            \"seconds\" : 0,\n            \"versions\" : 0\n        },\n        \"degraded_processes\" : 0,\n        \"fault_tolerance\" : {\n            \"max_zone_failures_without_losing_availability\" : 0,\n            \"max_zone_failures_without_losing_data\" : 0\n        },\n        \"full_replication\" : true,\n        \"generation\" : 6,\n        \"idempotency_ids\" : {\n            \"size_bytes\" : 0\n        },\n        \"incompatible_connections\" : [\n        ],\n        \"latency_probe\" : {\n            \"commit_seconds\" : 0.022584200000000002,\n            \"immediate_priority_transaction_start_seconds\" : 0.0037555699999999997,\n            \"read_seconds\" : 6.0081500000000011e-05,\n            \"transaction_start_seconds\" : 0.0045347199999999999\n        },\n        \"layers\" : {\n            \"_valid\" : true,\n            \"backup\" : {\n                \"blob_recent_io\" : {\n                    \"bytes_sent\" : 0,\n                    \"requests_failed\" : 0,\n                    \"requests_successful\" : 0\n                },\n                \"instances\" : {\n                    \"1cb9b00dde393bb9bcd525088909f3e1\" : {\n                        \"blob_stats\" : {\n                            \"recent\" : {\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            },\n                            \"total\" : {\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            }\n                        },\n                        \"configured_workers\" : 10,\n                        \"id\" : \"1cb9b00dde393bb9bcd525088909f3e1\",\n                        \"last_updated\" : 1715267902.2352662,\n                        \"locality\" : {\n                        },\n                        \"main_thread_cpu_seconds\" : 0.033302000000000005,\n                        \"memory_usage\" : 35070201856,\n                        \"networkAddress\" : \"127.0.0.1\",\n                        \"processID\" : 6272,\n                        \"process_cpu_seconds\" : 0.034511,\n                        \"resident_size\" : 16355328,\n                        \"version\" : \"7.3.27\"\n                    }\n                },\n                \"instances_running\" : 1,\n                \"last_updated\" : 1715267902.2352662,\n                \"paused\" : false,\n                \"tags\" : {\n                },\n                \"total_workers\" : 10\n            }\n        },\n        \"logs\" : [\n            {\n                \"begin_version\" : 758347531,\n                \"current\" : true,\n                \"epoch\" : 6,\n                \"log_fault_tolerance\" : 0,\n                \"log_interfaces\" : [\n                    {\n                        \"address\" : \"127.0.0.1:4689\",\n                        \"healthy\" : true,\n                        \"id\" : \"39fcad2118284af9\"\n                    }\n                ],\n                \"log_replication_factor\" : 1,\n                \"log_write_anti_quorum\" : 0,\n                \"possibly_losing_data\" : false\n            },\n            {\n                \"begin_version\" : 479498831,\n                \"current\" : false,\n                \"end_version\" : 756345015,\n                \"epoch\" : 4,\n                \"log_fault_tolerance\" : 0,\n                \"log_interfaces\" : [\n                    {\n                        \"address\" : \"127.0.0.1:4689\",\n                        \"healthy\" : true,\n                        \"id\" : \"0a09048f035ff96c\"\n                    }\n                ],\n                \"log_replication_factor\" : 1,\n                \"log_write_anti_quorum\" : 0,\n                \"possibly_losing_data\" : false\n            }\n        ],\n        \"lowest_compatible_protocol_version\" : \"fdb00b072000000\",\n        \"machines\" : {\n        },\n        \"messages\" : [\n            {\n                \"description\" : \"Unable to start batch priority transaction after 5 seconds.\",\n                \"name\" : \"batch_priority_transaction_start_probe_timeout\"\n            },\n            {\n                \"description\" : \"Unable to retrieve all status information.\",\n                \"name\" : \"status_incomplete\",\n                \"reasons\" : [\n                    {\n                        \"description\" : \"Cannot retrieve all process status information.\"\n                    },\n                    {\n                        \"description\" : \"Unknown cache statistics.\"\n                    }\n                ]\n            }\n        ],\n        \"metacluster\" : {\n            \"cluster_type\" : \"standalone\"\n        },\n        \"newest_protocol_version\" : \"fdb00b073000000\",\n        \"processes\" : {\n            \"0801ab9096766a86765021a7b4b116b2\" : {\n                \"address\" : \"127.0.0.1:4689\",\n                \"class_source\" : \"command_line\",\n                \"class_type\" : \"unset\",\n                \"command_line\" : \"/usr/local/libexec/fdbserver --cluster_file=/usr/local/etc/foundationdb/fdb.cluster --datadir=/usr/local/foundationdb/data/4689 --listen_address=public --logdir=/usr/local/foundationdb/logs --public_address=auto:4689\",\n                \"excluded\" : false,\n                \"memory\" : {\n                    \"limit_bytes\" : 8589934592\n                },\n                \"messages\" : [\n                ],\n                \"roles\" : [\n                    {\n                        \"id\" : \"305ba9de0ac83105\",\n                        \"role\" : \"master\"\n                    },\n                    {\n                        \"id\" : \"644d22deb419e20d\",\n                        \"role\" : \"cluster_controller\"\n                    },\n                    {\n                        \"id\" : \"05bc27e635435ea2\",\n                        \"role\" : \"data_distributor\"\n                    },\n                    {\n                        \"id\" : \"d24cc01b1963b60f\",\n                        \"role\" : \"ratekeeper\"\n                    },\n                    {\n                        \"id\" : \"f9447007d2d471fe\",\n                        \"role\" : \"consistency_scan\"\n                    },\n                    {\n                        \"id\" : \"0a09048f035ff96c\",\n                        \"role\" : \"log\"\n                    },\n                    {\n                        \"role\" : \"coordinator\"\n                    },\n                    {\n                        \"id\" : \"606736be0a39007f\",\n                        \"role\" : \"commit_proxy\"\n                    },\n                    {\n                        \"id\" : \"a7e4ad2c04967a8f\",\n                        \"role\" : \"grv_proxy\"\n                    },\n                    {\n                        \"data_version\" : 863195315,\n                        \"durable_bytes\" : {\n                            \"counter\" : 0,\n                            \"hz\" : 0,\n                            \"roughness\" : -1\n                        },\n                        \"id\" : \"39fcad2118284af9\",\n                        \"input_bytes\" : {\n                            \"counter\" : 10081,\n                            \"hz\" : 2016.1700000000001,\n                            \"roughness\" : 6083.2799999999997\n                        },\n                        \"kvstore_available_bytes\" : 15040008192,\n                        \"kvstore_free_bytes\" : 15040008192,\n                        \"kvstore_total_bytes\" : 499963174912,\n                        \"kvstore_used_bytes\" : 104882176,\n                        \"queue_disk_available_bytes\" : 15040008192,\n                        \"queue_disk_free_bytes\" : 15040008192,\n                        \"queue_disk_total_bytes\" : 499963174912,\n                        \"queue_disk_used_bytes\" : 1044480,\n                        \"role\" : \"log\"\n                    },\n                    {\n                        \"bytes_queried\" : {\n                            \"counter\" : 12598,\n                            \"hz\" : 2519.4899999999998,\n                            \"roughness\" : 2177.75\n                        },\n                        \"data_lag\" : {\n                            \"seconds\" : 0,\n                            \"versions\" : 0\n                        },\n                        \"data_version\" : 863195315,\n                        \"durability_lag\" : {\n                            \"seconds\" : 105,\n                            \"versions\" : 105000000\n                        },\n                        \"durable_bytes\" : {\n                            \"counter\" : 0,\n                            \"hz\" : 0,\n                            \"roughness\" : -1\n                        },\n                        \"durable_version\" : 758195315,\n                        \"fetched_versions\" : {\n                            \"counter\" : 109847784,\n                            \"hz\" : 21968600,\n                            \"roughness\" : 37925800\n                        },\n                        \"fetches_from_logs\" : {\n                            \"counter\" : 6,\n                            \"hz\" : 1.1999500000000001,\n                            \"roughness\" : 1.07155\n                        },\n                        \"finished_queries\" : {\n                            \"counter\" : 191,\n                            \"hz\" : 38.198300000000003,\n                            \"roughness\" : 11.2013\n                        },\n                        \"id\" : \"1719fcaa0d55118f\",\n                        \"input_bytes\" : {\n                            \"counter\" : 30306,\n                            \"hz\" : 6060.9300000000003,\n                            \"roughness\" : 25583.799999999999\n                        },\n                        \"keys_queried\" : {\n                            \"counter\" : 98,\n                            \"hz\" : 19.5991,\n                            \"roughness\" : 15.948499999999999\n                        },\n                        \"kvstore_available_bytes\" : 1073725696,\n                        \"kvstore_free_bytes\" : 1073725696,\n                        \"kvstore_inline_keys\" : 0,\n                        \"kvstore_total_bytes\" : 1073741824,\n                        \"kvstore_total_nodes\" : 0,\n                        \"kvstore_total_size\" : 0,\n                        \"kvstore_used_bytes\" : 94208,\n                        \"local_rate\" : 100,\n                        \"low_priority_queries\" : {\n                            \"counter\" : 0,\n                            \"hz\" : 0,\n                            \"roughness\" : -1\n                        },\n                        \"mutation_bytes\" : {\n                            \"counter\" : 3872,\n                            \"hz\" : 774.36500000000001,\n                            \"roughness\" : 3267.8099999999999\n                        },\n                        \"mutations\" : {\n                            \"counter\" : 26,\n                            \"hz\" : 5.19977,\n                            \"roughness\" : 20.9496\n                        },\n                        \"query_queue_max\" : 9,\n                        \"role\" : \"storage\",\n                        \"storage_metadata\" : {\n                            \"created_time_datetime\" : \"2024-05-09 15:07:10.354 +0000\",\n                            \"created_time_timestamp\" : 1715267230.3541701,\n                            \"storage_engine\" : \"memory\"\n                        },\n                        \"stored_bytes\" : 0,\n                        \"total_queries\" : {\n                            \"counter\" : 191,\n                            \"hz\" : 32.798499999999997,\n                            \"roughness\" : 9.4726499999999998\n                        }\n                    },\n                    {\n                        \"id\" : \"bdca50358d550c90\",\n                        \"role\" : \"resolver\"\n                    }\n                ],\n                \"version\" : \"7.3.27\"\n            }\n        },\n        \"protocol_version\" : \"fdb00b073000000\",\n        \"qos\" : {\n            \"batch_performance_limited_by\" : {\n                \"description\" : \"Log server MVCC memory.\",\n                \"name\" : \"log_server_mvcc_write_bandwidth\",\n                \"reason_id\" : 4,\n                \"reason_server_id\" : \"39fcad2118284af9\"\n            },\n            \"batch_released_transactions_per_second\" : 0,\n            \"batch_transactions_per_second_limit\" : 0,\n            \"limiting_data_lag_storage_server\" : {\n                \"seconds\" : 0,\n                \"versions\" : 0\n            },\n            \"limiting_durability_lag_storage_server\" : {\n                \"seconds\" : 105.069,\n                \"versions\" : 105068980\n            },\n            \"limiting_queue_bytes_storage_server\" : 0,\n            \"performance_limited_by\" : {\n                \"description\" : \"Log server MVCC memory.\",\n                \"name\" : \"log_server_mvcc_write_bandwidth\",\n                \"reason_id\" : 4,\n                \"reason_server_id\" : \"39fcad2118284af9\"\n            },\n            \"released_transactions_per_second\" : 5.5791399999999998,\n            \"throttled_tags\" : {\n                \"auto\" : {\n                    \"busy_read\" : 0,\n                    \"busy_write\" : 0,\n                    \"count\" : 0,\n                    \"recommended_only\" : 0\n                },\n                \"manual\" : {\n                    \"count\" : 0\n                }\n            },\n            \"transactions_per_second_limit\" : 0,\n            \"worst_data_lag_storage_server\" : {\n                \"seconds\" : 0,\n                \"versions\" : 0\n            },\n            \"worst_durability_lag_storage_server\" : {\n                \"seconds\" : 105.069,\n                \"versions\" : 105068980\n            },\n            \"worst_queue_bytes_log_server\" : 10277,\n            \"worst_queue_bytes_storage_server\" : 30306\n        },\n        \"recovery_state\" : {\n            \"active_generations\" : 1,\n            \"description\" : \"Accepting commits. All logs recruited.\",\n            \"name\" : \"all_logs_recruited\",\n            \"seconds_since_last_recovered\" : 1.3090200000000001\n        },\n        \"tenants\" : {\n            \"num_tenants\" : 0\n        },\n        \"version_epoch\" : {\n            \"enabled\" : false\n        },\n        \"workload\" : {\n            \"bytes\" : {\n                \"read\" : {\n                    \"counter\" : 12598,\n                    \"hz\" : 2519.4899999999998,\n                    \"roughness\" : 2177.75\n                },\n                \"written\" : {\n                    \"counter\" : 3502,\n                    \"hz\" : 700.35000000000002,\n                    \"roughness\" : 1974.5699999999999\n                }\n            },\n            \"keys\" : {\n                \"read\" : {\n                    \"counter\" : 98,\n                    \"hz\" : 19.5991,\n                    \"roughness\" : 15.948499999999999\n                }\n            },\n            \"operations\" : {\n                \"location_requests\" : {\n                    \"counter\" : 22,\n                    \"hz\" : 4.3996899999999997,\n                    \"roughness\" : 11.476599999999999\n                },\n                \"low_priority_reads\" : {\n                    \"counter\" : 0,\n                    \"hz\" : 0,\n                    \"roughness\" : 0\n                },\n                \"memory_errors\" : {\n                    \"counter\" : 0,\n                    \"hz\" : 0,\n                    \"roughness\" : 0\n                },\n                \"read_requests\" : {\n                    \"counter\" : 191,\n                    \"hz\" : 32.798499999999997,\n                    \"roughness\" : 9.4726499999999998\n                },\n                \"reads\" : {\n                    \"counter\" : 191,\n                    \"hz\" : 38.198300000000003,\n                    \"roughness\" : 11.2013\n                },\n                \"writes\" : {\n                    \"counter\" : 24,\n                    \"hz\" : 4.7996600000000003,\n                    \"roughness\" : 12.539\n                }\n            },\n            \"transactions\" : {\n                \"committed\" : {\n                    \"counter\" : 16,\n                    \"hz\" : 3.19977,\n                    \"roughness\" : 5.2360499999999996\n                },\n                \"conflicted\" : {\n                    \"counter\" : 3,\n                    \"hz\" : 0.59995700000000007,\n                    \"roughness\" : 2\n                },\n                \"rejected_for_queued_too_long\" : {\n                    \"counter\" : 0,\n                    \"hz\" : 0,\n                    \"roughness\" : 0\n                },\n                \"started\" : {\n                    \"counter\" : 78,\n                    \"hz\" : 15.5999,\n                    \"roughness\" : 3.8475600000000001\n                },\n                \"started_batch_priority\" : {\n                    \"counter\" : 0,\n                    \"hz\" : 0,\n                    \"roughness\" : 0\n                },\n                \"started_default_priority\" : {\n                    \"counter\" : 40,\n                    \"hz\" : 7.9999200000000004,\n                    \"roughness\" : 1.95774\n                },\n                \"started_immediate_priority\" : {\n                    \"counter\" : 38,\n                    \"hz\" : 7.5999300000000005,\n                    \"roughness\" : 4.8546100000000001\n                }\n            }\n        }\n    }\n}\n</code></pre>\n<p>But still no luck with the DB. I am using the default config and haven\u2019t changed anything.</p>\n<p>I also tried with 6.3.23 as mentioned <a href=\"https://apple.github.io/foundationdb/downloads.html\" rel=\"noopener nofollow ugc\">here</a>. The issue persisted, so I am back to 7.3.27 again.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-05-09T15:19:42.492Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 119,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 600.8,
+        "yours": false,
+        "topic_id": 4466,
+        "topic_slug": "unable-to-get-it-running-locally-on-macos",
+        "display_username": "v",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/downloads.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Downloads \u2014 FoundationDB 7.1",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1417,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/unable-to-get-it-running-locally-on-macos/4466/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14036,
+        "name": "v",
+        "username": "avi",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+        "created_at": "2024-05-10T02:50:57.601Z",
+        "cooked": "<p>I have found the solution thanks to <a class=\"mention\" href=\"/u/carhops\">@carhops</a>!</p>\n<p>adding <code>knob_min_available_space_ratio</code> worked as suggested in <a href=\"https://forums.foundationdb.org/t/how-to-run-foundationdb-on-a-mac/3563/30\" class=\"inline-onebox\">How to run FoundationDB on a Mac? - #30 by carhops</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-05-10T02:50:57.601Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 14,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 70.6,
+        "yours": false,
+        "topic_id": 4466,
+        "topic_slug": "unable-to-get-it-running-locally-on-macos",
+        "display_username": "v",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/how-to-run-foundationdb-on-a-mac/3563/30",
+            "internal": true,
+            "reflection": false,
+            "title": "How to run FoundationDB on a Mac?",
+            "clicks": 49
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1417,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/unable-to-get-it-running-locally-on-macos/4466/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14031,
+      14036
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      530
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Unable to get it running locally on macOS",
+  "id": 4466,
+  "title": "Unable to get it running locally on macOS",
+  "posts_count": 2,
+  "created_at": "2024-05-09T15:19:42.326Z",
+  "views": 300,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-05-10T02:50:57.601Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "unable-to-get-it-running-locally-on-macos",
+  "category_id": 7,
+  "word_count": 1531,
+  "deleted_at": null,
+  "user_id": 1417,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4466",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to run FoundationDB on a Mac?",
+      "id": 3563,
+      "title": "How to run FoundationDB on a Mac?",
+      "slug": "how-to-run-foundationdb-on-a-mac",
+      "posts_count": 31,
+      "reply_count": 20,
+      "highest_post_number": 31,
+      "image_url": null,
+      "created_at": "2022-09-27T08:23:57.287Z",
+      "last_posted_at": "2024-05-10T02:44:20.490Z",
+      "bumped": true,
+      "bumped_at": "2024-05-10T02:44:20.490Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 17,
+      "views": 3315,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 307,
+            "username": "jwr",
+            "name": "Jan Rychter",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwr/{size}/302_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1342,
+            "username": "newhook",
+            "name": "Matthew Newhook",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/newhook/{size}/1684_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1417,
+            "username": "avi",
+            "name": "v",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Brand new macOS installation &ldquo;has issues&rdquo;",
+      "id": 2163,
+      "title": "Brand new macOS installation \"has issues\"",
+      "slug": "brand-new-macos-installation-has-issues",
+      "posts_count": 13,
+      "reply_count": 9,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2020-06-06T00:59:50.974Z",
+      "last_posted_at": "2020-06-07T15:45:14.843Z",
+      "bumped": true,
+      "bumped_at": "2020-06-07T15:45:14.843Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1568,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 776,
+            "username": "dimi",
+            "name": "Dimitri Bouniol",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dimi/{size}/879_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Getting started with 7.3.x on macos",
+      "id": 4027,
+      "title": "Getting started with 7.3.x on macos",
+      "slug": "getting-started-with-7-3-x-on-macos",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2023-06-23T05:18:36.749Z",
+      "last_posted_at": "2023-11-14T01:17:18.394Z",
+      "bumped": true,
+      "bumped_at": "2023-11-14T01:17:18.394Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 940,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1278,
+            "username": "spegoraro",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ac8455/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1267,
+            "username": "fuCtor",
+            "name": "Alexey Shcherbakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/fuctor/{size}/1599_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1291,
+            "username": "bryanp",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bryanp/{size}/1627_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1343,
+            "username": "rabernat",
+            "name": "Ryan Abernathey",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rabernat/{size}/1685_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Macos version database is available, but has issues. All of a sudden",
+      "id": 3932,
+      "title": "Macos version database is available, but has issues. All of a sudden",
+      "slug": "macos-version-database-is-available-but-has-issues-all-of-a-sudden",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2023-04-26T17:30:05.076Z",
+      "last_posted_at": "2023-04-28T04:57:59.102Z",
+      "bumped": true,
+      "bumped_at": "2023-04-28T04:57:59.102Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 625,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1247,
+            "username": "rootaccess",
+            "name": "Root Access",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rootaccess/{size}/1575_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Mac version of FoundationDB seems unhealthy",
+      "id": 624,
+      "title": "Mac version of FoundationDB seems unhealthy",
+      "slug": "mac-version-of-foundationdb-seems-unhealthy",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-08-09T01:54:43.781Z",
+      "last_posted_at": "2018-08-09T14:27:32.729Z",
+      "bumped": true,
+      "bumped_at": "2018-08-09T14:27:32.729Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1806,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 349,
+            "username": "knaversr",
+            "name": "rob rodgers",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/k/82dd89/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1417,
+        "username": "avi",
+        "name": "v",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1417,
+      "username": "avi",
+      "name": "v",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png"
+    },
+    "last_poster": {
+      "id": 1417,
+      "username": "avi",
+      "name": "v",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/how-to-run-foundationdb-on-a-mac/3563/30",
+        "title": "How to run FoundationDB on a Mac?",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 49,
+        "user_id": 1417,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

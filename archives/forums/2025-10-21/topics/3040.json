@@ -1,0 +1,645 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10329,
+        "name": "wen",
+        "username": "fang",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/96bed5/{size}.png",
+        "created_at": "2021-11-25T10:12:36.001Z",
+        "cooked": "<p>I have a fdb cluster using <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB</a> and now trying to raise a pod with <a href=\"https://github.com/FoundationDB/fdb-document-layer\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">GitHub - FoundationDB/fdb-document-layer: A document data model on FoundationDB, implementing MongoDB\u00ae wire protocol</a>. the status of pod is running, but l can not telnet ip:27016, so l check log : Type=\u201cStartupFailure\u201d ID=\u201c0000000000000000\u201d phase=\u201cConnectToCluster\u201d timeout=\u201c70\u201d.  l don\u2019t know why can\u2019t connect to cluster, my fdbcluster is running and my cluster file is correct.<br>\nthese are my yaml</p>\n<pre><code class=\"lang-auto\">apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: fdb-doc-layer\n  namespace: yunzhou-system\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: fdb-doc-layer\n  template:\n    metadata:\n      labels:\n        app: fdb-doc-layer\n    spec:\n      containers:\n      - name: fdb-doc-layer\n        image: foundationdb/fdb-document-layer:1.6.4\n        env:\n        - name: FDB_CLUSTER_FILE\n          value: /etc/foundationdb/fdb.cluster\n        volumeMounts:\n        - name: config-volume\n          mountPath: /etc/foundationdb\n        resources:\n          limits:\n            memory: \"128Mi\"\n            cpu: \"200m\"\n        ports:\n        - containerPort: 27016\n      volumes:\n       - name: config-volume\n         configMap:\n           name: my-cluster-config\n           items:\n           - key: cluster-file\n             path: fdb.cluster</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-11-25T10:12:36.001Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 27,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 137.6,
+        "yours": false,
+        "topic_id": 3040,
+        "topic_slug": "fdb-doc-layer-on-kubernets",
+        "display_username": "wen",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-document-layer",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-document-layer: A document data model on FoundationDB, implementing MongoDB\u00ae wire protocol",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1040,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-doc-layer-on-kubernets/3040/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10349,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2021-12-02T07:53:42.090Z",
+        "cooked": "<p>You could try the example job from the operator repo to see if you can connect to the cluster: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/master/sample-apps/data-loader/job.yaml\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/job.yaml at master \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a> and just to confirm you are not using any <code>NetworkPolicies</code> or something like that? In addition to that could you confirm that the cluster is up and running by using <code>kubectl exec ..</code> to jump into one of the Pods of the cluster and run <code>fddbcli --exec 'status details'</code>? And your cluster is running without mTLS?</p>\n<p>Another guess is that the lib version of the Doc Layer is to old. since the official image uses 6.0 (see: <a href=\"https://github.com/FoundationDB/fdb-document-layer/blob/master/packaging/docker/Dockerfile#L43-L48\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-document-layer/Dockerfile at master \u00b7 FoundationDB/fdb-document-layer \u00b7 GitHub</a>) but I would expect some additional information about that in the client logs, so you might wan to build you own version with a never library. I never ran the Doc Layer so those are only guesses hat hopefully help.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-12-02T07:53:42.090Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 7.2,
+        "yours": false,
+        "topic_id": 3040,
+        "topic_slug": "fdb-doc-layer-on-kubernets",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-document-layer/blob/master/packaging/docker/Dockerfile#L43-L48",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-document-layer/Dockerfile at master \u00b7 FoundationDB/fdb-document-layer \u00b7 GitHub",
+            "clicks": 5
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/master/sample-apps/data-loader/job.yaml",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/job.yaml at master \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-doc-layer-on-kubernets/3040/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10329,
+      10349
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1427
+    ],
+    [
+      2,
+      1420
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Fdb-doc-layer on kubernets",
+  "id": 3040,
+  "title": "Fdb-doc-layer on kubernets",
+  "posts_count": 2,
+  "created_at": "2021-11-25T10:12:35.935Z",
+  "views": 567,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-12-02T07:53:42.090Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-doc-layer-on-kubernets",
+  "category_id": 11,
+  "word_count": 325,
+  "deleted_at": null,
+  "user_id": 1040,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3040",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Can&rsquo;t use MongoDB CLI to connect to Document Layer Docker image",
+      "id": 1502,
+      "title": "Can't use MongoDB CLI to connect to Document Layer Docker image",
+      "slug": "cant-use-mongodb-cli-to-connect-to-document-layer-docker-image",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-07-02T08:21:13.904Z",
+      "last_posted_at": "2021-10-11T12:35:10.548Z",
+      "bumped": true,
+      "bumped_at": "2021-10-11T12:35:10.548Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1570,
+      "category_id": 11,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 951,
+            "username": "wedi",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/w/73ab20/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 990,
+            "username": "baiwfg2",
+            "name": "Lewis Chan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Connecting to the database using `fdbcli` results in an error",
+      "id": 1841,
+      "title": "Connecting to the database using `fdbcli` results in an error",
+      "slug": "connecting-to-the-database-using-fdbcli-results-in-an-error",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-12-14T07:23:08.203Z",
+      "last_posted_at": "2019-12-17T15:06:03.064Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T15:06:03.064Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2426,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Getting timeout error while reconciling foundationDB cluster in kubernetes",
+      "id": 2150,
+      "title": "Getting timeout error while reconciling foundationDB cluster in kubernetes",
+      "slug": "getting-timeout-error-while-reconciling-foundationdb-cluster-in-kubernetes",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-06-01T10:44:55.604Z",
+      "last_posted_at": "2020-06-01T16:46:30.092Z",
+      "bumped": true,
+      "bumped_at": "2020-06-01T16:46:30.092Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 789,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 772,
+            "username": "antonprabin",
+            "name": "Prabin Poulose",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to connect to FoundationDB with MongoDB CLI?",
+      "id": 977,
+      "title": "How to connect to FoundationDB with MongoDB CLI?",
+      "slug": "how-to-connect-to-foundationdb-with-mongodb-cli",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-12-28T15:06:54.534Z",
+      "last_posted_at": "2019-01-02T23:14:14.408Z",
+      "bumped": true,
+      "bumped_at": "2019-01-02T23:14:14.408Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1621,
+      "category_id": 11,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 465,
+            "username": "xet7",
+            "name": "xet7",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/xet7/{size}/460_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB @ Kubernetes having &ldquo;issues&rdquo;",
+      "id": 383,
+      "title": "FoundationDB @ Kubernetes having \"issues\"",
+      "slug": "foundationdb-kubernetes-having-issues",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-09T10:17:53.797Z",
+      "last_posted_at": "2018-05-11T17:28:05.081Z",
+      "bumped": true,
+      "bumped_at": "2018-05-11T17:28:05.081Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2031,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1040,
+        "username": "fang",
+        "name": "wen",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/96bed5/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1040,
+      "username": "fang",
+      "name": "wen",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/96bed5/{size}.png"
+    },
+    "last_poster": {
+      "id": 849,
+      "username": "johscheuer",
+      "name": "Johannes Scheuermann",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-document-layer/blob/master/packaging/docker/Dockerfile#L43-L48",
+        "title": "fdb-document-layer/Dockerfile at master \u00b7 FoundationDB/fdb-document-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-document-layer",
+        "title": "GitHub - FoundationDB/fdb-document-layer: A document data model on FoundationDB, implementing MongoDB\u00ae wire protocol",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1040,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator",
+        "title": "GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1040,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/master/sample-apps/data-loader/job.yaml",
+        "title": "fdb-kubernetes-operator/job.yaml at master \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

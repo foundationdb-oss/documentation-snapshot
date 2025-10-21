@@ -1,0 +1,635 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12440,
+        "name": "Felix-zhoux",
+        "username": "Felix-zhoux",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/8797f3/{size}.png",
+        "created_at": "2023-02-15T14:22:51.315Z",
+        "cooked": "<p>Hi~ In the deployment practice of pushing FDB to a <strong>large-scale</strong> (60 nodes, 480 disks, <strong>1320 processes</strong>. When we deploy only half the size, there is no problem) cluster, we found that the <code>Replication health</code> state of the cluster has been in <code>(Re)initializing automatic data distribution</code><br>\nChecking the log found that DD was accompanied by some errors, and it was still unable to successfully recruit a healthy server team.</p>\n<pre><code class=\"lang-auto\"># fdbserver --version\nFoundationDB 7.1 (v7.1.27)\nsource version dc4bd7ef6fcda345276073599ed6a2b28b089e90\nprotocol fdb00b071010000\n# fdbcli \nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nThe database is available.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; \nfdb&gt; status\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - three_datacenter\n  Storage engine         - ssd-2\n  Coordinators           - 9\n  Desired Logs           - 12\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 1320\n  Zones                  - 60\n  Machines               - 60\n  Memory availability    - 8.0 GB per process on machine with least available\n  Retransmissions rate   - 109 Hz\n  Fault Tolerance        - 3 machines\n  Server time            - 02/15/23 14:26:30\n\nData:\n  Replication health     - (Re)initializing automatic data distribution\n  Moving data            - unknown (initializing)\n  Sum of key-value sizes - unknown\n  Disk space used        - 114.535 GB\n\nOperating space:\n  Storage server         - 6855.3 GB free on most full server\n  Log server             - 6855.4 GB free on most full server\n\nWorkload:\n  Read rate              - 257 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 14 Hz\n  Transactions committed - 1 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 02/15/23 14:26:29\n\nfdb&gt; \n\n</code></pre>\n<p>The relevant log snippets are as follows:</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"10\" Time=\"1676469574.195800\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DumpToken\" ID=\"9647cfdd6dc42c37\" Name=\"recruited.waitFailure\" Token=\"050cab77aaa22633\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.195800\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DatabaseContextCreated\" ID=\"027acbf78b76f6a4\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x3753c3c 0x2d64121 0x2d676e6 0x1fe9e37 0x12e8184 0x2009768 0x2009a1e 0xc944a4 0x355b1f3 0x355b5db 0x11e8760 0x36ee806 0xa776e9 0x7f8620a9e555\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.195800\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DataDistributorRunning\" ID=\"9647cfdd6dc42c37\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.195800\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DatabaseContextCreated\" ID=\"a4975c5989d98d07\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x3753c3c 0x2d64121 0x2d676e6 0x1fe9e37 0x12ced0e 0x12cf463 0x12e7e00 0x12e8210 0x2009768 0x2009a1e 0xc944a4 0x355b1f3 0x355b5db 0x11e8760 0x36ee806 0xa776e9 0x7f8620a9e555\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n...\n&lt;Event Severity=\"10\" Time=\"1676469574.210912\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDInitTookMoveKeysLock\" ID=\"9647cfdd6dc42c37\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.212116\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDInitGotConfiguration\" ID=\"9647cfdd6dc42c37\" Conf=\"{&amp;quot;backup_worker_enabled&amp;quot;:0,&amp;quot;blob_granules_enabled&amp;quot;:0,&amp;quot;log_spill&amp;quot;:2,&amp;quot;logs&amp;quot;:12,&amp;quot;perpetual_storage_wiggle&amp;quot;:0,&amp;quot;perpetual_storage_wiggle_locality&amp;quot;:&amp;quot;0&amp;quot;,&amp;quot;redundancy_mode&amp;quot;:&amp;quot;three_datacenter&amp;quot;,&amp;quot;storage_engine&amp;quot;:&amp;quot;ssd-2&amp;quot;,&amp;quot;storage_migration_type&amp;quot;:&amp;quot;disabled&amp;quot;,&amp;quot;tenant_mode&amp;quot;:&amp;quot;disabled&amp;quot;,&amp;quot;usable_regions&amp;quot;:1}\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.213482\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDInitUpdatedReplicaKeys\" ID=\"9647cfdd6dc42c37\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.234713\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"HugeArenaSample\" ID=\"0000000000000000\" Count=\"1\" Size=\"78084\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x36ac71e 0x368dc48 0x368e0d6 0x355eb80 0x11e8760 0x36ee806 0xa776e9 0x7f8620a9e555\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.256349\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDInitGotInitialDD\" ID=\"9647cfdd6dc42c37\" B=\"\" E=\"\\xff\\xff\" Src=\"4323f8147a78392a,6326c89b8eb4ad4f,7064281b2b53e9b7,7e3c88d189df961f,8f694905f7c2e94d,f7c84302691f7954\" Dest=\"[no items]\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.256975\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"TrackInitialShards\" ID=\"9647cfdd6dc42c37\" InitialShardCount=\"2\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.256975\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDTrackerStarting\" ID=\"9647cfdd6dc42c37\" State=\"Inactive\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.256975\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"AddedStorageServer\" ID=\"9647cfdd6dc42c37\" ServerID=\"540c6d4faf750f00\" ProcessID=\"157f53f4c3dde10629100fe6025c22fb\" ProcessClass=\"storage\" WaitFailureToken=\"7419393a57b74a05\" Address=\"10.214.177.38:5513\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n...\n&lt;Event Severity=\"10\" Time=\"1676469574.256975\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"AddedStorageServer\" ID=\"9647cfdd6dc42c37\" ServerID=\"fb8efa60867cf8ff\" ProcessID=\"48ca5e1775e1139282b9467758701e78\" ProcessClass=\"storage\" WaitFailureToken=\"7df731c680f8410d\" Address=\"10.249.122.29:5506\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.256975\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"ServerTeamTrackerStarting\" ID=\"9647cfdd6dc42c37\" Reason=\"Initial wait complete (sc)\" ServerTeam=\"TeamID f09682a5f93ab824; Size 6; 10.227.154.32:5500 4323f8147a78392a, 10.214.177.40:5502 6326c89b8eb4ad4f, 10.249.122.28:5513 7064281b2b53e9b7, 10.227.154.38:5513 7e3c88d189df961f, 10.214.177.26:5513 8f694905f7c2e94d, 10.249.122.39:5505 f7c84302691f7954\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.256975\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"ServerTeamHealthChangeDetected\" ID=\"9647cfdd6dc42c37\" ServerTeam=\"TeamID f09682a5f93ab824; Size 6; 10.227.154.32:5500 4323f8147a78392a, 10.214.177.40:5502 6326c89b8eb4ad4f, 10.249.122.28:5513 7064281b2b53e9b7, 10.227.154.38:5513 7e3c88d189df961f, 10.214.177.26:5513 8f694905f7c2e94d, 10.249.122.39:5505 f7c84302691f7954\" Primary=\"1\" IsReady=\"0\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.256975\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"TeamCollectionInfo\" ID=\"9647cfdd6dc42c37\" Primary=\"1\" AddedTeams=\"0\" TeamsToBuild=\"0\" CurrentServerTeams=\"0\" DesiredTeams=\"5400\" MaxTeams=\"27000\" StorageTeamSize=\"6\" CurrentMachineTeams=\"0\" CurrentHealthyMachineTeams=\"0\" DesiredMachineTeams=\"300\" MaxMachineTeams=\"1500\" TotalHealthyMachines=\"60\" MinTeamsOnServer=\"0\" MaxTeamsOnServer=\"0\" MinMachineTeamsOnMachine=\"0\" MaxMachineTeamsOnMachine=\"0\" DoBuildTeams=\"1\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1676469574.389380\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"Net2RunLoopTrace\" ID=\"0000000000000000\" TraceTime=\"1676469574.389671\" Trace=\"addr2line -e fdbserver.debug -p -C -f -i 0x7f8620e59630 0x7f8620e58aeb 0x36f5b53 0x370aa84 0x355e811 0x11e8760 0x36ee806 0xa776e9 0x7f8620a9e555 0xae1a42\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.417293\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"ServerTeamHealthChangeDetected\" ID=\"9647cfdd6dc42c37\" ServerTeam=\"TeamID f09682a5f93ab824; Size 6; 10.227.154.32:5500 4323f8147a78392a, 10.214.177.40:5502 6326c89b8eb4ad4f, 10.249.122.28:5513 7064281b2b53e9b7, 10.227.154.38:5513 7e3c88d189df961f, 10.214.177.26:5513 8f694905f7c2e94d, 10.249.122.39:5505 f7c84302691f7954\" Primary=\"1\" IsReady=\"0\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.417293\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"TeamCollectionInfo\" ID=\"9647cfdd6dc42c37\" Primary=\"1\" AddedTeams=\"0\" TeamsToBuild=\"0\" CurrentServerTeams=\"1\" DesiredTeams=\"5400\" MaxTeams=\"27000\" StorageTeamSize=\"6\" CurrentMachineTeams=\"1\" CurrentHealthyMachineTeams=\"1\" DesiredMachineTeams=\"300\" MaxMachineTeams=\"1500\" TotalHealthyMachines=\"60\" MinTeamsOnServer=\"0\" MaxTeamsOnServer=\"1\" MinMachineTeamsOnMachine=\"0\" MaxMachineTeamsOnMachine=\"1\" DoBuildTeams=\"1\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.418146\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDTeamCollectionBegin\" ID=\"9647cfdd6dc42c37\" Primary=\"1\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.418146\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDTeamCollectionReadyToStart\" ID=\"9647cfdd6dc42c37\" Primary=\"1\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.418146\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"TeamCollectionInfo\" ID=\"9647cfdd6dc42c37\" Primary=\"1\" AddedTeams=\"0\" TeamsToBuild=\"0\" CurrentServerTeams=\"1\" DesiredTeams=\"5400\" MaxTeams=\"27000\" StorageTeamSize=\"6\" CurrentMachineTeams=\"1\" CurrentHealthyMachineTeams=\"1\" DesiredMachineTeams=\"300\" MaxMachineTeams=\"1500\" TotalHealthyMachines=\"60\" MinTeamsOnServer=\"0\" MaxTeamsOnServer=\"1\" MinMachineTeamsOnMachine=\"0\" MaxMachineTeamsOnMachine=\"1\" DoBuildTeams=\"1\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.418146\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDRecruiting\" ID=\"0000000000000000\" Primary=\"1\" State=\"Sending request to CC\" Exclusions=\"1080\" Critical=\"0\" IncludedDCsSize=\"0\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.418146\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"StorageServerRecruitment\" ID=\"9647cfdd6dc42c37\" State=\"Idle\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.418146\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDMonitorHealthyTeamsStart\" ID=\"0000000000000000\" ZeroHealthyTeams=\"0\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.418146\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"TotalDataInFlight\" ID=\"9647cfdd6dc42c37\" Primary=\"1\" TotalBytes=\"0\" UnhealthyServers=\"0\" ServerCount=\"1080\" StorageTeamSize=\"6\" HighestPriority=\"140\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.423461\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDTrackerStats\" ID=\"9647cfdd6dc42c37\" Shards=\"1\" TotalSizeBytes=\"2005500\" SystemSizeBytes=\"0\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.424501\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"PerpetualStorageWiggleClose\" ID=\"9647cfdd6dc42c37\" Primary=\"1\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1676469574.425148\" DateTime=\"2023-02-15T13:59:34Z\" Type=\"DDExcludedServersChanged\" ID=\"9647cfdd6dc42c37\" AddressesExcluded=\"0\" AddressesFailed=\"0\" LocalitiesExcluded=\"0\" LocalitiesFailed=\"0\" ThreadID=\"9846941102884159635\" Machine=\"10.214.177.33:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n\n</code></pre>\n<p>Is this because the ceiling of the fdb cluster size has been reached?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-02-15T14:35:42.638Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 34,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 176.2,
+        "yours": false,
+        "topic_id": 3810,
+        "topic_slug": "dd-data-distributor-process-does-not-work-in-large-clusters",
+        "display_username": "Felix-zhoux",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1209,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dd-data-distributor-process-does-not-work-in-large-clusters/3810/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12807,
+        "name": "BoLee",
+        "username": "libo-sober",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "created_at": "2023-05-05T10:30:40.203Z",
+        "cooked": "<p>We encountered the same problem.<br>\nAt this scale, it is available and healthy for the cluster redundancy mode to be single.<br>\nWhen switching to 3DC mode, DD has been repeatedly recruiting.</p>\n<pre><code class=\"lang-bash\">&lt;Event Severity=\"10\" Time=\"1682908213.704075\" DateTime=\"2023-05-01T02:30:13Z\" Type=\"DataDistributorHalted\" ID=\"9d333ef8ebaf0b04\" ReqID=\"824bc5b34506366f\" ThreadID=\"20218286323518257\" Machine=\"10.214.177.37:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1682908213.704075\" DateTime=\"2023-05-01T02:30:13Z\" Type=\"BgDDMountainChopper\" ID=\"9d333ef8ebaf0b04\" SuppressedEventCount=\"0\" PollingInterval=\"10\" Enabled=\"1\" QueuedRelocations=\"0\" Error=\"operation_cancelled\" ErrorDescription=\"Asynchronous operation cancelled\" ErrorCode=\"1101\" ThreadID=\"20218286323518257\" Machine=\"10.214.177.37:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1682908213.704075\" DateTime=\"2023-05-01T02:30:13Z\" Type=\"BgDDValleyFiller\" ID=\"9d333ef8ebaf0b04\" SuppressedEventCount=\"0\" PollingInterval=\"10\" Enabled=\"1\" QueuedRelocations=\"0\" Error=\"operation_cancelled\" ErrorDescription=\"Asynchronous operation cancelled\" ErrorCode=\"1101\" ThreadID=\"20218286323518257\" Machine=\"10.214.177.37:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1682908213.704075\" DateTime=\"2023-05-01T02:30:13Z\" Type=\"DDTeamCollectionDestructed\" ID=\"9d333ef8ebaf0b04\" Primary=\"1\" ThreadID=\"20218286323518257\" Machine=\"10.214.177.37:7500\" LogGroup=\"default\" Roles=\"DD\" /&gt;\n</code></pre>\n<p><code>fdbcli --exec \"kill;kill all\"</code> will not work.</p>\n<p>What is the maximum scale that a cluster can currently support?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-05-05T10:30:40.203Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 15.2,
+        "yours": false,
+        "topic_id": 3810,
+        "topic_slug": "dd-data-distributor-process-does-not-work-in-large-clusters",
+        "display_username": "BoLee",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1175,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dd-data-distributor-process-does-not-work-in-large-clusters/3810/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12440,
+      12807
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      979
+    ],
+    [
+      2,
+      900
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "DD(data_distributor) process does not work in large clusters",
+  "id": 3810,
+  "title": "DD(data_distributor) process does not work in large clusters",
+  "posts_count": 2,
+  "created_at": "2023-02-15T14:22:51.248Z",
+  "views": 422,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-05-05T10:30:40.203Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "dd-data-distributor-process-does-not-work-in-large-clusters",
+  "category_id": 7,
+  "word_count": 1784,
+  "deleted_at": null,
+  "user_id": 1209,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3810",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Troubles scaling up the cluster",
+      "id": 751,
+      "title": "Troubles scaling up the cluster",
+      "slug": "troubles-scaling-up-the-cluster",
+      "posts_count": 32,
+      "reply_count": 26,
+      "highest_post_number": 32,
+      "image_url": null,
+      "created_at": "2018-10-08T03:24:54.004Z",
+      "last_posted_at": "2018-11-01T16:26:01.527Z",
+      "bumped": true,
+      "bumped_at": "2018-11-01T16:26:01.527Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3747,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "When configure three_datacenter_fallback,the cluster Replication health remains in (Re)initializing automatic data distribution",
+      "id": 3943,
+      "title": "When configure three_datacenter_fallback,the cluster Replication health remains in (Re)initializing automatic data distribution",
+      "slug": "when-configure-three-datacenter-fallback-the-cluster-replication-health-remains-in-re-initializing-automatic-data-distribution",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2023-05-05T09:19:34.357Z",
+      "last_posted_at": "2023-05-05T09:19:34.453Z",
+      "bumped": true,
+      "bumped_at": "2023-05-05T09:53:12.338Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 348,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1175,
+            "username": "libo-sober",
+            "name": "BoLee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why doesn&rsquo;t my cluster performance scale when I double the number of machines?",
+      "id": 640,
+      "title": "Why doesn't my cluster performance scale when I double the number of machines?",
+      "slug": "why-doesnt-my-cluster-performance-scale-when-i-double-the-number-of-machines",
+      "posts_count": 21,
+      "reply_count": 16,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-08-15T09:26:47.588Z",
+      "last_posted_at": "2018-08-17T07:32:00.164Z",
+      "bumped": true,
+      "bumped_at": "2018-08-17T07:32:00.164Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 68,
+            "username": "daverosenthal",
+            "name": "Dave Rosenthal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daverosenthal/{size}/51_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Migrating from a large cluster to another",
+      "id": 721,
+      "title": "Migrating from a large cluster to another",
+      "slug": "migrating-from-a-large-cluster-to-another",
+      "posts_count": 15,
+      "reply_count": 9,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2018-09-21T15:41:31.742Z",
+      "last_posted_at": "2018-11-06T16:15:24.202Z",
+      "bumped": true,
+      "bumped_at": "2018-11-06T16:15:24.202Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2418,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 16,
+            "username": "ashishnm",
+            "name": "Ashish Motivala",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b5e925/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 43,
+            "username": "killertypo",
+            "name": "Mike McMahon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/killertypo/{size}/35_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1175,
+        "username": "libo-sober",
+        "name": "BoLee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1209,
+        "username": "Felix-zhoux",
+        "name": "Felix-zhoux",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/8797f3/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1209,
+      "username": "Felix-zhoux",
+      "name": "Felix-zhoux",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/8797f3/{size}.png"
+    },
+    "last_poster": {
+      "id": 1175,
+      "username": "libo-sober",
+      "name": "BoLee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png"
+    }
+  },
+  "bookmarks": []
+}

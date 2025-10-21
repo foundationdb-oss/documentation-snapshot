@@ -1,0 +1,528 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14128,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2024-06-08T11:13:56.044Z",
+        "cooked": "<p>We\u2019ve got some behaviour here that I\u2019m trying to understand, partly for my own learning and partly so I can explain it to the rest of our engineers and think about how we can fix it.</p>\n<p>We\u2019re running in AWS, single region, 3 AZs, with the DB configured in three_data_hall mode and the IDs set up so that data should be replicated to storage nodes in each of the AZs.</p>\n<p>We <em>know</em> we have a few \u2018hot keys\u2019/\u2018hot ranges\u2019 in our application, and we\u2019re working to rearchitect the system to prevent that. Cloud compute with remote block storage has pretty high latency and poor I/O volumes compared to direct-attached NVMe, so when we run our load tests it shows up pretty fast.</p>\n<p>What\u2019s odd is <em>how</em> it shows up. For a given load test we\u2019ll see disk I/O at or near 100% on quite a few nodes,  but we\u2019ll only get a <em>single</em> storage node whose durability lag spikes. If we keep running the test it\u2019ll be reporting tens of minutes of lag, when all the other nodes are stable in the 5-20s range.</p>\n<p>But my understanding of three_data_hall is that writes will need to go to 3 nodes for replication, and reads should be load balanced between the replicas. So I don\u2019t understand why we\u2019re only seeing <em>one</em> hot node instead of three. What am I missing?</p>\n<p>We only have a small number of clients (using the Java lib with JNI to invoke the C bindings) which serve our API frontend and can handle a large volume of API requests each, so does each client select and use a single read node for a shard, or something, and you only get load balanced reads when you have a large number of clients?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2024-06-08T11:13:56.044Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 48.0,
+        "yours": false,
+        "topic_id": 4504,
+        "topic_slug": "single-hot-storage-nodes-in-three-data-hall-mode",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/single-hot-storage-nodes-in-three-data-hall-mode/4504/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      14128
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      500
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Single &lsquo;hot&rsquo; storage nodes in three_data_hall mode?",
+  "id": 4504,
+  "title": "Single 'hot' storage nodes in three_data_hall mode?",
+  "posts_count": 1,
+  "created_at": "2024-06-08T11:13:55.993Z",
+  "views": 78,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2024-06-08T11:13:56.044Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "single-hot-storage-nodes-in-three-data-hall-mode",
+  "category_id": 7,
+  "word_count": 308,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4504",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Need suggestion on 3 data center deployment (we want active/active/active if possible)",
+      "id": 1315,
+      "title": "Need suggestion on 3 data center deployment (we want active/active/active if possible)",
+      "slug": "need-suggestion-on-3-data-center-deployment-we-want-active-active-active-if-possible",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-04-17T23:59:27.797Z",
+      "last_posted_at": "2019-04-19T17:56:24.576Z",
+      "bumped": true,
+      "bumped_at": "2019-04-19T17:56:24.576Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 943,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 566,
+            "username": "fengqu",
+            "name": "Feng Qu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/85f322/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "id": 1282,
+      "title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "slug": "6-0-18-reporting-incorrect-fault-tolerance-via-fdbcli-with-triple-redundancy-mode",
+      "posts_count": 15,
+      "reply_count": 8,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-04-04T19:04:42.341Z",
+      "last_posted_at": "2019-04-06T00:41:42.940Z",
+      "bumped": true,
+      "bumped_at": "2019-04-06T00:41:42.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1976,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Understanding load balancing between storage processes under bulk writes",
+      "id": 974,
+      "title": "Understanding load balancing between storage processes under bulk writes",
+      "slug": "understanding-load-balancing-between-storage-processes-under-bulk-writes",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/86dcf5016f536d13cdf7c90596e6b58cf6d315d6_2_1023x376.png",
+      "created_at": "2018-12-27T13:26:03.231Z",
+      "last_posted_at": "2019-01-11T23:16:33.076Z",
+      "bumped": true,
+      "bumped_at": "2019-01-11T23:16:33.076Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1835,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 424,
+            "username": "jwb",
+            "name": "Jeff Baker",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwb/{size}/413_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 55,
+            "username": "bowlofstew",
+            "name": "Stewart Henderson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Replication method consideration",
+      "id": 1410,
+      "title": "Replication method consideration",
+      "slug": "replication-method-consideration",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-30T12:13:55.382Z",
+      "last_posted_at": "2019-05-31T00:39:24.107Z",
+      "bumped": true,
+      "bumped_at": "2019-05-31T00:39:24.107Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 792,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 595,
+            "username": "Choboz",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/65b543/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimal configuration for more than 3 DCs",
+      "id": 1519,
+      "title": "Optimal configuration for more than 3 DCs",
+      "slug": "optimal-configuration-for-more-than-3-dcs",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-07-15T04:50:08.246Z",
+      "last_posted_at": "2019-07-15T09:32:14.332Z",
+      "bumped": true,
+      "bumped_at": "2019-07-15T09:32:14.332Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1332,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    }
+  },
+  "bookmarks": []
+}

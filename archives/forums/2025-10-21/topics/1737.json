@@ -1,0 +1,661 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5560,
+        "name": "",
+        "username": "stevent",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/5f9b8f/{size}.png",
+        "created_at": "2019-11-14T20:42:30.988Z",
+        "cooked": "<p>When using the Go bindings, is there a way to prevent <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Database.Transact\" rel=\"nofollow noopener\">Transact</a> from retrying when the transaction fails due to taking more than 5 seconds (<code>FoundationDB error code 1007 (Transaction is too old to perform reads or be committed)</code>? For example, this code will just keep on retrying forever:</p>\n<pre><code>\t_, err := db.Transact(func(tr fdb.Transaction) (interface{}, error) {\n\t\ttr.Get(fdb.Key(\"foo\")).MustGet()\n\n\t\t// Simulate slow transaction\n\t\ttime.Sleep(6 * time.Second)\n\n\t\ttr.Set(fdb.Key(\"bar\"), []byte{1})\n\n\t\treturn nil, nil\n\t})</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-11-14T20:42:30.988Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 74,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 374.8,
+        "yours": false,
+        "topic_id": 1737,
+        "topic_slug": "prevent-retrying-on-slow-transactions",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Database.Transact",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 681,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/prevent-retrying-on-slow-transactions/1737/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5561,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2019-11-14T20:46:22.590Z",
+        "cooked": "<p>You can configure the retry behavior by setting a <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#TransactionOptions.SetRetryLimit\">retry limit</a> or <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#TransactionOptions.SetTimeout\">timeout</a> on the transaction or as a <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#DatabaseOptions.SetTransactionRetryLimit\">database default</a>.</p>\n<p>With a retry limit, the transaction will fail with the last error if it wants to retry but has met the limit. With a timeout, you will get a timeout error if the transaction takes longer than the specified duration.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-11-14T20:46:22.590Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 24.8,
+        "yours": false,
+        "topic_id": 1737,
+        "topic_slug": "prevent-retrying-on-slow-transactions",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#TransactionOptions.SetRetryLimit",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 11
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#TransactionOptions.SetTimeout",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 6
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#DatabaseOptions.SetTransactionRetryLimit",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/prevent-retrying-on-slow-transactions/1737/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5560,
+      5561
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2168
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Prevent retrying on slow transactions",
+  "id": 1737,
+  "title": "Prevent retrying on slow transactions",
+  "posts_count": 2,
+  "created_at": "2019-11-14T20:42:30.931Z",
+  "views": 715,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2019-11-14T20:46:22.590Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "prevent-retrying-on-slow-transactions",
+  "category_id": 7,
+  "word_count": 196,
+  "deleted_at": null,
+  "user_id": 681,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1737",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Defaults for transaction timeouts and retries?",
+      "id": 315,
+      "title": "Defaults for transaction timeouts and retries?",
+      "slug": "defaults-for-transaction-timeouts-and-retries",
+      "posts_count": 17,
+      "reply_count": 9,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2018-04-30T18:07:12.420Z",
+      "last_posted_at": "2021-10-08T10:30:15.297Z",
+      "bumped": true,
+      "bumped_at": "2021-10-08T10:30:15.297Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 4922,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 57,
+            "username": "mzamani",
+            "name": "Michael Zamani",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mzamani/{size}/133_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 990,
+            "username": "baiwfg2",
+            "name": "Lewis Chan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What does it mean &ldquo;Transaction Is Retryable&rdquo;, In particular to Handle Error of &ldquo;Transaction Too Old&rdquo;?",
+      "id": 1451,
+      "title": "What does it mean \"Transaction Is Retryable\", In particular to Handle Error of \"Transaction Too Old\"?",
+      "slug": "what-does-it-mean-transaction-is-retryable-in-particular-to-handle-error-of-transaction-too-old",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-13T09:38:16.632Z",
+      "last_posted_at": "2019-06-13T23:20:16.165Z",
+      "bumped": true,
+      "bumped_at": "2019-06-13T23:20:16.165Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3564,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Checking if an error is retryable?",
+      "id": 913,
+      "title": "Checking if an error is retryable?",
+      "slug": "checking-if-an-error-is-retryable",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-29T05:48:16.720Z",
+      "last_posted_at": "2018-11-29T20:25:24.144Z",
+      "bumped": true,
+      "bumped_at": "2018-11-29T20:25:24.144Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1877,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 439,
+            "username": "yields",
+            "name": "Amir",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/yields/{size}/545_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proper transaction retry loops",
+      "id": 2090,
+      "title": "Proper transaction retry loops",
+      "slug": "proper-transaction-retry-loops",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-04-28T21:37:58.250Z",
+      "last_posted_at": "2020-04-29T20:54:27.789Z",
+      "bumped": true,
+      "bumped_at": "2020-04-29T20:54:27.789Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 561,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 576,
+            "username": "davisp",
+            "name": "Paul J  Davis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davisp/{size}/570_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Disable or configure the transaction time limit",
+      "id": 1292,
+      "title": "Disable or configure the transaction time limit",
+      "slug": "disable-or-configure-the-transaction-time-limit",
+      "posts_count": 7,
+      "reply_count": 5,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-04-10T09:26:17.636Z",
+      "last_posted_at": "2019-04-17T16:03:04.588Z",
+      "bumped": true,
+      "bumped_at": "2019-04-17T16:03:04.588Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1036,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 191,
+            "username": "twilmes",
+            "name": "Ted Wilmes",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/twilmes/{size}/552_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 681,
+        "username": "stevent",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/5f9b8f/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 681,
+      "username": "stevent",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/5f9b8f/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#TransactionOptions.SetRetryLimit",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 11,
+        "user_id": 12,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#TransactionOptions.SetTimeout",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 12,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#DatabaseOptions.SetTransactionRetryLimit",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 12,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,540 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13801,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2024-02-22T14:49:29.441Z",
+        "cooked": "<p>We\u2019re backing up our FDB 7.1 cluster to S3 directly via <code>fdbbackup</code>. Recently, as we load more data into our system (the K/V size is not growing as much, but we are seeing a lot of \u2018churn\u2019 certain key prefixes which means the backup log bytes is 10x more than K/V), we\u2019re seeing much longer restore times than we\u2019d like.</p>\n<p>I am aware of a faster backup and restore method which seems to have been introduced back in 6.x. We tried it on 7.1 and it completely destroyed our <em>source</em> cluster, and we don\u2019t really understand why. Like, the cluster locked up and no transactions could be run against it, and we couldn\u2019t stop the backup process to get it usable without backups. We ended up having to spin up a replacement cluster and restore our data using the old/slow version. Of course this was all in our non-prod environment so there wasn\u2019t a massive issue there. But since then I\u2019ve seen various other posts on here about people testing that backup method on 6.3, 7.0, and 7.1, and no-one ever mentioned the cluster locking up like we saw\u2026</p>\n<p>Regardless, my understanding is that even that method would only give an ~2x speed increase over the existing version, which is still going to very quickly blast through our RTO with any reasonable data volumes. How are other people speeding up restores?</p>\n<p>So far we\u2019ve identified a cluster makeup that seems to improve things. We deploy as single replica instead of three_data_hall, with 3x more storage nodes and additional commit proxies. Increasing beyond those numbers doesn\u2019t seem to give us a noticeable performance uplift, at least currently. Once the data is on the cluster we convert to three_data_hall and then migrate data via exclusions and scale our nodes back down to get to a more \u2018reasonable\u2019 size/cost of cluster that can handle our traffic levels.</p>\n<p>Has anyone else found other ways to improve the restore speed? We have noticed that the throughput of the cluster nodes when rebalancing data seems to be <em>significantly</em> higher/faster than pulling that data from S3, so we were wondering if a mounted \u2018backup\u2019 volume which we periodically snapshot to S3 or similar might improve matters. Has anyone tried anything like that?</p>\n<p>We\u2019re also not yet using the redwood storage engine. Is there anything in there that would improve restore performance?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2024-02-22T14:54:30.487Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 41,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 225.6,
+        "yours": false,
+        "topic_id": 4365,
+        "topic_slug": "faster-restores-of-an-fdb-cluster",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/faster-restores-of-an-fdb-cluster/4365/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      13801
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      607
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Faster restores of an FDB cluster?",
+  "id": 4365,
+  "title": "Faster restores of an FDB cluster?",
+  "posts_count": 1,
+  "created_at": "2024-02-22T14:49:29.377Z",
+  "views": 199,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2024-02-22T14:49:29.441Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "faster-restores-of-an-fdb-cluster",
+  "category_id": 7,
+  "word_count": 417,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4365",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to speed up the FDB restore process from s3?",
+      "id": 2939,
+      "title": "How to speed up the FDB restore process from s3?",
+      "slug": "how-to-speed-up-the-fdb-restore-process-from-s3",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/8/8351c2c0c1ee9fbe49f84aaa62719b8235ab6514_2_1024x985.jpeg",
+      "created_at": "2021-10-11T19:15:09.347Z",
+      "last_posted_at": "2021-10-14T11:03:02.244Z",
+      "bumped": true,
+      "bumped_at": "2021-10-14T11:03:02.244Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 411,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1003,
+            "username": "nisman",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/7ba0ec/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Restore is slow and parallel restore doesn&rsquo;t achieve performance boost",
+      "id": 2128,
+      "title": "Restore is slow and parallel restore doesn't achieve performance boost",
+      "slug": "restore-is-slow-and-parallel-restore-doesnt-achieve-performance-boost",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-05-20T05:56:49.975Z",
+      "last_posted_at": "2020-05-23T04:17:19.585Z",
+      "bumped": true,
+      "bumped_at": "2020-05-23T04:17:19.585Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1398,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup using disk snapshots",
+      "id": 1076,
+      "title": "Backup using disk snapshots",
+      "slug": "backup-using-disk-snapshots",
+      "posts_count": 15,
+      "reply_count": 9,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-01-29T12:52:43.232Z",
+      "last_posted_at": "2019-02-14T18:12:56.795Z",
+      "bumped": true,
+      "bumped_at": "2019-02-14T18:12:56.795Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2676,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 360,
+            "username": "bjorndv",
+            "name": "Bj\u00f6rn",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/f05b48/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 417,
+            "username": "lihtnes",
+            "name": "Senthil Ramamoorthy",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/848f3c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB 6.3 performant restore",
+      "id": 2137,
+      "title": "FDB 6.3 performant restore",
+      "slug": "fdb-6-3-performant-restore",
+      "posts_count": 17,
+      "reply_count": 8,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2020-05-27T06:16:38.330Z",
+      "last_posted_at": "2022-10-05T00:25:32.840Z",
+      "bumped": true,
+      "bumped_at": "2022-10-05T00:25:32.840Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2583,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 746,
+            "username": "matiasholte",
+            "name": "Matias Holte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbrestore Performance",
+      "id": 4290,
+      "title": "Fdbrestore Performance",
+      "slug": "fdbrestore-performance",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/4/498033eaf061d72d16dd9a71ed0a4c4bd5eedbb0.png",
+      "created_at": "2023-12-08T22:26:43.381Z",
+      "last_posted_at": "2023-12-14T22:25:59.643Z",
+      "bumped": true,
+      "bumped_at": "2023-12-14T22:25:59.643Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 410,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 769,
+            "username": "ajames",
+            "name": "Alwin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    }
+  },
+  "bookmarks": []
+}

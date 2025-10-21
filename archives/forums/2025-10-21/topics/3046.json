@@ -1,0 +1,614 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10339,
+        "name": "widjaoidnasdqw",
+        "username": "widjaoidnasdqw",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/widjaoidnasdqw/{size}/1274_2.png",
+        "created_at": "2021-11-29T11:44:46.608Z",
+        "cooked": "<p>why I add machine can\u2019t improve the performance linearly?<br>\nmachine info:<br>\n|CPU|Intel(R) Xeon(R) CPU E5-2690 v2 @ 2.60GHz 40 core|<br>\n|memory|256GB DDR3|<br>\n|disk|3T shannon card|<br>\n|os|centos 6.10|<br>\n|engine|Memory|</p>\n<p><a href=\"https://apple.github.io/foundationdb/benchmarking.html\" class=\"onebox\" target=\"_blank\" rel=\"noopener nofollow ugc\">https://apple.github.io/foundationdb/benchmarking.html</a><br>\nofficial                                   my-test (workload 1B)<br>\none process read(10 key per transaction)     30W reads/second                         18W reads/second<br>\n2-machine read(10 key per transaction single)            ----                                    22W reads/second<br>\n2-machine read(10 key per transaction double)           ----                                    27W reads/second<br>\n12-machine read(10 key per transaction)      5,540,000 reads/second                 -----</p>\n<p>according to the official artical,add machine can linearly improve read performance,but I just improve 25%.(stoarge cpu usage is 99%)</p>\n<p>Configuration:<br>\nRedundancy mode        - double<br>\nStorage engine         - memory-2<br>\nCoordinators           - 1<br>\nUsable Regions         - 1</p>\n<p>Workload:<br>\nRead rate              - 282414 Hz<br>\nWrite rate             - 0 Hz<br>\nTransactions started   - 27749 Hz<br>\nTransactions committed - 0 Hz<br>\nConflict rate          - 0 Hz</p>\n<p>Process performance details:<br>\n10.205.31.31:4011      ( 99% cpu;  4% machine; 0.161 Gbps;  0% disk IO; 1.3 GB / 8.0 GB RAM  )<br>\n10.205.31.31:4023      ( 16% cpu;  4% machine; 0.161 Gbps;  0% disk IO; 0.2 GB / 8.0 GB RAM  )<br>\n10.205.31.31:4024      (  0% cpu;  4% machine; 0.161 Gbps;  0% disk IO; 0.6 GB / 8.0 GB RAM  )<br>\n10.205.31.32:4011      ( 99% cpu;  3% machine; 0.199 Gbps;  0% disk IO; 1.3 GB / 8.0 GB RAM  )<br>\n10.205.31.32:4023      (  0% cpu;  3% machine; 0.199 Gbps;  0% disk IO; 0.2 GB / 8.0 GB RAM  )<br>\n10.205.31.32:4024      (  1% cpu;  3% machine; 0.199 Gbps;  0% disk IO; 0.4 GB / 8.0 GB RAM  )</p>\n<p>Coordination servers:<br>\n10.205.31.32:4011  (reachable)</p>\n<p>here is my test method\uff1a<br>\ngo + python<br>\nevery go process can only create one network threads,so I use python to open multi go process to open multi network threads,in order to fully use every network threads,I use 20 goroutine per go process</p>\n<p>db connection, I reduce  the times of client accesses to proxy and log process,but the read performance can\u2019t improve linearly</p>\n<pre><code class=\"lang-auto\">db := getFdbConnection(fdbClusterFile)\n_ = db.Options().SetTransactionCausalReadRisky()\n</code></pre>\n<p>main method: just only cyclic reading</p>\n<pre><code class=\"lang-auto\">_, err := db.Transact(func (tr fdb.Transaction) (ret interface{}, e error) {\n\t\t_ = tr.Options().SetSnapshotRywDisable()\n\t\tfor i :=0; i &lt; transactionSize; i++ {\n\t\t\tkey_name := fmt.Sprintf(\"%d\", rand.Intn(keyspacelen))\n\t\t\tt6:=time.Now().UnixNano()\n\t\t\t_ = tr.Get(fdb.Key(key_name)).MustGet()\n\t\t\tt7:=time.Now().UnixNano()\n\t\t\tusedTime = append(usedTime, t7 - t6)\n\t\t\tatomic.AddInt64(&amp;finishRequest, 1)\n\t\t\tatomic.AddInt64(&amp;totalUsedTime, t7 - t6)\n\t\t}\n\t\treturn\n\t})\n</code></pre>\n<p>Is adding machine can improve read performance linearly?</p>\n<p>I also try to  add storage process ,can improve performance<br>\n20 go client and every go client has 20 goroutine<br>\n10 operation per transaction<br>\n1 stateless 1transaction</p>\n<pre><code>                        performance (1B)\n</code></pre>\n<p>one storage                22W qps<br>\ntwo stoarge                30W qps<br>\nthree storage              32W qps<br>\neight storage               40W qps</p>\n<p>I don\u2019t know why. Are there any way to improve the read performance ?<br>\nall the benchmarking all the cpu usage of storage process is up to 99% and (proxy and log) process just 1~2% (because I SetTransactionCausalReadRisky())</p>\n<p>Is my benchmarking method problem ?</p>\n<p>I also try to use ycsb,foundationdb flowbench ,and the official test process</p>\n<p>ycsb test : why the test data is record by record ?<br>\nfoundationdb flowbench : Compiled successfully but run the flowbench has the error \u201csegment fault\u201d</p>\n<p>test process: <a href=\"https://apple.github.io/foundationdb/client-testing.html?highlight=multitest\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Client Testing \u2014 FoundationDB 6.3</a><br>\nI can;t run this\u2026<br>\n/home/apps/lxl/fdb_binaries/fdbserver -r multitest -f /home/apps/lxl/foundationdb-master/tests/RandomRead.txt (open 3 test process) \u2026 It just stuck there\u2026 and run fdbcli  status details\u2026 nothing happen</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2021-11-29T11:44:46.608Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 14,
+        "reads": 27,
+        "readers_count": 26,
+        "score": 75.4,
+        "yours": false,
+        "topic_id": 3046,
+        "topic_slug": "how-to-improve-foundationdb-read-throughput",
+        "display_username": "widjaoidnasdqw",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/benchmarking.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Benchmarking \u2014 FoundationDB 6.3",
+            "clicks": 5
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/client-testing.html?highlight=multitest",
+            "internal": false,
+            "reflection": false,
+            "title": "Client Testing \u2014 FoundationDB 6.3",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1042,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-improve-foundationdb-read-throughput/3046/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      10339
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1422
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "How to improve foundationdb read throughput?",
+  "id": 3046,
+  "title": "How to improve foundationdb read throughput?",
+  "posts_count": 1,
+  "created_at": "2021-11-29T11:44:46.519Z",
+  "views": 527,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-11-29T11:44:46.608Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-improve-foundationdb-read-throughput",
+  "category_id": 7,
+  "word_count": 616,
+  "deleted_at": null,
+  "user_id": 1042,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3046",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDB read performance",
+      "id": 729,
+      "title": "FoundationDB read performance",
+      "slug": "foundationdb-read-performance",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-09-25T07:10:56.281Z",
+      "last_posted_at": "2018-09-26T12:47:46.621Z",
+      "bumped": true,
+      "bumped_at": "2018-09-26T12:47:46.621Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1526,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 382,
+            "username": "rahul",
+            "name": "Rahul",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f14d63/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to increase the read/write throughput for foundationdb 5.2",
+      "id": 1968,
+      "title": "How to increase the read/write throughput for foundationdb 5.2",
+      "slug": "how-to-increase-the-read-write-throughput-for-foundationdb-5-2",
+      "posts_count": 21,
+      "reply_count": 19,
+      "highest_post_number": 23,
+      "image_url": null,
+      "created_at": "2020-02-20T00:35:23.457Z",
+      "last_posted_at": "2020-05-24T08:05:30.224Z",
+      "bumped": true,
+      "bumped_at": "2020-05-24T08:05:30.224Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3153,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 718,
+            "username": "Cliicy",
+            "name": "Dragon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/47e85d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to achieve (1000 tx 1000 reads each)/sec on single client",
+      "id": 2130,
+      "title": "How to achieve (1000 tx 1000 reads each)/sec on single client",
+      "slug": "how-to-achieve-1000-tx-1000-reads-each-sec-on-single-client",
+      "posts_count": 25,
+      "reply_count": 16,
+      "highest_post_number": 25,
+      "image_url": null,
+      "created_at": "2020-05-21T03:47:18.304Z",
+      "last_posted_at": "2021-12-15T17:53:19.208Z",
+      "bumped": true,
+      "bumped_at": "2021-12-15T17:53:19.208Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 3174,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 808,
+            "username": "sfc-gh-ngoyal",
+            "name": "Neelam Goyal",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/439d5e/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why doesn&rsquo;t my cluster performance scale when I double the number of machines?",
+      "id": 640,
+      "title": "Why doesn't my cluster performance scale when I double the number of machines?",
+      "slug": "why-doesnt-my-cluster-performance-scale-when-i-double-the-number-of-machines",
+      "posts_count": 21,
+      "reply_count": 16,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-08-15T09:26:47.588Z",
+      "last_posted_at": "2018-08-17T07:32:00.164Z",
+      "bumped": true,
+      "bumped_at": "2018-08-17T07:32:00.164Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 68,
+            "username": "daverosenthal",
+            "name": "Dave Rosenthal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daverosenthal/{size}/51_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Benchmarking FoundationDB on AWS",
+      "id": 410,
+      "title": "Benchmarking FoundationDB on AWS",
+      "slug": "benchmarking-foundationdb-on-aws",
+      "posts_count": 19,
+      "reply_count": 12,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2018-05-14T09:55:57.604Z",
+      "last_posted_at": "2018-10-30T16:01:15.283Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T16:01:15.283Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 9035,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 257,
+            "username": "cih.y2k",
+            "name": "cih.y2k",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cih.y2k/{size}/423_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1042,
+        "username": "widjaoidnasdqw",
+        "name": "widjaoidnasdqw",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/widjaoidnasdqw/{size}/1274_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1042,
+      "username": "widjaoidnasdqw",
+      "name": "widjaoidnasdqw",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/widjaoidnasdqw/{size}/1274_2.png"
+    },
+    "last_poster": {
+      "id": 1042,
+      "username": "widjaoidnasdqw",
+      "name": "widjaoidnasdqw",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/widjaoidnasdqw/{size}/1274_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/benchmarking.html",
+        "title": "Benchmarking \u2014 FoundationDB 6.3",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 1042,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/client-testing.html?highlight=multitest",
+        "title": "Client Testing \u2014 FoundationDB 6.3",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1042,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

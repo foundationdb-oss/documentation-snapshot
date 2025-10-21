@@ -1,0 +1,581 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9259,
+        "name": "Rahul",
+        "username": "rahulj",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/4da419/{size}.png",
+        "created_at": "2021-04-09T06:27:05.439Z",
+        "cooked": "<p>I am just starting with foundationdb and trying the hello world example.<br>\nI build the source from the docker and able to create a new db and check its status via the fdbcli. Screenshot below.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b.png\" data-download-href=\"/uploads/short-url/6nvTfqHZt2PTU3TMoq0T1A4mjKr.png?dl=1\" title=\"image\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b_2_554x500.png\" alt=\"image\" data-base62-sha1=\"6nvTfqHZt2PTU3TMoq0T1A4mjKr\" width=\"554\" height=\"500\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b_2_554x500.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b_2_831x750.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image</span><span class=\"informations\">910\u00d7820 85.1 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>Now when I try to run the hello_world example below:<br>\n1 import fdb<br>\n2 fdb.api_version(620)<br>\n3 db = fdb.open()<br>\n4 db[b\u2019hello\u2019] = b\u2019world\u2019<br>\n5 print \u2018hello\u2019, db[b\u2019hello\u2019]</p>\n<p>The code hangs at line 4 and never returns.</p>\n<p>Any pointers on how to proceed?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-04-09T06:27:05.439Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 173,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 850.6,
+        "yours": false,
+        "topic_id": 2643,
+        "topic_slug": "write-to-db-hangs",
+        "display_username": "Rahul",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b.png",
+            "internal": false,
+            "reflection": false,
+            "title": "2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 918,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/write-to-db-hangs/2643/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 9284,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2021-04-09T23:14:56.082Z",
+        "cooked": "<p>Your client hanging at the point where it first tries to use the database implies that it is not successfully able to connect. The most common reasons for this would be:</p>\n<ol>\n<li>You are using a different <code>fdb.cluster</code> file that doesn\u2019t match the cluster</li>\n<li>You are using a client library (e.g. <code>libfdb_c.so</code> on linux) that is not compatible with the cluster (they need to have the same major minor version, such as 6.2).</li>\n</ol>\n<p>There are other possibilities as well, such your client being unable to reach the server over the network (less likely if you are running <code>fdbcli</code> from the same place) or an issue with TLS configuration.</p>\n<p>It looks like your <code>fdbcli</code> run is getting its cluster file from the current working directory. Are you running your Python program from the same directory? If not, then it\u2019s worth checking that the cluster file it\u2019s loading has the same contents (see <a href=\"https://apple.github.io/foundationdb/administration.html#default-cluster-file\" class=\"inline-onebox\">Administration \u2014 FoundationDB 6.2</a>).</p>\n<p>One other way you can get a sense for what\u2019s happening is to turn on trace logging for your client:</p>\n<pre><code class=\"lang-auto\">import fdb\nfdb.api_version(620)\nfdb.options.set_trace_enable()\n...\n</code></pre>\n<p>After you\u2019ve terminated your program, you can check the log file (trace*.xml) for events that suggest what is happening. If it can\u2019t connect at all, I believe you\u2019ll see a <code>ConnectionTimedOut</code> event. If it gets rejected for being incompatible, you\u2019ll instead see something like <code>IncompatibleProtocolVersion</code>.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-04-09T23:14:56.082Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 25.0,
+        "yours": false,
+        "topic_id": 2643,
+        "topic_slug": "write-to-db-hangs",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/administration.html#default-cluster-file",
+            "internal": false,
+            "reflection": false,
+            "title": "Administration \u2014 FoundationDB 6.2",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/write-to-db-hangs/2643/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      9259,
+      9284
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1657
+    ],
+    [
+      2,
+      1656
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Write to DB hangs",
+  "id": 2643,
+  "title": "Write to DB hangs",
+  "posts_count": 2,
+  "created_at": "2021-04-09T06:27:05.325Z",
+  "views": 730,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-04-09T23:14:56.082Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "write-to-db-hangs",
+  "category_id": 7,
+  "word_count": 336,
+  "deleted_at": null,
+  "user_id": 918,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2643",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 910,
+      "height": 820,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/2/2cb58271aeab5edf0c3dff5b4dd7a32fec7c565b.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Foundationdb seems keep reinitialising itself after client hang",
+      "id": 1437,
+      "title": "Foundationdb seems keep reinitialising itself after client hang",
+      "slug": "foundationdb-seems-keep-reinitialising-itself-after-client-hang",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-10T10:10:13.209Z",
+      "last_posted_at": "2019-06-26T18:08:03.629Z",
+      "bumped": true,
+      "bumped_at": "2019-06-26T18:08:03.629Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1222,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 602,
+            "username": "ppggff",
+            "name": "ppggff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ppggff/{size}/855_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Connecting to the database using `fdbcli` results in an error",
+      "id": 1841,
+      "title": "Connecting to the database using `fdbcli` results in an error",
+      "slug": "connecting-to-the-database-using-fdbcli-results-in-an-error",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-12-14T07:23:08.203Z",
+      "last_posted_at": "2019-12-17T15:06:03.064Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T15:06:03.064Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2426,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can not connect to foundationdb docker container",
+      "id": 1856,
+      "title": "Can not connect to foundationdb docker container",
+      "slug": "can-not-connect-to-foundationdb-docker-container",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-26T14:05:22.848Z",
+      "last_posted_at": "2019-12-31T00:12:32.627Z",
+      "bumped": true,
+      "bumped_at": "2019-12-31T00:12:32.627Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1550,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 674,
+            "username": "ivvist",
+            "name": "Victor Istratenko",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/da6949/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to create a foundation db",
+      "id": 1102,
+      "title": "How to create a foundation db",
+      "slug": "how-to-create-a-foundation-db",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-02-01T19:36:35.747Z",
+      "last_posted_at": "2019-02-01T20:10:56.364Z",
+      "bumped": true,
+      "bumped_at": "2019-02-01T20:10:56.364Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2930,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 503,
+            "username": "xiaoqin",
+            "name": "Qin Ma",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/f4b2a3/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Set up fdb to use TLS failure with N2_ConnectError",
+      "id": 3020,
+      "title": "Set up fdb to use TLS failure with N2_ConnectError",
+      "slug": "set-up-fdb-to-use-tls-failure-with-n2-connecterror",
+      "posts_count": 9,
+      "reply_count": 3,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-11-19T08:38:17.530Z",
+      "last_posted_at": "2021-11-23T00:53:27.886Z",
+      "bumped": true,
+      "bumped_at": "2021-11-23T05:48:39.795Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1054,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1029,
+            "username": "liuyan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/839c29/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 918,
+        "username": "rahulj",
+        "name": "Rahul",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/4da419/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 918,
+      "username": "rahulj",
+      "name": "Rahul",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/4da419/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/administration.html#default-cluster-file",
+        "title": "Administration \u2014 FoundationDB 6.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 12,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

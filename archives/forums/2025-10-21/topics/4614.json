@@ -1,0 +1,656 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14354,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2024-09-13T07:08:04.274Z",
+        "cooked": "<p>We\u2019re trying to deploy the multi-version client in our Clojure app so we can upgrade our FDB 7.1 cluster to 7.3 with minimal downtime. Because the app is Clojure, and thus runs on the JVM and has full JVM interop, we\u2019re using the Java bindings with our own shim to make interacting with it \u2018Clojure-ish\u2019.</p>\n<p>Our CI pipeline (Linux, x86_64) is throwing a load of errors when a 7.3 client with the external lib for 7.1 loaded tries to talk to a 7.1 server. I know <em>basic</em> functionality works (I have SSHed in to the pipeline runner and executed a simple <code>get</code>), so I\u2019m pretty sure this is something weird our app is doing that I need to debug.</p>\n<p>Trying to debug this on the CI machine without my IDE etc is a massive pain in the ass, so I\u2019m trying to replicate the failure on my local dev machine (MacOS, arm64), but I am completely failing to get the client to talk directly to a 7.1 local server there.</p>\n<p>The story so far:</p>\n<ul>\n<li>7.3 client with 7.3 server works fine.</li>\n<li>7.3 client with <code>FDB.options().setDisableLocalClient()</code> and <em>no</em> external libs loaded doesn\u2019t work (as expected).</li>\n<li>7.3 client with <code>FDB.options().setDisableLocalClient()</code> <em>and</em> <code>FDB.options().setExternalClientLibrary(\"/path/to/external/7.3/libfdb_c.so\")</code> against a 7.3 server <em>does</em> work, so I\u2019ve proved that loading external client libs \u2018in general\u2019 is working.</li>\n<li>7.3 client with <code>FDB.options().setExternalClientLibrary(\"/path/to/external/7.1/libfdb_c.so\")</code> against a 7.1 server just times out when I try to make a request.</li>\n</ul>\n<p>The same pattern works fine on the CI machine, so this would seem to be something specific to MacOS (or arm64). What else do I need to do to get the 7.3 client on MacOS to talk to a 7.1 server successfully?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2024-09-13T20:26:17.512Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 37,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 204.8,
+        "yours": false,
+        "topic_id": 4614,
+        "topic_slug": "how-do-i-run-the-multi-version-client-on-macos-arm64",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-do-i-run-the-multi-version-client-on-macos-arm64/4614/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14974,
+        "name": "Han Xu",
+        "username": "hxu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hxu/{size}/1934_2.png",
+        "created_at": "2025-06-04T08:02:02.368Z",
+        "cooked": "<p>Were you able to get this to work?</p>\n<p>Based on our experimentation, I was under the impression that there was no 7.1 <code>libfdb_c.so</code> that would work on an MacOS arm64, so are you using the x86_64 version of <code>libfdb_c.so</code> or something?</p>\n<p>Our environment is a bit different in that we are running our Java application in an ubuntu docker container (on MacOS arm64), so maybe this is different than your environment if you\u2019re running directly on the Mac.</p>\n<p>I was also puzzled about version compatibility, and I thought that your client language bindings (i.e. <code>fdb-java</code>) couldn\u2019t be newer than the client library. In other words, I would\u2019ve thought that the 7.3 client couldn\u2019t use the 7.1 <code>libfdb_c.so</code>, but the 7.1 client could use the 7.3 <code>libfdb_c.so</code>. Though this was only based on my testing using Python, not Java.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-06-04T08:03:22.030Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 7.2,
+        "yours": false,
+        "topic_id": 4614,
+        "topic_slug": "how-do-i-run-the-multi-version-client-on-macos-arm64",
+        "display_username": "Han Xu",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1525,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-do-i-run-the-multi-version-client-on-macos-arm64/4614/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14990,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2025-06-12T08:26:22.977Z",
+        "cooked": "<p>I didn\u2019t. But you make a good point about 7.1 arm64. I know that when we first started using FDB we were using the x86_64 client on MacOS arm64, and had to use releases which didn\u2019t have the avx extensions enabled because Rosetta/Qemu (for running in a container) didn\u2019t support those, so I may well have had the extra issue (that didn\u2019t occur to me until you mentioned it) that my 2 libraries were for different platforms\u2026</p>\n<p>Then again, our CTO did manage to get FDB to compile on MacOS arm64, so maybe we were using the version from that\u2026 It was long enough ago that I\u2019ve forgotten.</p>\n<p>I got to the bottom of our CI failures by debugging it on CI in the end, so we managed to do the 7.1-&gt;7.3 upgrade without issue in our deployed environments, then we switched to 7.3 locally using arm64 native and a lot of the additional complexity went away.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-06-12T08:26:22.977Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 1.6,
+        "yours": false,
+        "topic_id": 4614,
+        "topic_slug": "how-do-i-run-the-multi-version-client-on-macos-arm64",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1525,
+          "username": "hxu",
+          "name": "Han Xu",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/hxu/{size}/1934_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-do-i-run-the-multi-version-client-on-macos-arm64/4614/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14354,
+      14974,
+      14990
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      404
+    ],
+    [
+      2,
+      140
+    ],
+    [
+      3,
+      132
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "How do I run the multi-version client on MacOS arm64?",
+  "id": 4614,
+  "title": "How do I run the multi-version client on MacOS arm64?",
+  "posts_count": 3,
+  "created_at": "2024-09-13T07:08:04.212Z",
+  "views": 103,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2025-06-12T08:26:22.977Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-do-i-run-the-multi-version-client-on-macos-arm64",
+  "category_id": 7,
+  "word_count": 644,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4614",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to setup multi-version clients with Java?",
+      "id": 1549,
+      "title": "How to setup multi-version clients with Java?",
+      "slug": "how-to-setup-multi-version-clients-with-java",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-07-30T22:41:37.609Z",
+      "last_posted_at": "2019-07-31T15:04:51.073Z",
+      "bumped": true,
+      "bumped_at": "2019-07-31T15:04:51.073Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1813,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 627,
+            "username": "Dan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/eada6e/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Client library backwards compatibility issues",
+      "id": 919,
+      "title": "Client library backwards compatibility issues",
+      "slug": "client-library-backwards-compatibility-issues",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-30T16:17:55.490Z",
+      "last_posted_at": "2018-11-30T19:21:19.862Z",
+      "bumped": true,
+      "bumped_at": "2018-11-30T19:21:19.862Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1325,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to connect to fdb 6.2 and 6.3 or 7.1 from the same pod?",
+      "id": 3580,
+      "title": "How to connect to fdb 6.2 and 6.3 or 7.1 from the same pod?",
+      "slug": "how-to-connect-to-fdb-6-2-and-6-3-or-7-1-from-the-same-pod",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2022-10-08T08:03:05.598Z",
+      "last_posted_at": "2022-10-21T13:27:31.468Z",
+      "bumped": true,
+      "bumped_at": "2022-10-21T13:27:31.468Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator",
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 447,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1022,
+            "username": "liyyue",
+            "name": "liyyue",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Multi version with fdbcli 7.3",
+      "id": 4432,
+      "title": "Multi version with fdbcli 7.3",
+      "slug": "multi-version-with-fdbcli-7-3",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2024-04-15T14:59:56.827Z",
+      "last_posted_at": "2024-04-15T17:09:28.314Z",
+      "bumped": true,
+      "bumped_at": "2024-04-15T17:09:28.314Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 328,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 872,
+            "username": "COran",
+            "name": "Carlito",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1342,
+            "username": "newhook",
+            "name": "Matthew Newhook",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/newhook/{size}/1684_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "id": 437,
+      "title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "slug": "new-api-to-get-the-version-of-a-running-cluster-without-needing-a-matching-libfdb-c-library",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-05-19T12:26:50.509Z",
+      "last_posted_at": "2018-05-21T19:33:34.145Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T19:33:34.145Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2729,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1525,
+        "username": "hxu",
+        "name": "Han Xu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hxu/{size}/1934_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    }
+  },
+  "bookmarks": []
+}

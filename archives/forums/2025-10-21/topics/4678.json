@@ -1,0 +1,632 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14483,
+        "name": "Hikouki Gumo",
+        "username": "hikouki-gumo",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+        "created_at": "2024-10-30T07:43:46.828Z",
+        "cooked": "<p>Hi</p>\n<p>I\u2019m using fdbbackup in non continuous mode, backup<br>\nsnapshot every hour. Backup consumes quite a lot CPU. I want to try continuous backup mode (fdbbackup start -z), to reduce CPU usages.</p>\n<p>Fdbbackup is deployed as Job in K8s. As fdbbackup now continuous run, if I deploy Job again (e.x. when upgrade system), the command will fail.<br>\nThe current running backup will be unaffected, but my new deploy Job status will be failed. To avoid that, I try to check whether a backup processe with specific tag is running, if already run, skip <code>fbdbackup start</code>.</p>\n<p>My question:<br>\nHow to check whether a backup process with specific tag is running?<br>\nOne way is use <code>fdbbackup status</code> then parse the output message, but I think there\u2019s other ways.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2024-10-30T07:43:46.828Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 32,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 162.0,
+        "yours": false,
+        "topic_id": 4678,
+        "topic_slug": "how-to-verify-a-fdb-backup-with-specific-tag-is-running",
+        "display_username": "Hikouki Gumo",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1485,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-verify-a-fdb-backup-with-specific-tag-is-running/4678/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14487,
+        "name": "Sam Weaver",
+        "username": "swr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png",
+        "created_at": "2024-10-31T20:49:15.551Z",
+        "cooked": "<p>It\u2019s not well documented (or maybe not documented at all) but try <code>fdbbackup status --json</code> for output that\u2019s more machine-readable.</p>\n<p>You can also check the status of the backup layer from <code>fdbcli --exec \"status json\"</code>, which produces JSON-formatted status for the whole cluster.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2024-10-31T20:49:15.551Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 21.6,
+        "yours": false,
+        "topic_id": 4678,
+        "topic_slug": "how-to-verify-a-fdb-backup-with-specific-tag-is-running",
+        "display_username": "Sam Weaver",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1309,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-verify-a-fdb-backup-with-specific-tag-is-running/4678/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14489,
+        "name": "Hikouki Gumo",
+        "username": "hikouki-gumo",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+        "created_at": "2024-11-01T04:03:16.085Z",
+        "cooked": "<p><a class=\"mention\" href=\"/u/swr\">@swr</a> Thank you, that\u2019s what I\u2019m looking for.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2024-11-01T04:03:16.085Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 7,
+        "readers_count": 6,
+        "score": 16.4,
+        "yours": false,
+        "topic_id": 4678,
+        "topic_slug": "how-to-verify-a-fdb-backup-with-specific-tag-is-running",
+        "display_username": "Hikouki Gumo",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1309,
+          "username": "swr",
+          "name": "Sam Weaver",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1485,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-verify-a-fdb-backup-with-specific-tag-is-running/4678/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14483,
+      14487,
+      14489
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      357
+    ],
+    [
+      2,
+      355
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "How to verify a fdb backup with specific tag is running?",
+  "id": 4678,
+  "title": "How to verify a fdb backup with specific tag is running?",
+  "posts_count": 3,
+  "created_at": "2024-10-30T07:43:46.778Z",
+  "views": 59,
+  "reply_count": 1,
+  "like_count": 2,
+  "last_posted_at": "2024-11-01T04:03:16.085Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-verify-a-fdb-backup-with-specific-tag-is-running",
+  "category_id": 7,
+  "word_count": 186,
+  "deleted_at": null,
+  "user_id": 1485,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4678",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Check if fdbbackup is running",
+      "id": 4675,
+      "title": "Check if fdbbackup is running",
+      "slug": "check-if-fdbbackup-is-running",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2024-10-29T12:01:10.246Z",
+      "last_posted_at": "2024-11-05T11:24:11.344Z",
+      "bumped": true,
+      "bumped_at": "2024-11-05T11:24:11.344Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 31,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1485,
+            "username": "hikouki-gumo",
+            "name": "Hikouki Gumo",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backing up the database using `fdbbackup` command returns in an error",
+      "id": 1844,
+      "title": "Backing up the database using `fdbbackup` command returns in an error",
+      "slug": "backing-up-the-database-using-fdbbackup-command-returns-in-an-error",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-16T10:49:12.154Z",
+      "last_posted_at": "2019-12-16T13:54:49.984Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T13:54:49.984Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1069,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup status does not response",
+      "id": 4686,
+      "title": "Fdbbackup status does not response",
+      "slug": "fdbbackup-status-does-not-response",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2024-11-05T09:36:32.709Z",
+      "last_posted_at": "2024-11-05T09:36:32.777Z",
+      "bumped": true,
+      "bumped_at": "2024-11-05T09:36:32.777Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 15,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1485,
+            "username": "hikouki-gumo",
+            "name": "Hikouki Gumo",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Regarding issue faced while running fdbbackup",
+      "id": 1458,
+      "title": "Regarding issue faced while running fdbbackup",
+      "slug": "regarding-issue-faced-while-running-fdbbackup",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-06-17T12:33:04.574Z",
+      "last_posted_at": "2019-12-17T19:51:11.604Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T19:51:11.604Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2007,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 587,
+            "username": "pragawaran",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f07891/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to understand fdbbackup error : Task execution stopped",
+      "id": 1385,
+      "title": "How to understand fdbbackup error : Task execution stopped",
+      "slug": "how-to-understand-fdbbackup-error-task-execution-stopped",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-05-21T23:52:06.935Z",
+      "last_posted_at": "2019-05-24T06:47:05.855Z",
+      "bumped": true,
+      "bumped_at": "2019-05-24T06:47:05.855Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 909,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 412,
+            "username": "mengranewo",
+            "name": "Mengran Wang",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/8e8cbc/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1485,
+        "username": "hikouki-gumo",
+        "name": "Hikouki Gumo",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1309,
+        "username": "swr",
+        "name": "Sam Weaver",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1485,
+      "username": "hikouki-gumo",
+      "name": "Hikouki Gumo",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png"
+    },
+    "last_poster": {
+      "id": 1485,
+      "username": "hikouki-gumo",
+      "name": "Hikouki Gumo",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

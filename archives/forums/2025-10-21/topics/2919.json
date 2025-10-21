@@ -1,0 +1,655 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10040,
+        "name": "Lou",
+        "username": "laita",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/77aa72/{size}.png",
+        "created_at": "2021-09-30T15:46:28.703Z",
+        "cooked": "<p>Hello,<br>\nI am a new user of foundationdb and using it now in our projects. I wonder about using fdb.transactional decorator and handling errors and exceptions.</p>\n<p>I wonder if I am missing something  is the following example of code (not the final code):</p>\n<pre><code class=\"lang-auto\">def bank_account(self, params):\n      self._fdb_create_accoun(self.db, param)\n\n@fdb.transactional\ndef _fdb_create_account(tr, param)\n     tr['account_id'] = params['name']\n     tr['date'] = params['date']\n</code></pre>\n<p>I know that decorator includes a try/except but what happen if transaction failed and what error to handle in caller method bank_account ?</p>\n<p>Thank you for advices</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-10-01T10:05:08.312Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 123,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 613.0,
+        "yours": false,
+        "topic_id": 2919,
+        "topic_slug": "python-api-handle-exceptions-with-fdb-transactional",
+        "display_username": "Lou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 989,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/python-api-handle-exceptions-with-fdb-transactional/2919/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10044,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2021-09-30T19:30:06.216Z",
+        "cooked": "<p>The transaction decorator will cause the transaction to automatically retry certain FDB errors. If your function throws a non-FDB error, it would bubble out to <code>bank_account</code>. Additionally, any non-retryable FDB errors will be thrown, as well as any retryable error if you exceed your configured retry limit (based on a transaction option). FDB errors will be of type <code>fdb.FDBError</code>.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-09-30T19:30:06.216Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 22.8,
+        "yours": false,
+        "topic_id": 2919,
+        "topic_slug": "python-api-handle-exceptions-with-fdb-transactional",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/python-api-handle-exceptions-with-fdb-transactional/2919/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 10098,
+        "name": "Amirouche",
+        "username": "amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "created_at": "2021-10-10T07:30:47.800Z",
+        "cooked": "<p>I second what ajbeamon wrote. Any user exception will not be catched and raise as usual. See</p>\n<aside class=\"onebox githubblob\" data-onebox-src=\"https://github.com/apple/foundationdb/blob/0cce7743255f539f7811aa0776e9cf625c7771e4/bindings/python/fdb/impl.py#L272-L281\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/blob/0cce7743255f539f7811aa0776e9cf625c7771e4/bindings/python/fdb/impl.py#L272-L281\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/0cce7743255f539f7811aa0776e9cf625c7771e4/bindings/python/fdb/impl.py#L272-L281\" target=\"_blank\" rel=\"noopener nofollow ugc\">apple/foundationdb/blob/0cce7743255f539f7811aa0776e9cf625c7771e4/bindings/python/fdb/impl.py#L272-L281</a></h4>\n\n\n\n  <pre class=\"onebox\">    <code class=\"lang-py\">\n      <ol class=\"start lines\" start=\"272\" style=\"counter-reset: li-counter 271 ;\">\n          <li>while not committed:</li>\n          <li>    ret = None</li>\n          <li>    try:</li>\n          <li>        ret = func(*largs, **kwargs)</li>\n          <li>        if fdb.get_api_version() &gt;= 630 and inspect.isgenerator(ret):</li>\n          <li>            raise ValueError(\"Generators can not be wrapped with fdb.transactional\")</li>\n          <li>        tr.commit().wait()</li>\n          <li>        committed = True</li>\n          <li>    except FDBError as e:</li>\n          <li>        tr.on_error(e.code).wait()</li>\n      </ol>\n    </code>\n  </pre>\n\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>Line 280, the <code>except FDBError</code> will only catch FoundationDB errors.</p>\n<p><code>tr.on_error(...)</code> might raise a FDB error in case the transaction was retried too many times or that is a non-retryable error (e.g. transaction too large ?), and which case the <code>while not commited</code> will stop. Just reading the Python code it seems that the transaction might retry indefinitly, but it is never the case.</p>\n<p>By the way, given the fact that a transaction can be retried, you must make sure that the decorated function is <strong>idempotent</strong> e.g. you can\u2019t send an email inside the transaction function and expect that it will only be sent only-once.</p>\n<p>(On a somewhat related note, I am wondering whether the retry logic, should not be the responsability of the bindings instead of the C driver, in some cases you do not want to retry too much time if the transaction happens during an end-user HTTP request-response. One way to workaround it would be to have an \u201ceffort\u201d or \u201ctimeout\u201d in milliseconds provided by the user, and fallback to another approach in case the transaction can not succeed because of competition. Now that I wrote that, I figured it can be implemented in custom bindings or alternative <code>@transactional</code> decorator)</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-10-10T07:30:47.800Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 27.6,
+        "yours": false,
+        "topic_id": 2919,
+        "topic_slug": "python-api-handle-exceptions-with-fdb-transactional",
+        "display_username": "Amirouche",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/0cce7743255f539f7811aa0776e9cf625c7771e4/bindings/python/fdb/impl.py#L272-L281",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/impl.py at 0cce7743255f539f7811aa0776e9cf625c7771e4 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 41,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/python-api-handle-exceptions-with-fdb-transactional/2919/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10040,
+      10044,
+      10098
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1482
+    ],
+    [
+      3,
+      1473
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Python api handle exceptions with @fdb.transactional",
+  "id": 2919,
+  "title": "Python api handle exceptions with @fdb.transactional",
+  "posts_count": 3,
+  "created_at": "2021-09-30T15:46:28.651Z",
+  "views": 483,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2021-10-10T07:30:47.800Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "python-api-handle-exceptions-with-fdb-transactional",
+  "category_id": 7,
+  "word_count": 397,
+  "deleted_at": null,
+  "user_id": 989,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2919",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Proper transaction retry loops",
+      "id": 2090,
+      "title": "Proper transaction retry loops",
+      "slug": "proper-transaction-retry-loops",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-04-28T21:37:58.250Z",
+      "last_posted_at": "2020-04-29T20:54:27.789Z",
+      "bumped": true,
+      "bumped_at": "2020-04-29T20:54:27.789Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 561,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 576,
+            "username": "davisp",
+            "name": "Paul J  Davis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davisp/{size}/570_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What does it mean &ldquo;Transaction Is Retryable&rdquo;, In particular to Handle Error of &ldquo;Transaction Too Old&rdquo;?",
+      "id": 1451,
+      "title": "What does it mean \"Transaction Is Retryable\", In particular to Handle Error of \"Transaction Too Old\"?",
+      "slug": "what-does-it-mean-transaction-is-retryable-in-particular-to-handle-error-of-transaction-too-old",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-13T09:38:16.632Z",
+      "last_posted_at": "2019-06-13T23:20:16.165Z",
+      "bumped": true,
+      "bumped_at": "2019-06-13T23:20:16.165Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3564,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Checking if an error is retryable?",
+      "id": 913,
+      "title": "Checking if an error is retryable?",
+      "slug": "checking-if-an-error-is-retryable",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-29T05:48:16.720Z",
+      "last_posted_at": "2018-11-29T20:25:24.144Z",
+      "bumped": true,
+      "bumped_at": "2018-11-29T20:25:24.144Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1877,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 439,
+            "username": "yields",
+            "name": "Amir",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/yields/{size}/545_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Prevent retrying on slow transactions",
+      "id": 1737,
+      "title": "Prevent retrying on slow transactions",
+      "slug": "prevent-retrying-on-slow-transactions",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-11-14T20:42:30.931Z",
+      "last_posted_at": "2019-11-14T20:46:22.590Z",
+      "bumped": true,
+      "bumped_at": "2019-11-14T20:46:22.590Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 715,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 681,
+            "username": "stevent",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/5f9b8f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Golang Client Error Wrapping Convention",
+      "id": 1713,
+      "title": "Golang Client Error Wrapping Convention",
+      "slug": "golang-client-error-wrapping-convention",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-11-02T23:07:59.527Z",
+      "last_posted_at": "2019-11-22T06:44:07.319Z",
+      "bumped": true,
+      "bumped_at": "2019-11-22T06:44:07.319Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 577,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 41,
+        "username": "amirouche",
+        "name": "Amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 989,
+        "username": "laita",
+        "name": "Lou",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/77aa72/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 989,
+      "username": "laita",
+      "name": "Lou",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/77aa72/{size}.png"
+    },
+    "last_poster": {
+      "id": 41,
+      "username": "amirouche",
+      "name": "Amirouche",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/0cce7743255f539f7811aa0776e9cf625c7771e4/bindings/python/fdb/impl.py#L272-L281",
+        "title": "foundationdb/impl.py at 0cce7743255f539f7811aa0776e9cf625c7771e4 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 41,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

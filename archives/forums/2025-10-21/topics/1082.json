@@ -1,0 +1,976 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 3171,
+        "name": "Seph Gentle",
+        "username": "josephg",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+        "created_at": "2019-01-30T05:44:29.087Z",
+        "cooked": "<p>Hi all!</p>\n<p>I thought you might like to see something neat - I\u2019m working on a realtime data processing pipeline / event sourcing system lately called <a href=\"https://github.com/josephg/statecraft\" rel=\"nofollow noopener\">statecraft</a>. Over the last few days I\u2019ve added foundationdb backend support.</p>\n<p>That means I can seamlessly run my little collaborative text editing demo on top of a foundationdb cluster. <a href=\"https://home.seph.codes/edit/hi_fdb\" rel=\"nofollow noopener\">Editor demo here</a>!</p>\n<p>The editor allows any document name after <code>/edit</code> in the URL and it creates documents on the fly. It has full reconnection support, and it\u2019ll render whatever you add into <a href=\"https://home.seph.codes/md/hi_fdb\" rel=\"nofollow noopener\">markdown</a>.</p>\n<p>Apologies in advance if people have vandalised the page (there\u2019s no access control) or if the server has gone down (there are more bugs - this is still POC territory).</p>\n<hr>\n<h4>Background &amp; implementation</h4>\n<p>If you\u2019re interested in some background on this, I worked on Google Wave back in 2011, and then when that got cancelled I reimplemented my own small version of a lot of the tech into <a href=\"https://github.com/josephg/ShareJS\" rel=\"nofollow noopener\">ShareJS</a>, which became <a href=\"https://github.com/share/sharedb\" rel=\"nofollow noopener\">ShareDB</a> for arbitrary realtime document editing. Foundationdb was the first database I wanted to build sharedb on top of because of its rock-solid fundamentals. But then FDB disappeared and I was bullied by my company into using redis + mongodb instead.</p>\n<p>Anyway, statecraft is in many ways the latest iteration of this long path. It supports \u2026 actually, I\u2019ll hold that explanation for later. I\u2019m very pleased with it though.</p>\n<p>In terms of realtime support with FDB, it leans heavily on fdb\u2019s versionstamps. Every operation is added to a queue (<code>op/VERSIONSTAMP</code>). The documents themselves is stored with the versionstamp prefixed at the front. The client knows the versionstamp of the document snapshot its looking at, and when it sends a change to the server I\u2019m checking for conflicts per-key on top of FDB. (<a href=\"https://github.com/josephg/statecraft/blob/5b3d70784e599cddaf1afaab71a1dfd37386398f/lib/stores/fdb.ts#L145-L195\" rel=\"nofollow noopener\">code</a>) Multiple users can edit different documents concurrently with conflicts. But if two users do conflict, I\u2019m reading out the operation log and doing a separate eventual consistency pass. (<a href=\"https://github.com/josephg/statecraft/blob/5b3d70784e599cddaf1afaab71a1dfd37386398f/lib/stores/ot.ts\" rel=\"nofollow noopener\">Code</a>, though it is far from straight forward)</p>\n<p>For realtime messaging, each write operation also writes into a big shared global version key (with conflicts turned off, though this might still be a bottleneck in big systems). Then each frontend server watches that global version key. Whenever it changes, it reads all client operations since that version and sends them to all connected listening clients.</p>\n<p>Its a bit bad using a single global current version key. I expect it would be more efficient if I could just follow the raw fdb oplog directly, or watch the versionstamp some other way. With FDB the way it is now I could also instead make a whole set of \u2018latest version\u2019 keys scattered throughout the keyspace and have each frontend server just watch all of them and take the max value when they change. But, as I said, this is a proof-of-concept. Eventually I want to rewrite the backend into rust, though I\u2019m hoping futures land in stable before that happens (and then that someone makes a rust FDB binding layer which adapts FDB futures into rust futures).</p>\n<p>The current code also re-stores the whole text document with every edit, but this is just because I haven\u2019t tuned it. It should store a collection of recent edits alongside each document, and then bake the edits back into the document itself in the database only when there\u2019s enough of them that it makes sense. That way it would be ammortized O(1) with the size of the document.</p>\n<p>Enjoy! And AMA!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-01-30T05:44:29.087Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 289,
+        "reads": 65,
+        "readers_count": 64,
+        "score": 1478.0,
+        "yours": false,
+        "topic_id": 1082,
+        "topic_slug": "show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb",
+        "display_username": "Seph Gentle",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://home.seph.codes/edit/hi_fdb",
+            "internal": false,
+            "reflection": false,
+            "clicks": 59
+          },
+          {
+            "url": "https://github.com/josephg/statecraft",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - josephg/statecraft: Manage state with finesse",
+            "clicks": 50
+          },
+          {
+            "url": "https://github.com/share/sharedb",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - share/sharedb: Realtime database backend based on Operational Transformation (OT)",
+            "clicks": 8
+          },
+          {
+            "url": "https://home.seph.codes/md/hi_fdb",
+            "internal": false,
+            "reflection": false,
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/josephg/statecraft/blob/5b3d70784e599cddaf1afaab71a1dfd37386398f/lib/stores/fdb.ts#L145-L195",
+            "internal": false,
+            "reflection": false,
+            "title": "statecraft/fdb.ts at 5b3d70784e599cddaf1afaab71a1dfd37386398f \u00b7 josephg/statecraft \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/josephg/statecraft/blob/5b3d70784e599cddaf1afaab71a1dfd37386398f/lib/stores/ot.ts",
+            "internal": false,
+            "reflection": false,
+            "title": "statecraft/ot.ts at 5b3d70784e599cddaf1afaab71a1dfd37386398f \u00b7 josephg/statecraft \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/josephg/ShareJS",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - josephg/ShareJS: Collaborative editing in any app",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/foundationdb-getting-started-help/1310/2",
+            "internal": true,
+            "reflection": true,
+            "title": "FoundationDB Getting Started Help",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 120,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb/1082/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 3173,
+        "name": "Amirouche",
+        "username": "amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "created_at": "2019-01-30T10:31:15.808Z",
+        "cooked": "<p>Hello joseph!</p>\n<aside class=\"quote no-group\" data-username=\"josephg\" data-post=\"1\" data-topic=\"1082\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/josephg/48/84_2.png\" class=\"avatar\"> josephg:</div>\n<blockquote>\n<p>I\u2019m working on a realtime data processing pipeline / event sourcing system lately called <a href=\"https://github.com/josephg/statecraft\" rel=\"noopener nofollow ugc\">statecraft</a>.</p>\n</blockquote>\n</aside>\n<p>This has nothing to do with things like kafka et al.?</p>\n<aside class=\"quote no-group\" data-username=\"josephg\" data-post=\"1\" data-topic=\"1082\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/josephg/48/84_2.png\" class=\"avatar\"> josephg:</div>\n<blockquote>\n<p>I worked on Google Wave back in 2011, and then when that got cancelled I reimplemented my own small version of a lot of the tech into <a href=\"https://github.com/josephg/ShareJS\" rel=\"noopener nofollow ugc\">ShareJS</a>, which became <a href=\"https://github.com/share/sharedb\" rel=\"noopener nofollow ugc\">ShareDB</a> for arbitrary realtime document editing.</p>\n</blockquote>\n</aside>\n<p>What about CRDTs? I was under the impression that it was the gist of google wave. How do you solve the same problem CRDTs solved in google wave with FDB?</p>\n<p>Do you use \u2018watches\u2019 with FDB?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-01-30T10:31:15.808Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 1,
+        "reads": 63,
+        "readers_count": 62,
+        "score": 22.6,
+        "yours": false,
+        "topic_id": 1082,
+        "topic_slug": "show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb",
+        "display_username": "Amirouche",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 41,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb/1082/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 3174,
+        "name": "Seph Gentle",
+        "username": "josephg",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+        "created_at": "2019-01-30T11:11:00.390Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"amirouche\" data-post=\"2\" data-topic=\"1082\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/amirouche/48/1911_2.png\" class=\"avatar\"> amirouche:</div>\n<blockquote>\n<p>This has nothing to do with things like kafka et al.?</p>\n</blockquote>\n</aside>\n<p>Sort of - kafka is a system for storing and forwarding <em>changes</em>. Statecraft is more of a database - or, a database constructor kit. You design how data moves around, then you can query it like any other database (or if you set it up correctly, serve HTML or whatever straight from the data store).</p>\n<aside class=\"quote no-group\" data-username=\"amirouche\" data-post=\"2\" data-topic=\"1082\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/amirouche/48/1911_2.png\" class=\"avatar\"> amirouche:</div>\n<blockquote>\n<p>What about CRDTs? I was under the impression that it was the gist of google wave. How do you solve the same problem CRDTs solved in google wave with FDB?</p>\n</blockquote>\n</aside>\n<p>Google wave didn\u2019t use CRDTs as we know them today. The Logoot paper only came out in late 2009, well after development was underway for wave. And that only implemented a CRDT for plain text. Nobody had done anything like that for the rich text / XML-like structures that wave used yet. So we used \u2018plain\u2019 OT based on a paper from 1995. Google docs at the time didn\u2019t even do that - its logic simply wasn\u2019t correct and with unlucky network connection &amp; disconnection, google docs at the time would start showing you incorrect document states.</p>\n<p>Just like Riak, conflict resolution in statecraft is entirely up to the developer. The idea is that OT or CRDT or whatever can be implemented as a layer on top of your root store, configured however you like. I\u2019ve implemented a layer for OT, but you should be able to use whatever conflict resolution system you want.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-01-30T11:11:45.407Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 1,
+        "incoming_link_count": 0,
+        "reads": 60,
+        "readers_count": 59,
+        "score": 27.0,
+        "yours": false,
+        "topic_id": 1082,
+        "topic_slug": "show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb",
+        "display_username": "Seph Gentle",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 120,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb/1082/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 3228,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-01-31T23:26:53.476Z",
+        "cooked": "<p>I enjoyed vandalizing your demo, and look forward to vandalizing your future demos. <img src=\"https://emoji.discourse-cdn.com/twitter/smiley.png?v=6\" title=\":smiley:\" class=\"emoji\" alt=\":smiley:\"></p>\n<p>I\u2019m also really interested in hearing more on how realtime web things work out on FDB.  I understand that it\u2019s an important thing for web, and I\u2019m interested in feedback on how useful/not useful watches and their semantics are for you.</p>\n<p>Would you mind elaborating on a couple parts of your design:</p>\n<ol>\n<li>\n<p>Why are you doing a global queue for all documents, rather than one queue of operations per document.  Do multi-document transforms exist?  It seems like one-queue-per-document would simplify/solve your scaling issues for realtime watches?</p>\n</li>\n<li>\n<p>What I remember reading of Wave\u2019s design was that the OT side was largely used on the client as a way to rebase unsynced operations onto the current server\u2019s state of the document.  It appears that\u2019s not what you\u2019re doing, but a quick read through of the eventual consistency pass implies that there\u2019s situations where you\u2019ll throw parts of edits away.  Does it not come out as odd from a UX perspective to have a server \u201caccept\u201d edits from a client, but conflicts from other users cause the edit to be thrown away once the document is synced back to the client?  Has OT/CRDT theory advanced sufficiently since the days of wave that both maintaining sufficient document history to be able to merge transforms and do the merge in a reliable way are now feasible?</p>\n</li>\n</ol>\n<p>(Sounds like quite a journey you\u2019ve had since your Google times\u2026 would you call it\u2026 a walkabout? <img src=\"https://emoji.discourse-cdn.com/twitter/wink.png?v=6\" title=\":wink:\" class=\"emoji\" alt=\":wink:\"> )</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-01-31T23:26:53.476Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 49,
+        "readers_count": 48,
+        "score": 54.8,
+        "yours": false,
+        "topic_id": 1082,
+        "topic_slug": "show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb/1082/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 3230,
+        "name": "Seph Gentle",
+        "username": "josephg",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+        "created_at": "2019-02-01T00:37:27.296Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"alexmiller\" data-post=\"4\" data-topic=\"1082\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/alexmiller/48/326_2.png\" class=\"avatar\"> alexmiller:</div>\n<blockquote>\n<p>would you call it\u2026 a walkabout?</p>\n</blockquote>\n</aside>\n<p><img src=\"https://emoji.discourse-cdn.com/twitter/sweat_smile.png?v=12\" title=\":sweat_smile:\" class=\"emoji\" alt=\":sweat_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"> that sure takes me back!</p>\n<p>\u2026 In the process of replying to you I\u2019m starting to rethink my design.</p>\n<p>The one-queue-per-document model would make more sense if all I were doing with statecraft was to remake google wave, or a similar collaborative editor. And its exactly what I did with ShareJS / <a href=\"https://github.com/share/sharedb\" rel=\"noopener nofollow ugc\">ShareDB</a>.</p>\n<p>But one of the big downsides to sharedb we ran into is that it doesn\u2019t support multi-document transactions. I want statecraft to be useful for more of the stuff you use databases for, so multi-document txn support is important. Statecraft also supports range queries and range query subscriptions. So right now statecraft imagines all writes going into a single big transaction log, and frontend servers filter operations out of that based on the active document sets of their clients.</p>\n<p>The current design will work fine for read-heavy workloads or workloads with a small active data set. But it won\u2019t scale to a large, sparse set of keys (like google docs). But thinking about it now I might be able to have my cake and eat it too. I could leave the write path more or less alone, still supporting multi-key transactions. But then store the operation log of each key separately. Then the frontend servers could set up a whole set of watches, watching the union of all keys which have active subscriptions.</p>\n<p>But I might run into active watch count limits. And you can\u2019t watch a range. But I could get around both of those problems by reducing the set of keys to a pool of 10-100 separate op logs. Each frontend server could hash &amp; truncate the active set of keys of its clients, then maintain a watch for each key in its active set of subscriptions. That would help distribute the load in a FDB cluster, and reduce the unnecessary work of receiving, decoding then filtering out operations in frontend servers. Range subscriptions would be trickier - I might need to make it configurable based on what you\u2019re doing.</p>\n<aside class=\"quote no-group\" data-username=\"alexmiller\" data-post=\"4\" data-topic=\"1082\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/alexmiller/48/326_2.png\" class=\"avatar\"> alexmiller:</div>\n<blockquote>\n<p>a quick read through of the eventual consistency pass implies that there\u2019s situations where you\u2019ll throw parts of edits away</p>\n</blockquote>\n</aside>\n<p>A document operation in statecraft is <em>Set(newval)</em>, <em>Remove()</em> or some registered custom operation type. For that demo, all the typing operations are <a href=\"https://github.com/ottypes/text-unicode\" rel=\"noopener nofollow ugc\">ot-text-unicode</a> operations. If all operations are text operations, no data will be lost. But there\u2019s a weird situation that arises when one user does a set or remove on the entire document, and another user concurrently edits the document\u2019s contents using OT. This sort of thing is impossible in that demo but it could happen, for example, if you wanted to run some sort of schema migration. Eventually I want the default operation type to be <a href=\"https://github.com/ottypes/json1\" rel=\"noopener nofollow ugc\">json1 OT operations</a>, and then schema migrations could also be resolved using operational transform. Its also detectable in the client (since the conflict error propogates all the way up). So if the app authors wanted to resolve it differently, they could - \u201cLooks like the document you were editing was deleted! Want to save your recent edits?\u201d</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-02-01T00:37:27.296Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 1,
+        "incoming_link_count": 1,
+        "reads": 46,
+        "readers_count": 45,
+        "score": 29.2,
+        "yours": false,
+        "topic_id": 1082,
+        "topic_slug": "show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb",
+        "display_username": "Seph Gentle",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/ottypes/text-unicode",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - ottypes/text-unicode: Unicode text OT implementation",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/share/sharedb",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - share/sharedb: Realtime database backend based on Operational Transformation (OT)",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/ottypes/json1",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - ottypes/json1: This is an operational transform type replacement for ottypes/json0",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 120,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb/1082/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      3171,
+      3173,
+      3174,
+      3228,
+      3230
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2457
+    ],
+    [
+      3,
+      2456
+    ],
+    [
+      4,
+      2455
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Show FDB: A scalable realtime text editor on top of foundationdb",
+  "id": 1082,
+  "title": "Show FDB: A scalable realtime text editor on top of foundationdb",
+  "posts_count": 5,
+  "created_at": "2019-01-30T05:44:28.951Z",
+  "views": 1270,
+  "reply_count": 2,
+  "like_count": 4,
+  "last_posted_at": "2019-02-01T00:37:27.296Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "show-fdb-a-scalable-realtime-text-editor-on-top-of-foundationdb",
+  "category_id": 7,
+  "word_count": 1868,
+  "deleted_at": null,
+  "user_id": 120,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1082",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Sneak peak - How Wavefront manages clusters at scale",
+      "id": 866,
+      "title": "Sneak peak - How Wavefront manages clusters at scale",
+      "slug": "sneak-peak-how-wavefront-manages-clusters-at-scale",
+      "posts_count": 2,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/8c7390150cd0078e967a18c7663581b9b334d239.png",
+      "created_at": "2018-11-12T21:59:24.684Z",
+      "last_posted_at": "2018-11-12T22:07:01.380Z",
+      "bumped": true,
+      "bumped_at": "2018-11-12T22:07:01.380Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 1384,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 26,
+            "username": "mrz",
+            "name": "matthew zeier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mrz/{size}/26_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Changefeeds (watching and getting updates on ranges of keys)",
+      "id": 511,
+      "title": "Changefeeds (watching and getting updates on ranges of keys)",
+      "slug": "changefeeds-watching-and-getting-updates-on-ranges-of-keys",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-06-16T12:26:34.710Z",
+      "last_posted_at": "2018-07-06T14:46:54.646Z",
+      "bumped": true,
+      "bumped_at": "2018-07-06T14:46:54.646Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 4221,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 307,
+            "username": "jwr",
+            "name": "Jan Rychter",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwr/{size}/302_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Neon: a versioned quad store that works like git requires a lock",
+      "id": 305,
+      "title": "Neon: a versioned quad store that works like git requires a lock",
+      "slug": "neon-a-versioned-quad-store-that-works-like-git-requires-a-lock",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-29T14:15:51.510Z",
+      "last_posted_at": "2018-05-05T00:43:03.752Z",
+      "bumped": true,
+      "bumped_at": "2018-05-05T00:43:03.752Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1128,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Technical overview of the database",
+      "id": 135,
+      "title": "Technical overview of the database",
+      "slug": "technical-overview-of-the-database",
+      "posts_count": 27,
+      "reply_count": 15,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-04-20T15:30:31.788Z",
+      "last_posted_at": "2019-01-11T23:25:47.462Z",
+      "bumped": true,
+      "bumped_at": "2019-01-11T23:25:47.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 64,
+      "views": 12958,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 96,
+            "username": "idiot",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 443,
+            "username": "junius",
+            "name": "junius",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f08c70/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 120,
+        "username": "josephg",
+        "name": "Seph Gentle",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 41,
+        "username": "amirouche",
+        "name": "Amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 120,
+      "username": "josephg",
+      "name": "Seph Gentle",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png"
+    },
+    "last_poster": {
+      "id": 120,
+      "username": "josephg",
+      "name": "Seph Gentle",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png"
+    },
+    "links": [
+      {
+        "url": "https://home.seph.codes/edit/hi_fdb",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 59,
+        "user_id": 120,
+        "domain": "home.seph.codes",
+        "root_domain": "seph.codes"
+      },
+      {
+        "url": "https://github.com/josephg/statecraft",
+        "title": "GitHub - josephg/statecraft: Manage state with finesse",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 50,
+        "user_id": 120,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/share/sharedb",
+        "title": "GitHub - share/sharedb: Realtime database backend based on Operational Transformation (OT)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 120,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/josephg/statecraft/blob/5b3d70784e599cddaf1afaab71a1dfd37386398f/lib/stores/fdb.ts#L145-L195",
+        "title": "statecraft/fdb.ts at 5b3d70784e599cddaf1afaab71a1dfd37386398f \u00b7 josephg/statecraft \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 120,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://home.seph.codes/md/hi_fdb",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 120,
+        "domain": "home.seph.codes",
+        "root_domain": "seph.codes"
+      },
+      {
+        "url": "https://github.com/ottypes/text-unicode",
+        "title": "GitHub - ottypes/text-unicode: Unicode text OT implementation",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 120,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/josephg/statecraft/blob/5b3d70784e599cddaf1afaab71a1dfd37386398f/lib/stores/ot.ts",
+        "title": "statecraft/ot.ts at 5b3d70784e599cddaf1afaab71a1dfd37386398f \u00b7 josephg/statecraft \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 120,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

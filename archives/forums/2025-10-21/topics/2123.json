@@ -1,0 +1,687 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7003,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2020-05-14T13:44:27.947Z",
+        "cooked": "<p>After having implemented caching in the Directory Layer and several other complex layers, using the <code>\\xff/metadaVersion</code> key, and having used it for a while, I ended up having to scrap this idea for mainly three reasons:</p>\n<ul>\n<li>\n<p>Relying on a single global key creates to much noise from other sources in the cluster.</p>\n</li>\n<li>\n<p>Adding another key to the Directory Layer (used to test if the change is indeed coming from the DL or other) is a breaking change that needs requires a new version of the DL implementation in all bindings.</p>\n</li>\n<li>\n<p>Both the global metadata key and the \u201clocal\u201d key used by layers will totally miss any admin operation performed by fdbcli (or outside) script  (see <a href=\"https://forums.foundationdb.org/t/should-mutations-performed-via-fdbcli-always-update-the-xff-metadataversion-key/2093\" class=\"inline-onebox\">Should mutations performed via fdbcli always update the \\xff/metadataVersion key?</a>). It can be argued that \u201cit should not happen\u201d, but <em>if</em> it happens this is catastrophic (all running instances will continue with the cache and data corruption will occur).</p>\n</li>\n</ul>\n<p>My feeling is that the most robust implementation for caching, would be the ability for a transaction to set read conflict ranges that can \u201cgo back in time\u201d, ie: instead of setting a conflict range starting at the current transaction\u2019s read-version, it could specify an older value (probably the value of the read-version when the cache was first created).</p>\n<p>This feature does not exist, and I\u2019m not sure if it could be done in such a way that a cache could live longer than 5 seconds anyway.</p>\n<p>In the mean time, I had to find another solution that 1) can be retrofit onto existing layers without requiring versioning, and 2) would be robust enough to no be vulnerable to admin mistakes, like doing a clear range in fdbcli.</p>\n<p>I ended up added a \u201cdeferred value-checks\u201d feature in the binding itself: a \u201cvalue-check\u201d is an outstanding asynchronous read, paired with an expected result value, which will run concurrently with the execution of the transaction handler. Just before commit (for r/w transactions) or before the handler completes (for read-only transactions), the binding will wait for all these outstanding reads to complete, and verify that they all return the expected values. If <em>any</em> read fails or returns a different value, the attempt will be failed (by simulating a <code>not_committed</code> error), and the retry loop will retry the execution.</p>\n<p>Of course, in the next attempt, the layer code must be able to know that a value-check failed (or risk looping for ever). The binding offers another API that can be used to check if something failed in the <em>previous</em> attempt. The layer can then decide to drop any previous cache, and re-read everything.</p>\n<p><em>This is very similar to the way FDB does optimistic locking by inducing retries by forcing code to run again. Except in this case, the layer code must notice this happening and react accordingly.</em></p>\n<p>Pros:</p>\n<ul>\n<li>\n<p>Layers can check multiple keys in // without having to run them sequentially. (ex: the Directory Layer can \u201crevalidate\u201d all the nodes from the root in a deeply nested path in // instead of sequentially).</p>\n</li>\n<li>\n<p>Layers can have their own set of keys that are not shared with anyone else.</p>\n</li>\n<li>\n<p>Layers can keep a cache around when creating new entries (ex: the DL only tracks subspaces opened previously, creating a directory or deleting a directory not in the cache will not bust the cache!)</p>\n</li>\n<li>\n<p>Layers can reuse existing keys for the value-checks (ex: the DL reuses the keys that map names to prefixes)</p>\n</li>\n<li>\n<p>This method allows multiple layers to work on the same transaction without interference, and easily decide if <em>their</em> cache is bad, or it it\u2019s someone else\u2019s cache.</p>\n</li>\n<li>\n<p>If the data is changed by <em>any</em> external tool or script, the layer will observe it. (ex: a clear-range in fdbcli will make all value checks fail, and the DL will notice it on the next attempt).</p>\n</li>\n</ul>\n<p>Cons:</p>\n<ul>\n<li>\n<p>Compared to the global metadata version key, this method requires at least two \u201chops\u201d with the cluster, because we will still need to wait for the read-version, and then wait for the outstanding reads to complete, before calling commit. It is possible that the two hops will be merged into one if the transaction only writes.</p>\n</li>\n<li>\n<p>The implementation of caching is more complex and error-prone because it works \u201caccross\u201d retries.</p>\n</li>\n<li>\n<p>It is currently done at the binding layer, but there has some limitations. It would work better if done at a lower level.</p>\n</li>\n</ul>\n<p>These are the methods I have added to the .NET API:</p>\n<p><em>note: the \u201ccontext\u201d class is the type that manages the lifetime of a transaction in the .NET binding. It is accessed via the <code>tr.Context</code> property, which \u201chides\u201d these API away from the view or \u201cnormal\u201d users, since this is essentially an expert-level API!!!</em></p>\n<pre><code class=\"lang-auto\">public class FdbOperationContext\n{\n    //...\n\n    public void AddValueCheck(string tag, Slice key, Slice expectedValue);\n    public void AddValueChecks(string tag, IEnumerable&lt;KeyValuePair&lt;Slice, Slice&gt;&gt; items);\n\n    public bool? ValueCheckFailedInPreviousAttempt(string tag);\n    public bool HasAtLeastOneFailedValueCheck { get; }\n}\n</code></pre>\n<p>During the first attempt, the layer calls <code>tr.Context.AddValueCheck(...)</code> or <code>tr.Context.AddValueChecks(...)</code> with a list of key/value pairs, but the call is \u2018void\u2019. Each value-check is paired with a <em>tag</em> which is an opaque string.</p>\n<p>In the next retry, meaning that at least on value-check failed, the layer can call <code>tr.Context.ValueCheckFailedInPreviousAttempt(...)</code> with the same tag, and get a result. If the method returns true, the layer knows that the value changed at some time in the past, and throws out the cache.</p>\n<p>Here is a somewhat contrived example of code using these checks:</p>\n<pre><code class=\"lang-csharp\">async Task SomeLayerMethod(IFdbTransaction tr, ....)\n{\n     CacheContainer? cachedMetadata = .....;\n     if (cachedData != null)\n     { // we have to re-validate the cache!\n        if (tr.Context.ValueCheckFailedInPreviousAttempt(\"acmeLayerId\"))\n        { // we know from the previous attempt that something changed!\n            cachedMetadata = null; // drop the cache\n        }\n        else\n        { // optimistically use the cached data, but add a value-check for this transcation.\n            tr.Context.AddValueCheck(\"acmeLayerId\", cachedMetadata.CheckKey, cachedMetadata.CheckValue);\n        }\n     }\n\n     if (cachedMetadata == null)\n     { // we must read all the metadata from the database\n        cachedMetadata = await GetMetadata(tr, ...); // reload metadata from the db\n        // keep this around _only_ if the transaction commits with success\n        tr.Context.OnSuccess((ctx, _) =&gt; { /* store the cached metadata somewhere */ });\n     }\n\n     // run the rest of the transaction as normal\n     tr.Set(.....);\n     await tr.GetAsync(....);\n}\n</code></pre>\n<p>There are several performances issues, due to the fact that I\u2019m currently handling this at the binding level:</p>\n<ul>\n<li>\n<p>I don\u2019t dedup value checks for the same key in a transaction: I rely on the fact that the C binding already does that (merging multiple concurrent reads on the same key), but I still need to allocate tasks and futures.</p>\n</li>\n<li>\n<p>When a value-check is created, I start the read immediately. If the same transaction changes the value after that, the value-check should not see the updated value. But if the code creates a new value-check for the same key, then <em>that</em> read should see the updated value. This alone means that I cannot easily \u201cmerge\u201d checks for the same key, because it is difficult to know if the value was changed locally or not. The C binding <em>does</em> know that, and could easily implement this optimization!</p>\n</li>\n<li>\n<p>Most layers have to check multiple values at once. I re-used the fake \u201cGetValues(\u2026)\u201d method of the .NET binding that creates multiple futures (one for each key) but only calls back into the .NET world once (with the array of results). If this feature is more heavily used, it would be nice if the C binding could provide such bulk read method, to reduce the number of allocations and native interop.</p>\n</li>\n</ul>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-05-14T13:44:27.947Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 55.0,
+        "yours": false,
+        "topic_id": 2123,
+        "topic_slug": "deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/should-mutations-performed-via-fdbcli-always-update-the-xff-metadataversion-key/2093",
+            "internal": true,
+            "reflection": false,
+            "title": "Should mutations performed via fdbcli always update the \\xff/metadataVersion key?",
+            "clicks": 1
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/should-mutations-performed-via-fdbcli-always-update-the-xff-metadataversion-key/2093/6",
+            "internal": true,
+            "reflection": true,
+            "title": "Should mutations performed via fdbcli always update the \\xff/metadataVersion key?",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/query-hotspotting-on-directory-layers-metadata-subspace/2487/3",
+            "internal": true,
+            "reflection": true,
+            "title": "Query hotspotting on Directory Layer's metadata subspace",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers/2123/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 7098,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2020-05-23T12:49:26.440Z",
+        "cooked": "<p>After using this for a while, I found a few cases that need special care when using this technique.</p>\n<p>The main issue is that the retry loop handler may fail because the application code throws errors/exceptions due to invalid assumptions. Meaning that it (or code in a layer it uses) assumed that the value of a key was something, but then following reads did not return the expected result, and the layer or application code interpreted <em>that</em> as some invalid situation (corrupted data? invalid state in the worflow?).</p>\n<blockquote>\n<p>Real life example: layer code is using a cached directory subspace\u2019s prefix to read keys. The directory subspace was just deleted and then re-created with a new prefix. Old prefix is still in cache, and points to either empty data, or WORSE, new data because the prefix was reused somehow! This is very frequent inside unit test suites that repeatedly delete and re-create entire sub-trees between each test.</p>\n</blockquote>\n<p>When this happens, and if there is AT LEAST one failed value-check, the retry loop HAS to retry the handler.</p>\n<ul>\n<li>If the exception was due to an invalid assumption, the layer or app code should see that the check failed, reload everything from the cluster, get the correct data, and no throw again.</li>\n<li>If the exception was unrelated, if should (probably) fail again.</li>\n</ul>\n<p>This makes this even more difficult to implement well, because if any of the layer code mixes things up in the value-check retry logic, it may end up retrying forever\u2026</p>\n<p>But anyway, with that in place, here is an example of this in action:</p>\n<p>The layer code is very simplistic and assume that it has a <code>\"Foo\"</code> key that is either <code>\"NotReady\"</code> or <code>\"Ready\"</code>. The value of <code>Foo</code> becomes <code>\"Ready\"</code> after some (slow) initialization step that will set the value of a key <code>\"Bar\"</code> to some important value, which should NOT be null !</p>\n<p>So the initial state of the database may be:</p>\n<ul>\n<li><code>Foo</code> = <code>NotReady</code></li>\n<li><code>Bar</code> does not exist.</li>\n</ul>\n<p>After execution the slow initialization process, the database SHOULD be:</p>\n<ul>\n<li><code>Foo</code> = <code>Ready</code></li>\n<li><code>Bar</code> = Something important for the application</li>\n</ul>\n<p>The transaction code expects to be in the \u201cReady\u201d state, and will optimistically assume that it is true without doing any reads, and rely on retries to discover the ugly truth (that someone forgot to run the init script!)</p>\n<p>First transaction (that discovers something is wrong):</p>\n<pre><code class=\"lang-plaintext\">Transaction #10 (read/write, 17 operations, '#' = 0.5 ms, started 12:26:15.0039736Z [1590236775.003], ended 12:26:15.0139512Z [1590236775.013])\n\u250c  oper. \u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500 start \u2500\u2500\u2500\u2500 end \u2500\u2500 duration \u2500\u2500\u252c\u2500 sent  recv \u2510\n\u2502 0   // \u2502                     \u2502 T+  0.013                        \u2502     -     - \u2502 // APP: I'm feeling lucky! Let's assume the db is already initialized\n\u2502:0   G \u00b0\u2502 ##$                 \u2502 T+  0.022 ~   1.066 (  1,045 \u00b5s) \u2502    19     8 \u2502 Get (\"value_checks\", \"Foo\") =&gt; 'NotReady'\n\u2502:0   // \u2502 `                   \u2502 T+  0.035                        \u2502     -     - \u2502 // APP: The value of 'Bar' better not be empty...\n\u2502:0   G \u00b0\u2502 ##$                 \u2502 T+  0.036 ~   1.046 (  1,009 \u00b5s) \u2502    19     0 \u2502 Get (\"value_checks\", \"Bar\") =&gt; not_found\n\u2502 1   // \u2502 __`                 \u2502 T+  1.060                        \u2502     -     - \u2502 // APP: UH OH... something's wrong! let's throw an exception!!\n\u2502 2   // \u2502 ___`                \u2502 T+  1.186                        \u2502     -     - \u2502 // Handler failed with error: [InvalidOperationException] Oh noes! There is some corruption in the database!\n\u2502:2   // \u2502 ___`                \u2502 T+  1.208                        \u2502     -     - \u2502 // Failed value-check 'foo' for (\"value_checks\", \"Foo\"): expected 'Ready', actual 'NotReady'\n\u2502:2   Er\u00b0\u2502 ___X###########+    \u2502 T+  1.232 ~   5.709 (  4,478 \u00b5s) \u2502             \u2502 OnError NotCommitted (1020)\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524 == Attempt #2 == 12:26:15.0097157Z (1590236775.009)\n\u2502 3   // \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0`    \u2502 T+  5.742                        \u2502     -     - \u2502 // SetOption(Timeout, 15000)\n\u2502:3   // \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0`    \u2502 T+  5.854                        \u2502     -     - \u2502 // Previous attempt failed because of the following failed value-check(s): foo\n\u2502:3   // \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0`    \u2502 T+  5.872                        \u2502     -     - \u2502 // APP: doing the actual work to check the state of the db, and initialize the schema if required...\n\u2502:3   G \u00b0\u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0.##$ \u2502 T+  5.878 ~   6.982 (  1,105 \u00b5s) \u2502    19     8 \u2502 Get (\"value_checks\", \"Foo\") =&gt; 'NotReady'\n\u2502 4   // \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0___` \u2502 T+  6.991                        \u2502     -     - \u2502 // APP: initializing the database!\n\u2502:4   s  \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0___` \u2502 T+  7.010 ~   7.017 (      7 \u00b5s) \u2502    24       \u2502 Set (\"value_checks\", \"Foo\") = 'Ready'\n\u2502 5   s  \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0___` \u2502 T+  7.019 ~   7.020 (      1 \u00b5s) \u2502    28       \u2502 Set (\"value_checks\", \"Bar\") = 'Something'\n\u2502 6   // \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0___` \u2502 T+  7.020                        \u2502     -     - \u2502 // APP: The value of 'Bar' better not be empty...\n\u2502:6   G  \u2502 \u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0\u00b0___` \u2502 T+  7.022 ~   7.038 (     16 \u00b5s) \u2502    19     9 \u2502 Get (\"value_checks\", \"Bar\") =&gt; 'Something'\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n&gt; Read 25 bytes in 9.976 ms and 2 attempt(s)\n</code></pre>\n<p>The code then first optimistically assumes that the layer is \u201cReady\u201d, and expects a non-null value in \u201cBar\u201d. If it is null then <em>it assumes that there is some corruption in the database</em>, and throws an exception.</p>\n<p>The retry loop handler sees the exceptions, but sees the failed value-check, and retries.</p>\n<p>On the second attempt, the layer code does not assume anything, reads \u201cFoo\u201d, sees that it\u2019s \u201cNotReady\u201d and then does the actual work to initialize the db.</p>\n<p>All the `following transactions show the case when the value-check is successfull.</p>\n<pre><code class=\"lang-plaintext\">Transaction #11 (read/write, 4 operations, '#' = 0.5 ms, started 12:26:15.0141316Z [1590236775.014], ended 12:26:15.0159212Z [1590236775.015])\n\u250c  oper. \u252c\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500 start \u2500\u2500\u2500\u2500 end \u2500\u2500 duration \u2500\u2500\u252c\u2500 sent  recv \u2510\n\u2502 0   // \u2502     \u2502 T+  0.008                        \u2502     -     - \u2502 // APP: I'm feeling lucky! Let's assume the db is already initialized\n\u2502:0   G \u00b0\u2502 ### \u2502 T+  0.014 ~   1.696 (  1,682 \u00b5s) \u2502    19     5 \u2502 Get (\"value_checks\", \"Foo\") =&gt; 'Ready'\n\u2502:0   // \u2502 `   \u2502 T+  0.023                        \u2502     -     - \u2502 // APP: The value of 'Bar' better not be empty...\n\u2502:0   G \u00b0\u2502 ### \u2502 T+  0.024 ~   1.683 (  1,659 \u00b5s) \u2502    19     9 \u2502 Get (\"value_checks\", \"Bar\") =&gt; 'Something'\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n&gt; Read 14 bytes in 1.787 ms and 1 attempt(s)\n\nTransaction #12 (read/write, 4 operations, '#' = 0.5 ms, started 12:26:15.0160095Z [1590236775.016], ended 12:26:15.0169962Z [1590236775.016])\n\u250c  oper. \u252c\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500 start \u2500\u2500\u2500\u2500 end \u2500\u2500 duration \u2500\u2500\u252c\u2500 sent  recv \u2510\n\u2502 0   // \u2502   \u2502 T+  0.007                        \u2502     -     - \u2502 // APP: I'm feeling lucky! Let's assume the db is already initialized\n\u2502:0   G  \u2502 # \u2502 T+  0.011 ~   0.945 (    934 \u00b5s) \u2502    19     5 \u2502 Get (\"value_checks\", \"Foo\") =&gt; 'Ready'\n\u2502:0   // \u2502 ` \u2502 T+  0.016                        \u2502     -     - \u2502 // APP: The value of 'Bar' better not be empty...\n\u2502:0   G  \u2502 # \u2502 T+  0.017 ~   0.935 (    918 \u00b5s) \u2502    19     9 \u2502 Get (\"value_checks\", \"Bar\") =&gt; 'Something'\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n&gt; Read 14 bytes in 0.986 ms and 1 attempt(s)\n</code></pre>\n<p>What we can observe is that both the reads for \u201cFoo\u201d and \u201cBar\u201d start and complete at roughly the same time, even though, logically, the application should first read \u201cFoo\u201d <em>and then</em> if the value is \u201cReady\u201d, read the value of \u201cBar\u201d:</p>\n<ul>\n<li>Start \u201cFoo\u201d read</li>\n<li>Await \u201cFoo\u201d read</li>\n<li>Start \u201cBar\u201d read</li>\n<li>Await \u201cBar\u201d read</li>\n</ul>\n<p>In the above examples, though, both reads are merged, or rather the read for \u201cFoo\u201d is not awaited, but rather deferred right until the end.</p>\n<p>So the actual order of operation is:</p>\n<ul>\n<li>Start \u201cFoo\u201d read</li>\n<li>Start \u201cBar\u201d read</li>\n<li>Await \u201cBar\u201d read</li>\n<li>Await \u201cFoo\u201d read</li>\n</ul>\n<blockquote>\n<p>It looks like the fdb client multiplexes both reads so they are essentially merged into a single network roundtrip! If you look carefully, you see that the end time for the \u201cFoo\u201d reads is a few \u00b5sec later than the end time for \u201cBar\u201d.</p>\n</blockquote>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-05-23T12:51:12.179Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 18,
+        "readers_count": 17,
+        "score": 13.6,
+        "yours": false,
+        "topic_id": 2123,
+        "topic_slug": "deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers/2123/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 7102,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2020-05-26T14:32:11.872Z",
+        "cooked": "<p>This is what it looks like in a \u201creal life\u201d transaction that combines the Directory Layer and a Document Store layer.</p>\n<p>The transaction queries an index in a collection of Books, and both the directory subspaces and the metadata for the collection are cached from previous requests. Both DL and Document layer use value-checks are used to ensure that the cache is valid.</p>\n<pre><code class=\"lang-plaintext\">Querying Genre == 'Science Fiction' ...\nTransaction #21 (read-only, 17 operations, '#' = 0.5 ms, started 14:21:20.5156647Z [1590502880.515], ended 14:21:20.5171854Z [1590502880.517])\n\u250c  oper. \u252c\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500 start \u2500\u2500\u2500\u2500 end \u2500\u2500 duration \u2500\u2500\u252c\u2500 sent  recv \u2510\n\u2502 0   // \u2502     \u2502 T+  0.404                        \u2502     -     - \u2502 // Unpacking Book documents...\n\u2502:0   ?? \u2502 ##+ \u2502 T+  0.430 ~   1.176 (    746 \u00b5s) \u2502    13     1 \u2502 CheckValue (|Directory|, `&lt;FE&gt;`, 0, \"Tests\") =?= &lt;14&gt; =&gt; &lt;14&gt; [Success]\n\u2502:0   ?? \u2502 ##. \u2502 T+  0.442 ~   1.099 (    657 \u00b5s) \u2502    18     3 \u2502 CheckValue (0, |Directory|, `&lt;14&gt;&lt;FE&gt;`, 0, \"ACME\") =?= &lt;14&gt;&lt;15&gt;&lt;16&gt; =&gt; &lt;14&gt;&lt;15&gt;&lt;16&gt; [Success]\n\u2502:0   ?? \u2502 ##. \u2502 T+  0.445 ~   1.096 (    652 \u00b5s) \u2502    20     3 \u2502 CheckValue (0, |Directory|, `&lt;14&gt;&lt;15&gt;&lt;16&gt;`, 0, \"MUTSUMI\") =?= &lt;14&gt;&lt;15&gt;5 =&gt; &lt;14&gt;&lt;15&gt;5 [Success]\n\u2502:0   ?? \u2502 &amp;#. \u2502 T+  0.447 ~   1.093 (    646 \u00b5s) \u2502    23     4 \u2502 CheckValue (0, |Directory|, `&lt;14&gt;&lt;15&gt;5`, 0, \"BookFacts\") =?= &lt;14&gt;&lt;16&gt;&lt;15&gt;&lt;11&gt; =&gt; &lt;14&gt;&lt;16&gt;&lt;15&gt;&lt;11&gt; [Success]\n\u2502:0   ?? \u2502 &amp;#. \u2502 T+  0.452 ~   1.087 (    635 \u00b5s) \u2502    20     4 \u2502 CheckValue (0, |Directory|, `&lt;14&gt;&lt;16&gt;&lt;15&gt;&lt;11&gt;`, 0, \"Books\") =?= &lt;14&gt;&lt;16&gt;&lt;16&gt;b =&gt; &lt;14&gt;&lt;16&gt;&lt;16&gt;b [Success]\n\u2502:0   // \u2502 `   \u2502 T+  0.469                        \u2502     -     - \u2502 // Checking schema snapshot 19228081243440 for collection /Tests/Acme/MUTSUMI/BookFacts/Books[Doxense:DocStore:Collection] at &lt;14&gt;&lt;16&gt;&lt;16&gt;b against content of directory at DirectorySubspace(path=/Tests/Acme/MUTSUMI/BookFacts/Books[Doxense:DocStore:Collection], prefix=(0, 5730))\n\u2502:0   // \u2502 `   \u2502 T+  0.471                        \u2502     -     - \u2502 // Schema cache likely still valid for collection '/Tests/Acme/MUTSUMI/BookFacts/Books[Doxense:DocStore:Collection]'.\n\u2502:0   ?? \u2502 &amp;#; \u2502 T+  0.472 ~   1.149 (    677 \u00b5s) \u2502    15     5 \u2502 CheckValue (0, 5730, \"Name\") =?= 'Books' =&gt; 'Books' [Success]\n\u2502:0   ?? \u2502 $#; \u2502 T+  0.492 ~   1.147 (    655 \u00b5s) \u2502    20     1 \u2502 CheckValue (0, 5730, \"SchemaVersion\") =?= &lt;01&gt; =&gt; &lt;01&gt; [Success]\n\u2502:0   ?? \u2502 $#; \u2502 T+  0.498 ~   1.144 (    646 \u00b5s) \u2502    20    10 \u2502 CheckValue (0, 5730, \"Type\") =?= 'Collection' =&gt; 'Collection' [Success]\n\u2502:0   ?? \u2502 $#; \u2502 T+  0.500 ~   1.141 (    641 \u00b5s) \u2502    20     6 \u2502 CheckValue (0, 5730, \"Metadata\") =?= 0&lt;C5&gt;&lt;F3&gt;&lt;E2&gt;|&lt;11&gt; =&gt; 0&lt;C5&gt;&lt;F3&gt;&lt;E2&gt;|&lt;11&gt; [Success]\n\u2502:0   // \u2502 `   \u2502 T+  0.566                        \u2502     -     - \u2502 // Lookup value (\"science fiction\",) from non-unique index [Books.IX_Genres]\n\u2502:0   R  \u2502 +#: \u2502 T+  0.625 ~   1.136 (    511 \u00b5s) \u2502    54    30 \u2502 GetRange fGE{(0, 5730, 1, 2, 0, \"science fiction\").&lt;00&gt;} &lt;= k &lt; fGE{(0, 5730, 1, 2, 0, \"science fiction\").&lt;FF&gt;}, WantAll, Keys =&gt; 1 result(s)\n\u2502 10  R  \u2502 __= \u2502 T+  1.209 ~   1.371 (    162 \u00b5s) \u2502    20   299 \u2502 GetRange fGE{(0, 5730, 0, 88038).&lt;00&gt;} &lt;= k &lt; fGE{(0, 5730, 0, 88038).&lt;FF&gt;}, WantAll, Values =&gt; 1 result(s)\n\u2502 11  // \u2502 ___ \u2502 T+  1.500                        \u2502     -     - \u2502 // Verifying 9 pending value-check(s)\n\u2502:11  // \u2502 ___ \u2502 T+  1.512                        \u2502     -     - \u2502 // All value-checks passed\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n&gt; Read 366 bytes in 1.520 ms and 1 attempt(s)\n</code></pre>\n<p>The first 5 value checks are from the Directory Layer, and the next 4 checks are for the metadata cache of the collection itself. The only \u201creal\u201d operations are the GetRange(\u2026) used to query the index.</p>\n<blockquote>\n<p><em>note: the first column of this log displays the \u201coperation index\u201d, which is  \u201cthe number of I/Os that have completed before this operation\u201d. All the lines that start with <code>:0</code> mean that they started while the previous operations are still pending. The second <code>GetRange</code> has <code>10</code> which means that when it was issued, 10 operations before it completed. So in short: all the lines that start with a <code>':'</code> are multiplexed with other operations. Only lines that increment this number are sequential.</em></p>\n</blockquote>\n<p>We can see that the first 8 value-check reads have been merged with the first GetRange(\u2026), so they don\u2019t add to the overall transaction latency. Without this, and without any cache, the first 5 reads from the DL would have been sequentials, and only the 4 reads from the collection metadata would have been done in //, so a total of 5 round-trips required <em>before</em> issuing the first GetRange.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-05-26T17:47:07.169Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 2.8,
+        "yours": false,
+        "topic_id": 2123,
+        "topic_slug": "deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 53,
+          "username": "KrzysFR",
+          "name": "Christophe Chevalier",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers/2123/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7003,
+      7098,
+      7102
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1986
+    ],
+    [
+      2,
+      1977
+    ],
+    [
+      3,
+      1974
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Deferred value checks as an alternative to the metadataVersion key for caching in layers",
+  "id": 2123,
+  "title": "Deferred value checks as an alternative to the metadataVersion key for caching in layers",
+  "posts_count": 3,
+  "created_at": "2020-05-14T13:44:27.861Z",
+  "views": 849,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2020-05-26T14:32:11.872Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers",
+  "category_id": 5,
+  "word_count": 3083,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2123",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "id": 1833,
+      "title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "slug": "cannot-commit-transaction-that-reads-the-metadataversion-key-after-changing-it",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-12-11T22:52:33.816Z",
+      "last_posted_at": "2019-12-13T13:23:15.818Z",
+      "bumped": true,
+      "bumped_at": "2019-12-13T14:11:35.389Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1297,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to safely add a metadata caching &ldquo;layer&rdquo; on top of existing layers?",
+      "id": 1809,
+      "title": "How to safely add a metadata caching \"layer\" on top of existing layers?",
+      "slug": "how-to-safely-add-a-metadata-caching-layer-on-top-of-existing-layers",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef_2_1024x317.png",
+      "created_at": "2019-12-04T18:52:44.332Z",
+      "last_posted_at": "2019-12-12T19:05:17.074Z",
+      "bumped": true,
+      "bumped_at": "2019-12-12T19:05:17.074Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1311,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Implementing atomic DDL for SQL schema",
+      "id": 678,
+      "title": "Implementing atomic DDL for SQL schema",
+      "slug": "implementing-atomic-ddl-for-sql-schema",
+      "posts_count": 9,
+      "reply_count": 2,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-09-03T19:04:26.293Z",
+      "last_posted_at": "2018-09-08T15:28:47.996Z",
+      "bumped": true,
+      "bumped_at": "2018-09-08T15:28:47.996Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2146,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 251,
+            "username": "George",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A new tool for managing layer metadata",
+      "id": 1191,
+      "title": "A new tool for managing layer metadata",
+      "slug": "a-new-tool-for-managing-layer-metadata",
+      "posts_count": 11,
+      "reply_count": 4,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-03-02T02:24:25.605Z",
+      "last_posted_at": "2019-04-03T23:30:21.306Z",
+      "bumped": true,
+      "bumped_at": "2019-04-03T23:30:21.306Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2506,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/should-mutations-performed-via-fdbcli-always-update-the-xff-metadataversion-key/2093",
+        "title": "Should mutations performed via fdbcli always update the \\xff/metadataVersion key?",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 53,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,629 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12833,
+        "name": "",
+        "username": "walter",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/walter/{size}/1592_2.png",
+        "created_at": "2023-05-10T09:16:50.022Z",
+        "cooked": "<p>According to the comment on the code, the custom parameters should be passed to fdbbackup and fdbrestore, but the code only passes the parameters to fdbcli, is that a bug?</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25.png\" data-download-href=\"/uploads/short-url/7c3hhf54Z25M18BLnbu5JHQxsF.png?dl=1\" title=\"image\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25_2_690x258.png\" alt=\"image\" data-base62-sha1=\"7c3hhf54Z25M18BLnbu5JHQxsF\" width=\"690\" height=\"258\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25_2_690x258.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25_2_1035x387.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25_2_1380x516.png 2x\" data-dominant-color=\"F3EDDD\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">image</span><span class=\"informations\">3206\u00d71203 355 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-05-10T09:16:50.022Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 9,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 48.0,
+        "yours": false,
+        "topic_id": 3957,
+        "topic_slug": "call-fdbbackup-fdbrestore-with-custom-parameters",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25.png",
+            "internal": false,
+            "reflection": false,
+            "title": "00d031946437b0fd6be535518f48bc3ba64ded25.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1255,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/call-fdbbackup-fdbrestore-with-custom-parameters/3957/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12835,
+        "name": "Clarkson",
+        "username": "ClarksonPowell",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/clarksonpowell/{size}/1587_2.png",
+        "created_at": "2023-05-10T11:57:57.396Z",
+        "cooked": "<p>I managed to configure fdbbackup and fdbrestore parameters by adding them to the script files and specifying them on the command line when calling the corresponding utilities.<br>\nFor fdbbackup I created a script file with the extension \u201c.cluster\u201d and specified the necessary parameters inside this file. Then, when calling fdbbackup, I used the \u201c-C\u201d flag to specify the path to my script file.<br>\nAn example of the script file \u201cbackup.cluster\u201d:<br>\ncoordinators=\u201cfdb1:4500\u201d<br>\nsnapshot_interval_seconds=600<br>\nmax_versions=10000<br>\nThen I called fdbbackup in the following way:<br>\nfdbbackup -C /path/to/backup.cluster<br>\nSimilarly, for fdbrestore, I created a script file with the extension \u201c.restore\u201d and specified the necessary parameters inside the file. When calling fdbrestore, I used the \u201c-C\u201d flag to specify the path to my script file.<br>\nAn example of the script file \u201crestore.restore\u201d:<br>\ndest_cluster_file=\u201cfdb2.cluster\u201d<br>\nsnapshot_version=1234567890<br>\nlogs_directory=\u201c/path/to/logs\u201d<br>\nI then called fdbrestore as follows:<br>\nfdbrestore -C /path/to/restore.restore<br>\nThis way you can configure fdbbackup and fdbrestore parameters by creating script files and specifying the necessary values inside these files. Then just use the \u201c-C\u201d flag with the path to your script file when calling the utilities.<br>\nI hope this helps you set up fdbbackup and fdbrestore with the right parameters! If you have any further questions, feel free to ask. Good luck!</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-05-10T11:58:22.892Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 22.8,
+        "yours": false,
+        "topic_id": 3957,
+        "topic_slug": "call-fdbbackup-fdbrestore-with-custom-parameters",
+        "display_username": "Clarkson",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1256,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/call-fdbbackup-fdbrestore-with-custom-parameters/3957/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12833,
+      12835
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      896
+    ],
+    [
+      2,
+      895
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Call fdbbackup/fdbrestore with custom parameters",
+  "id": 3957,
+  "title": "Call fdbbackup/fdbrestore with custom parameters",
+  "posts_count": 2,
+  "created_at": "2023-05-10T09:16:49.965Z",
+  "views": 348,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2023-05-10T11:57:57.396Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "call-fdbbackup-fdbrestore-with-custom-parameters",
+  "category_id": 16,
+  "word_count": 256,
+  "deleted_at": null,
+  "user_id": 1255,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25_2_1024x384.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3957",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 3206,
+      "height": 1203,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 384,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/0/00d031946437b0fd6be535518f48bc3ba64ded25_2_1024x384.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Backup_agent configuration for running fdbrestore",
+      "id": 2870,
+      "title": "Backup_agent configuration for running fdbrestore",
+      "slug": "backup-agent-configuration-for-running-fdbrestore",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2021-08-30T11:24:43.726Z",
+      "last_posted_at": "2021-09-02T18:32:12.397Z",
+      "bumped": true,
+      "bumped_at": "2021-09-02T18:32:12.397Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 824,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 994,
+            "username": "maxim",
+            "name": "maxim ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/maxim/{size}/1211_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup /restore fdb",
+      "id": 1637,
+      "title": "Backup /restore fdb",
+      "slug": "backup-restore-fdb",
+      "posts_count": 22,
+      "reply_count": 17,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2019-09-19T17:04:18.878Z",
+      "last_posted_at": "2019-10-05T04:45:51.663Z",
+      "bumped": true,
+      "bumped_at": "2019-10-05T04:45:51.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2729,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Regarding issue faced while running fdbbackup",
+      "id": 1458,
+      "title": "Regarding issue faced while running fdbbackup",
+      "slug": "regarding-issue-faced-while-running-fdbbackup",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-06-17T12:33:04.574Z",
+      "last_posted_at": "2019-12-17T19:51:11.604Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T19:51:11.604Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2007,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 587,
+            "username": "pragawaran",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f07891/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDBBackup backup command error",
+      "id": 2341,
+      "title": "FoundationDBBackup backup command error",
+      "slug": "foundationdbbackup-backup-command-error",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-09-17T20:19:07.206Z",
+      "last_posted_at": "2020-09-17T20:58:51.172Z",
+      "bumped": true,
+      "bumped_at": "2020-09-19T00:01:34.791Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 657,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 819,
+            "username": "mbuleandra",
+            "name": "Marius",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbuleandra/{size}/977_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Run fdbbackup/fdbrestore on a TLS-enabled cluster",
+      "id": 1851,
+      "title": "Run fdbbackup/fdbrestore on a TLS-enabled cluster",
+      "slug": "run-fdbbackup-fdbrestore-on-a-tls-enabled-cluster",
+      "posts_count": 10,
+      "reply_count": 7,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-12-18T22:45:53.439Z",
+      "last_posted_at": "2019-12-19T18:48:10.897Z",
+      "bumped": true,
+      "bumped_at": "2019-12-19T18:48:10.897Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1359,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 566,
+            "username": "fengqu",
+            "name": "Feng Qu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/85f322/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1255,
+        "username": "walter",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/walter/{size}/1592_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1256,
+        "username": "ClarksonPowell",
+        "name": "Clarkson",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/clarksonpowell/{size}/1587_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1255,
+      "username": "walter",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/walter/{size}/1592_2.png"
+    },
+    "last_poster": {
+      "id": 1256,
+      "username": "ClarksonPowell",
+      "name": "Clarkson",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/clarksonpowell/{size}/1587_2.png"
+    }
+  },
+  "bookmarks": []
+}

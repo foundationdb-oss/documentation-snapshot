@@ -1,0 +1,621 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10336,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-11-28T02:53:31.884Z",
+        "cooked": "<p>Hi, I was trying to look into the backup agent file handle leak (<a href=\"https://forums.foundationdb.org/t/backup-agent-leaking-handles-in-close-wait/2881\" class=\"inline-onebox\">Backup Agent Leaking handles in CLOSE_WAIT</a>) and wanted to try running some of the Net2RunLoopTrace addr2line lookups, like:</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"20\" Time=\"1638067585.958872\" Type=\"Net2RunLoopTrace\" ID=\"0000000000000000\" TraceTime=\"1638067585.941422\" Trace=\"addr2line -e backup_agent.debug -p -C -f -i 0x7f0b2531d730 0x7f0b2531a5a1 0xb618ff 0xb62ff8 0x855b72 0x4c88aa 0x7f0b24fe609b 0x4d5905\" Machine=\"127.0.0.1:29241\" LogGroup=\"default\" /&gt;\n</code></pre>\n<p>However I\u2019m not sure where to find the backup_agent.debug file? I\u2019m on 6.3.15, the fdb_6.3.15-debug.tar.gz download from the Downloads page contains debug files for fdbserver, fdbcli, and fdbbackup, but not backup_agent. I tried running it on fdbserver.debug and fdbbackup.debug in case it was packaged weirdly but the results didn\u2019t make sense, so guessing I\u2019m missing the file?</p>\n<p>I downloaded the latest debug binaries (6.3.22) and I don\u2019t see a backup_agent.debug there either.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-11-28T02:53:31.884Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 57,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 303.4,
+        "yours": false,
+        "topic_id": 3044,
+        "topic_slug": "where-do-i-find-backup-agent-debug",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/backup-agent-leaking-handles-in-close-wait/2881",
+            "internal": true,
+            "reflection": false,
+            "title": "Backup Agent Leaking handles in CLOSE_WAIT",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/where-do-i-find-backup-agent-debug/3044/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10341,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2021-11-29T16:43:39.631Z",
+        "cooked": "<p><code>backup_agent</code> is the same binary as <code>fdbbackup</code>, so I would expect you to be able to use the symbol file <code>fdbbackup.debug</code> to get a backtrace. If that isn\u2019t working, then something might be wrong with <code>fdbbackup.debug</code> or there may be some sort of version mismatch.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-11-29T16:43:39.631Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 28.2,
+        "yours": false,
+        "topic_id": 3044,
+        "topic_slug": "where-do-i-find-backup-agent-debug",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/where-do-i-find-backup-agent-debug/3044/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10336,
+      10341
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1424
+    ],
+    [
+      2,
+      1422
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Where do I find &ldquo;backup_agent.debug&rdquo;?",
+  "id": 3044,
+  "title": "Where do I find \"backup_agent.debug\"?",
+  "posts_count": 2,
+  "created_at": "2021-11-28T02:53:31.823Z",
+  "views": 554,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2021-11-29T16:43:39.631Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "where-do-i-find-backup-agent-debug",
+  "category_id": 17,
+  "word_count": 225,
+  "deleted_at": null,
+  "user_id": 810,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3044",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Regarding issue faced in fdbbackup",
+      "id": 1457,
+      "title": "Regarding issue faced in fdbbackup",
+      "slug": "regarding-issue-faced-in-fdbbackup",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-17T12:29:45.825Z",
+      "last_posted_at": "2019-06-18T16:05:04.239Z",
+      "bumped": true,
+      "bumped_at": "2019-06-18T16:05:04.239Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 484,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 587,
+            "username": "pragawaran",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f07891/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup_agent is gone after upgrade to 6.3",
+      "id": 2707,
+      "title": "Backup_agent is gone after upgrade to 6.3",
+      "slug": "backup-agent-is-gone-after-upgrade-to-6-3",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-05-19T09:07:07.620Z",
+      "last_posted_at": "2022-06-21T08:47:34.282Z",
+      "bumped": true,
+      "bumped_at": "2022-06-21T08:47:34.282Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 475,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1104,
+            "username": "chetan_pg",
+            "name": "chetan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Regarding issue faced while running fdbbackup",
+      "id": 1458,
+      "title": "Regarding issue faced while running fdbbackup",
+      "slug": "regarding-issue-faced-while-running-fdbbackup",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-06-17T12:33:04.574Z",
+      "last_posted_at": "2019-12-17T19:51:11.604Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T19:51:11.604Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2007,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 587,
+            "username": "pragawaran",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f07891/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backing up the database using `fdbbackup` command returns in an error",
+      "id": 1844,
+      "title": "Backing up the database using `fdbbackup` command returns in an error",
+      "slug": "backing-up-the-database-using-fdbbackup-command-returns-in-an-error",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-16T10:49:12.154Z",
+      "last_posted_at": "2019-12-16T13:54:49.984Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T13:54:49.984Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1069,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Problem with debugging",
+      "id": 538,
+      "title": "Problem with debugging",
+      "slug": "problem-with-debugging",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-07-03T08:03:44.151Z",
+      "last_posted_at": "2018-07-03T08:37:57.837Z",
+      "bumped": true,
+      "bumped_at": "2018-07-03T08:37:57.837Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 737,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 275,
+            "username": "vmanukyan",
+            "name": "Vruyr Manukyan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vmanukyan/{size}/329_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 810,
+        "username": "amanda",
+        "name": "Amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/backup-agent-leaking-handles-in-close-wait/2881",
+        "title": "Backup Agent Leaking handles in CLOSE_WAIT",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 810,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

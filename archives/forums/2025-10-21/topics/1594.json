@@ -1,0 +1,671 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4951,
+        "name": "Joe D",
+        "username": "JoeD",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png",
+        "created_at": "2019-08-26T18:23:33.153Z",
+        "cooked": "<p>Hi all,</p>\n<p>I wonder if anyone could point me in the right direction of some detailed documentation on FDB\u2019s simulate feature? I\u2019ve managed to run fdbserve with a few sample tests I downloaded, however I\u2019m not very clear on what\u2019s going on tbh, why I should use this, options, etc.<br>\nI\u2019ve searched everywhere for some decent documentation but struggling to find any.</p>\n<p>Any help would be very much appreciated.</p>\n<p>Joe</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-08-26T18:23:33.153Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 142,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 716.4,
+        "yours": false,
+        "topic_id": 1594,
+        "topic_slug": "fdb-simulate-with-fdbserver-documentation",
+        "display_username": "Joe D",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 596,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-simulate-with-fdbserver-documentation/1594/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4952,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2019-08-26T18:38:56.835Z",
+        "cooked": "<p>I don\u2019t think we have this well documented <img src=\"https://emoji.discourse-cdn.com/twitter/frowning.png?v=9\" title=\":frowning:\" class=\"emoji\" alt=\":frowning:\"></p>\n<p>The only thing I have written is a short documentation about <a href=\"https://github.com/apple/foundationdb/blob/master/documentation/sphinx/source/client-testing.rst\" rel=\"nofollow noopener\">Client Simulation Testing</a> - but depending on what you want to do, this might not be good enough. Though it should give you some very first idea how you could implement your own tests (though if you want to test something outside of a client you might want to use the internal API - for this you can use at any existing workload)</p>\n<p>What is going on is actually quite simple:</p>\n<p>The simulator simulates a cluster (potentially in different data centers) - it simulates disks, the network, and processes (and it also simulates time). It will then run normal FDB code.</p>\n<p>At the start of a simulation it will initialize a random number generator with a seed (either it generates a true random number or you can pass a seed via the command line). Within that simulated cluster it will then run a set of workloads - described in a test-file. The simulator can then inject failures and some workloads will kill processes, machines, or even datacenters. A test is considered successful if no trace-lines with an error was printed.</p>\n<p>If a test fails, you can look at the random seed and reproduce the failure as often as you want to.</p>\n<p>This is just the gist of it. But it is actually quite easy to use. You can look at existing workloads to get an idea and at the existing test files to see how multiple workloads can be started (either concurrently or serial).</p>\n<p>Though having better developer documentation is definitely something we should work on.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-08-26T18:38:56.835Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 26.4,
+        "yours": false,
+        "topic_id": 1594,
+        "topic_slug": "fdb-simulate-with-fdbserver-documentation",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/master/documentation/sphinx/source/client-testing.rst",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/client-testing.rst at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 40
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-simulate-with-fdbserver-documentation/1594/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 4953,
+        "name": "Joe D",
+        "username": "JoeD",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png",
+        "created_at": "2019-08-26T18:42:19.426Z",
+        "cooked": "<p>Thanks Markus - I shall have a play around.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-08-26T18:42:19.426Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 26.0,
+        "yours": false,
+        "topic_id": 1594,
+        "topic_slug": "fdb-simulate-with-fdbserver-documentation",
+        "display_username": "Joe D",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 15,
+          "username": "markus.pilman",
+          "name": "Markus Pilman",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 596,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-simulate-with-fdbserver-documentation/1594/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4951,
+      4952,
+      4953
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2248
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FDB Simulate with fdbserver - documentation?",
+  "id": 1594,
+  "title": "FDB Simulate with fdbserver - documentation?",
+  "posts_count": 3,
+  "created_at": "2019-08-26T18:23:33.098Z",
+  "views": 818,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2019-08-26T18:42:19.426Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-simulate-with-fdbserver-documentation",
+  "category_id": 7,
+  "word_count": 371,
+  "deleted_at": null,
+  "user_id": 596,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1594",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Show the FDB Forums: prototyping simulation runs on Kubernetes",
+      "id": 1357,
+      "title": "Show the FDB Forums: prototyping simulation runs on Kubernetes",
+      "slug": "show-the-fdb-forums-prototyping-simulation-runs-on-kubernetes",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-13T15:01:31.101Z",
+      "last_posted_at": "2019-05-13T20:44:25.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-13T20:44:25.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1046,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "From Build to Running Tests",
+      "id": 113,
+      "title": "From Build to Running Tests",
+      "slug": "from-build-to-running-tests",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-04-20T10:09:32.693Z",
+      "last_posted_at": "2018-04-21T15:33:01.453Z",
+      "bumped": true,
+      "bumped_at": "2018-04-21T15:33:01.453Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 2362,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 78,
+            "username": "pineapple",
+            "name": "Brian Haslet",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/7993a0/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Simulation testing of FoundationDb",
+      "id": 2654,
+      "title": "Simulation testing of FoundationDb",
+      "slug": "simulation-testing-of-foundationdb",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2021-04-14T16:05:30.941Z",
+      "last_posted_at": "2021-07-14T15:07:05.107Z",
+      "bumped": true,
+      "bumped_at": "2021-07-14T15:07:05.107Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1371,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to use foundationdb unit test?",
+      "id": 3077,
+      "title": "How to use foundationdb unit test?",
+      "slug": "how-to-use-foundationdb-unit-test",
+      "posts_count": 9,
+      "reply_count": 6,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-12-15T11:13:48.135Z",
+      "last_posted_at": "2023-06-07T14:03:05.268Z",
+      "bumped": true,
+      "bumped_at": "2023-06-07T14:03:05.268Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 1327,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1006,
+            "username": "superhail",
+            "name": "Alan Muhammad",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/superhail/{size}/1191_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Run nightly tests before pull-request submission",
+      "id": 451,
+      "title": "Run nightly tests before pull-request submission",
+      "slug": "run-nightly-tests-before-pull-request-submission",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-22T14:32:19.639Z",
+      "last_posted_at": "2018-05-31T16:25:36.662Z",
+      "bumped": true,
+      "bumped_at": "2018-05-31T16:25:36.662Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1238,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 277,
+            "username": "mghandevosya",
+            "name": "Marine Ghandevosyan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/b38774/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 596,
+        "username": "JoeD",
+        "name": "Joe D",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 596,
+      "username": "JoeD",
+      "name": "Joe D",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png"
+    },
+    "last_poster": {
+      "id": 596,
+      "username": "JoeD",
+      "name": "Joe D",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/master/documentation/sphinx/source/client-testing.rst",
+        "title": "foundationdb/client-testing.rst at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 40,
+        "user_id": 15,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

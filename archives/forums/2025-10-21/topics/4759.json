@@ -1,0 +1,525 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14653,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2025-01-10T12:51:44.797Z",
+        "cooked": "<p>I know that coordinators need static IPs, because they only get updated by a manual call to <code>coordinators</code> (this is assuming not using the K8s operator here, we\u2019re deployed directly onto EC2 instances).</p>\n<p>Our pattern currently is that we have ephemeral instances that come online and have an on-boot process that searches the current availability zone for an unattached volume with the correct tags (same cluster name and so forth) and mounts it. The same process uses other tags on the instance to decide things like how many volumes to look for/how many processes to create, whether to run backup and/or DR agents, what class processes should be, etc. It then builds the FDB config file based on that, before telling <code>fdbmonitor</code> to start.</p>\n<p>In the case where an instance is going to be a coordinator, tags on the volume tell it which network interface with a static IP to go and fetch, that \u2018matches\u2019 the volume, so the same data always has the same IP. For non-coordinators, we don\u2019t see any performance or reliability problems with an instance X going offline on IP A, and a new instance Y on new IP B mounting the same volume, being configured as the same FDB class, and picking up work from where X left off.</p>\n<p>This all works absolutely fine, <em>but</em> we see an awful lot of log spam at <code>warning</code> about being unable to communicate with IPs that would appear to be instances that went offline <em>days</em> ago, and were replaced by new ones mounting the same data and joining the cluster fine, but on a new IP.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-01-10T12:51:44.797Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 27.0,
+        "yours": false,
+        "topic_id": 4759,
+        "topic_slug": "what-are-the-recommendations-around-static-ips-for-non-coordinators",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-are-the-recommendations-around-static-ips-for-non-coordinators/4759/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      14653
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      284
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "What are the recommendations around static IPs for non-coordinators?",
+  "id": 4759,
+  "title": "What are the recommendations around static IPs for non-coordinators?",
+  "posts_count": 1,
+  "created_at": "2025-01-10T12:51:44.736Z",
+  "views": 25,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-01-10T12:51:44.797Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "what-are-the-recommendations-around-static-ips-for-non-coordinators",
+  "category_id": 7,
+  "word_count": 274,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4759",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FDB client connects to old IP addresses",
+      "id": 3866,
+      "title": "FDB client connects to old IP addresses",
+      "slug": "fdb-client-connects-to-old-ip-addresses",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2023-03-20T21:32:12.859Z",
+      "last_posted_at": "2023-03-24T03:01:49.074Z",
+      "bumped": true,
+      "bumped_at": "2023-03-24T03:01:49.074Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 338,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proposal: Don&rsquo;t identify a coordinator based on its IP",
+      "id": 502,
+      "title": "Proposal: Don't identify a coordinator based on its IP",
+      "slug": "proposal-dont-identify-a-coordinator-based-on-its-ip",
+      "posts_count": 26,
+      "reply_count": 13,
+      "highest_post_number": 26,
+      "image_url": null,
+      "created_at": "2018-06-09T13:09:51.305Z",
+      "last_posted_at": "2019-08-06T20:24:41.013Z",
+      "bumped": true,
+      "bumped_at": "2019-08-06T20:24:41.013Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 8425,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 302,
+            "username": "basgys",
+            "name": "Bastien Gysler",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/basgys/{size}/291_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 339,
+            "username": "Zatte",
+            "name": "Mikael Rapp ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zatte/{size}/344_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 545,
+            "username": "rishabh",
+            "name": "Rishabh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rishabh/{size}/540_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 614,
+            "username": "qrpike",
+            "name": "Quinton Pike",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/qrpike/{size}/618_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Operating FoundationDB in an elastic environment",
+      "id": 664,
+      "title": "Operating FoundationDB in an elastic environment",
+      "slug": "operating-foundationdb-in-an-elastic-environment",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-08-25T20:24:49.961Z",
+      "last_posted_at": "2018-08-27T03:45:42.742Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T03:45:42.742Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1143,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 42,
+            "username": "ddunbar",
+            "name": "Daniel Dunbar",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ddunbar/{size}/368_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 26,
+            "username": "mrz",
+            "name": "matthew zeier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mrz/{size}/26_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deployment with custom fdb.cluster file",
+      "id": 592,
+      "title": "Deployment with custom fdb.cluster file",
+      "slug": "deployment-with-custom-fdb-cluster-file",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-07-26T23:00:18.994Z",
+      "last_posted_at": "2018-07-27T23:44:31.722Z",
+      "bumped": true,
+      "bumped_at": "2018-07-27T23:44:31.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 4329,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "K8s operator fdb.cluster IP addresses issue",
+      "id": 2273,
+      "title": "K8s operator fdb.cluster IP addresses issue",
+      "slug": "k8s-operator-fdb-cluster-ip-addresses-issue",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2020-08-03T20:04:36.427Z",
+      "last_posted_at": "2020-09-18T09:27:09.647Z",
+      "bumped": true,
+      "bumped_at": "2020-09-18T09:27:09.647Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1219,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 798,
+            "username": "ghenom",
+            "name": "Ghenom",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/46a35a/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 820,
+            "username": "kcking",
+            "name": "Kevin King",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kcking/{size}/934_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    }
+  },
+  "bookmarks": []
+}

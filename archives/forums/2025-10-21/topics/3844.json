@@ -1,0 +1,737 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12523,
+        "name": "Paul Adamson",
+        "username": "padamson",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/padamson/{size}/1420_2.png",
+        "created_at": "2023-03-07T12:37:21.043Z",
+        "cooked": "<p>Hey Folks.</p>\n<p>(Bug report in lieu of github issues)</p>\n<p>I have storageServersPerPod set to 2 which gives me 12 storage processes spread across 6 pods.</p>\n<p>When I attempt to upgrade from 7.1.21 \u2192 7.1.27 the operator 1.4.0 [CORRECTION: 1.14.0] gets stuck with the following message:<br>\n<code>\"expected 25 processes, got 31 processes ready to restart\"</code> as the reason for delaying the upgrade; it never gets beyond this.</p>\n<p>Some brief maths later and i found that the 25 was the number of pods i had running, and 31 was the number of processes I had running, the additional 6 being the doubled up storage nodes.</p>\n<p>The code that is causing the upgrade to wait indefinitely is the following:</p><aside class=\"onebox githubblob\" data-onebox-src=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/d7376e419789613bbd043d34c3522787986aad9f/controllers/bounce_processes.go#L242\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/d7376e419789613bbd043d34c3522787986aad9f/controllers/bounce_processes.go#L242\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/d7376e419789613bbd043d34c3522787986aad9f/controllers/bounce_processes.go#L242\" target=\"_blank\" rel=\"noopener nofollow ugc\">FoundationDB/fdb-kubernetes-operator/blob/d7376e419789613bbd043d34c3522787986aad9f/controllers/bounce_processes.go#L242</a></h4>\n\n\n\n    <pre class=\"onebox\"><code class=\"lang-go\">\n      <ol class=\"start lines\" start=\"232\" style=\"counter-reset: li-counter 231 ;\">\n          <li>\t\t}</li>\n          <li>\t}</li>\n          <li>\n          </li>\n<li>\t// If we upgrade the cluster wait until all processes are ready for the restart. We don't want to block the restart</li>\n          <li>\t// if some processes are already upgraded e.g. in the case of version compatible upgrades and we also don't want to</li>\n          <li>\t// block the restart command if a process is missing longer than the specified GetIgnoreMissingProcessesSeconds.</li>\n          <li>\t// Those checks should ensure we only run the restart command if all processes that have to be restarted and are connected</li>\n          <li>\t// to cluster are ready to be restarted.</li>\n          <li>\tif cluster.IsBeingUpgraded() &amp;&amp; (counts.Total()-missingProcesses-upgradedProcesses) != len(addresses) {</li>\n          <li>\t\treturn nil, &amp;requeue{</li>\n          <li class=\"selected\">\t\t\tmessage:        fmt.Sprintf(\"expected %d processes, got %d processes ready to restart\", counts.Total(), len(addresses)),</li>\n          <li>\t\t\tdelayedRequeue: true,</li>\n          <li>\t\t}</li>\n          <li>\t}</li>\n          <li>\n          </li>\n<li>\treturn addresses, nil</li>\n          <li>}</li>\n          <li>\n          </li>\n<li>// getAddressesForUpgrade checks that all processes in a cluster are ready to be</li>\n          <li>// upgraded and returns the full list of addresses.</li>\n          <li>func getAddressesForUpgrade(logger logr.Logger, r *FoundationDBClusterReconciler, databaseStatus *fdbv1beta2.FoundationDBStatus, lockClient fdbadminclient.LockClient, cluster *fdbv1beta2.FoundationDBCluster, version fdbv1beta2.Version) ([]fdbv1beta2.ProcessAddress, *requeue) {</li>\n      </ol>\n    </code></pre>\n\n\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n<p>\nIt looks like it\u2019s expecting the total number of <em>addresses</em> to neatly align with the exact process count, but in my case I have more ready processes than expected!</p>\n<p>I reduced storageServersPerPod to 1 successfully, which brought the address count down to exactly 25 and the upgrade immediately progressed. Afterwards I scaled in again afterwards back to 2 per pod, which was a feasible workaround.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-03-08T12:09:57.997Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 14,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 72.2,
+        "yours": false,
+        "topic_id": 3844,
+        "topic_slug": "upgrade-never-completes-when-storageserversperpod-1",
+        "display_username": "Paul Adamson",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/d7376e419789613bbd043d34c3522787986aad9f/controllers/bounce_processes.go#L242",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/bounce_processes.go at d7376e419789613bbd043d34c3522787986aad9f \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1161,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": "correct operator version number",
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/upgrade-never-completes-when-storageserversperpod-1/3844/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12524,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2023-03-07T18:26:29.166Z",
+        "cooked": "<p>Thanks for reporting that issue! The operator version 1.4.0 should work without any issues, as the check is not present there. For the operator version 1.14.0 and newer you are right, the <code>counts.Total()</code> method doesn\u2019t take the <code>storageServersPerPod</code> into account.I open a GitHub issue for that and we should be able to fix that soon.</p>\n<p>Created this issue: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/issues/1535\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Upgrade blocked when storageServersPerPod &gt; 1 \u00b7 Issue #1535 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-03-07T18:27:27.241Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 11.6,
+        "yours": false,
+        "topic_id": 3844,
+        "topic_slug": "upgrade-never-completes-when-storageserversperpod-1",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/issues/1535",
+            "internal": false,
+            "reflection": false,
+            "title": "Upgrade blocked when storageServersPerPod > 1 \u00b7 Issue #1535 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/upgrade-never-completes-when-storageserversperpod-1/3844/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12555,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2023-03-13T15:34:00.551Z",
+        "cooked": "<p>JFYI: We have a fix for this bug: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/pull/1538\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Fix upgrade logic for multiple storage server per Pod by johscheuer \u00b7 Pull Request #1538 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a>. Thanks again for reporting!</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-03-13T15:34:00.551Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 6,
+        "readers_count": 5,
+        "score": 1.2,
+        "yours": false,
+        "topic_id": 3844,
+        "topic_slug": "upgrade-never-completes-when-storageserversperpod-1",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/pull/1538",
+            "internal": false,
+            "reflection": false,
+            "title": "Fix upgrade logic for multiple storage server per Pod by johscheuer \u00b7 Pull Request #1538 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 849,
+          "username": "johscheuer",
+          "name": "Johannes Scheuermann",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/upgrade-never-completes-when-storageserversperpod-1/3844/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12523,
+      12524,
+      12555
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      959
+    ],
+    [
+      3,
+      953
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Upgrade never completes when storageServersPerPod &gt; 1",
+  "id": 3844,
+  "title": "Upgrade never completes when storageServersPerPod > 1",
+  "posts_count": 3,
+  "created_at": "2023-03-07T12:37:20.977Z",
+  "views": 357,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2023-03-13T15:34:00.551Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "upgrade-never-completes-when-storageserversperpod-1",
+  "category_id": 16,
+  "word_count": 297,
+  "deleted_at": null,
+  "user_id": 1161,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3844",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Upgrading FoundationDB",
+      "id": 191,
+      "title": "Upgrading FoundationDB",
+      "slug": "upgrading-foundationdb",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-04-21T23:51:26.311Z",
+      "last_posted_at": "2018-08-27T03:33:51.669Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T03:33:51.669Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 3852,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 133,
+            "username": "titanous",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/titanous/{size}/94_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to upgrade apple operator 0.48 to 1.4.1 without deleting the old crd?",
+      "id": 3518,
+      "title": "How to upgrade apple operator 0.48 to 1.4.1 without deleting the old crd?",
+      "slug": "how-to-upgrade-apple-operator-0-48-to-1-4-1-without-deleting-the-old-crd",
+      "posts_count": 42,
+      "reply_count": 12,
+      "highest_post_number": 42,
+      "image_url": null,
+      "created_at": "2022-08-24T14:20:04.118Z",
+      "last_posted_at": "2022-10-13T13:23:51.905Z",
+      "bumped": true,
+      "bumped_at": "2022-10-13T13:23:51.905Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1185,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1022,
+            "username": "liyyue",
+            "name": "liyyue",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB Cluster upgrade does not deletes old pods",
+      "id": 4074,
+      "title": "FDB Cluster upgrade does not deletes old pods",
+      "slug": "fdb-cluster-upgrade-does-not-deletes-old-pods",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2023-07-20T23:41:53.789Z",
+      "last_posted_at": "2023-07-24T09:21:01.151Z",
+      "bumped": true,
+      "bumped_at": "2023-07-24T09:21:01.151Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 211,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1292,
+            "username": "mdfaizsiddiqui",
+            "name": "Faiz",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mdfaizsiddiqui/{size}/1628_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB kubernetes operator continuously boucing processes",
+      "id": 2092,
+      "title": "FDB kubernetes operator continuously boucing processes",
+      "slug": "fdb-kubernetes-operator-continuously-boucing-processes",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-04-29T10:57:13.947Z",
+      "last_posted_at": "2020-05-03T07:18:12.844Z",
+      "bumped": true,
+      "bumped_at": "2020-05-03T07:18:12.844Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1013,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 724,
+            "username": "larshagen",
+            "name": "Lars Hagen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/larshagen/{size}/776_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Troubles scaling up the cluster",
+      "id": 751,
+      "title": "Troubles scaling up the cluster",
+      "slug": "troubles-scaling-up-the-cluster",
+      "posts_count": 32,
+      "reply_count": 26,
+      "highest_post_number": 32,
+      "image_url": null,
+      "created_at": "2018-10-08T03:24:54.004Z",
+      "last_posted_at": "2018-11-01T16:26:01.527Z",
+      "bumped": true,
+      "bumped_at": "2018-11-01T16:26:01.527Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3747,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1161,
+        "username": "padamson",
+        "name": "Paul Adamson",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/padamson/{size}/1420_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1161,
+      "username": "padamson",
+      "name": "Paul Adamson",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/padamson/{size}/1420_2.png"
+    },
+    "last_poster": {
+      "id": 849,
+      "username": "johscheuer",
+      "name": "Johannes Scheuermann",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/pull/1538",
+        "title": "Fix upgrade logic for multiple storage server per Pod by johscheuer \u00b7 Pull Request #1538 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/d7376e419789613bbd043d34c3522787986aad9f/controllers/bounce_processes.go#L242",
+        "title": "fdb-kubernetes-operator/bounce_processes.go at d7376e419789613bbd043d34c3522787986aad9f \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1161,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/issues/1535",
+        "title": "Upgrade blocked when storageServersPerPod > 1 \u00b7 Issue #1535 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

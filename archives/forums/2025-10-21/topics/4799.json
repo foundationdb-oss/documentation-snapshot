@@ -1,0 +1,874 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14754,
+        "name": "Jon Chambers",
+        "username": "jon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "created_at": "2025-03-06T18:06:43.131Z",
+        "cooked": "<p>We\u2019re performing some load tests with a new FoundationDB cluster (7.3.43 with <code>three_data_hall</code> replication and the Redwood storage engine).</p>\n<p>In this test, we scaled up load to the point where our log processes\u2019 CPU consumption was very close to saturated. At that point, we doubled the number of log processes and commit proxies from 4 to 8. We were surprised to observe that the CPU load on both process classes remained the same despite unchanged load; in other words, we just went from 4 log processes at 95% CPU utilization to 8 log processes with 95% CPU utilization. We also observed a modest increase in commit latency as reported by the latency probe.</p>\n<p>Is this expected, or have we committed a scaling faux pas? In terms of scaling log processes, what metrics should we be watching to decide that it\u2019s time to add more log processes? Is it normal/expected for log processes to be CPU-limited?</p>\n<p>Thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-03-06T18:06:43.131Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 15,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 74.6,
+        "yours": false,
+        "topic_id": 4799,
+        "topic_slug": "log-processes-and-cpu-saturation",
+        "display_username": "Jon Chambers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/scaling-log-server-and-log-to-storage-ratio/4890/3",
+            "internal": true,
+            "reflection": true,
+            "title": "Scaling log server and log to storage ratio",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1505,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/log-processes-and-cpu-saturation/4799/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14755,
+        "name": "Jon Chambers",
+        "username": "jon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "created_at": "2025-03-06T22:11:34.054Z",
+        "cooked": "<p>I\u2019m now reasonably convinced that CPU utilization is not a good measure for log process saturation. We just threw more load at our log processes that looked CPU-saturated and\u2026 they handled it just fine?</p>\n<p>I guess this focuses the question a little more: what metrics should we focus on to understand when it\u2019s time to add more log processes?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-03-06T22:11:34.054Z",
+        "reply_count": 2,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 14.6,
+        "yours": false,
+        "topic_id": 4799,
+        "topic_slug": "log-processes-and-cpu-saturation",
+        "display_username": "Jon Chambers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1505,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/log-processes-and-cpu-saturation/4799/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14774,
+        "name": "Ingo Walther",
+        "username": "iwalther",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/iwalther/{size}/1912_2.png",
+        "created_at": "2025-03-26T16:17:34.698Z",
+        "cooked": "<p>I have not seen this with our log processes (our workload is very read heavy). For storage processes, I find the disk busy metric very useful to detect if the disk is saturated. Usually it\u2019s either that or the CPU.</p>\n<p>I suspect that in our setup, the EBS disk driver can consume significant CPU (but could not directly prove it, might be wrong). Maybe your log process CPU is busy writing small batches of data to disk, and as the throughput increases, it writes larger batches to disk, achieving higher throughput per CPU?</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-03-26T16:17:34.698Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 8.8,
+        "yours": false,
+        "topic_id": 4799,
+        "topic_slug": "log-processes-and-cpu-saturation",
+        "display_username": "Ingo Walther",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1505,
+          "username": "jon",
+          "name": "Jon Chambers",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1512,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/log-processes-and-cpu-saturation/4799/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14857,
+        "name": "Jon Chambers",
+        "username": "jon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "created_at": "2025-04-22T13:53:46.319Z",
+        "cooked": "<blockquote>\n<p>Maybe your log process CPU is busy writing small batches of data to disk, and as the throughput increases, it writes larger batches to disk, achieving higher throughput per CPU?</p>\n</blockquote>\n<p>That was my suspicion, too.</p>\n<p>My other hypothesis is that this might have been another symptom of the \u201cnoisy neighbor\u201d problem discussed in <a href=\"https://forums.foundationdb.org/t/significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster/4800/2\" class=\"inline-onebox\">Significant changes in CPU load on resolver processes depending on placement in a cluster - #2 by jon</a>. We\u2019ll likely re-run this test with better CPU/memory isolation in the not-too-distant future, and I\u2019ll report back if that makes a difference in this case.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-04-22T13:53:46.319Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 7.8,
+        "yours": false,
+        "topic_id": 4799,
+        "topic_slug": "log-processes-and-cpu-saturation",
+        "display_username": "Jon Chambers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster/4800/2",
+            "internal": true,
+            "reflection": false,
+            "title": "Significant changes in CPU load on resolver processes depending on placement in a cluster",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1512,
+          "username": "iwalther",
+          "name": "Ingo Walther",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/iwalther/{size}/1912_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1505,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/log-processes-and-cpu-saturation/4799/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14932,
+        "name": "Matthieu Patou",
+        "username": "mpatou_openai",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "created_at": "2025-05-15T05:30:31.919Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"jon\" data-post=\"2\" data-topic=\"4799\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/jon/48/1896_2.png\" class=\"avatar\"> jon:</div>\n<blockquote>\n<p>I guess this focuses the question a little more: what metrics should we focus on to understand when it\u2019s time to add more log processes?</p>\n</blockquote>\n</aside>\n<p>If you look at <code>status json</code> there a is QOS section there is <code>batch_performance_limited_by</code> if the log server is listed then you are limited by the logs.<br>\nThere is also <code>performance_limited_by</code>.</p>\n<p>I found also that disk business is also not a good indicator based on my understanding if you have if you had at least 1 (not necessarily the same I/O just that over the period there was at last one) outstanding I/O in the queue in the last second you will have a busyness of 1 for that second given that nowdays disks can handle way more than that that it\u2019s not a great measure it seems to me it\u2019s more important to know the IOPS capacity of your disk and see if you are saturating it or not.</p>\n<p>It\u2019s worth noting that both storage and log server won\u2019t try to issue more I/O if there already <code>max_outstanding</code> I/O (64 by default, can be changed with <code>knob_max_outstanding</code>).</p>\n<aside class=\"quote no-group quote-modified\" data-username=\"jon\" data-post=\"2\" data-topic=\"4799\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/jon/48/1896_2.png\" class=\"avatar\"> jon:</div>\n<blockquote>\n<p>we doubled the number of log processes and commit proxies from 4 to 8. We were surprised to observe that the CPU load on both process classes remained the same despite unchanged load</p>\n</blockquote>\n</aside>\n<p>I don\u2019t know for sure for the log server, but for the proxies they need to talk to each other and so the more you add them the more they talk to each other and the less value you are getting out of them.</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-05-15T05:30:31.919Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 0,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 4799,
+        "topic_slug": "log-processes-and-cpu-saturation",
+        "display_username": "Matthieu Patou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1484,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/log-processes-and-cpu-saturation/4799/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14754,
+      14755,
+      14774,
+      14857,
+      14932
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      229
+    ],
+    [
+      3,
+      209
+    ],
+    [
+      4,
+      182
+    ],
+    [
+      5,
+      160
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Log processes and CPU saturation",
+  "id": 4799,
+  "title": "Log processes and CPU saturation",
+  "posts_count": 5,
+  "created_at": "2025-03-06T18:06:43.083Z",
+  "views": 125,
+  "reply_count": 2,
+  "like_count": 0,
+  "last_posted_at": "2025-05-15T05:30:31.919Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "log-processes-and-cpu-saturation",
+  "category_id": 17,
+  "word_count": 707,
+  "deleted_at": null,
+  "user_id": 1505,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4799",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "What is the good ratio of the storage processes and the log processes, and the associated metrics for monitoring?",
+      "id": 1418,
+      "title": "What is the good ratio of the storage processes and the log processes, and the associated metrics for monitoring?",
+      "slug": "what-is-the-good-ratio-of-the-storage-processes-and-the-log-processes-and-the-associated-metrics-for-monitoring",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-06-03T14:57:46.557Z",
+      "last_posted_at": "2019-06-05T17:51:17.358Z",
+      "bumped": true,
+      "bumped_at": "2019-06-05T17:51:17.358Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1001,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "CPU limited storage processes",
+      "id": 2140,
+      "title": "CPU limited storage processes",
+      "slug": "cpu-limited-storage-processes",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-05-29T11:53:05.632Z",
+      "last_posted_at": "2021-05-18T11:29:51.842Z",
+      "bumped": true,
+      "bumped_at": "2021-05-18T11:29:51.842Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1567,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 741,
+            "username": "sears",
+            "name": "Russell Sears",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to troubleshoot throughput performance degrade?",
+      "id": 1436,
+      "title": "How to troubleshoot throughput performance degrade?",
+      "slug": "how-to-troubleshoot-throughput-performance-degrade",
+      "posts_count": 36,
+      "reply_count": 24,
+      "highest_post_number": 36,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/9c9854ce87e53265f75154876f180812ee93f8ec.png",
+      "created_at": "2019-06-10T10:09:55.810Z",
+      "last_posted_at": "2019-06-20T21:36:30.209Z",
+      "bumped": true,
+      "bumped_at": "2019-06-20T21:36:30.209Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 4377,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 597,
+            "username": "rayjcwu",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rayjcwu/{size}/602_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 592,
+            "username": "nfeinberg",
+            "name": "Nicholas Feinberg",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/ba8739/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "WARNING: A single process is both a transaction log and a storage server",
+      "id": 1580,
+      "title": "WARNING: A single process is both a transaction log and a storage server",
+      "slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-08-11T17:20:33.378Z",
+      "last_posted_at": "2019-08-13T20:43:59.991Z",
+      "bumped": true,
+      "bumped_at": "2019-08-13T20:43:59.991Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1783,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scaling log server and log to storage ratio",
+      "id": 4890,
+      "title": "Scaling log server and log to storage ratio",
+      "slug": "scaling-log-server-and-log-to-storage-ratio",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2025-05-06T01:38:15.779Z",
+      "last_posted_at": "2025-05-15T21:41:26.735Z",
+      "bumped": true,
+      "bumped_at": "2025-05-15T21:41:26.735Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 98,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1484,
+            "username": "mpatou_openai",
+            "name": "Matthieu Patou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1505,
+            "username": "jon",
+            "name": "Jon Chambers",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1491,
+            "username": "msf",
+            "name": "Miguel Filipe",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1505,
+        "username": "jon",
+        "name": "Jon Chambers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1484,
+        "username": "mpatou_openai",
+        "name": "Matthieu Patou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1512,
+        "username": "iwalther",
+        "name": "Ingo Walther",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/iwalther/{size}/1912_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1505,
+      "username": "jon",
+      "name": "Jon Chambers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jon/{size}/1896_2.png"
+    },
+    "last_poster": {
+      "id": 1484,
+      "username": "mpatou_openai",
+      "name": "Matthieu Patou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/significant-changes-in-cpu-load-on-resolver-processes-depending-on-placement-in-a-cluster/4800/2",
+        "title": "Significant changes in CPU load on resolver processes depending on placement in a cluster",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1505,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

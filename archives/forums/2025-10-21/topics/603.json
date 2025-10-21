@@ -1,0 +1,673 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1768,
+        "name": "Jesse Bennett",
+        "username": "wolfspider",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "created_at": "2018-08-01T04:58:53.239Z",
+        "cooked": "<p>I\u2019m trying to address an issue right now with the MachineMetrics coming out negative in FreeBSD. I found a couple of problems with the code I have so far (format is different, need to poll all cores) but just need to know if I\u2019m looking at the right thing. From what I can tell testing in Docker and going through the code the CPUSeconds for MachineMetrics are calculated by this:</p>\n<pre><code>getMachineLoad(clockIdleTime, clockTotalTime);\nreturnStats.machineCPUSeconds = clockTotalTime - (*statState)-&gt;lastClockTotalTime != 0 ? ( 1 - ((clockIdleTime - (*statState)-&gt;lastClockIdleTime) / ((double)(clockTotalTime - (*statState)-&gt;lastClockTotalTime)))) * returnStats.elapsed : 0; \n</code></pre>\n<p>Pulling this up in Docker for VSCode I can see on my VM 4 cores are polled and values are totaled:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66.png\" title=\"dockercompare.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66_2_690x429.png\" alt=\"dockercompare\" width=\"690\" height=\"429\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66_2_690x429.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66_2_1035x643.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66_2_1380x858.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">dockercompare.png</span><span class=\"informations\">3004\u00d71870 754 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>I\u2019m getting a negative 3 digit number as time progresses but those numbers as uint64_t do increment over time slightly since they are a metric of time. The test code which I use (which is now just on 1 core still for simplicity\u2019s sake) to see this in a console application is as follows:</p>\n<pre><code>util = (100ULL * cur[CP_USER] / (sum ? (double)sum : 1.0L));\nprintf(\"cpu user utilization: %7.3f\\n\", util);\nutil = (100ULL * cur[CP_NICE] / (sum ? (double)sum : 1.0L));\nprintf(\"cpu nice utilization: %7.3f\\n\", util);\nutil = (100ULL * cur[CP_SYS] / (sum ? (double)sum : 1.0L));\nprintf(\"cpu sys utilization: %7.3f\\n\", util);\nutil = (100ULL * cur[CP_IDLE] / (sum ? (double)sum : 1.0L));\nprintf(\"cpu idle utilization: %7.3f\\n\", util);\n\nprintf(\"User in uint64_t: %ju\\n\", (uint64_t)(cur[CP_USER] * 100ULL));\nprintf(\"Nice in uint64_t: %ju\\n\", (uint64_t)(cur[CP_NICE] * 100ULL));\nprintf(\"System in uint64_t: %ju\\n\", (uint64_t)(cur[CP_SYS] * 100ULL));\nprintf(\"Idle in uint64_t: %ju\\n\", (uint64_t)(cur[CP_IDLE] * 100ULL));\n</code></pre>\n<p>The modifier at the end is just to make it equivalent to /proc/stat and there are some other methods to make them the same but I notice that the numbers are incrementing and \u201csystem\u201d is too large- the output is:</p>\n<p>cpu user utilization:   0.161<br>\ncpu nice utilization:   0.000<br>\ncpu sys utilization:   0.591<br>\ncpu idle utilization:  98.974<br>\nUser in uint64_t: 28900<br>\nNice in uint64_t: 0<br>\nSystem in uint64_t: 106100<br>\nIdle in uint64_t: 17782400</p>\n<p>cpu user utilization:   0.161<br>\ncpu nice utilization:   0.000<br>\ncpu sys utilization:   0.591<br>\ncpu idle utilization:  98.974<br>\nUser in uint64_t: 28900<br>\nNice in uint64_t: 0<br>\nSystem in uint64_t: 106100<br>\nIdle in uint64_t: 17782400</p>\n<p>cpu user utilization:   0.161<br>\ncpu nice utilization:   0.000<br>\ncpu sys utilization:   0.591<br>\ncpu idle utilization:  98.973<br>\nUser in uint64_t: 29000<br>\nNice in uint64_t: 0<br>\nSystem in uint64_t: 106200<br>\nIdle in uint64_t: 17796600</p>\n<p>Alright, so you get the idea and working on fixing up the number conversion so it\u2019s better but the ratios of the CPU are accurate and have definitely tested to see if that\u2019s correct.</p>\n<p>My question is- should CPUSeconds usually come out as 0 and how? The way I read the code is that it compares the time values and if they are different then output the calculated length of time between ProcessMetrics calls. Wouldn\u2019t that always normally output a value? Also, is this the correct place to be testing things? I\u2019ve tried modifying a few things here and there and seem to get the same negative 3 digit number.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-01T04:58:53.239Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 15,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 79.0,
+        "yours": false,
+        "topic_id": 603,
+        "topic_slug": "getmachineload-and-calculation-of-cpuseconds-for-machinemetrics",
+        "display_username": "Jesse Bennett",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66.png",
+            "internal": false,
+            "reflection": false,
+            "title": "f9e145eff3abe9966dac1fc3e7563ec41f004f66.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 235,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/getmachineload-and-calculation-of-cpuseconds-for-machinemetrics/603/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1778,
+        "name": "Jesse Bennett",
+        "username": "wolfspider",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "created_at": "2018-08-02T05:05:38.554Z",
+        "cooked": "<p>I believe I may have a possible cause of the issue:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L115\" target=\"_blank\" rel=\"nofollow noopener\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L115\" target=\"_blank\" rel=\"nofollow noopener\">freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L115</a></h4>\n<pre class=\"onebox\"><code class=\"lang-c\"><ol class=\"start lines\" start=\"105\" style=\"counter-reset: li-counter 104 ;\">\n<li>#include &lt;compat/linux/linux.h&gt;</li>\n<li>#include &lt;compat/linux/linux_mib.h&gt;</li>\n<li>#include &lt;compat/linux/linux_misc.h&gt;</li>\n<li>#include &lt;compat/linux/linux_util.h&gt;</li>\n<li>#include &lt;fs/pseudofs/pseudofs.h&gt;</li>\n<li>#include &lt;fs/procfs/procfs.h&gt;</li>\n<li>\n</li>\n<li>/*</li>\n<li>* Various conversion macros</li>\n<li>*/</li>\n<li class=\"selected\">#define T2J(x) ((long)(((x) * 100ULL) / (stathz ? stathz : hz)))\t/* ticks to jiffies */</li>\n<li>#define T2CS(x) ((unsigned long)(((x) * 100ULL) / (stathz ? stathz : hz)))\t/* ticks to centiseconds */</li>\n<li>#define T2S(x) ((x) / (stathz ? stathz : hz))\t\t/* ticks to seconds */</li>\n<li>#define B2K(x) ((x) &gt;&gt; 10)\t\t\t\t/* bytes to kbytes */</li>\n<li>#define B2P(x) ((x) &gt;&gt; PAGE_SHIFT)\t\t\t/* bytes to pages */</li>\n<li>#define P2B(x) ((x) &lt;&lt; PAGE_SHIFT)\t\t\t/* pages to bytes */</li>\n<li>#define P2K(x) ((x) &lt;&lt; (PAGE_SHIFT - 10))\t\t/* pages to kbytes */</li>\n<li>#define TV2J(x)\t((x)-&gt;tv_sec * 100UL + (x)-&gt;tv_usec / 10000)</li>\n<li>\n</li>\n<li>/**</li>\n<li>* @brief Mapping of ki_stat in struct kinfo_proc to the linux state</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>So it looks like ticks and jiffies aren\u2019t being converted properly. Also, different kernel versions have different 0 paddings applied to them:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L499\" target=\"_blank\" rel=\"nofollow noopener\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L499\" target=\"_blank\" rel=\"nofollow noopener\">freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L499</a></h4>\n<pre class=\"onebox\"><code class=\"lang-c\"><ol class=\"start lines\" start=\"489\" style=\"counter-reset: li-counter 488 ;\">\n<li>linprocfs_dostat(PFS_FILL_ARGS)</li>\n<li>{</li>\n<li>\tstruct pcpu *pcpu;</li>\n<li>\tlong cp_time[CPUSTATES];</li>\n<li>\tlong *cp;</li>\n<li>\tstruct timeval boottime;</li>\n<li>\tint i;</li>\n<li>\tchar *zero_pad;</li>\n<li>\tbool has_intr = true;</li>\n<li>\n</li>\n<li class=\"selected\">\tif (linux_kernver(td) &gt;= LINUX_KERNVER(2,6,33)) {</li>\n<li>\t\tzero_pad = \" 0 0 0 0\\n\";</li>\n<li>\t} else if (linux_kernver(td) &gt;= LINUX_KERNVER(2,6,24)) {</li>\n<li>\t\tzero_pad = \" 0 0 0\\n\";</li>\n<li>\t} else if (linux_kernver(td) &gt;= LINUX_KERNVER(2,6,11)) {</li>\n<li>\t\tzero_pad = \" 0 0\\n\";</li>\n<li>\t} else if (linux_kernver(td) &gt;= LINUX_KERNVER(2,5,41)) {</li>\n<li>\t\thas_intr = false;</li>\n<li>\t\tzero_pad = \" 0\\n\";</li>\n<li>\t} else {</li>\n<li>\t\thas_intr = false;</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>The Docker image gives me this info for uname:</p>\n<p>root@48ceb58f7a7c:/home/applefdbvol/bin# uname -a<br>\nLinux 48ceb58f7a7c 4.9.87-linuxkit-aufs <span class=\"hashtag\">#1</span> SMP Wed Mar 14 15:12:16 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-02T05:05:38.554Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 8.8,
+        "yours": false,
+        "topic_id": 603,
+        "topic_slug": "getmachineload-and-calculation-of-cpuseconds-for-machinemetrics",
+        "display_username": "Jesse Bennett",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L115",
+            "internal": false,
+            "reflection": false,
+            "title": "freebsd/linprocfs.c at ef0cebe7e1319abfe840cc789932f5cc0c54d175 \u00b7 freebsd/freebsd \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/freebsd/freebsd/blob/ef0cebe7e1319abfe840cc789932f5cc0c54d175/sys/compat/linprocfs/linprocfs.c#L499",
+            "internal": false,
+            "reflection": false,
+            "title": "freebsd/linprocfs.c at ef0cebe7e1319abfe840cc789932f5cc0c54d175 \u00b7 freebsd/freebsd \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 235,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/getmachineload-and-calculation-of-cpuseconds-for-machinemetrics/603/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1779,
+        "name": "Jesse Bennett",
+        "username": "wolfspider",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "created_at": "2018-08-02T07:22:14.537Z",
+        "cooked": "<p>Ok, I solved it the cause of the problem was that Idle just wasn\u2019t being added into the total but using \u2018ticks\u2019 just like Darwin does is fine with this equation after all. For this section of the log it\u2019s reading:</p>\n<pre><code>Type=\"MachineMetrics\" ID=\"0000000000000000\" Elapsed=\"5.00392\" MbpsSent=\"0.100129\" MbpsReceived=\"0.133521\" OutSegs=\"579\" RetransSegs=\"0\" CPUSeconds=\"0.110759\" TotalMemory=\"8117676\" CommittedMemory=\"1649936\" AvailableMemory=\"6467740\" ZoneID=\"57dcf28053018043d1374767f01da056\" MachineID=\"57dcf28053018043d1374767f01da056\" Machine=\"192.168.64.2:4689\" LogGroup=\"default\" TrackLatestType=\"Original\"\n</code></pre>\n<p>Idle just got left out of the total so it was going into a large negative territory. There are some other things in the logs related to the recent huge allocations but that is for another forum topic.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-08-02T07:22:14.537Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 13.8,
+        "yours": false,
+        "topic_id": 603,
+        "topic_slug": "getmachineload-and-calculation-of-cpuseconds-for-machinemetrics",
+        "display_username": "Jesse Bennett",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 235,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/getmachineload-and-calculation-of-cpuseconds-for-machinemetrics/603/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1768,
+      1778,
+      1779
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2639
+    ],
+    [
+      2,
+      2638
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "getMachineLoad and calculation of CPUSeconds for MachineMetrics",
+  "id": 603,
+  "title": "getMachineLoad and calculation of CPUSeconds for MachineMetrics",
+  "posts_count": 3,
+  "created_at": "2018-08-01T04:58:53.123Z",
+  "views": 785,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2018-08-02T07:22:14.537Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "getmachineload-and-calculation-of-cpuseconds-for-machinemetrics",
+  "category_id": 5,
+  "word_count": 764,
+  "deleted_at": null,
+  "user_id": 235,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66_2_1024x637.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_603",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 3004,
+      "height": 1870,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 637,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/f9e145eff3abe9966dac1fc3e7563ec41f004f66_2_1024x637.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Memory Available in FDBCLI",
+      "id": 653,
+      "title": "Memory Available in FDBCLI",
+      "slug": "memory-available-in-fdbcli",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_1024x576.jpg",
+      "created_at": "2018-08-23T06:05:32.307Z",
+      "last_posted_at": "2018-08-25T03:34:01.847Z",
+      "bumped": true,
+      "bumped_at": "2018-08-25T05:24:46.227Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1047,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 235,
+            "username": "wolfspider",
+            "name": "Jesse Bennett",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Few queries on status json",
+      "id": 684,
+      "title": "Few queries on status json",
+      "slug": "few-queries-on-status-json",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-09-08T13:43:35.838Z",
+      "last_posted_at": "2018-12-07T20:20:54.448Z",
+      "bumped": true,
+      "bumped_at": "2018-12-07T20:20:54.448Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1237,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to detect disk stalls?",
+      "id": 1729,
+      "title": "How to detect disk stalls?",
+      "slug": "how-to-detect-disk-stalls",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2019-11-12T19:04:58.331Z",
+      "last_posted_at": "2019-11-13T19:13:56.769Z",
+      "bumped": true,
+      "bumped_at": "2019-11-13T19:13:56.769Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1944,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 478,
+            "username": "kao.makino",
+            "name": "Kao Makino",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kao.makino/{size}/476_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Unable to fake multiple &ldquo;machine_id&rdquo; on the same host for testing",
+      "id": 970,
+      "title": "Unable to fake multiple \"machine_id\" on the same host for testing",
+      "slug": "unable-to-fake-multiple-machine-id-on-the-same-host-for-testing",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-12-21T18:38:14.904Z",
+      "last_posted_at": "2018-12-21T22:34:28.427Z",
+      "bumped": true,
+      "bumped_at": "2018-12-21T22:34:28.427Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1358,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How are &lsquo;contributing_workers&rsquo; computed?",
+      "id": 360,
+      "title": "How are 'contributing_workers' computed?",
+      "slug": "how-are-contributing-workers-computed",
+      "posts_count": 20,
+      "reply_count": 13,
+      "highest_post_number": 20,
+      "image_url": null,
+      "created_at": "2018-05-07T00:53:18.538Z",
+      "last_posted_at": "2018-05-12T07:19:34.562Z",
+      "bumped": true,
+      "bumped_at": "2018-05-12T07:19:34.562Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1986,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 236,
+            "username": "marctrem",
+            "name": "Marc-Andr\u00e9 Tremblay",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/marctrem/{size}/208_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 235,
+        "username": "wolfspider",
+        "name": "Jesse Bennett",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 235,
+      "username": "wolfspider",
+      "name": "Jesse Bennett",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png"
+    },
+    "last_poster": {
+      "id": 235,
+      "username": "wolfspider",
+      "name": "Jesse Bennett",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png"
+    }
+  },
+  "bookmarks": []
+}

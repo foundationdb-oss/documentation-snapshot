@@ -1,0 +1,626 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2756,
+        "name": "Ricky Saltzer",
+        "username": "ricky.saltzer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+        "created_at": "2018-11-30T16:17:55.562Z",
+        "cooked": "<p>Hey there -</p>\n<p>I updated my client libraries from 5.2 to 6.0 but now I can\u2019t seem to communicate with my cluster. Is this expected behavior? I\u2019m able to connect to the cluster on any other client that\u2019s using the 5.2 library.</p>\n<pre><code>$ fdbcli\nUsing cluster file `fdb.cluster'.\n\nWARNING: One or more of the processes in the cluster is incompatible with this version of fdbcli.\n\nThe database is unavailable; type `status' for more information.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; status\n\nWARNING: One or more of the processes in the cluster is incompatible with this version of fdbcli.\n\nUsing cluster file `fdb.cluster'.\n\nCould not communicate with a quorum of coordination servers:\n  10.49.38.10:4500  (unreachable)\n  10.49.38.23:4500  (unreachable)\n  10.49.38.36:4500  (unreachable)\n  10.49.38.52:4500  (unreachable)\n  10.49.38.72:4500  (unreachable)</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-30T16:17:55.562Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 407,
+        "reads": 59,
+        "readers_count": 58,
+        "score": 2046.8,
+        "yours": false,
+        "topic_id": 919,
+        "topic_slug": "client-library-backwards-compatibility-issues",
+        "display_username": "Ricky Saltzer",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 369,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/client-library-backwards-compatibility-issues/919/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2757,
+        "name": "Austin Seipp",
+        "username": "aseipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "created_at": "2018-11-30T19:21:19.862Z",
+        "cooked": "<p>That\u2019s expected. For a given FDB version <code>major.minor.patch</code>,  only <code>.patch</code>-level releases are protocol compatible. This means any <code>major</code> or <code>minor</code> changes to the server imply a new protocol across the cluster. The <code>fdb_c</code> library uses this same protocol to talk to the cluster, so it impacts all clients, as well.</p>\n<p>(Note that protocol changes <em>are not</em> the same as storage engine/format changes, as you might have noticed \u2013 the raw data on disk is generally stable across versions.)</p>\n<p>The correct thing to do here is to use the multi-version client support, <a href=\"https://apple.github.io/foundationdb/api-general.html#multi-version-client-api\" rel=\"nofollow noopener\">documented here</a>. The TL;DR is you need to put copies of <code>libfdb_c-5.2.so</code> and <code>libfdb_c-6.0.so</code> from the client library packages into a directory, and point your client applications to that directory during startup. When they try to talk to the cluster, they will negotiate a protocol version, then transparently load the right library and use that to communicate.</p>\n<p>First, you would want to deploy a new version of all your client applications/layers with the multi-version API configured, and both 5.2 and 6.0 libraries available somewhere. You do not want to make any client-level changes, just a redeploy (perhaps with a few extra command line options pointing to the multi-version directory.) Then, you can roll out the new cluster.</p>\n<hr>\n<p>There is also the question of the API version you request in your client application. The thing is, you want to keep requesting the old API version with the new cluster until it\u2019s fully rolled out. For instance, you would be done deploying the 6.0 cluster, but you\u2019d still request an API version of <code>520</code>. Later on you can update the API version as part of routine maintenance in your client applications, once everything is stable. You always want to do this last.</p>\n<p>The reason for this is simple but subtle and took me a while to boil down easily: features are not the same as protocol-incompatible changes. Even though you need a different protocol for 5.2 and 6.0, 6.0 still supports the same features as 5.2. It can still satisfy the constraint you \u201cwant all 5.2.x based features\u201d. The underlying protocol/dynamically loaded client library is orthogonal to this. This means you could also still <em>downgrade</em> to 5.2 as well (I think.) But once you request an API version of <code>600</code>, there\u2019s no going back.</p>\n<hr>\n<p>Note: As far as I know, <code>fdbcli</code> itself does not support the multi-client library feature, because it is not a client of <code>libfdb_c.so</code> at all \u2013 it shares code and features directly with the server codebase, so it\u2019s much more tightly coupled (for example, what should happen when you use new 6.0 multi-region support in <code>fdbcli</code>, while talking to fdb 5.2?) It\u2019s unclear if this can or should ever change \u2013 so, in the mean time you probably also want to keep multiple versions of <code>fdbcli</code> around, too.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-30T19:21:19.862Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 14,
+        "reads": 55,
+        "readers_count": 54,
+        "score": 96.0,
+        "yours": false,
+        "topic_id": 919,
+        "topic_slug": "client-library-backwards-compatibility-issues",
+        "display_username": "Austin Seipp",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-general.html#multi-version-client-api",
+            "internal": false,
+            "reflection": false,
+            "title": "Using FoundationDB Clients \u2014 FoundationDB 6.0",
+            "clicks": 51
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 158,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/client-library-backwards-compatibility-issues/919/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2756,
+      2757
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2517
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Client library backwards compatibility issues",
+  "id": 919,
+  "title": "Client library backwards compatibility issues",
+  "posts_count": 2,
+  "created_at": "2018-11-30T16:17:55.490Z",
+  "views": 1325,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2018-11-30T19:21:19.862Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "client-library-backwards-compatibility-issues",
+  "category_id": 7,
+  "word_count": 669,
+  "deleted_at": null,
+  "user_id": 369,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_919",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Multiversion cluster",
+      "id": 1503,
+      "title": "Multiversion cluster",
+      "slug": "multiversion-cluster",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-03T18:05:21.031Z",
+      "last_posted_at": "2019-07-03T18:08:50.605Z",
+      "bumped": true,
+      "bumped_at": "2019-07-03T18:08:50.605Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 398,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to setup multi-version clients with Java?",
+      "id": 1549,
+      "title": "How to setup multi-version clients with Java?",
+      "slug": "how-to-setup-multi-version-clients-with-java",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-07-30T22:41:37.609Z",
+      "last_posted_at": "2019-07-31T15:04:51.073Z",
+      "bumped": true,
+      "bumped_at": "2019-07-31T15:04:51.073Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1813,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 627,
+            "username": "Dan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/eada6e/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How do bindings get an appropriate copy of `fdb_c`?",
+      "id": 311,
+      "title": "How do bindings get an appropriate copy of `fdb_c`?",
+      "slug": "how-do-bindings-get-an-appropriate-copy-of-fdb-c",
+      "posts_count": 9,
+      "reply_count": 6,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-30T08:29:35.925Z",
+      "last_posted_at": "2019-03-07T21:28:28.848Z",
+      "bumped": true,
+      "bumped_at": "2020-10-02T19:38:40.426Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 2829,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 491,
+            "username": "iilyak",
+            "name": "Iilyak",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/iilyak/{size}/1073_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "id": 437,
+      "title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "slug": "new-api-to-get-the-version-of-a-running-cluster-without-needing-a-matching-libfdb-c-library",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-05-19T12:26:50.509Z",
+      "last_posted_at": "2018-05-21T19:33:34.145Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T19:33:34.145Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2729,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Clairification about version compatibility between client and server",
+      "id": 4812,
+      "title": "Clairification about version compatibility between client and server",
+      "slug": "clairification-about-version-compatibility-between-client-and-server",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2025-03-26T15:47:17.308Z",
+      "last_posted_at": "2025-08-27T02:10:28.513Z",
+      "bumped": true,
+      "bumped_at": "2025-08-27T02:10:28.513Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 86,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1525,
+            "username": "hxu",
+            "name": "Han Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hxu/{size}/1934_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1358,
+            "username": "AlexandreBrg",
+            "name": "Alexandre Burgoni",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexandrebrg/{size}/1706_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 158,
+        "username": "aseipp",
+        "name": "Austin Seipp",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 369,
+        "username": "ricky.saltzer",
+        "name": "Ricky Saltzer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 369,
+      "username": "ricky.saltzer",
+      "name": "Ricky Saltzer",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png"
+    },
+    "last_poster": {
+      "id": 158,
+      "username": "aseipp",
+      "name": "Austin Seipp",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/api-general.html#multi-version-client-api",
+        "title": "Using FoundationDB Clients \u2014 FoundationDB 6.0",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 51,
+        "user_id": 158,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

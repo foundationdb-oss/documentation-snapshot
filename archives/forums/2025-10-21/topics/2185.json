@@ -1,0 +1,655 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7366,
+        "name": "Quang Le Hong",
+        "username": "iamquang95",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/iamquang95/{size}/889_2.png",
+        "created_at": "2020-06-16T09:47:05.449Z",
+        "cooked": "<p>There are some unexpected behaviors of rank indexing when adding records concurrently. I\u2019m having a record that has rank index. When i try to adding multiple records concurrently, there is something wrong with ranking. I tried to scan all records on the store, it has all records but using scoreForRank and rankForScore gave me wrong result.</p>\n<p>I\u2019m trying to re-procedure my use case on <code>RankIndexTest.java</code> (sorry, i\u2019m not really familiar with java).<br>\nI change the <code>loadRecords</code> to concurrently load records</p>\n<pre><code class=\"lang-auto\">public static class RunnableSaveRecord implements Runnable {\n        private final String name;\n        private final Integer score;\n        private final String sex;\n        private final FDBRecordStore recordStore;\n        private final CountDownLatch cd;\n\n        RunnableSaveRecord(String _name, Integer _score, String _sex, FDBRecordStore _store, CountDownLatch _cd) {\n            this.name = _name;\n            this.score = _score;\n            this.sex = _sex;\n            this.recordStore = _store;\n            this.cd = _cd;\n        }\n\n        @Override\n        public void run() {\n            System.out.printf(\"------------ write %s %d %s\", name, score, sex);\n            recordStore.saveRecord(TestRecordsRankProto.BasicRankedRecord.newBuilder()\n                    .setName(name)\n                    .setScore(score)\n                    .setGender(sex)\n                    .build());\n            cd.countDown();\n        }\n\n    }\n\n    @BeforeEach\n    public void loadRecords() throws Exception {\n        CountDownLatch cd = new CountDownLatch(RECORDS.length);\n        ExecutorService executor = Executors.newFixedThreadPool(RECORDS.length);\n        try (FDBRecordContext context = openContext()) {\n            openRecordStore(context);\n            for (Object[] rec : RECORDS) {\n                RunnableSaveRecord saver = new RunnableSaveRecord((String)rec[0], (Integer)rec[1], (String)rec[2], recordStore, cd);\n                executor.execute(saver);\n            }\n            cd.await();\n            commit(context);\n        }\n    }\n</code></pre>\n<p>With the code above, test will be failed. (Randomly, i think it\u2019s because of concurrency).</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-06-16T09:47:05.449Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 12,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 80.0,
+        "yours": false,
+        "topic_id": 2185,
+        "topic_slug": "wrong-rank-index-when-concurrently-adding-records",
+        "display_username": "Quang Le Hong",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 775,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/wrong-rank-index-when-concurrently-adding-records/2185/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 7375,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2020-06-16T17:48:31.509Z",
+        "cooked": "<p>Unfortunately, this is a known issue with not a great solution, at at the moment.</p>\n<p>It looks like we don\u2019t have an issue filed about this at the moment, but it is the root cause of: <a href=\"https://github.com/FoundationDB/fdb-record-layer/issues/482\">https://github.com/FoundationDB/fdb-record-layer/issues/482</a> , and there\u2019s a somewhat oblique reference to this in this comment: <a href=\"https://github.com/FoundationDB/fdb-record-layer/pull/914#discussion_r413906868\">https://github.com/FoundationDB/fdb-record-layer/pull/914#discussion_r413906868</a></p>\n<p>The root cause is that the underlying data structure that the rank index is not thread safe, so it is not safe to insert two records which touch the rank index at the same time in the same transaction. Note that you <em>can</em> have as much concurrency as you\u2019d like if the different updates use different transactions (that\u2019s completely safe), but within the same transaction, the objects share some state in an unsafe way.</p>\n<p>The difficulty here, though, is that we don\u2019t want to block any threads waiting for async work, so the only way to \u201cactually\u201d solve this is to introduce some kind of async queueing or locking mechanism. I\u2019ve thought about how we might want to do this at some point, but it\u2019s not a trivial thing to implement.</p>\n<p>So, in the meantime, the only solution is to insert your records in serial, unfortunately. In practice, our solution would be to serialize writes to the index, which seems like something the library should handle correctly for you, but it doesn\u2019t at the moment.</p>\n<p>Filed: <a href=\"https://github.com/FoundationDB/fdb-record-layer/issues/972\">https://github.com/FoundationDB/fdb-record-layer/issues/972</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-06-16T17:48:31.509Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 44.6,
+        "yours": false,
+        "topic_id": 2185,
+        "topic_slug": "wrong-rank-index-when-concurrently-adding-records",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/issues/482",
+            "internal": false,
+            "reflection": false,
+            "title": "Test failure in RankIndexTest::repeatedRankQuery \u00b7 Issue #482 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 6
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/issues/972",
+            "internal": false,
+            "reflection": false,
+            "title": "Concurrent rank and text index updates in the same transaction are unsafe \u00b7 Issue #972 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 5
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-record-layer/pull/914#discussion_r413906868",
+            "internal": false,
+            "reflection": false,
+            "title": "Fixes #482: Test failure in RankIndexTest::repeatedRankQuery by alecgrieser \u00b7 Pull Request #914 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/wrong-rank-index-when-concurrently-adding-records/2185/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7366,
+      7375
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1954
+    ],
+    [
+      2,
+      1953
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Wrong rank index when concurrently adding records",
+  "id": 2185,
+  "title": "Wrong rank index when concurrently adding records",
+  "posts_count": 2,
+  "created_at": "2020-06-16T09:47:05.381Z",
+  "views": 623,
+  "reply_count": 0,
+  "like_count": 3,
+  "last_posted_at": "2020-06-16T17:48:31.509Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "wrong-rank-index-when-concurrently-adding-records",
+  "category_id": 12,
+  "word_count": 490,
+  "deleted_at": null,
+  "user_id": 775,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2185",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Maintaining Data Integrity",
+      "id": 2338,
+      "title": "Maintaining Data Integrity",
+      "slug": "maintaining-data-integrity",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-09-15T07:41:31.379Z",
+      "last_posted_at": "2020-09-15T18:36:30.377Z",
+      "bumped": true,
+      "bumped_at": "2020-09-15T18:36:30.377Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 656,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 764,
+            "username": "legilimen",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/a6a055/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Best way to add an index on already-existing data?",
+      "id": 97,
+      "title": "Best way to add an index on already-existing data?",
+      "slug": "best-way-to-add-an-index-on-already-existing-data",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-04-20T04:59:04.978Z",
+      "last_posted_at": "2018-04-21T14:52:02.378Z",
+      "bumped": true,
+      "bumped_at": "2018-04-21T14:52:02.378Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 3525,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 67,
+            "username": "bpartridge",
+            "name": "Brenton Partridge",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bpartridge/{size}/50_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Online Indexing on large databases",
+      "id": 2391,
+      "title": "Online Indexing on large databases",
+      "slug": "online-indexing-on-large-databases",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-10-15T06:03:44.650Z",
+      "last_posted_at": "2020-10-16T17:32:52.713Z",
+      "bumped": true,
+      "bumped_at": "2020-10-16T17:32:52.713Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1226,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 653,
+            "username": "VibhutiD",
+            "name": "Vibhuti Dembi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vibhutid/{size}/668_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimizing a single large transaction ( 10,000 keys)",
+      "id": 1961,
+      "title": "Optimizing a single large transaction ( 10,000 keys)",
+      "slug": "optimizing-a-single-large-transaction-10-000-keys",
+      "posts_count": 12,
+      "reply_count": 10,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-02-17T13:36:55.355Z",
+      "last_posted_at": "2020-02-24T11:30:42.854Z",
+      "bumped": true,
+      "bumped_at": "2020-02-24T11:30:42.854Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2373,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Layer for read-write transactions lasting longer than 5 seconds",
+      "id": 1318,
+      "title": "Layer for read-write transactions lasting longer than 5 seconds",
+      "slug": "layer-for-read-write-transactions-lasting-longer-than-5-seconds",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-04-18T17:25:43.958Z",
+      "last_posted_at": "2019-11-12T22:43:02.952Z",
+      "bumped": true,
+      "bumped_at": "2019-11-12T22:43:02.952Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2043,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 775,
+        "username": "iamquang95",
+        "name": "Quang Le Hong",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/iamquang95/{size}/889_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 775,
+      "username": "iamquang95",
+      "name": "Quang Le Hong",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/iamquang95/{size}/889_2.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/issues/482",
+        "title": "Test failure in RankIndexTest::repeatedRankQuery \u00b7 Issue #482 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/issues/972",
+        "title": "Concurrent rank and text index updates in the same transaction are unsafe \u00b7 Issue #972 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-record-layer/pull/914#discussion_r413906868",
+        "title": "Fixes #482: Test failure in RankIndexTest::repeatedRankQuery by alecgrieser \u00b7 Pull Request #914 \u00b7 FoundationDB/fdb-record-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

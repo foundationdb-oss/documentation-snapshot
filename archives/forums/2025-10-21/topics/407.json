@@ -1,0 +1,910 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1073,
+        "name": "",
+        "username": "brb",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+        "created_at": "2018-05-13T18:02:42.482Z",
+        "cooked": "<p>I\u2019m trying to reason about the bandwidth consumption of a single fdb client and the fdbserver processes under different replication factors. Here is what my experiment looks like.</p>\n<p>I have one single fdbclient and 4 fdbserver processes on 4 machines (i.e. one process per machine) with redundancy mode \u2018double\u2019. Using the go-ycsb benchmark I can do 1K updates per second with the value size of 10K (key size is less than 100 bytes). I understand that the actual bandwidth would be larger than 10MB/sec but the observed outgoing bandwidth on this client machine is about ~100MB/sec according to iftop. I repeated the experiment multiple times and I made sure that there was no other processes consuming high bandwidth during the experiment.</p>\n<p>Now I\u2019m trying to reason about this 10x relationship between the actual data being updated (10K * 1K/sec == 10MB/sec) and the bandwidth consumed.</p>\n<p>As I read <a href=\"https://forums.foundationdb.org/t/technical-overview-of-the-database/135/3\">the write path diagram</a>, the client needs to send the mutation to the proxy (which would send to tLog servers) and it talks to the storage server directly. Since the replication factor is 2 in my case, I\u2019d have 2 + 1 == 3 times amplification. Also, the encoding of the key-value pairs has an overhead of 2x, therefore the above number would become 6 now but it still doesn\u2019t match the observed 10x number.</p>\n<p>(I also repeated the experiment of 1KB value and I can still observe ~10x bandwidth amplification).</p>\n<p>Any pointers to how to explain the relationship between the actual data being requested vs the actual consumed bandwidth would be appreciated.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-05-13T18:02:42.482Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 29,
+        "reads": 60,
+        "readers_count": 59,
+        "score": 157.0,
+        "yours": false,
+        "topic_id": 407,
+        "topic_slug": "bandwidth-consumption-from-one-fdb-client-to-fdbserver-process",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/technical-overview-of-the-database/135/3",
+            "internal": true,
+            "reflection": false,
+            "title": "Technical overview of the database",
+            "clicks": 6
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 243,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/bandwidth-consumption-from-one-fdb-client-to-fdbserver-process/407/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1094,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-05-14T17:13:35.282Z",
+        "cooked": "<p>Could you provide some more details about the specifics of what your test is doing? For example, is it simply doing 1K writes/s with ~10KB/write, or is it also doing some reads? If it is doing reads, are there many conflicts? You can tell that via <code>status</code> in <code>fdbcli</code>, which has a field for conflict rate. It might also be interesting to know the difference between the reported \u2018transactions started\u2019 and \u2018transaction committed\u2019. And just to be clear, you are only measuring the bandwidth of the client and not any server process, correct?</p>\n<p>The client talks to the proxy at transaction start time (to get the read version), but I don\u2019t think the size of this communication is significant.</p>\n<p>For reads, the client talks directly to the storage servers. In some cases, though, it may have to ask the proxies which storage server to talk to if its cache of data locations is incomplete or wrong.</p>\n<p>For commits, the client should be sending a message to only one proxy under normal circumstances. The proxy is then the one that fans it out to multiple transaction logs. The client doesn\u2019t talk to the storage nodes at all during a commit.</p>\n<p>The commit message contains all of the mutations being committed as well as the conflict ranges for the transaction. Unless you disabled them, there will be a read and/or write conflict range for each key (or range) read and/or written. Conflict ranges include both the start and end of the range, and for single key reads or writes, this means you more or less submit the key twice (but no values). Thus, the total size of the commit request that did only single key reads and writes should be roughly <code>(size of mutations) + 2*(size of keys read) + 2*(size of keys written)</code>, plus some overhead. There\u2019s definitely some room to optimize the amount of space used for single-key ranges, but given the relative sizes of your keys and values it shouldn\u2019t be a huge penalty.</p>\n<p>There\u2019s various other communication that happens. I think the client maintains connections with everybody it\u2019s talked to, and there are some heartbeats that go back and forth. There\u2019s also some communication with the cluster controller, but I don\u2019t think any of that should be significant. There may be other things I\u2019m forgetting, too.</p>\n<p>If the details of your workload don\u2019t suggest an explanation, we may have to dig a little deeper to track down what\u2019s going on.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-05-14T17:13:35.282Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 52,
+        "readers_count": 51,
+        "score": 15.4,
+        "yours": false,
+        "topic_id": 407,
+        "topic_slug": "bandwidth-consumption-from-one-fdb-client-to-fdbserver-process",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/bandwidth-consumption-from-one-fdb-client-to-fdbserver-process/407/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1096,
+        "name": "",
+        "username": "brb",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+        "created_at": "2018-05-14T22:19:56.472Z",
+        "cooked": "<p>Thanks a lot for the detailed explanation, see my setup following. According to your comment and my key value size, for each commit the bandwidth should be dominated by the mutation size which should be ~10KB per request (coz the key is less than 100) but I\u2019m definitely see way higher bandwidth than 10MB / sec under a 1K QPS and yes I\u2019m measuring on the machine where the benchmark ran not the fdb process.</p>\n<p>Benchmark <a href=\"https://github.com/pingcap/go-ycsb/\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">GitHub - pingcap/go-ycsb: A Go port of Yahoo! Cloud Serving Benchmark (YCSB)</a></p>\n<p>The setup is as mentioned above, 4 fdb processes (built using SHA1 ca720e15403bbe05a28a02b67d54b84bed9e09e3)  on 4 machines respectively. These are 32 core machines and have plenty of RAM. No CPU affinity has been set. The redundancy mode was set as \u2018double\u2019.</p>\n<p>For \u2018update\u2019, the benchmark reads the requested key, modifies it and sets it as in <a href=\"https://github.com/pingcap/go-ycsb/blob/master/db/foundationdb/db.go#L132\" rel=\"noopener nofollow ugc\">the codes here.</a>.</p>\n<p>For the 10KB value benchmark, here is the property file like the following<br>\nrecordcount=1000000<br>\noperationcount=10000000<br>\nworkload=core<br>\nreadallfields=true<br>\nreadproportion=0.0<br>\nupdateproportion=1.0<br>\nscanproportion=0.0<br>\ninsertproportion=0.0<br>\nrequestdistribution=uniform<br>\nfieldcount=1<br>\nfieldlength=10000<br>\nmaxscanlength=10</p>\n<p>The constructed key is less than 100 bytes and the constructed values are  x  number of bytes, which is 10K here.</p>\n<p>The \u2018key\u2019 is generated by hashing a random number between 0 and the recordcount (it\u2019s 1 million here).</p>\n<p>Load the data by</p>\n<blockquote>\n<p>./go-ycsb   load  fdb  -P update-only-load -p fdb.cluster=fdb.cluster --threads 200</p>\n</blockquote>\n<p>Run it by</p>\n<blockquote>\n<p>./go-ycsb   run  fdb  -P update-only-load -p fdb.cluster=fdb.cluster --threads 200</p>\n</blockquote>\n<p>The bandwidth monitored was the outbound bandwidth from the machine where the benchmark is run to the fdb processes.</p>\n<p>I repeated the experiment; the numbers were similar but not exactly same as the original post.<br>\nFor 10KB value size, go-ycsb reported a qps as 1.4K/sec (updated every 10 sec, so it\u2019s an avg/smoothed QPS).<br>\nThe outbound bandwidth fluctuates between 100MB ~ 130MB. Among the 4 fdb processes, the benchmark transmitted large amount of data to two of them; almost always half of the total outbound bandwidth.</p>\n<p>fdbcli status reported QPS fluctuates around 1.4K, e.g. sometimes 1K. No conflict was observed. A typical output looks like</p>\n<p>Read rate              - 1476 Hz<br>\nWrite rate             - 1441 Hz<br>\nTransactions started   - 1417 Hz<br>\nTransactions committed - 1441 Hz<br>\nConflict rate          - 0 Hz</p>\n<p>I also repeated it with1KB value set up (by changing the fieldlength from 10000 to 1000), the result was also similar.</p>\n<p>go-ycsb reported QPS fluctuated between 5K/sec and 7K/sec. Outbound bandwidth fluctuates between 70MB/sec to 90MB/sec. Constantly 1 conflict per second like the following.<br>\nWorkload:<br>\nRead rate              - 9390 Hz<br>\nWrite rate             - 9536 Hz<br>\nTransactions started   - 9534 Hz<br>\nTransactions committed - 9533 Hz<br>\nConflict rate          - 1 Hz</p>\n<p>fdb sees higher QPS due to transaction retry (I assume) but is it normal for 1 conflict per second to cause extra 1K QPS ?</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-05-14T22:19:56.472Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 47,
+        "readers_count": 46,
+        "score": 14.4,
+        "yours": false,
+        "topic_id": 407,
+        "topic_slug": "bandwidth-consumption-from-one-fdb-client-to-fdbserver-process",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/pingcap/go-ycsb/",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - pingcap/go-ycsb: A Go port of Yahoo! Cloud Serving Benchmark (YCSB)",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/pingcap/go-ycsb/blob/master/db/foundationdb/db.go#L132",
+            "internal": false,
+            "reflection": false,
+            "title": "go-ycsb/db.go at master \u00b7 pingcap/go-ycsb \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 243,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/bandwidth-consumption-from-one-fdb-client-to-fdbserver-process/407/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1121,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-05-15T22:03:14.395Z",
+        "cooked": "<p>I ran a similar test and wasn\u2019t able to reproduce the issue, but I did notice that iftop is reporting results in megabits rather than megabytes. Is there any chance that\u2019s the source of confusion?</p>\n<aside class=\"quote no-group\" data-username=\"brb\" data-post=\"3\" data-topic=\"407\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/b/9d8465/48.png\" class=\"avatar\"> brb:</div>\n<blockquote>\n<p>fdb sees higher QPS due to transaction retry (I assume) but is it normal for 1 conflict per second to cause extra 1K QPS ?</p>\n</blockquote>\n</aside>\n<p>It doesn\u2019t look like there are many retries happening from your sampled status output, as the transactions started and committed rates are very similar. Also, each conflict should result in only one retry. I\u2019m not sure why there\u2019s a disparity between what the client and cluster report here.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-05-15T22:03:14.395Z",
+        "reply_count": 1,
+        "reply_to_post_number": 3,
+        "quote_count": 1,
+        "incoming_link_count": 1,
+        "reads": 39,
+        "readers_count": 38,
+        "score": 17.8,
+        "yours": false,
+        "topic_id": 407,
+        "topic_slug": "bandwidth-consumption-from-one-fdb-client-to-fdbserver-process",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/bandwidth-consumption-from-one-fdb-client-to-fdbserver-process/407/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1143,
+        "name": "",
+        "username": "brb",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+        "created_at": "2018-05-17T00:09:20.521Z",
+        "cooked": "<p>Ah, crap. I\u2019m sorry. Usually I have alias iftop=\u2018iftop -B\u2019 but on these machines I don\u2019t have it and I assumed it. That\u2019s where the misunderstanding was. Thanks a lot for investigation.</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2018-05-17T00:09:20.521Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 34,
+        "readers_count": 33,
+        "score": 16.8,
+        "yours": false,
+        "topic_id": 407,
+        "topic_slug": "bandwidth-consumption-from-one-fdb-client-to-fdbserver-process",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 243,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/bandwidth-consumption-from-one-fdb-client-to-fdbserver-process/407/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1073,
+      1094,
+      1096,
+      1121,
+      1143
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2718
+    ],
+    [
+      2,
+      2717
+    ],
+    [
+      4,
+      2716
+    ],
+    [
+      5,
+      2715
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Bandwidth consumption from one fdb client to fdbserver process",
+  "id": 407,
+  "title": "Bandwidth consumption from one fdb client to fdbserver process",
+  "posts_count": 5,
+  "created_at": "2018-05-13T18:02:42.359Z",
+  "views": 1119,
+  "reply_count": 3,
+  "like_count": 0,
+  "last_posted_at": "2018-05-17T00:09:20.521Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "bandwidth-consumption-from-one-fdb-client-to-fdbserver-process",
+  "category_id": 7,
+  "word_count": 1362,
+  "deleted_at": null,
+  "user_id": 243,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_407",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Benchmarking FoundationDB on AWS",
+      "id": 410,
+      "title": "Benchmarking FoundationDB on AWS",
+      "slug": "benchmarking-foundationdb-on-aws",
+      "posts_count": 19,
+      "reply_count": 12,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2018-05-14T09:55:57.604Z",
+      "last_posted_at": "2018-10-30T16:01:15.283Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T16:01:15.283Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 9035,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 257,
+            "username": "cih.y2k",
+            "name": "cih.y2k",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cih.y2k/{size}/423_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Network bandwidth and disk write bandwidth not matching for SS",
+      "id": 3083,
+      "title": "Network bandwidth and disk write bandwidth not matching for SS",
+      "slug": "network-bandwidth-and-disk-write-bandwidth-not-matching-for-ss",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-12-17T08:00:58.202Z",
+      "last_posted_at": "2021-12-20T08:18:25.124Z",
+      "bumped": true,
+      "bumped_at": "2021-12-20T10:17:05.425Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 859,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1037,
+            "username": "leonliao",
+            "name": "Leonliao",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/leonliao/{size}/1244_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction/operation throughput",
+      "id": 1880,
+      "title": "Transaction/operation throughput",
+      "slug": "transaction-operation-throughput",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-01-14T22:48:44.649Z",
+      "last_posted_at": "2020-01-23T15:09:25.796Z",
+      "bumped": true,
+      "bumped_at": "2020-01-23T15:09:25.796Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2028,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to achieve (1000 tx 1000 reads each)/sec on single client",
+      "id": 2130,
+      "title": "How to achieve (1000 tx 1000 reads each)/sec on single client",
+      "slug": "how-to-achieve-1000-tx-1000-reads-each-sec-on-single-client",
+      "posts_count": 25,
+      "reply_count": 16,
+      "highest_post_number": 25,
+      "image_url": null,
+      "created_at": "2020-05-21T03:47:18.304Z",
+      "last_posted_at": "2021-12-15T17:53:19.208Z",
+      "bumped": true,
+      "bumped_at": "2021-12-15T17:53:19.208Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 3174,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 808,
+            "username": "sfc-gh-ngoyal",
+            "name": "Neelam Goyal",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/439d5e/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to improve connections count from client to server in go sdk or in c sdk",
+      "id": 223,
+      "title": "How to improve connections count from client to server in go sdk or in c sdk",
+      "slug": "how-to-improve-connections-count-from-client-to-server-in-go-sdk-or-in-c-sdk",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-23T15:43:18.969Z",
+      "last_posted_at": "2018-04-24T05:23:56.703Z",
+      "bumped": true,
+      "bumped_at": "2018-04-24T05:23:56.703Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1718,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 152,
+            "username": "shgxwxl",
+            "name": "Shgxwxl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/shgxwxl/{size}/127_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 243,
+        "username": "brb",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 243,
+      "username": "brb",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png"
+    },
+    "last_poster": {
+      "id": 243,
+      "username": "brb",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/technical-overview-of-the-database/135/3",
+        "title": "Technical overview of the database",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 243,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://github.com/pingcap/go-ycsb/",
+        "title": "GitHub - pingcap/go-ycsb: A Go port of Yahoo! Cloud Serving Benchmark (YCSB)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 243,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/pingcap/go-ycsb/blob/master/db/foundationdb/db.go#L132",
+        "title": "go-ycsb/db.go at master \u00b7 pingcap/go-ycsb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 243,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

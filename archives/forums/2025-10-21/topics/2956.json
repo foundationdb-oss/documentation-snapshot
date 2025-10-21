@@ -1,0 +1,687 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10155,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-10-19T21:32:10.691Z",
+        "cooked": "<p>Hi, I upgraded one of my large FoundationDB clusters from 6.2.25 to 6.2.30 yesterday. Around 12 hours after the upgrade, one of the storage fdbservers failed with:</p>\n<pre><code class=\"lang-auto\">\"messages\" : [\n                    {\n                        \"description\" : \"StorageServerFailed: unknown_error at Tue Oct 19 07:17:21 2021\",\n                        \"name\" : \"unknown_error\",\n                        \"raw_log_message\" : \"\\\"Severity\\\"=\\\"40\\\", \\\"Time\\\"=\\\"1634627841.978797\\\", \\\"DateTime\\\"=\\\"2021-10-19T07:17:21Z\\\", \\\"Type\\\"=\\\"StorageServerFailed\\\", \\\"ID\\\"=\\\"666a86a655a76bbc\\\", \\\"Error\\\"=\\\"unknown_error\\\", \\\"ErrorDescription\\\"=\\\"An unknown error occurred\\\", \\\"ErrorCode\\\"=\\\"4000\\\", \\\"Reason\\\"=\\\"Error\\\", \\\"Backtrace\\\"=\\\"addr2line -e fdbserver.debug -p -C -f -i 0x19ed48c 0x19ecc40 0x19ecd21 0x1078f9a 0x107996d 0x1079ab3 0x105d2ae 0x105d52e 0x6c1ec9 0x1074fd7 0x107591e 0xb42558 0xb4277e 0x6c1ec9 0x106d7a3 0x106d81f 0x106d96c 0x8018f0 0xb962d3 0xb96767 0xb96e61 0x6c2728 0x1a22500 0x1a1f167 0x1a1f6b0 0xa59580 0x8018f0 0x1a2b270 0x6784f9 0x7fa4d865d09b\\\", \\\"Machine\\\"=\\\"&lt;IP&gt;:4613\\\", \\\"LogGroup\\\"=\\\"default\\\", \\\"Roles\\\"=\\\"SS\\\"\",\n                        \"time\" : 1634630000,\n                        \"type\" : \"StorageServerFailed\"\n                    }\n                ],\n</code></pre>\n<p>Ran addr2line with fdbserver 6.2.30 debug:</p>\n<pre><code class=\"lang-auto\">root@3471274ba32b:/src/storage# addr2line -e fdbserver.debug -p -C -f -i 0x19ed48c 0x19ecc40 0x19ecd21 0x1078f9a 0x107996d 0x1079ab3 0x105d2ae 0x105d52e 0x6c1ec9 0x1074fd7 0x107591e 0xb42558 0xb4277e 0x6c1ec9 0x106d7a3 0x106d81f 0x106d96c 0x8018f0 0xb962d3 0xb96767 0xb96e61 0x6c2728 0x1a22500 0x1a1f167 0x1a1f6b0 0xa59580 0x8018f0 0x1a2b270 0x6784f9 0x7fa4d865d09b\nTraceEvent::backtrace(std::string const&amp;) at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.tcc:613\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:5967\n (inlined by) TraceEvent::backtrace(std::string const&amp;) at /opt/foundation/foundationdb/flow/Trace.cpp:1020\nTraceEvent::log() at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3640\n (inlined by) TraceEvent::log() at /opt/foundation/foundationdb/flow/Trace.cpp:1037\nTraceEvent::~TraceEvent() at /opt/foundation/foundationdb/./flow/Trace.h:60\n (inlined by) TraceEvent::~TraceEvent() at /opt/foundation/foundationdb/flow/Trace.cpp:1069\nendRole(Role const&amp;, UID, std::string, bool, Error) at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3640\n (inlined by) endRole(Role const&amp;, UID, std::string, bool, Error) at /opt/foundation/foundationdb/fdbserver/worker.actor.cpp:656\n(anonymous namespace)::WorkerHandleErrorsActorState&lt;(anonymous namespace)::WorkerHandleErrorsActor&gt;::a_body1loopBody1when1(ErrorInfo const&amp;, int) at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3640\n (inlined by) a_body1loopBody1when1 at /opt/foundation/foundationdb/fdbserver/worker.actor.cpp:186\nActorSingleCallback&lt;(anonymous namespace)::WorkerHandleErrorsActor, 0, ErrorInfo&gt;::fire(ErrorInfo const&amp;) at /opt/foundation/foundationdb/./flow/flow.h:1010\n(anonymous namespace)::ForwardErrorActorState&lt;(anonymous namespace)::ForwardErrorActor&gt;::a_body1Catch2(Error const&amp;, int) [clone .isra.1783] at /opt/foundation/foundationdb/fdbserver/worker.actor.cpp:139\nActorCallback&lt;(anonymous namespace)::ForwardErrorActor, 0, Void&gt;::error(Error) at /opt/foundation/foundationdb/./flow/flow.h:1003\nKilled\n</code></pre>\n<p>Which doesn\u2019t seem to say much about the error, just that an error was thrown and logged? I checked the logs, these are the logs with severity &gt; 10. I filtered out some SlowTask/Net2SlowTaskTrace logs that didn\u2019t seem super helpful, as indicated by <code>[...]</code>, happy to post them too. There were no severity &gt; 10 logs at all before the SystemError log line, and the log file started about 6 minutes prior to hitting the SystemError.</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"40\" Time=\"1634627839.189913\" DateTime=\"2021-10-19T07:17:19Z\" Type=\"SystemError\" ID=\"0000000000000000\" Error=\"unknown_error\" ErrorDescription=\"An unknown error occurred\" ErrorCode=\"4000\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x19ed48c 0x19ecc40 0x19ecd21 0x19a3203 0x5103f5 0x8018f0 0x1a2b270 0x6784f9 0x7fa4d865d09b\" Machine=\"&lt;IP&gt;:4613\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n&lt;Event Severity=\"30\" Time=\"1634627839.189913\" DateTime=\"2021-10-19T07:17:19Z\" Type=\"SlowTask\" ID=\"0000000000000000\" TaskID=\"7010\" MClocks=\"2192.39\" Duration=\"0.876958\" SampleRate=\"1\" NumYields=\"0\" Machine=\"&lt;IP&gt;:4613\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1634627839.189913\" DateTime=\"2021-10-19T07:17:19Z\" Type=\"Net2SlowTaskTrace\" ID=\"0000000000000000\" TraceTime=\"1634627839.414140\" Trace=\"addr2line -e fdbserver.debug -p -C -f -i 0x7fa4d8999730 0xd3d5fb 0xd3d624 0xd3d60b 0xd3d60b 0xd3d624 0xd3d624 0xd3d60b 0xd3d60b 0xd3d60b 0xd3d624 0xd3d624 0xd3d60b 0xd3d60b 0xd3d624 0xd3d624 0xd3d60b 0xd3d624 0xd3d624 0xd3d624 0xd3d624 0xd3d60b 0xd3d624 0xd3d60b 0x1005499 0xfbf610 0xfc90dc 0xfc957e 0x6c1ec9 0xfab332 0x1a2150a 0x1a1eeef 0x1a1f53e 0x1a1f7f2 0x6c1ec9 0x510401 0x8018f0 0x1a2b270 0x6784f9 0x7fa4d865d09b 0x6b2385\" Machine=\"&lt;IP&gt;:4613\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n[...]\n&lt;Event Severity=\"20\" Time=\"1634627840.073183\" DateTime=\"2021-10-19T07:17:20Z\" Type=\"FailureMonitorClientSlow\" ID=\"0000000000000000\" Elapsed=\"0.959561\" Expected=\"0.1\" Machine=\"&lt;IP&gt;:4613\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n[...]\n&lt;Event Severity=\"20\" Time=\"1634627841.977139\" DateTime=\"2021-10-19T07:17:21Z\" Type=\"FailureMonitorClientSlow\" ID=\"0000000000000000\" Elapsed=\"1.90303\" Expected=\"0.1\" Machine=\"&lt;IP&gt;:4613\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n&lt;Event Severity=\"40\" Time=\"1634627841.978797\" DateTime=\"2021-10-19T07:17:21Z\" Type=\"StorageServerFailed\" ID=\"666a86a655a76bbc\" Error=\"unknown_error\" ErrorDescription=\"An unknown error occurred\" ErrorCode=\"4000\" Reason=\"Error\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x19ed48c 0x19ecc40 0x19ecd21 0x1078f9a 0x107996d 0x1079ab3 0x105d2ae 0x105d52e 0x6c1ec9 0x1074fd7 0x107591e 0xb42558 0xb4277e 0x6c1ec9 0x106d7a3 0x106d81f 0x106d96c 0x8018f0 0xb962d3 0xb96767 0xb96e61 0x6c2728 0x1a22500 0x1a1f167 0x1a1f6b0 0xa59580 0x8018f0 0x1a2b270 0x6784f9 0x7fa4d865d09b\" Machine=\"&lt;IP&gt;:4613\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1634628019.851092\" DateTime=\"2021-10-19T07:20:19Z\" Type=\"N2_ReadError\" ID=\"fb1fb0aa9e238539\" SuppressedEventCount=\"1\" ErrorCode=\"1\" Message=\"stream truncated\" Machine=\"&lt;IP&gt;:4613\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n</code></pre>\n<p>I ran the initial SystemError addr2line as well:</p>\n<pre><code class=\"lang-auto\">root@3471274ba32b:/src/storage# addr2line -e fdbserver.debug -p -C -f -i 0x19ed48c 0x19ecc40 0x19ecd21 0x19a3203 0x5103f5 0x8018f0 0x1a2b270 0x6784f9 0x7fa4d865d09b\nTraceEvent::backtrace(std::string const&amp;) at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.tcc:613\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:5967\n (inlined by) TraceEvent::backtrace(std::string const&amp;) at /opt/foundation/foundationdb/flow/Trace.cpp:1020\nTraceEvent::log() at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) ?? at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3640\n (inlined by) TraceEvent::log() at /opt/foundation/foundationdb/flow/Trace.cpp:1037\nTraceEvent::~TraceEvent() at /opt/foundation/foundationdb/./flow/Trace.h:60\n (inlined by) TraceEvent::~TraceEvent() at /opt/foundation/foundationdb/flow/Trace.cpp:1069\nError::Error(int) at /opt/foundation/foundationdb/flow/Error.cpp:67\nActorCallback&lt;(anonymous namespace)::ReportStorageServerStateActor, 0, Void&gt;::fire(Void const&amp;) [clone .cold.21771] at /opt/foundation/foundationdb/.objs/fdbserver/storageserver.actor.g.cpp:13612\n (inlined by) ?? at /opt/foundation/foundationdb/.objs/fdbserver/storageserver.actor.g.cpp:13690\n (inlined by) fire at /opt/foundation/foundationdb/./flow/flow.h:999\nKilled\n</code></pre>\n<p>Looked at the 6.2.30 code and it also doesn\u2019t seem like this tells us much besides that an error was thrown and logged.</p>\n<p>I bounced the fdbserver (killed the process manually, fdbmonitor spun it back up) and it was fine after that. But since it had failed and not come back up on its own, the cluster had started a large data distribution job to recover the RF and the io load caused batch performance limited.</p>\n<p>It doesn\u2019t seem like the cluster was specifically under load (or any other abnormal workload) prior to the fdbserver going down, and I don\u2019t think it hit any system or process limits. Along with the 6.2.30 upgrade we also upgraded the base docker image from debian 9.13-slim to 10.10-slim, but I would not expect that to be related (?)</p>\n<p>I looked into unknown_error / SystemError which didn\u2019t say much:</p>\n<pre><code class=\"lang-auto\">// 4xxx Internal errors (those that should be generated only by bugs) are decimal 4xxx\nERROR( unknown_error, 4000, \"An unknown error occurred\" )  // C++ exception not of type Error\nERROR( internal_error, 4100, \"An internal error occurred\" )\n</code></pre>\n<p>(<a href=\"https://github.com/apple/foundationdb/blob/6.2.30/flow/error_definitions.h#L219-L221\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">foundationdb/error_definitions.h at 6.2.30 \u00b7 apple/foundationdb \u00b7 GitHub</a>)</p>\n<pre><code class=\"lang-auto\">if (error_code &gt;= 3000 &amp;&amp; error_code &lt; 6000) {\n\t\tTraceEvent(SevError, \"SystemError\").error(*this).backtrace();\n\t\tif (g_crashOnError) {\n\t\t\tflushOutputStreams();\n\t\t\tflushTraceFileVoid();\n\t\t\tcrashAndDie();\n\t\t}\n\t}\n</code></pre>\n<p>(<a href=\"https://github.com/apple/foundationdb/blob/6.2.30/flow/Error.cpp#L65-L72\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">foundationdb/Error.cpp at 6.2.30 \u00b7 apple/foundationdb \u00b7 GitHub</a>)</p>\n<p>Any tips on how to further debug this, especially if it\u2019s related to the 6.2.30 upgrade? Were there any compatibility changes in 6.2.25 to 6.2.30? We\u2019re holding off on upgrading our other production clusters as a result.</p>\n<p>Thanks in advance! Happy to provide any other info.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-10-19T21:32:10.691Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 27,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 139.6,
+        "yours": false,
+        "topic_id": 2956,
+        "topic_slug": "storageserverfailed-with-unknown-error-after-6-2-30-upgrade",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/6.2.30/flow/Error.cpp#L65-L72",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/Error.cpp at 6.2.30 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/6.2.30/flow/error_definitions.h#L219-L221",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/error_definitions.h at 6.2.30 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storageserverfailed-with-unknown-error-after-6-2-30-upgrade/2956/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10165,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2021-10-23T23:36:02.074Z",
+        "cooked": "<p>This is probably the same as the <a href=\"https://apple.github.io/foundationdb/release-notes/release-notes-620.html\">bug fixed in 6.2.33</a>, and if I\u2019m reading correctly it was introduced in 6.2.28. You could probably try 6.2.27 instead to avoid the problem.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-10-23T23:36:02.074Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 28.8,
+        "yours": false,
+        "topic_id": 2956,
+        "topic_slug": "storageserverfailed-with-unknown-error-after-6-2-30-upgrade",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/release-notes/release-notes-620.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Release Notes \u2014 FoundationDB 6.3",
+            "clicks": 10
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storageserverfailed-with-unknown-error-after-6-2-30-upgrade/2956/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 10170,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-10-25T17:33:45.422Z",
+        "cooked": "<p>Ah yup, that looks like the issue we hit. We will downgrade. Thanks!</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-10-25T17:33:45.422Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 8.2,
+        "yours": false,
+        "topic_id": 2956,
+        "topic_slug": "storageserverfailed-with-unknown-error-after-6-2-30-upgrade",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storageserverfailed-with-unknown-error-after-6-2-30-upgrade/2956/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10155,
+      10165,
+      10170
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1463
+    ],
+    [
+      2,
+      1459
+    ],
+    [
+      3,
+      1457
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "StorageServerFailed with unknown_error after 6.2.30 upgrade",
+  "id": 2956,
+  "title": "StorageServerFailed with unknown_error after 6.2.30 upgrade",
+  "posts_count": 3,
+  "created_at": "2021-10-19T21:32:10.596Z",
+  "views": 662,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2021-10-25T17:33:45.422Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "storageserverfailed-with-unknown-error-after-6-2-30-upgrade",
+  "category_id": 17,
+  "word_count": 1436,
+  "deleted_at": null,
+  "user_id": 810,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2956",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Large spikes in memory usage on storage processes, 6.0.18",
+      "id": 2115,
+      "title": "Large spikes in memory usage on storage processes, 6.0.18",
+      "slug": "large-spikes-in-memory-usage-on-storage-processes-6-0-18",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_1024x320.png",
+      "created_at": "2020-05-12T19:17:47.329Z",
+      "last_posted_at": "2020-05-12T21:58:14.570Z",
+      "bumped": true,
+      "bumped_at": "2020-05-12T21:58:14.570Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 582,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb seems keep reinitialising itself after client hang",
+      "id": 1437,
+      "title": "Foundationdb seems keep reinitialising itself after client hang",
+      "slug": "foundationdb-seems-keep-reinitialising-itself-after-client-hang",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-10T10:10:13.209Z",
+      "last_posted_at": "2019-06-26T18:08:03.629Z",
+      "bumped": true,
+      "bumped_at": "2019-06-26T18:08:03.629Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1222,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 602,
+            "username": "ppggff",
+            "name": "ppggff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ppggff/{size}/855_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to troubleshoot foundation db 6.0 startup issue",
+      "id": 1372,
+      "title": "How to troubleshoot foundation db 6.0 startup issue",
+      "slug": "how-to-troubleshoot-foundation-db-6-0-startup-issue",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-05-20T03:28:02.719Z",
+      "last_posted_at": "2019-05-23T15:59:12.442Z",
+      "bumped": true,
+      "bumped_at": "2019-05-23T15:59:12.442Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 842,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 586,
+            "username": "srinivas",
+            "name": "Srinivas k",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ecccb3/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Upgrading FoundationDB",
+      "id": 191,
+      "title": "Upgrading FoundationDB",
+      "slug": "upgrading-foundationdb",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-04-21T23:51:26.311Z",
+      "last_posted_at": "2018-08-27T03:33:51.669Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T03:33:51.669Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 3852,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 133,
+            "username": "titanous",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/titanous/{size}/94_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbserver error in a cluster with double redundancy",
+      "id": 2348,
+      "title": "Fdbserver error in a cluster with double redundancy",
+      "slug": "fdbserver-error-in-a-cluster-with-double-redundancy",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-09-20T18:50:42.932Z",
+      "last_posted_at": "2020-09-22T07:33:44.911Z",
+      "bumped": true,
+      "bumped_at": "2020-09-22T11:25:55.307Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 859,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 810,
+        "username": "amanda",
+        "name": "Amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    },
+    "last_poster": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/release-notes/release-notes-620.html",
+        "title": "Release Notes \u2014 FoundationDB 6.3",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 10,
+        "user_id": 12,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

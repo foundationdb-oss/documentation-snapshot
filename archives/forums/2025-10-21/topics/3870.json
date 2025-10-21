@@ -1,0 +1,484 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12633,
+        "name": "Joe",
+        "username": "jojamu",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/eb8c5e/{size}.png",
+        "created_at": "2023-03-24T19:54:19.981Z",
+        "cooked": "<p>Hi everyone, I am trying to learn FDB currently for use for a school project, and am running into issues that I\u2019m having trouble solving through the documentation. Basically, the project consists of using a cursor to go through a database, and then being able to update/delete records that the cursor is currently pointing at.</p>\n<p>I\u2019m trying to create the cursor now, and having some trouble. For example, I\u2019m trying to code the following function:</p>\n<pre><code class=\"lang-auto\">  /**\n   * Seek the cursor to the first qualified record.\n   *\n   * Once the cursor is initialized by getFirst, it can ONLY iterate records using getNext.\n   * @param cursor the target cursor\n   * @return the first qualified record\n   */\n  Record getFirst(Cursor cursor);\n</code></pre>\n<p>I have instantiated a cursor that could contain the table name, attribute name, attribute value, a comparison operator, and the mode of the cursor (read vs. read/write).</p>\n<p>The idea that I have to implement this method is to use the following function to get the key-value pair, and then go from there:</p>\n<pre><code class=\"lang-auto\"> public static List&lt;FDBKVPair&gt; getAllKeyValuePairsOfSubdirectory(Database db, Transaction tx, List&lt;String&gt; path) {\n    List&lt;FDBKVPair&gt; res = new ArrayList&lt;&gt;();\n    if (!doesSubdirectoryExists(tx, path)) {\n      return res;\n    }\n\n    DirectorySubspace dir = FDBHelper.createOrOpenSubspace(tx, path);\n    Range range = dir.range();\n\n    List&lt;KeyValue&gt; kvs = tx.getRange(range).asList().join();\n    for (KeyValue kv : kvs) {\n      Tuple key = dir.unpack(kv.getKey());\n      Tuple value = Tuple.fromBytes(kv.getValue());\n      res.add(new FDBKVPair(path, key, value));\n    }\n\n    return res;\n  }\n</code></pre>\n<p>From there, my plan is to use the AsyncInterable interface interator() method to get an iterator, and then use next() and hasNext() to get the actual record to return in the original function.</p>\n<p>I\u2019m really struggling with taking this idea, and implementing it in code, and any help would be greatly appreciated. Once I\u2019m done developing the cursor to go forwards, I\u2019ll also have to add the ability for it to go backwards through the database.</p>\n<p>Thanks so much,</p>\n<p>Joe</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-03-24T19:54:19.981Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 38,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 193.2,
+        "yours": false,
+        "topic_id": 3870,
+        "topic_slug": "trying-to-implement-cursor-with-fdb",
+        "display_username": "Joe",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1230,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/trying-to-implement-cursor-with-fdb/3870/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12633
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      942
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Trying to implement cursor with FDB",
+  "id": 3870,
+  "title": "Trying to implement cursor with FDB",
+  "posts_count": 1,
+  "created_at": "2023-03-24T19:54:19.914Z",
+  "views": 321,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-03-24T19:54:19.981Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "trying-to-implement-cursor-with-fdb",
+  "category_id": 7,
+  "word_count": 318,
+  "deleted_at": null,
+  "user_id": 1230,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3870",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "AsyncIterator `hasNext` method not returning value",
+      "id": 1718,
+      "title": "AsyncIterator `hasNext` method not returning value",
+      "slug": "asynciterator-hasnext-method-not-returning-value",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-11-06T20:55:47.298Z",
+      "last_posted_at": "2019-11-08T23:40:07.479Z",
+      "bumped": true,
+      "bumped_at": "2019-11-08T23:40:07.479Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 816,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 660,
+            "username": "kc626",
+            "name": "Kevin Chan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/k/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to Fetch all stored key-values at once",
+      "id": 1285,
+      "title": "How to Fetch all stored key-values at once",
+      "slug": "how-to-fetch-all-stored-key-values-at-once",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-04-05T12:12:49.636Z",
+      "last_posted_at": "2019-04-10T20:48:57.581Z",
+      "bumped": true,
+      "bumped_at": "2019-04-10T20:48:57.581Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 5507,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Emulate secondary index",
+      "id": 430,
+      "title": "Emulate secondary index",
+      "slug": "emulate-secondary-index",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-05-18T07:04:04.967Z",
+      "last_posted_at": "2018-05-21T14:11:05.503Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T14:11:05.503Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1123,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 268,
+            "username": "urykhy",
+            "name": "Yury",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/u/7bcc69/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 190,
+            "username": "itp",
+            "name": "Ian Peters",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/itp/{size}/151_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can&rsquo;t get last pair in FDBKeyValue array",
+      "id": 1252,
+      "title": "Can't get last pair in FDBKeyValue array",
+      "slug": "cant-get-last-pair-in-fdbkeyvalue-array",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-03-24T06:57:23.327Z",
+      "last_posted_at": "2019-03-25T21:53:28.346Z",
+      "bumped": true,
+      "bumped_at": "2019-03-25T22:09:28.671Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 886,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Is it possible to fetch two different keys using &ldquo;fdb_transaction_get_range&rdquo; API in C program",
+      "id": 1388,
+      "title": "Is it possible to fetch two different keys using \"fdb_transaction_get_range\" API in C program",
+      "slug": "is-it-possible-to-fetch-two-different-keys-using-fdb-transaction-get-range-api-in-c-program",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-23T08:14:07.379Z",
+      "last_posted_at": "2019-05-23T15:43:55.444Z",
+      "bumped": true,
+      "bumped_at": "2019-05-23T15:43:55.444Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 591,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1230,
+        "username": "jojamu",
+        "name": "Joe",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/eb8c5e/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1230,
+      "username": "jojamu",
+      "name": "Joe",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/eb8c5e/{size}.png"
+    },
+    "last_poster": {
+      "id": 1230,
+      "username": "jojamu",
+      "name": "Joe",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/eb8c5e/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

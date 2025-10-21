@@ -1,0 +1,792 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 8885,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2020-12-16T04:00:07.343Z",
+        "cooked": "<p>Hey, I use FDB 6.2 and all requests use the directory layer. I noticed I have pretty bad storage process query hotspotting due to the heavy usage of the directory layer. One of my storage processes is always CPU-bound, and its <code>total_queries</code> metric in <code>status json</code> is ~70x the other storage processes. I ran the transaction profiler analyzer to find that all the read requests were in the directory layer nodeSS metadata subspace. From the data distributor internals it seems like data distribution is based solely on the size and write rate, and not the read rate, which is why the entire subspace is on one storage process. I\u2019m curious if anyone has run into this and has any workarounds?</p>\n<p>One thing I\u2019ve had to rule out is caching the mapping in memory. I can\u2019t only rely on this because a remote client might delete/move directories and I haven\u2019t found an out-of-the-box way to validate a <code>[]byte -&gt; []string</code> directory prefix mapping without going through the directory layer. I can\u2019t store my own reverse mapping (for example, writing the <code>[]string</code> directory path at the start of each directory subspace) because:</p>\n<ol>\n<li>We have a lot of query patterns that range scan the entire directory, so we can\u2019t write inside an existing directory</li>\n<li>We use the default AllKeys for contentSS so it\u2019s unsafe to store keys outside a directory</li>\n</ol>\n<p>Is it possible to manually move data? Then I could split the nodeSS shard manually for my most CPU-bound clusters. Also, would anyone ever consider making nodeSS replication a feature in the directory layer? So that when a directory is created/moved/removed it updates all nodeSS-es, and when you fetch a directory subspace it randomly queries one nodeSS.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-12-16T04:00:07.343Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 119,
+        "reads": 38,
+        "readers_count": 37,
+        "score": 602.6,
+        "yours": false,
+        "topic_id": 2487,
+        "topic_slug": "query-hotspotting-on-directory-layers-metadata-subspace",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/query-hotspotting-on-directory-layers-metadata-subspace/2487/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 8951,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-01-21T06:12:57.725Z",
+        "cooked": "<p>Just wanted to give a quick update of what we ended up doing\u2013</p>\n<p>We checked that the initial key of every directory (equivalent to the <code>dirSubspace.Bytes()</code>) is not being used, which makes sense as we encode everything in tuples. We have an in-memory cache, then at the initial key of every directory wrote the directory path as a reverse mapping. We update the cache and reverse mapping key value when a directory is moved, deleted, or if the reverse mapping value doesn\u2019t match.</p>\n<p>So for example, the read path is to get the directory subspace for <code>my/dir</code> is:</p>\n<ol>\n<li>Check cache for <code>my/dir</code>, say the value is <code>\\x01\\x02</code>\n</li>\n<li>Read key <code>\\x01\\x02</code> and confirm that the value is <code>my/dir</code>\n</li>\n<li>If the value does not match, get the subspace from the directory layer - say <code>\\x01\\x03</code> Then update the in-memory cache and if the tx is not read-only, write <code>my/dir</code> at key <code>\\x01\\x03</code>\n</li>\n</ol>\n<p>It is still the same amount of reads but now much more distributed as it isn\u2019t hitting the directory layer shard upon every request. Our CPU usage hotspotting has greatly improved since we enabled this.</p>\n<p>Also came across the Consistent Caching talk (<a href=\"https://www.youtube.com/watch?v=LaoYkonjwrM&amp;list=UL1u3pkSULOeM&amp;index=958\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Consistent Caching in FoundationDB - Xin Dong, Apple &amp; Neelam Goyal, Snowflake - YouTube</a>) which looks like it would totally take care of this. Super exciting stuff! Any idea when this will be released? Is it part of 6.3?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2021-01-21T06:12:57.725Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 51.6,
+        "yours": false,
+        "topic_id": 2487,
+        "topic_slug": "query-hotspotting-on-directory-layers-metadata-subspace",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://www.youtube.com/watch?v=LaoYkonjwrM&list=UL1u3pkSULOeM&index=958",
+            "internal": false,
+            "reflection": false,
+            "title": "Consistent Caching in FoundationDB - Xin Dong, Apple & Neelam Goyal, Snowflake - YouTube",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/query-hotspotting-on-directory-layers-metadata-subspace/2487/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 8989,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2021-01-27T10:12:32.862Z",
+        "cooked": "<p>That\u2019s an interesting work around.</p>\n<p>I\u2019ve had many issues other the years with the Directory Layer, related to sequential read latency required to get a subspace prefix, and issues related to caching (which is unsafe if not done very carefully), and tried multiple approaches to fix this, including breaking changes to the DL API. I ended rolling back these changes because it made it unsafe to use in combination with other tools (that don\u2019t know about the API changes).</p>\n<p>The best compromise solution I found was to <a href=\"https://forums.foundationdb.org/t/deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers/2123/\">defer the reads to the DL until the end of the transaction</a> so as to get rid of the extra latency, and only commit the transaction if the result matches what the cache expected (and if not, retry the transaction). But this still induces a hot spot in the DL\u2019s key subspace.</p>\n<p>Your idea of adding a reverse key into each subspace is technically a breaking change to the DL contract, meaning that any external client or tool that would create a directory subspace by itself would not insert this key, and your cache check would fail. Note that the DL api in most binding usually allow the caller to implicitly create the directory if it is missing, so even if the tool was only intending to \u201cread\u201d, it may accidentally cause the subspace to be created if it runs before your application deployment script.</p>\n<p>Also, there are some layers that use the subspace prefix key itself to store some sort of metadata, so that would collide with your reverse mapping key:</p>\n<pre><code class=\"lang-auto\">(PREFIX,) = { layer stores some metadata here }   // &lt;-- spot already occcupied!\n(PREFIX, (123,)) = SOME DATA\n(PREFIX, (456,)) = SOME OTHER DATA\n(PREFIX, (789,)) = SOME MORE DATA\n</code></pre>\n<p>Using <code>(PREFIX,) + \\xFF</code> could also be an issue because, even though the tuple encoding does not uses \\xFF as a header byte, other key encoding might, like someone just appending raw uuids or another other compact key encoding.</p>\n<p>But if you have complete control over the content of your subspaces and control or audit all tools/scripts that could touch them, then you should definitely combine your reverse mapping key, plus deferring the read until the end of the transaction to reduce the latency even further!</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2021-01-27T17:13:16.715Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 16.4,
+        "yours": false,
+        "topic_id": 2487,
+        "topic_slug": "query-hotspotting-on-directory-layers-metadata-subspace",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers/2123",
+            "internal": true,
+            "reflection": false,
+            "title": "Deferred value checks as an alternative to the metadataVersion key for caching in layers",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/query-hotspotting-on-directory-layers-metadata-subspace/2487/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 9048,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-02-05T22:04:42.327Z",
+        "cooked": "<p>Ah yes, I should\u2019ve added that\u2013We have a wrapper microservice around FDB. We blocked access to the prefix key as a breaking change</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2021-02-05T22:04:42.327Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 5.8,
+        "yours": false,
+        "topic_id": 2487,
+        "topic_slug": "query-hotspotting-on-directory-layers-metadata-subspace",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/query-hotspotting-on-directory-layers-metadata-subspace/2487/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      8885,
+      8951,
+      8989,
+      9048
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1771
+    ],
+    [
+      2,
+      1735
+    ],
+    [
+      3,
+      1729
+    ],
+    [
+      4,
+      1719
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Query hotspotting on Directory Layer&rsquo;s metadata subspace",
+  "id": 2487,
+  "title": "Query hotspotting on Directory Layer's metadata subspace",
+  "posts_count": 4,
+  "created_at": "2020-12-16T04:00:07.268Z",
+  "views": 1183,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2021-02-05T22:04:42.327Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "query-hotspotting-on-directory-layers-metadata-subspace",
+  "category_id": 14,
+  "word_count": 964,
+  "deleted_at": null,
+  "user_id": 810,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2487",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "What&rsquo;s the purpose of the Directory layer?",
+      "id": 677,
+      "title": "What's the purpose of the Directory layer?",
+      "slug": "whats-the-purpose-of-the-directory-layer",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-09-02T20:58:11.436Z",
+      "last_posted_at": "2022-07-22T02:24:33.270Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T02:24:33.270Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 11,
+      "views": 6523,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1080,
+            "username": "knarayanan88",
+            "name": "Narayanan K",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/knarayanan88/{size}/1300_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A new tool for managing layer metadata",
+      "id": 1191,
+      "title": "A new tool for managing layer metadata",
+      "slug": "a-new-tool-for-managing-layer-metadata",
+      "posts_count": 11,
+      "reply_count": 4,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-03-02T02:24:25.605Z",
+      "last_posted_at": "2019-04-03T23:30:21.306Z",
+      "bumped": true,
+      "bumped_at": "2019-04-03T23:30:21.306Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2506,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions about the Directory partitions",
+      "id": 2514,
+      "title": "Questions about the Directory partitions",
+      "slug": "questions-about-the-directory-partitions",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-01-18T13:24:12.363Z",
+      "last_posted_at": "2021-01-25T12:20:22.847Z",
+      "bumped": true,
+      "bumped_at": "2021-01-25T12:20:22.847Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 883,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can subspace/dir be used unlimited (modelling) and about multi client",
+      "id": 536,
+      "title": "Can subspace/dir be used unlimited (modelling) and about multi client",
+      "slug": "can-subspace-dir-be-used-unlimited-modelling-and-about-multi-client",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-07-01T15:39:50.966Z",
+      "last_posted_at": "2018-07-03T18:41:34.170Z",
+      "bumped": true,
+      "bumped_at": "2018-07-03T18:44:49.138Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1105,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 317,
+            "username": "Lundin",
+            "name": "Pontus Lundin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/dfb087/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "KeySpace and FDB Directory Layer",
+      "id": 3585,
+      "title": "KeySpace and FDB Directory Layer",
+      "slug": "keyspace-and-fdb-directory-layer",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2022-10-11T00:20:13.091Z",
+      "last_posted_at": "2022-10-12T09:36:00.956Z",
+      "bumped": true,
+      "bumped_at": "2022-10-12T09:36:00.956Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 505,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1027,
+            "username": "randyhu",
+            "name": "Randy Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/randyhu/{size}/1224_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 810,
+        "username": "amanda",
+        "name": "Amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    },
+    "last_poster": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://www.youtube.com/watch?v=LaoYkonjwrM&list=UL1u3pkSULOeM&index=958",
+        "title": "Consistent Caching in FoundationDB - Xin Dong, Apple & Neelam Goyal, Snowflake - YouTube",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 810,
+        "domain": "www.youtube.com",
+        "root_domain": "youtube.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

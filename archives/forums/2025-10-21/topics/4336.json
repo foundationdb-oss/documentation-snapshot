@@ -1,0 +1,951 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13694,
+        "name": "Patricio Bonsembiante",
+        "username": "patob",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/patob/{size}/1728_2.png",
+        "created_at": "2024-01-25T19:29:12.222Z",
+        "cooked": "<p>Hi all!</p>\n<p>I\u2019ve been are seeing a huge impact on Ratekeeper\u2019s limits when the amount of write operations increases (~2x the amount of write transactions), thus affecting our write throughput and increasing latency in the system. We are keeping transaction sizes below 1MB (around 250 records per transaction) and key/value sizes below the Known Limitations suggestions.</p>\n<p>As can be seen in the graph below, the number of available transactions/s goes down from ~50M ops/s to around 3M ops/s. We are querying <code>fdb_cluster_qos_transactions_per_second_limit</code> for available tx/s and <code>fdb_cluster_qos_released_transactions_per_second</code> for the release tx/s.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56.png\" data-download-href=\"/uploads/short-url/xllYWghL6nRz4LmTMHWpBJhlZIO.png?dl=1\" title=\"Ratekeeper limits\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56_2_690x248.png\" alt=\"Ratekeeper limits\" data-base62-sha1=\"xllYWghL6nRz4LmTMHWpBJhlZIO\" width=\"690\" height=\"248\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56_2_690x248.png, https://global.discourse-cdn.com/foundationdb/original/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56.png 2x\" data-dominant-color=\"1F2425\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Ratekeeper limits</span><span class=\"informations\">715\u00d7258 27.5 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div><br>\n<code>fdb_cluster_qos_transactions_per_second_limit</code> and <code>fdb_cluster_qos_released_transactions_per_second</code></p>\n<p>The storage queue (<code>fdb_cluster_processes_roles_storage_query_queue_max</code>) also sees an impact with the increased amount of writes going from ~15 to 500+ (high spikes not a constant change) and we can see the amount of data growing as well going from around 12Mbps to 25Mbps (which is expected as we are nearly doubling the amount of data written)(<code>fdb_cluster_processes_network_megabits_received_hz</code>).</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/e/eb63a9c2f8ac04efe64563ceee20274416b27675.jpeg\" data-download-href=\"/uploads/short-url/xAlJqZN5BzGDFjDuVbwQLKffeQJ.jpeg?dl=1\" title=\"Storage Query Queue\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/eb63a9c2f8ac04efe64563ceee20274416b27675_2_690x203.jpeg\" alt=\"Storage Query Queue\" data-base62-sha1=\"xAlJqZN5BzGDFjDuVbwQLKffeQJ\" width=\"690\" height=\"203\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/e/eb63a9c2f8ac04efe64563ceee20274416b27675_2_690x203.jpeg, https://global.discourse-cdn.com/foundationdb/original/2X/e/eb63a9c2f8ac04efe64563ceee20274416b27675.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/e/eb63a9c2f8ac04efe64563ceee20274416b27675.jpeg 2x\" data-dominant-color=\"232329\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Storage Query Queue</span><span class=\"informations\">1003\u00d7296 30.7 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div><br>\n<code>fdb_cluster_processes_roles_storage_query_queue_max</code></p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/c/c76869308a26aa7d7c71963b54a1614df551df98.jpeg\" data-download-href=\"/uploads/short-url/ss2Io3bFuUyzpnt63EXikPWVewE.jpeg?dl=1\" title=\"Megabits Received\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/c/c76869308a26aa7d7c71963b54a1614df551df98_2_690x221.jpeg\" alt=\"Megabits Received\" data-base62-sha1=\"ss2Io3bFuUyzpnt63EXikPWVewE\" width=\"690\" height=\"221\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/c/c76869308a26aa7d7c71963b54a1614df551df98_2_690x221.jpeg, https://global.discourse-cdn.com/foundationdb/original/2X/c/c76869308a26aa7d7c71963b54a1614df551df98.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/c/c76869308a26aa7d7c71963b54a1614df551df98.jpeg 2x\" data-dominant-color=\"53463F\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Megabits Received</span><span class=\"informations\">921\u00d7296 57 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div><br>\n<code>fdb_cluster_processes_network_megabits_received_hz</code></p>\n<p>And tho the disk operations increase (<code>fdb_cluster_processes_disk_writes_hz</code> and <code>fdb_cluster_processes_disk_reads_hz</code>), the disks don\u2019t seem to be anywhere near close to stressed as <code>fdb_cluster_processes_disk_busy</code> is always bellow 12%.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/3/3307ea6254d8a8dbe9d66bb1fe95ab1649615a11.jpeg\" data-download-href=\"/uploads/short-url/7hrjdFDVnPtYcllZeurdcxleC53.jpeg?dl=1\" title=\"Disk Busy\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/3/3307ea6254d8a8dbe9d66bb1fe95ab1649615a11_2_690x172.jpeg\" alt=\"Disk Busy\" data-base62-sha1=\"7hrjdFDVnPtYcllZeurdcxleC53\" width=\"690\" height=\"172\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/3/3307ea6254d8a8dbe9d66bb1fe95ab1649615a11_2_690x172.jpeg, https://global.discourse-cdn.com/foundationdb/original/2X/3/3307ea6254d8a8dbe9d66bb1fe95ab1649615a11.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/3/3307ea6254d8a8dbe9d66bb1fe95ab1649615a11.jpeg 2x\" data-dominant-color=\"3C3939\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Disk Busy</span><span class=\"informations\">818\u00d7205 24.9 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div><br>\n<code>fdb_cluster_processes_disk_busy</code></p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/2/2c632548b4f1c99ef543a0d0b6b10767028be41c.jpeg\" data-download-href=\"/uploads/short-url/6kFqumSLKHAWdfUchG6ACG73w8k.jpeg?dl=1\" title=\"Disk Writes\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/2/2c632548b4f1c99ef543a0d0b6b10767028be41c_2_690x167.jpeg\" alt=\"Disk Writes\" data-base62-sha1=\"6kFqumSLKHAWdfUchG6ACG73w8k\" width=\"690\" height=\"167\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/2/2c632548b4f1c99ef543a0d0b6b10767028be41c_2_690x167.jpeg, https://global.discourse-cdn.com/foundationdb/original/2X/2/2c632548b4f1c99ef543a0d0b6b10767028be41c.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/2/2c632548b4f1c99ef543a0d0b6b10767028be41c.jpeg 2x\" data-dominant-color=\"393737\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Disk Writes</span><span class=\"informations\">818\u00d7199 27.9 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div><br>\n<code>fdb_cluster_processes_disk_writes_hz</code></p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/4/47b2ffd45ea46bc8bb30d05dfb304c916d09dbce.jpeg\" data-download-href=\"/uploads/short-url/aehp5GXX4BqU2qktkY34DHnd9ds.jpeg?dl=1\" title=\"DIsk Reads\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/4/47b2ffd45ea46bc8bb30d05dfb304c916d09dbce_2_690x170.jpeg\" alt=\"DIsk Reads\" data-base62-sha1=\"aehp5GXX4BqU2qktkY34DHnd9ds\" width=\"690\" height=\"170\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/4/47b2ffd45ea46bc8bb30d05dfb304c916d09dbce_2_690x170.jpeg, https://global.discourse-cdn.com/foundationdb/original/2X/4/47b2ffd45ea46bc8bb30d05dfb304c916d09dbce.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/4/47b2ffd45ea46bc8bb30d05dfb304c916d09dbce.jpeg 2x\" data-dominant-color=\"43403E\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">DIsk Reads</span><span class=\"informations\">818\u00d7202 31.9 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div><br>\n<code>fdb_cluster_processes_disk_reads_hz</code></p>\n<p>The RPS on the client app decrease and latency increases as soon as we start writing more data and the ratekeeper limits kick in.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/4/4a911a512a036b7f89cf25ab582d6b070592c275.jpeg\" data-download-href=\"/uploads/short-url/aDEdh7iFmCIyjvYi0YN8Oyd17yl.jpeg?dl=1\" title=\"RPS\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/4/4a911a512a036b7f89cf25ab582d6b070592c275_2_690x226.jpeg\" alt=\"RPS\" data-base62-sha1=\"aDEdh7iFmCIyjvYi0YN8Oyd17yl\" width=\"690\" height=\"226\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/4/4a911a512a036b7f89cf25ab582d6b070592c275_2_690x226.jpeg, https://global.discourse-cdn.com/foundationdb/original/2X/4/4a911a512a036b7f89cf25ab582d6b070592c275.jpeg 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/4/4a911a512a036b7f89cf25ab582d6b070592c275.jpeg 2x\" data-dominant-color=\"1C1E21\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">RPS</span><span class=\"informations\">818\u00d7269 22.2 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div></p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/f/f3ae49bc34063373854f5bbaed6223b14c765e28.png\" data-download-href=\"/uploads/short-url/yLHr0OMLT6VgrFV9H9ZiF4MmE64.png?dl=1\" title=\"Latency\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f3ae49bc34063373854f5bbaed6223b14c765e28_2_690x165.png\" alt=\"Latency\" data-base62-sha1=\"yLHr0OMLT6VgrFV9H9ZiF4MmE64\" width=\"690\" height=\"165\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f3ae49bc34063373854f5bbaed6223b14c765e28_2_690x165.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f3ae49bc34063373854f5bbaed6223b14c765e28_2_1035x247.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/f/f3ae49bc34063373854f5bbaed6223b14c765e28.png 2x\" data-dominant-color=\"282925\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">Latency</span><span class=\"informations\">1232\u00d7296 27.7 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div></p>\n<p>Any pointers on how to configure/increase ratekeeper limits, and/or increase write throughput is greatly appreciated!</p>\n<p>Please feel free to ask for whatever information I might have missed and could be useful to addressing this issue.</p>\n<p>Best regards!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-01-25T19:40:15.716Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 23,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 121.2,
+        "yours": false,
+        "topic_id": 4336,
+        "topic_slug": "ratekeeper-limits-dropping-substantially-with-bulk-writes",
+        "display_username": "Patricio Bonsembiante",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/eb63a9c2f8ac04efe64563ceee20274416b27675.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "eb63a9c2f8ac04efe64563ceee20274416b27675.jpeg",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/c/c76869308a26aa7d7c71963b54a1614df551df98.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "c76869308a26aa7d7c71963b54a1614df551df98.jpeg",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/2/2c632548b4f1c99ef543a0d0b6b10767028be41c.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "2c632548b4f1c99ef543a0d0b6b10767028be41c.jpeg",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56.png",
+            "internal": false,
+            "reflection": false,
+            "title": "e9b1b49bd6e94be9e1088a68fad5e65d72c11d56.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/4/47b2ffd45ea46bc8bb30d05dfb304c916d09dbce.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "47b2ffd45ea46bc8bb30d05dfb304c916d09dbce.jpeg",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/4/4a911a512a036b7f89cf25ab582d6b070592c275.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "4a911a512a036b7f89cf25ab582d6b070592c275.jpeg",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/f/f3ae49bc34063373854f5bbaed6223b14c765e28.png",
+            "internal": false,
+            "reflection": false,
+            "title": "f3ae49bc34063373854f5bbaed6223b14c765e28.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/3/3307ea6254d8a8dbe9d66bb1fe95ab1649615a11.jpeg",
+            "internal": false,
+            "reflection": false,
+            "title": "3307ea6254d8a8dbe9d66bb1fe95ab1649615a11.jpeg",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1376,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ratekeeper-limits-dropping-substantially-with-bulk-writes/4336/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13734,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2024-01-27T06:30:17.693Z",
+        "cooked": "<p>Seems ratekeeper was throttling, so you should start looking at <code>RkUpdate</code> trace events in its log, where each entry has something like <code>ID=\"c78b41de2e8e417d\" TPSLimit=\"45698.1\" Reason=\"2\"</code>. The reason is the one we are looking for, corresponds to values defined <a href=\"https://github.com/apple/foundationdb/blob/393fef71fa26e7b4b1db7b72bdf6128e18ae4b2c/fdbserver/Ratekeeper.actor.cpp#L29\">here</a>.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-01-27T06:30:17.693Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 25.2,
+        "yours": false,
+        "topic_id": 4336,
+        "topic_slug": "ratekeeper-limits-dropping-substantially-with-bulk-writes",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/393fef71fa26e7b4b1db7b72bdf6128e18ae4b2c/fdbserver/Ratekeeper.actor.cpp#L29",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbserver/Ratekeeper.actor.cpp at 393fef71fa26e7b4b1db7b72bdf6128e18ae4b2c \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 12
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ratekeeper-limits-dropping-substantially-with-bulk-writes/4336/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13737,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2024-01-29T20:57:42.441Z",
+        "cooked": "<p>Questions</p>\n<ul>\n<li>Which FDB version are you using?</li>\n<li>Which storage engine?</li>\n<li>What is the key locality of your writes?  Are they random/scattered or are they mostly sequential/adjacent?</li>\n<li>What kind of disks are you using?</li>\n<li>Are you placing &gt;1 storage server on a disk volume?</li>\n<li>Does each storage server have 1 physical CPU core to use?</li>\n</ul>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-01-29T20:57:42.441Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 25.2,
+        "yours": false,
+        "topic_id": 4336,
+        "topic_slug": "ratekeeper-limits-dropping-substantially-with-bulk-writes",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ratekeeper-limits-dropping-substantially-with-bulk-writes/4336/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13760,
+        "name": "Patricio Bonsembiante",
+        "username": "patob",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/patob/{size}/1728_2.png",
+        "created_at": "2024-02-02T18:55:30.794Z",
+        "cooked": "<p>Hi Steve, thank you for getting back on this, here\u2019s the data you requested.</p>\n<ul>\n<li>Which FDB version are you using?</li>\n</ul>\n<pre><code class=\"lang-auto\">FoundationDB 6.2 (v6.2.15)\nsource version 20566f2ff06a7e822b30e8cfd91090fbd863a393\nprotocol fdb00b062010001\n</code></pre>\n<ul>\n<li>Which storage engine?</li>\n</ul>\n<pre><code class=\"lang-auto\">onfiguration:\n  Redundancy mode        - double\n  Storage engine         - ssd-2\n  Coordinators           - 6\n  Exclusions             - 31 (type `exclude' for details)\n  Desired Proxies        - 12\n  Desired Resolvers      - 8\n  Desired Logs           - 12\n\nCluster:\n  FoundationDB processes - 308 (less 2 excluded; 0 with errors)\n  Zones                  - 24\n  Machines               - 24\n  Memory availability    - 5.5 GB per process on machine with least available\n  Retransmissions rate   - 1 Hz\n  Fault Tolerance        - 1 machine\n  Server time            - 02/01/24 17:33:58\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 4.770 TB\n  Disk space used        - 12.933 TB\n\nOperating space:\n  Storage server         - 1338.7 GB free on most full server\n  Log server             - 826.1 GB free on most full server\n\nWorkload:\n  Read rate              - 127406 Hz\n  Write rate             - 6424 Hz\n  Transactions started   - 100350 Hz\n  Transactions committed - 233 Hz\n  Conflict rate          - 9 Hz\n</code></pre>\n<ul>\n<li>\n<p>What is the key locality of your writes? Are they random/scattered or are they mostly sequential/adjacent?<br>\nMostly random/scattered as they are UUIDs + app id combination</p>\n</li>\n<li>\n<p>What kind of disks are you using?<br>\nNVME (instance store)</p>\n</li>\n<li>\n<p>Are you placing &gt;1 storage server on a disk volume?<br>\nYes</p>\n</li>\n<li>\n<p>Does each storage server have 1 physical CPU core to use?<br>\nYes, we don\u2019t see anywhere near full CPU/disk usage as shown in the original post.</p>\n</li>\n</ul>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-02-02T18:55:30.794Z",
+        "reply_count": 1,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 24.8,
+        "yours": false,
+        "topic_id": 4336,
+        "topic_slug": "ratekeeper-limits-dropping-substantially-with-bulk-writes",
+        "display_username": "Patricio Bonsembiante",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 7,
+          "username": "SteavedHams",
+          "name": "Steve Atherton",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1376,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ratekeeper-limits-dropping-substantially-with-bulk-writes/4336/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13829,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2024-03-12T08:04:23.230Z",
+        "cooked": "<p>Random writes are a worst-case IO pattern and the <code>ssd-2</code> engine does not handle it well because it will incur many serial disk latencies on the write path, so you could be IO bound on the Storage Servers which causes their Storage Queue to build up and then Ratekeeper to limit.  As <a class=\"mention\" href=\"/u/jzhou\">@jzhou</a> said you should look at the <code>RkUpdate</code> events to see what the limiting reason is.</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-03-12T08:04:37.046Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 4.4,
+        "yours": false,
+        "topic_id": 4336,
+        "topic_slug": "ratekeeper-limits-dropping-substantially-with-bulk-writes",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 1376,
+          "username": "patob",
+          "name": "Patricio Bonsembiante",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/patob/{size}/1728_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ratekeeper-limits-dropping-substantially-with-bulk-writes/4336/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13694,
+      13734,
+      13737,
+      13760,
+      13829
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      635
+    ],
+    [
+      2,
+      634
+    ],
+    [
+      3,
+      631
+    ],
+    [
+      4,
+      627
+    ],
+    [
+      5,
+      589
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Ratekeeper limits dropping substantially with bulk writes",
+  "id": 4336,
+  "title": "Ratekeeper limits dropping substantially with bulk writes",
+  "posts_count": 5,
+  "created_at": "2024-01-25T19:29:12.139Z",
+  "views": 290,
+  "reply_count": 2,
+  "like_count": 2,
+  "last_posted_at": "2024-03-12T08:04:23.230Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "ratekeeper-limits-dropping-substantially-with-bulk-writes",
+  "category_id": 12,
+  "word_count": 727,
+  "deleted_at": null,
+  "user_id": 1376,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4336",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 715,
+      "height": 258,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/e/e9b1b49bd6e94be9e1088a68fad5e65d72c11d56.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How does Ratekeeper actually _work_, and can I tune it?",
+      "id": 3616,
+      "title": "How does Ratekeeper actually _work_, and can I tune it?",
+      "slug": "how-does-ratekeeper-actually-work-and-can-i-tune-it",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2022-10-21T12:03:45.959Z",
+      "last_posted_at": "2022-10-27T22:18:55.325Z",
+      "bumped": true,
+      "bumped_at": "2022-10-27T22:18:55.325Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 612,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1142,
+            "username": "danm",
+            "name": "Dan Meyers",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Knobs/strategies to get around storage server write queue size error?",
+      "id": 996,
+      "title": "Knobs/strategies to get around storage server write queue size error?",
+      "slug": "knobs-strategies-to-get-around-storage-server-write-queue-size-error",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-01-04T05:49:33.775Z",
+      "last_posted_at": "2019-01-05T07:32:45.225Z",
+      "bumped": true,
+      "bumped_at": "2019-01-05T07:32:45.225Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 952,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scaling Record Layer for Bulk Writes",
+      "id": 2249,
+      "title": "Scaling Record Layer for Bulk Writes",
+      "slug": "scaling-record-layer-for-bulk-writes",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2020-07-16T16:18:26.188Z",
+      "last_posted_at": "2020-07-24T20:28:03.020Z",
+      "bumped": true,
+      "bumped_at": "2020-07-24T20:28:03.020Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 936,
+      "category_id": 14,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 741,
+            "username": "sears",
+            "name": "Russell Sears",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scaling issues with FDB for write throughput",
+      "id": 2327,
+      "title": "Scaling issues with FDB for write throughput",
+      "slug": "scaling-issues-with-fdb-for-write-throughput",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2020-09-03T04:48:25.889Z",
+      "last_posted_at": "2020-09-14T23:02:57.196Z",
+      "bumped": true,
+      "bumped_at": "2020-09-14T23:02:57.196Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1866,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 757,
+            "username": "dsubramaniam",
+            "name": "DeepikaaSubramaniam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/f17d59/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 769,
+            "username": "ajames",
+            "name": "Alwin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9de0a6/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage queue limiting performance when initially loading data",
+      "id": 1135,
+      "title": "Storage queue limiting performance when initially loading data",
+      "slug": "storage-queue-limiting-performance-when-initially-loading-data",
+      "posts_count": 11,
+      "reply_count": 6,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-02-13T10:07:40.715Z",
+      "last_posted_at": "2019-10-14T16:11:25.098Z",
+      "bumped": true,
+      "bumped_at": "2019-10-14T16:11:25.098Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 2780,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 509,
+            "username": "qlees",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/q/ba8739/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 476,
+            "username": "dch",
+            "name": "Dave Cottlehuber",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 663,
+            "username": "atul",
+            "name": "Atul Gupta",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f14d63/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 1376,
+        "username": "patob",
+        "name": "Patricio Bonsembiante",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/patob/{size}/1728_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1376,
+      "username": "patob",
+      "name": "Patricio Bonsembiante",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/patob/{size}/1728_2.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/393fef71fa26e7b4b1db7b72bdf6128e18ae4b2c/fdbserver/Ratekeeper.actor.cpp#L29",
+        "title": "foundationdb/fdbserver/Ratekeeper.actor.cpp at 393fef71fa26e7b4b1db7b72bdf6128e18ae4b2c \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 12,
+        "user_id": 454,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

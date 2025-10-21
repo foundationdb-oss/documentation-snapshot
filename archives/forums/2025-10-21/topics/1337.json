@@ -1,0 +1,806 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4035,
+        "name": "Kao Makino",
+        "username": "kao.makino",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/kao.makino/{size}/476_2.png",
+        "created_at": "2019-04-29T22:39:15.289Z",
+        "cooked": "<p>Due to the unique coroutine-based architecture of FoundationDB, profiling FoundationDB may be a little bit tricky sometimes.  I\u2019d like to share some methods and tips we use at Snowflake to efficiently profile FoundationDB.</p>\n<p><strong>Isolate the Roles</strong><br>\nThe very first thing you need to do is to isolate the roles, so you can identify which role is being the bottleneck for your workload.  If you are running FoundationDB on a single machine (a development machine, for example), binding each process to a specific CPU in conjunction with using <code>htop</code> command or <code>top -H -c</code> command will greatly help you to identify the hot process.</p>\n<p>For Example:</p>\n<blockquote>\n<p>[fdbserver.4500]<br>\ncommand = /usr/bin/numactl --physcpubind=0 fdbserver<br>\nclass = master</p>\n<p>[fdbserver.4501]<br>\ncommand = /usr/bin/numactl --physcpubind=1 fdbserver<br>\nclass = proxy</p>\n<p>[fdbserver.4502]<br>\ncommand = /usr/bin/numactl --physcpubind=2 fdbserver<br>\nclass = resolution</p>\n<p>\u2026 and so on \u2026</p>\n</blockquote>\n<p><strong>perf</strong><br>\n<a href=\"https://perf.wiki.kernel.org/\" rel=\"noopener nofollow ugc\">https://perf.wiki.kernel.org/</a></p>\n<p><code>perf</code> is one of the most commonly used profiling tools on Linux, and it works perfectly for FoundationDB.  Once you identify the hot <code>fdbserver</code> process, you can use <code>perf top</code> to take a quick look at the top functions.</p>\n<p><code>perf top -p &lt;fdbserver PID&gt;</code></p>\n<p>If you need to drill down even further, use <code>perf record</code> and <code>perf report</code>.</p>\n<p><code>perf record --call-graph dwarf -o &lt;profile.data&gt; -p &lt;fdbserver PID&gt;</code></p>\n<p>This will collect the CPU-cycle profile and save it as &lt;profile.data&gt; file.  If you want to look at another metric than CPU-cycle, specify <code>-e &lt;event&gt;</code> option (For example, <code>-e cache-misses</code>).  For the complete list of events supported on your system, run <code>perf list</code>.</p>\n<p><code>--call-graph dwarf</code> is an option to use DWARF\u00b4s CFI (Call Frame Information) to collect call-graph information instead of using the frame pointer (default in <code>perf</code>).</p>\n<p>If your FoundationDB does not contain the debug information (e.g. Release binary), then you need to install <code>debuginfo</code> package globally, or extract the debuginfo data under an arbitrary location and specify <code>--symfs</code> argument pointing to the directory which contains your <code>usr/lib/debug</code>.</p>\n<p>Once you collect the profiles, then you can use <code>perf report</code> to navigate through the data.</p>\n<p><code>perf report -g -i &lt;profile.data&gt; --no-children</code></p>\n<p>This will open an interactive viewer in the bottom-up view, which we found more useful to easily identify the bottlenecks.  If you do not specify <code>--no-children</code>, <code>perf</code> will open a top-down view.</p>\n<blockquote>\n<p>Tip:<br>\nIf you specify <code>--stdio</code>, or  pipe the <code>perf report</code> output to a file or another command, such as <code>less</code>, it will generate an expanded view.  It is useful if you want to share the output with someone.</p>\n</blockquote>\n<blockquote>\n<p>Tip:<br>\n<code>--call-graph dwarf</code> may generate very large profile data.  You may need to start with a lower sampling rate by specifying <code>--freq</code> explicitly.</p>\n</blockquote>\n<p><strong>Valgrind</strong><br>\n<a href=\"http://valgrind.org/\" rel=\"noopener nofollow ugc\">http://valgrind.org</a></p>\n<p>Another profiler we regularly use is <code>valgrind</code>.  <code>valgrind</code> is a set of various profilers, such as <code>cachegrind</code> (cache usage) or <code>callgrind</code> (CPU usage).</p>\n<p>You cannot attach <code>Valgrind</code> to an already running process, so you need to start <code>fdbserver</code> process through <code>valgrind</code> manually.  In order to do so, you need to comment out your process from <code>foundationdb.conf</code> file first.  As soon as you make the change, <code>fdbmonitor</code> process will automatically stop the <code>fdbserver</code> process.</p>\n<blockquote>\n<p>Tip:<br>\nRun \u201c<code>ps -ef | grep fdbserver</code>\u201d before stopping it, and save the exact command line, so you can copy and paste it as <code>valgrind</code> arguments later.</p>\n</blockquote>\n<p>Then, run <code>fdbserver</code> through <code>valgrind</code>.</p>\n<p><code>valgrind --tool=callgrind /path/to/fdbserver --cluster_file ...</code></p>\n<p>Wait until <code>fdbserver</code> joins the cluster, then run your workload.<br>\nWhen the workload is finished, or you collected enough data, stop <code>valgrind</code> by hitting ctrl-c.  It will generate a file like <code>callgrind.out.&lt;pid&gt;</code>.</p>\n<p>Once you have the <code>valgrind</code> output file, you can copy it to your local machine and open it with <code>kcachegrind</code> or <code>qcachegrind</code> and visually analyze it.</p>\n<p>Here\u2019s a screenshot of <code>qcachegrind</code> on my mac.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4.png\" data-download-href=\"/uploads/short-url/79nIvKWvtxdNhE2mUSySgt4JTE0.png?dl=1\" title=\"45%20PM\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4_2_345x245.png\" alt=\"45%20PM\" data-base62-sha1=\"79nIvKWvtxdNhE2mUSySgt4JTE0\" width=\"345\" height=\"245\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4_2_345x245.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4_2_517x367.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4_2_690x490.png 2x\" data-dominant-color=\"C0C4CA\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">45%20PM</span><span class=\"informations\">1378\u00d7981 325 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div></p>\n<p><strong>We\u2019d like to hear your tips too!</strong><br>\nI didn\u2019t describe here, but I also use Intel Pin Tool sometimes, especially when collecting instruction counts.  Good old <code>pstack</code> is sometimes good enough (and super quick!).  I\u2019m pretty sure other people in this forum have different methods and tips.  Please share little bit of your secrets too.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-05-23T18:54:43.095Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 296,
+        "reads": 93,
+        "readers_count": 92,
+        "score": 1670.6,
+        "yours": false,
+        "topic_id": 1337,
+        "topic_slug": "profiling-foundationdb",
+        "display_username": "Kao Makino",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "http://valgrind.org/",
+            "internal": false,
+            "reflection": false,
+            "title": "Valgrind Home",
+            "clicks": 5
+          },
+          {
+            "url": "https://perf.wiki.kernel.org/",
+            "internal": false,
+            "reflection": false,
+            "clicks": 3
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4.png",
+            "internal": false,
+            "reflection": false,
+            "title": "321ebb8f7c569e4b0f32962edada62873f75d8c4.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 6
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 478,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/profiling-foundationdb/1337/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4041,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2019-04-30T19:02:19.128Z",
+        "cooked": "<p>Thanks for the detailed instructions!</p>\n<p>I\u2019ll add another memory profiling option using <a href=\"https://github.com/gperftools/gperftools\" rel=\"nofollow noopener\">gperftools</a> here:</p>\n<ol>\n<li>Compile with gperftools enabled</li>\n</ol>\n<pre><code class=\"lang-auto\">cmake -DUSE_GPERFTOOLS=1 ../foundationdb\nmake\n</code></pre>\n<ol start=\"2\">\n<li>Running with gperftools enabled</li>\n</ol>\n<pre><code class=\"lang-auto\">HEAPPROFILE=/tmp/fdbserver fdbserver [args...]\n</code></pre>\n<p>A client triggered profile dump session for server at 127.0.0.1:4500 is:</p>\n<pre><code class=\"lang-auto\">fdb&gt; profile\nERROR: Usage: profile &lt;client|list|flow|heap&gt;\nfdb&gt; profile heap 127.0.0.1:4500\n</code></pre>\n<p>The server side session is like:</p>\n<pre><code class=\"lang-auto\">$ HEAPPROFILE=/tmp/fdbserver bin/fdbserver -C ../test.cluster -p 127.0.0.1:4500\nStarting tracking the heap\nFDBD joined cluster.\nDumping heap profile to /tmp/fdbserver.0001.heap (1024 MB allocated cumulatively, 13 MB currently in use)\nDumping heap profile to /tmp/fdbserver.0002.heap (User triggered heap dump)\n</code></pre>\n<p>The fdbserver binary has a command line flag to trigger heap dump when RSS memory is larger than a threshold. The default dump interval is every 30s (controlled by knob HEAP_PROFILER_INTERVAL), e.g.,</p>\n<pre><code class=\"lang-auto\">HEAPPROFILE=/tmp/fdbserver bin/fdbserver -C cluster_file -p 127.0.0.1:4500 --rsssize=500MiB\n</code></pre>\n<ol start=\"3\">\n<li>Visualize the heap dump with <a href=\"https://github.com/google/pprof\" rel=\"nofollow noopener\">pprof</a>\n</li>\n</ol>\n<pre><code class=\"lang-auto\">pprof -call_tree -nodecount=400 -web path_to_fdb_binary/fdbserver /tmp/fdbserver.0023.heap\n</code></pre>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-04-30T19:02:19.128Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 20,
+        "reads": 78,
+        "readers_count": 77,
+        "score": 160.6,
+        "yours": false,
+        "topic_id": 1337,
+        "topic_slug": "profiling-foundationdb",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/gperftools/gperftools",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - gperftools/gperftools: Main gperftools repository",
+            "clicks": 8
+          },
+          {
+            "url": "https://github.com/google/pprof",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - google/pprof: pprof is a tool for visualization and analysis of profiling data",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 3
+          }
+        ],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/profiling-foundationdb/1337/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 7929,
+        "name": "Daniel Smith",
+        "username": "Daniel-B-Smith",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+        "created_at": "2020-09-17T15:43:34.992Z",
+        "cooked": "<p>Late follow up, but just in case someone comes across this. Sometimes <code>perf record</code> can record more data than <code>perf</code> can ingest in a reasonable amount of time. Adding <code>--no-inline</code> to <code>perf script</code>, <code>report</code>, etc can allow <code>perf</code> to read in the recording in a reasonable amount of time.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-17T15:43:34.992Z",
+        "reply_count": 0,
+        "reply_to_post_number": 1,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 51,
+        "readers_count": 50,
+        "score": 30.2,
+        "yours": false,
+        "topic_id": 1337,
+        "topic_slug": "profiling-foundationdb",
+        "display_username": "Daniel Smith",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 478,
+          "username": "kao.makino",
+          "name": "Kao Makino",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/kao.makino/{size}/476_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 679,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/profiling-foundationdb/1337/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4035,
+      4041,
+      7929
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2367
+    ],
+    [
+      2,
+      2366
+    ],
+    [
+      3,
+      1860
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Profiling FoundationDB",
+  "id": 1337,
+  "title": "Profiling FoundationDB",
+  "posts_count": 3,
+  "created_at": "2019-04-29T22:39:15.199Z",
+  "views": 1597,
+  "reply_count": 1,
+  "like_count": 10,
+  "last_posted_at": "2020-09-17T15:43:34.992Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "profiling-foundationdb",
+  "category_id": 5,
+  "word_count": 966,
+  "deleted_at": null,
+  "user_id": 478,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4_2_1024x728.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1337",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1378,
+      "height": 981,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 728,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/321ebb8f7c569e4b0f32962edada62873f75d8c4_2_1024x728.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDB Summit 2019: Performance Profiling in FoundationDB",
+      "id": 1746,
+      "title": "FoundationDB Summit 2019: Performance Profiling in FoundationDB",
+      "slug": "foundationdb-summit-2019-performance-profiling-in-foundationdb",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-11-18T19:01:49.309Z",
+      "last_posted_at": "2019-12-05T14:08:41.888Z",
+      "bumped": true,
+      "bumped_at": "2019-12-05T14:08:41.888Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 565,
+      "category_id": 10,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Setting CPU affinity for fdbservers",
+      "id": 84,
+      "title": "Setting CPU affinity for fdbservers",
+      "slug": "setting-cpu-affinity-for-fdbservers",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-19T22:52:03.659Z",
+      "last_posted_at": "2018-11-18T01:24:39.675Z",
+      "bumped": true,
+      "bumped_at": "2018-11-18T01:24:39.675Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 44,
+            "username": "cespare",
+            "name": "Caleb Spare",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 99,
+            "username": "Ramaprakash",
+            "name": "Ramaprakash Sathyanarayan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/df705f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Using the transaction profiling analyzer?",
+      "id": 1959,
+      "title": "Using the transaction profiling analyzer?",
+      "slug": "using-the-transaction-profiling-analyzer",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-02-14T23:44:04.975Z",
+      "last_posted_at": "2020-02-14T23:48:50.507Z",
+      "bumped": true,
+      "bumped_at": "2020-04-13T14:33:04.601Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 784,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB Summit 2019: Build Anything with FoundationDB",
+      "id": 1768,
+      "title": "FoundationDB Summit 2019: Build Anything with FoundationDB",
+      "slug": "foundationdb-summit-2019-build-anything-with-foundationdb",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-11-19T00:03:33.675Z",
+      "last_posted_at": "2019-12-09T22:33:03.971Z",
+      "bumped": true,
+      "bumped_at": "2019-12-09T22:33:03.971Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1073,
+      "category_id": 10,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 307,
+            "username": "jwr",
+            "name": "Jan Rychter",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwr/{size}/302_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 461,
+            "username": "Jmintz",
+            "name": "Josh Mintz",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jmintz/{size}/451_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "ANN: benchmark FoundationDB with Go YCSB",
+      "id": 318,
+      "title": "ANN: benchmark FoundationDB with Go YCSB",
+      "slug": "ann-benchmark-foundationdb-with-go-ycsb",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-04-30T22:55:12.171Z",
+      "last_posted_at": "2018-05-06T18:42:59.159Z",
+      "bumped": true,
+      "bumped_at": "2018-05-06T18:42:59.159Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 3423,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 195,
+            "username": "siddontang",
+            "name": "Siddontang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/siddontang/{size}/155_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 146,
+            "username": "bigdata86",
+            "name": "Wangmeng",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/cdc98d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 232,
+            "username": "tekumara",
+            "name": "Oliver Mannion",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tekumara/{size}/201_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      },
+      {
+        "id": 478,
+        "username": "kao.makino",
+        "name": "Kao Makino",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/kao.makino/{size}/476_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 679,
+        "username": "Daniel-B-Smith",
+        "name": "Daniel Smith",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 478,
+      "username": "kao.makino",
+      "name": "Kao Makino",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/kao.makino/{size}/476_2.png"
+    },
+    "last_poster": {
+      "id": 679,
+      "username": "Daniel-B-Smith",
+      "name": "Daniel Smith",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/gperftools/gperftools",
+        "title": "GitHub - gperftools/gperftools: Main gperftools repository",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 454,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "http://valgrind.org/",
+        "title": "Valgrind Home",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 478,
+        "domain": "valgrind.org",
+        "root_domain": "valgrind.org"
+      },
+      {
+        "url": "https://github.com/google/pprof",
+        "title": "GitHub - google/pprof: pprof is a tool for visualization and analysis of profiling data",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 454,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://perf.wiki.kernel.org/",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 478,
+        "domain": "perf.wiki.kernel.org",
+        "root_domain": "kernel.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

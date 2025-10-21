@@ -1,0 +1,698 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2742,
+        "name": "Amir",
+        "username": "yields",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/yields/{size}/545_2.png",
+        "created_at": "2018-11-29T05:48:16.802Z",
+        "cooked": "<p>Hey all,</p>\n<p>Is there a way to check if an error coming from <code>.Transact()</code> or <code>.ReadTransact()</code> is retryable in golang?</p>\n<p>I\u2019ve found some error predicates[1], but i\u2019m confused by the docs there, how does it return \u201ctrue\u201d?<br>\nI thought the docs imply I should compare it to <code>err.Code</code>, but I can\u2019t find any <code>5000</code> error code at all[1].</p>\n<ol>\n<li><a href=\"https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/generated.go#L543-L545\" rel=\"nofollow noopener\">https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/generated.go#L543-L545</a></li>\n<li><a href=\"https://apple.github.io/foundationdb/api-error-codes.html\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/api-error-codes.html</a></li>\n</ol>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-29T05:48:16.802Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 778,
+        "reads": 41,
+        "readers_count": 40,
+        "score": 3893.2,
+        "yours": false,
+        "topic_id": 913,
+        "topic_slug": "checking-if-an-error-is-retryable",
+        "display_username": "Amir",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/generated.go#L543-L545",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/generated.go at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 15
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/api-error-codes.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Error Codes \u2014 FoundationDB 6.0",
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 439,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/checking-if-an-error-is-retryable/913/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2746,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-11-29T20:25:24.144Z",
+        "cooked": "<p>The error predicate constants are for use with <code>fdb_error_predicate</code> in the <a href=\"https://apple.github.io/foundationdb/api-c.html#miscellaneous\">C API</a>. Some bindings expose APIs to use this function, but the Go bindings do not currently.</p>\n<p>The best way to check for retryability right now is using <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.OnError\"><code>OnError</code></a>. If the error is retryable, the returned future will be set normally. If it isn\u2019t, then the future will be set with the error that is passed in to it.</p>\n<p>It should be noted that this function will reset your transaction and possibly inject a delay for backoff purposes.</p>\n<p>If you wanted to see which errors are considered retryable, you can look at the implementation of <code>fdb_error_predicate</code>:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/ajbeamon/foundationdb/blob/d46231580939e4acd7a802ee0ecc77c8875e4b46/bindings/c/fdb_c.cpp#L65\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/ajbeamon/foundationdb/blob/d46231580939e4acd7a802ee0ecc77c8875e4b46/bindings/c/fdb_c.cpp#L65\" target=\"_blank\">ajbeamon/foundationdb/blob/d46231580939e4acd7a802ee0ecc77c8875e4b46/bindings/c/fdb_c.cpp#L65</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"55\" style=\"counter-reset: li-counter 54 ;\">\n<li>\n</li>\n<li>#define TSAV_ERROR(type, error) ((FDBFuture*)(ThreadFuture&lt;type&gt;(error())).extractPtr())</li>\n<li>\n</li>\n<li>\n</li>\n<li>extern \"C\" DLLEXPORT</li>\n<li>const char *fdb_get_error( fdb_error_t code ) {</li>\n<li>\treturn Error::fromUnvalidatedCode( code ).what();</li>\n<li>}</li>\n<li>\n</li>\n<li>extern \"C\" DLLEXPORT</li>\n<li class=\"selected\">fdb_bool_t fdb_error_predicate( int predicate_test, fdb_error_t code ) {</li>\n<li>\tif(predicate_test == FDBErrorPredicates::RETRYABLE) {</li>\n<li>\t\treturn fdb_error_predicate( FDBErrorPredicates::MAYBE_COMMITTED, code ) ||</li>\n<li>\t\t\t\tfdb_error_predicate( FDBErrorPredicates::RETRYABLE_NOT_COMMITTED, code );</li>\n<li>\t}</li>\n<li>\tif(predicate_test == FDBErrorPredicates::MAYBE_COMMITTED) {</li>\n<li>\t\treturn code == error_code_commit_unknown_result ||</li>\n<li>\t\t\t\tcode == error_code_cluster_version_changed;</li>\n<li>\t}</li>\n<li>\tif(predicate_test == FDBErrorPredicates::RETRYABLE_NOT_COMMITTED) {</li>\n<li>\t\treturn code == error_code_not_committed ||</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>And also the mapping of error names to codes:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/ajbeamon/foundationdb/blob/master/flow/error_definitions.h\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/ajbeamon/foundationdb/blob/master/flow/error_definitions.h\" target=\"_blank\">ajbeamon/foundationdb/blob/master/flow/error_definitions.h</a></h4>\n<pre><code class=\"lang-h\">/*\n * error_definitions.h\n *\n * This source file is part of the FoundationDB open source project\n *\n * Copyright 2013-2018 Apple Inc. and the FoundationDB project authors\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n *     http://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an \"AS IS\" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n */\n\n</code></pre>\n\n  This file has been truncated. <a href=\"https://github.com/ajbeamon/foundationdb/blob/master/flow/error_definitions.h\" target=\"_blank\">show original</a>\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-11-29T20:25:24.144Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 15,
+        "reads": 36,
+        "readers_count": 35,
+        "score": 82.2,
+        "yours": false,
+        "topic_id": 913,
+        "topic_slug": "checking-if-an-error-is-retryable",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/ajbeamon/foundationdb/blob/d46231580939e4acd7a802ee0ecc77c8875e4b46/bindings/c/fdb_c.cpp#L65",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdb_c.cpp at d46231580939e4acd7a802ee0ecc77c8875e4b46 \u00b7 ajbeamon/foundationdb \u00b7 GitHub",
+            "clicks": 20
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.OnError",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 18
+          },
+          {
+            "url": "https://github.com/ajbeamon/foundationdb/blob/master/flow/error_definitions.h",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/error_definitions.h at master \u00b7 ajbeamon/foundationdb \u00b7 GitHub",
+            "clicks": 15
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/api-c.html#miscellaneous",
+            "internal": false,
+            "reflection": false,
+            "title": "C API \u2014 FoundationDB 6.0",
+            "clicks": 6
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/checking-if-an-error-is-retryable/913/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2742,
+      2746
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2519
+    ],
+    [
+      2,
+      2518
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Checking if an error is retryable?",
+  "id": 913,
+  "title": "Checking if an error is retryable?",
+  "posts_count": 2,
+  "created_at": "2018-11-29T05:48:16.720Z",
+  "views": 1877,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2018-11-29T20:25:24.144Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "checking-if-an-error-is-retryable",
+  "category_id": 7,
+  "word_count": 251,
+  "deleted_at": null,
+  "user_id": 439,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_913",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Proper transaction retry loops",
+      "id": 2090,
+      "title": "Proper transaction retry loops",
+      "slug": "proper-transaction-retry-loops",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-04-28T21:37:58.250Z",
+      "last_posted_at": "2020-04-29T20:54:27.789Z",
+      "bumped": true,
+      "bumped_at": "2020-04-29T20:54:27.789Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 561,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 576,
+            "username": "davisp",
+            "name": "Paul J  Davis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davisp/{size}/570_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Golang Client Error Wrapping Convention",
+      "id": 1713,
+      "title": "Golang Client Error Wrapping Convention",
+      "slug": "golang-client-error-wrapping-convention",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-11-02T23:07:59.527Z",
+      "last_posted_at": "2019-11-22T06:44:07.319Z",
+      "bumped": true,
+      "bumped_at": "2019-11-22T06:44:07.319Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 577,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What does it mean &ldquo;Transaction Is Retryable&rdquo;, In particular to Handle Error of &ldquo;Transaction Too Old&rdquo;?",
+      "id": 1451,
+      "title": "What does it mean \"Transaction Is Retryable\", In particular to Handle Error of \"Transaction Too Old\"?",
+      "slug": "what-does-it-mean-transaction-is-retryable-in-particular-to-handle-error-of-transaction-too-old",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-13T09:38:16.632Z",
+      "last_posted_at": "2019-06-13T23:20:16.165Z",
+      "bumped": true,
+      "bumped_at": "2019-06-13T23:20:16.165Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3564,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Prevent retrying on slow transactions",
+      "id": 1737,
+      "title": "Prevent retrying on slow transactions",
+      "slug": "prevent-retrying-on-slow-transactions",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-11-14T20:42:30.931Z",
+      "last_posted_at": "2019-11-14T20:46:22.590Z",
+      "bumped": true,
+      "bumped_at": "2019-11-14T20:46:22.590Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 715,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 681,
+            "username": "stevent",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/5f9b8f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Crashes every day go bindings",
+      "id": 1219,
+      "title": "Crashes every day go bindings",
+      "slug": "crashes-every-day-go-bindings",
+      "posts_count": 19,
+      "reply_count": 13,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2019-03-13T07:03:38.291Z",
+      "last_posted_at": "2019-07-05T15:14:02.982Z",
+      "bumped": true,
+      "bumped_at": "2019-07-05T15:14:02.982Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2317,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 562,
+            "username": "ddi",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ddi/{size}/721_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 439,
+        "username": "yields",
+        "name": "Amir",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/yields/{size}/545_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 439,
+      "username": "yields",
+      "name": "Amir",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/yields/{size}/545_2.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/ajbeamon/foundationdb/blob/d46231580939e4acd7a802ee0ecc77c8875e4b46/bindings/c/fdb_c.cpp#L65",
+        "title": "foundationdb/fdb_c.cpp at d46231580939e4acd7a802ee0ecc77c8875e4b46 \u00b7 ajbeamon/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 20,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.OnError",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 18,
+        "user_id": 12,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      },
+      {
+        "url": "https://github.com/ajbeamon/foundationdb/blob/master/flow/error_definitions.h",
+        "title": "foundationdb/error_definitions.h at master \u00b7 ajbeamon/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/master/bindings/go/src/fdb/generated.go#L543-L545",
+        "title": "foundationdb/generated.go at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 439,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/api-error-codes.html",
+        "title": "Error Codes \u2014 FoundationDB 6.0",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 439,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/api-c.html#miscellaneous",
+        "title": "C API \u2014 FoundationDB 6.0",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 12,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

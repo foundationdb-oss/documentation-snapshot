@@ -1,0 +1,604 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14949,
+        "name": "Matthieu Patou",
+        "username": "mpatou_openai",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "created_at": "2025-05-24T18:17:33.795Z",
+        "cooked": "<p>We conducted a test yesterday where we were reading 1GByte/s and reading 80MBytes/s on a 100 storage server clusters.</p>\n<p>The status json kept on showing that we were limited by log_server_write_queue for batch performance and DataDistribution was continuously moving ~300GB of data at priority 1000 (the highest to the best of my understanding).</p>\n<p>From what I could tell the log servers actually were not saturated on I/O nor on CPU, but when I looked a bit more at the different shards I noticed that out of 5000 shards that 520 of them where used for backup logs ie.</p>\n<pre><code class=\"lang-auto\">b'\\xff\\x02/blog/&gt;l?6\\x93\\xd1\\x88\\xa9\\t~\\x00\\xd1\\x1f,\\xfe\\xa7\\xbd\\x00\\x00\\x00\\xc98\\xd3@' ['5ab86def80a483a1d9c992cfec4ae9c2', 'a9e203628a9336e815391eba3e37c179', 'aebb827b83585f537c8abe0134879ad4', '2a353d989c13cf2dc27b2804cb52b36e']\n</code></pre>\n<p>We had a backup lag of ~40s which seems decent and seems to explain why 3GB or so where continuously moving as it means that we were roughly storing that in the system range: 40*80MBytes = 3200MBytes.</p>\n<p>I suspect that as backup logs are written in the system range the range become quite write hot and  so DD wants to move and split the range in more shards to make it more uniform but as logs are stored but the nature of backup logs (somewhat ephemeral) is causing shards to quickly move from hot to cold and vice versa.<br>\nI\u2019m wondering if there is any tunning that could be applied either by using range config or knobs to somehow tame this.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-05-24T18:17:33.795Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 18,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 88.0,
+        "yours": false,
+        "topic_id": 4917,
+        "topic_slug": "backup-causing-a-lot-of-data-movement-on-write-heavy-load",
+        "display_username": "Matthieu Patou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1484,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-causing-a-lot-of-data-movement-on-write-heavy-load/4917/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14952,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2025-05-27T02:24:31.061Z",
+        "cooked": "<blockquote>\n<p>I\u2019m wondering if there is any tunning that could be applied either by using range config or knobs to somehow tame this.</p>\n</blockquote>\n<p>The range config feature can\u2019t tell DD to not split or to not move a key range.  It also can\u2019t force the replication factor of any key range to be lower than the configured replication factor for the cluster, only higher.</p>\n<p>I don\u2019t think any of the backup related knobs can meaningfully improve the situation.  Also, be aware that some of the backup/restore knobs are effectively stateful in that they determine parts of the KV log schema, so changing them once backup data exists can silently corrupt a running backup and/or silently prevent restore from using older backup data correctly.</p>\n<p>If you are writing to a <code>blobstore://</code> destination then you <em>might</em> be able to shave some seconds off of your backup lag by tweaking the blobstore URL parameters documented <a href=\"https://apple.github.io/foundationdb/backups.html#backup-urls\">here</a> but I don\u2019t have any specific suggestions.  The current log flushing logic reads reads from FDB in parallel and pipelines output to the destination, which in the <code>blobstore://</code> case is further pipelined by doing a multi-part upload and sending multiple parts at once.</p>\n<p>Backup has a better logging mode called <code>--partitioned-log-experimental</code> which reads logs directly from the transaction log roles, but I can\u2019t recommend using it because as far as I am aware the open source version has several critical backup bugs and the current version of restore can\u2019t use the partitioned logs because they were meant to be used with a new restore project which was abandoned as it did not deliver the performance improvement expected.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-05-28T00:58:05.395Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 22.4,
+        "yours": false,
+        "topic_id": 4917,
+        "topic_slug": "backup-causing-a-lot-of-data-movement-on-write-heavy-load",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/backups.html#backup-urls",
+            "internal": false,
+            "reflection": false,
+            "title": "Backup, Restore, and Replication for Disaster Recovery \u2014 FoundationDB ON documentation",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-causing-a-lot-of-data-movement-on-write-heavy-load/4917/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14949,
+      14952
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      150
+    ],
+    [
+      2,
+      148
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Backup causing a lot of Data Movement on write heavy load",
+  "id": 4917,
+  "title": "Backup causing a lot of Data Movement on write heavy load",
+  "posts_count": 2,
+  "created_at": "2025-05-24T18:17:33.701Z",
+  "views": 79,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2025-05-27T02:24:31.061Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "backup-causing-a-lot-of-data-movement-on-write-heavy-load",
+  "category_id": 17,
+  "word_count": 539,
+  "deleted_at": null,
+  "user_id": 1484,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4917",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Debugging Data Distribution",
+      "id": 802,
+      "title": "Debugging Data Distribution",
+      "slug": "debugging-data-distribution",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-10-25T03:02:35.580Z",
+      "last_posted_at": "2018-11-14T00:30:26.528Z",
+      "bumped": true,
+      "bumped_at": "2018-11-14T00:30:26.528Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 921,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Trying to understand the backup mechanism better",
+      "id": 588,
+      "title": "Trying to understand the backup mechanism better",
+      "slug": "trying-to-understand-the-backup-mechanism-better",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-07-25T22:58:43.059Z",
+      "last_posted_at": "2018-08-24T23:45:52.938Z",
+      "bumped": true,
+      "bumped_at": "2018-08-24T23:45:52.938Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1453,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Knobs to control data relocation?",
+      "id": 737,
+      "title": "Knobs to control data relocation?",
+      "slug": "knobs-to-control-data-relocation",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-09-29T01:15:30.138Z",
+      "last_posted_at": "2018-10-05T23:53:24.763Z",
+      "bumped": true,
+      "bumped_at": "2018-10-05T23:53:24.763Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 528,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 16,
+            "username": "ashishnm",
+            "name": "Ashish Motivala",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b5e925/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "R/w performance impact and replicas consistency while moving data",
+      "id": 567,
+      "title": "R/w performance impact and replicas consistency while moving data",
+      "slug": "r-w-performance-impact-and-replicas-consistency-while-moving-data",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-07-13T06:23:02.381Z",
+      "last_posted_at": "2018-07-13T06:23:02.474Z",
+      "bumped": true,
+      "bumped_at": "2018-07-13T06:23:02.474Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 499,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 327,
+            "username": "zhanghuan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/5fc32e/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Keyspace partitions &amp; performance",
+      "id": 168,
+      "title": "Keyspace partitions & performance",
+      "slug": "keyspace-partitions-performance",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-21T05:03:54.670Z",
+      "last_posted_at": "2018-04-22T03:29:31.049Z",
+      "bumped": true,
+      "bumped_at": "2018-04-22T03:29:31.049Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 5892,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 1484,
+        "username": "mpatou_openai",
+        "name": "Matthieu Patou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1484,
+      "username": "mpatou_openai",
+      "name": "Matthieu Patou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/backups.html#backup-urls",
+        "title": "Backup, Restore, and Replication for Disaster Recovery \u2014 FoundationDB ON documentation",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 7,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

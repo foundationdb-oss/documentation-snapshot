@@ -1,0 +1,671 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11495,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2022-07-19T21:55:10.642Z",
+        "cooked": "<p>The 7.1 version of FoundationDB introduces a <a href=\"https://apple.github.io/foundationdb/tenants.html?highlight=tenants\">new experimental feature called tenants</a> that allows a user to configure named transaction domains in the cluster. Tenants allow clients to operate on separate key-spaces without having to apply prefixes to every key, and they enforce that no operation can exceed the boundary associated with the tenant. Additionally, there are some upcoming useful features that will also be scoped to tenants.</p>\n<p>As an experimental feature, we do not make the same guarantees about the stability of the feature between versions like we do with normal features. Tenants are currently disabled by default and need to be enabled using fdbcli with one of the following two commands:</p>\n<pre><code class=\"lang-auto\">fdb&gt; configure tenant_mode=optional_experimental\nfdb&gt; configure tenant_mode=required_experimental\n</code></pre>\n<p>For the 7.2 release, we are planning to make some updates to the way metadata is stored for tenants, and as a result any tenants created in a 7.1 cluster will not be usable upon upgrade. Instead, such clusters can be repopulated after the upgrade. This change will not impact any user that has explicitly opted into the use of this feature with one of the commands above. If anybody thinks they would be significantly impacted by this, let us know and we can provide suggestions to help make migration easier.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-07-19T21:55:27.939Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 238,
+        "reads": 44,
+        "readers_count": 43,
+        "score": 1193.8,
+        "yours": false,
+        "topic_id": 3459,
+        "topic_slug": "tenant-feature-metadata-changes-in-7-2-release",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/tenants.html?highlight=tenants",
+            "internal": false,
+            "reflection": false,
+            "title": "Tenants \u2014 FoundationDB 7.1",
+            "clicks": 29
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/7-1-7-3-upgrade-with-tenating/4423",
+            "internal": true,
+            "reflection": true,
+            "title": "7.1 -> 7.3 upgrade with tenating",
+            "clicks": 5
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/7-1-7-3-upgrade-with-tenating/4423/2",
+            "internal": true,
+            "reflection": true,
+            "title": "7.1 -> 7.3 upgrade with tenating",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/tenants-golang/4408/5",
+            "internal": true,
+            "reflection": true,
+            "title": "Tenants & golang",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/tenant-feature-metadata-changes-in-7-2-release/3459/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11503,
+        "name": "Pierre Zemb",
+        "username": "PierreZ",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+        "created_at": "2022-07-21T08:07:42.782Z",
+        "cooked": "<p>We are not using Tenants on our side, but as we are seeing more and more interesting PRs(exhibit <a href=\"https://github.com/apple/foundationdb/pull/7549\" rel=\"noopener nofollow ugc\">A</a>, <a href=\"https://github.com/apple/foundationdb/pull/7376\" rel=\"noopener nofollow ugc\">B</a> and <a href=\"https://github.com/apple/foundationdb/pull/7572\" rel=\"noopener nofollow ugc\">C</a>), we might <img src=\"https://emoji.discourse-cdn.com/twitter/tongue.png?v=12\" title=\":tongue:\" class=\"emoji\" alt=\":tongue:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<p>I\u2019m wondering how we can shift our current key-design to make it easy to be \u201ctenant-compatible\u201d. Is it possible to create a tenant with a provided key-prefix?</p>\n<p>Do you have a feature list somewhere of what you want to build around the tenants?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-07-21T08:07:42.782Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 42,
+        "readers_count": 41,
+        "score": 73.4,
+        "yours": false,
+        "topic_id": 3459,
+        "topic_slug": "tenant-feature-metadata-changes-in-7-2-release",
+        "display_username": "Pierre Zemb",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/7549",
+            "internal": false,
+            "reflection": false,
+            "title": "Add support for tenant groups by sfc-gh-ajbeamon \u00b7 Pull Request #7549 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 45
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/pull/7376",
+            "internal": false,
+            "reflection": false,
+            "title": "Support Redwood encryption by sfc-gh-yiwu \u00b7 Pull Request #7376 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 36
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/pull/7572",
+            "internal": false,
+            "reflection": false,
+            "title": "Introduce storage quotas per tenant by sfc-gh-akejriwal \u00b7 Pull Request #7572 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 32
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 534,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/tenant-feature-metadata-changes-in-7-2-release/3459/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11495,
+      11503
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1190
+    ],
+    [
+      2,
+      1189
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Tenant feature metadata changes in 7.2 release",
+  "id": 3459,
+  "title": "Tenant feature metadata changes in 7.2 release",
+  "posts_count": 2,
+  "created_at": "2022-07-19T21:55:10.584Z",
+  "views": 647,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2022-07-21T08:07:42.782Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "tenant-feature-metadata-changes-in-7-2-release",
+  "category_id": 5,
+  "word_count": 319,
+  "deleted_at": null,
+  "user_id": 12,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3459",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Tenants &amp; golang",
+      "id": 4408,
+      "title": "Tenants & golang",
+      "slug": "tenants-golang",
+      "posts_count": 8,
+      "reply_count": 5,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2024-03-28T19:45:12.545Z",
+      "last_posted_at": "2024-04-03T14:46:29.917Z",
+      "bumped": true,
+      "bumped_at": "2024-04-03T14:46:29.917Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 383,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1342,
+            "username": "newhook",
+            "name": "Matthew Newhook",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/newhook/{size}/1684_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1192,
+            "username": "griffin",
+            "name": "griffin dunn",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/griffin/{size}/1604_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transactionally operating on multiple Tentants",
+      "id": 3283,
+      "title": "Transactionally operating on multiple Tentants",
+      "slug": "transactionally-operating-on-multiple-tentants",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2022-04-26T11:26:58.549Z",
+      "last_posted_at": "2022-04-27T03:13:59.705Z",
+      "bumped": true,
+      "bumped_at": "2022-04-28T00:10:54.208Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 428,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 946,
+            "username": "rajivr",
+            "name": "Rajiv M Ranganath",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Multi-tenancy backup failure using FDB 7.1.9",
+      "id": 3562,
+      "title": "Multi-tenancy backup failure using FDB 7.1.9",
+      "slug": "multi-tenancy-backup-failure-using-fdb-7-1-9",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/7/76fb221995e2738664a8a79895e5cf4d652425a4_2_1024x350.png",
+      "created_at": "2022-09-27T06:14:48.313Z",
+      "last_posted_at": "2022-11-24T13:58:45.225Z",
+      "bumped": true,
+      "bumped_at": "2022-11-24T13:58:45.225Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 566,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1147,
+            "username": "wengle",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wengle/{size}/1399_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "7.1 -&gt; 7.3 upgrade with tenating",
+      "id": 4423,
+      "title": "7.1 -> 7.3 upgrade with tenating",
+      "slug": "7-1-7-3-upgrade-with-tenating",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2024-04-10T20:34:51.255Z",
+      "last_posted_at": "2024-04-11T14:11:07.290Z",
+      "bumped": true,
+      "bumped_at": "2024-04-11T14:11:07.290Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 207,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1342,
+            "username": "newhook",
+            "name": "Matthew Newhook",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/newhook/{size}/1684_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Sharing the metadataVersionKey for multiple tenants",
+      "id": 1659,
+      "title": "Sharing the metadataVersionKey for multiple tenants",
+      "slug": "sharing-the-metadataversionkey-for-multiple-tenants",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-09-30T23:56:17.815Z",
+      "last_posted_at": "2023-06-25T07:47:15.709Z",
+      "bumped": true,
+      "bumped_at": "2023-06-25T07:47:15.709Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1201,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 423,
+            "username": "kocolosk",
+            "name": "Adam Kocoloski",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kocolosk/{size}/412_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 919,
+            "username": "Rjerk",
+            "name": "Rjerk",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjerk/{size}/1056_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 534,
+        "username": "PierreZ",
+        "name": "Pierre Zemb",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "last_poster": {
+      "id": 534,
+      "username": "PierreZ",
+      "name": "Pierre Zemb",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/pull/7549",
+        "title": "Add support for tenant groups by sfc-gh-ajbeamon \u00b7 Pull Request #7549 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 45,
+        "user_id": 534,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/pull/7376",
+        "title": "Support Redwood encryption by sfc-gh-yiwu \u00b7 Pull Request #7376 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 36,
+        "user_id": 534,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/pull/7572",
+        "title": "Introduce storage quotas per tenant by sfc-gh-akejriwal \u00b7 Pull Request #7572 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 32,
+        "user_id": 534,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/tenants.html?highlight=tenants",
+        "title": "Tenants \u2014 FoundationDB 7.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 29,
+        "user_id": 12,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/7-1-7-3-upgrade-with-tenating/4423",
+        "title": "7.1 -> 7.3 upgrade with tenating",
+        "internal": true,
+        "attachment": false,
+        "reflection": true,
+        "clicks": 5,
+        "user_id": 1342,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

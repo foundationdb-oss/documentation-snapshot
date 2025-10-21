@@ -1,0 +1,594 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9985,
+        "name": "Hari B",
+        "username": "harikb",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+        "created_at": "2021-09-20T18:14:03.533Z",
+        "cooked": "<p>Hi,</p>\n<p>Is anyone in this using minio on Azure for fdb backups? If so, are you using standalone product or the managed/paid Minio gateway ?</p>\n<p>How are you getting past this issue?</p><aside class=\"onebox githubissue\" data-onebox-src=\"https://github.com/apple/foundationdb/issues/2907\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/issues/2907\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com/apple/foundationdb</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"github-row\">\n  <div class=\"github-icon-container\" title=\"Issue\">\n\t  <svg width=\"60\" height=\"60\" class=\"github-icon\" viewBox=\"0 0 14 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z\"></path></svg>\n  </div>\n\n  <div class=\"github-info-container\">\n    <h4>\n      <a href=\"https://github.com/apple/foundationdb/issues/2907\" target=\"_blank\" rel=\"noopener nofollow ugc\">Update blob client to sign requests using S3 authentication version 4</a>\n    </h4>\n\n    <div class=\"github-info\">\n      <div class=\"date\">\n        opened <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2020-04-04\" data-time=\"09:53:22\" data-timezone=\"UTC\">09:53AM - 04 Apr 20 UTC</span>\n      </div>\n\n        <div class=\"date\">\n          closed <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2023-01-06\" data-time=\"06:57:17\" data-timezone=\"UTC\">06:57AM - 06 Jan 23 UTC</span>\n        </div>\n\n      <div class=\"user\">\n        <a href=\"https://github.com/satherton\" target=\"_blank\" rel=\"noopener nofollow ugc\">\n          <img alt=\"satherton\" src=\"https://global.discourse-cdn.com/foundationdb/original/1X/dcab1adc161b25c2cd76455166702f4cdf35a09e.png\" class=\"onebox-avatar-inline\" width=\"20\" height=\"20\" data-dominant-color=\"5A6257\">\n          satherton\n        </a>\n      </div>\n    </div>\n\n    <div class=\"labels\">\n        <span style=\"display:inline-block;margin-top:2px;background-color: #B8B8B8;padding: 2px;border-radius: 4px;color: #fff;margin-left: 3px;\">\n          help wanted\n        </span>\n    </div>\n  </div>\n</div>\n\n  <div class=\"github-row\">\n    <p class=\"github-body-container\">It is currently using v2, which is being phased out on June 24, 2020, though buc<span class=\"show-more-container\"><a href=\"\" rel=\"noopener\" class=\"show-more\">\u2026</a></span><span class=\"excerpt hidden\">kets existing before then will still support v2 for a while.\n\nPhase out info:\nhttps://aws.amazon.com/blogs/aws/amazon-s3-update-sigv2-deprecation-period-extended-modified/\n\nV4 specification:\nhttps://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html</span></p>\n  </div>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n<p>\nAs far as I know, minio has already switched to v4 and wouldn\u2019t allow turning on v2 either (labeled insecure) <a href=\"https://github.com/minio/minio/issues/7961\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Allow use of Signature v2 in S3 gateway configuration \u00b7 Issue #7961 \u00b7 minio/minio \u00b7 GitHub</a></p>\n<p>My repeated attempts end up with errors that look like</p><aside class=\"quote quote-modified\" data-post=\"1\" data-topic=\"412\">\n  <div class=\"title\">\n    <div class=\"quote-controls\"></div>\n    <img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/hiroshi/48/147_2.png\" class=\"avatar\">\n    <a href=\"https://forums.foundationdb.org/t/resolved-fdbbackup-platform-error-on-file-backup-write-range/412\">[RESOLVED?] Fdbbackup 'Platform error' on 'file_backup_write_range'</a> <a class=\"badge-category__wrapper \" href=\"/c/using-foundationdb/7\"><span data-category-id=\"7\" data-drop-close=\"true\" class=\"badge-category \" title=\"Topics related to use of FoundationDB.\"><span class=\"badge-category__name\">Using FoundationDB</span></span></a>\n  </div>\n  <blockquote>\n    TL;DR fdbbackup seems to require permission for parent directory of a backup url. (e.g for file:///path/to/backup, permission of /path/to do matter) \nUPDATE: It seems that parent of parent directory affect the error. \n\nI\u2019m trying to execute fdbbackup. \nUsing the latest docker file of <a href=\"https://forums.foundationdb.org/t/simple-dockerfile/280\">Simple Dockerfile</a>. \nStart a server. \n$ docker run --init --rm --name=fdb-a -v fdb-a:/var/lib/foundationdb hiroshi3110/foundationdb:5.1.5-1_ubuntu-16.04 ./start.sh\nConfigure new cluster.\n/etc/init.d/foundationdb: lin\u2026\n  </blockquote>\n</aside>\n<p>\n(No, I am not trying local filesystem unlike that thread)<br>\nand this error</p><aside class=\"quote quote-modified\" data-post=\"1\" data-topic=\"2703\">\n  <div class=\"title\">\n    <div class=\"quote-controls\"></div>\n    <img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/manish-2014/48/1002_2.png\" class=\"avatar\">\n    <a href=\"https://forums.foundationdb.org/t/backup-failure-could-not-create-backup-container-operation-timed-out-with-version-6-3-9/2703\">\"backup failure: Could not create backup container: Operation timed out\" with version 6.3.9</a> <a class=\"badge-category__wrapper \" href=\"/c/using-foundationdb/7\"><span data-category-id=\"7\" data-drop-close=\"true\" class=\"badge-category \" title=\"Topics related to use of FoundationDB.\"><span class=\"badge-category__name\">Using FoundationDB</span></span></a>\n  </div>\n  <blockquote>\n    I am using a Ubuntu 18.04 vm created by Vagrant and then deploying foundationdb-clients_6.3.9-1_amd64.deb and  foundationdb-server_6.3.9-1_amd64.deb. I have not configured TLS on foundationdb. \nAfter deployment , I used fdbcli to enter a few key values \nThis is the command I used for starting a backup: \nfdbbackup start -d blobstore://key:secret@s3.us-east-1.amazonaws.com/fb1?bucket=foundationdbbackups --log -t test1 \nconsole output: \nERROR: Could not create backup container: Operation timed out\n\u2026\n  </blockquote>\n</aside>\n\n<p>Thanks</p>\n<p>Hari</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2021-09-20T18:14:03.533Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 90,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 454.8,
+        "yours": false,
+        "topic_id": 2898,
+        "topic_slug": "fdb-backup-minio-and-minio-gateway-paid-service",
+        "display_username": "Hari B",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/2907",
+            "internal": false,
+            "reflection": false,
+            "clicks": 8
+          },
+          {
+            "url": "https://github.com/minio/minio/issues/7961",
+            "internal": false,
+            "reflection": false,
+            "clicks": 5
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/resolved-fdbbackup-platform-error-on-file-backup-write-range/412",
+            "internal": true,
+            "reflection": false,
+            "title": "[RESOLVED?] Fdbbackup 'Platform error' on 'file_backup_write_range'",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/backup-failure-could-not-create-backup-container-operation-timed-out-with-version-6-3-9/2703",
+            "internal": true,
+            "reflection": false,
+            "title": "\"backup failure: Could not create backup container: Operation timed out\" with version 6.3.9",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 405,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-backup-minio-and-minio-gateway-paid-service/2898/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      9985
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1492
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FDB Backup, minio, and minio gateway (paid service)",
+  "id": 2898,
+  "title": "FDB Backup, minio, and minio gateway (paid service)",
+  "posts_count": 1,
+  "created_at": "2021-09-20T18:14:03.477Z",
+  "views": 617,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-09-20T18:14:03.533Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-backup-minio-and-minio-gateway-paid-service",
+  "category_id": 17,
+  "word_count": 128,
+  "deleted_at": null,
+  "user_id": 405,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2898",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDb fdbbackup to Azure Blob Store",
+      "id": 3392,
+      "title": "FoundationDb fdbbackup to Azure Blob Store",
+      "slug": "foundationdb-fdbbackup-to-azure-blob-store",
+      "posts_count": 8,
+      "reply_count": 5,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2022-06-21T22:18:36.564Z",
+      "last_posted_at": "2022-11-10T10:12:28.003Z",
+      "bumped": true,
+      "bumped_at": "2022-11-10T10:12:28.003Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 713,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 915,
+            "username": "skr1942",
+            "name": "srai",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9f8e36/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 405,
+            "username": "harikb",
+            "name": "Hari B",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1128,
+            "username": "manfontan",
+            "name": "Manuel Fontan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundatioDBBackup against azure blobstore - unknown error",
+      "id": 2404,
+      "title": "FoundatioDBBackup against azure blobstore - unknown error",
+      "slug": "foundatiodbbackup-against-azure-blobstore-unknown-error",
+      "posts_count": 15,
+      "reply_count": 10,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2020-10-22T08:10:38.576Z",
+      "last_posted_at": "2022-06-27T18:32:25.783Z",
+      "bumped": true,
+      "bumped_at": "2022-06-27T18:32:25.783Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 1476,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 746,
+            "username": "matiasholte",
+            "name": "Matias Holte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 837,
+            "username": "petr-tichy",
+            "name": "Petr Tich\u00fd",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/petr-tichy/{size}/1427_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 405,
+            "username": "harikb",
+            "name": "Hari B",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB fdbbackup",
+      "id": 1460,
+      "title": "FoundationDB fdbbackup",
+      "slug": "foundationdb-fdbbackup",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-17T18:54:47.516Z",
+      "last_posted_at": "2019-10-09T03:07:15.974Z",
+      "bumped": true,
+      "bumped_at": "2019-10-09T03:07:15.974Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2461,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 579,
+            "username": "approachcp",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 581,
+            "username": "surprisetalk",
+            "name": "Taylor Sarrafian",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/surprisetalk/{size}/579_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup: backup_error",
+      "id": 2624,
+      "title": "Fdbbackup: backup_error",
+      "slug": "fdbbackup-backup-error",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f918f61d53b8958e5ae3a6e7975b55c5fd931d1a_2_1024x359.png",
+      "created_at": "2021-03-26T10:08:59.583Z",
+      "last_posted_at": "2021-05-25T22:41:19.000Z",
+      "bumped": true,
+      "bumped_at": "2021-05-25T22:41:19.000Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1217,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 908,
+            "username": "SnigdhaPathak",
+            "name": "Snigdha Pathak",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/e95f7d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 909,
+            "username": "findingnemo",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/ccd318/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup to MinIO server",
+      "id": 4092,
+      "title": "Fdbbackup to MinIO server",
+      "slug": "fdbbackup-to-minio-server",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2023-08-03T16:56:46.443Z",
+      "last_posted_at": "2023-08-03T17:30:18.943Z",
+      "bumped": true,
+      "bumped_at": "2023-08-03T18:15:35.884Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 405,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1160,
+            "username": "hbs",
+            "name": "Mathias Herberts",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hbs/{size}/1419_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 405,
+        "username": "harikb",
+        "name": "Hari B",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 405,
+      "username": "harikb",
+      "name": "Hari B",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png"
+    },
+    "last_poster": {
+      "id": 405,
+      "username": "harikb",
+      "name": "Hari B",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/2907",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 405,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/minio/minio/issues/7961",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 405,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

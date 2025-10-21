@@ -1,0 +1,577 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4181,
+        "name": "gaurav",
+        "username": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "created_at": "2019-05-27T15:44:27.144Z",
+        "cooked": "<p>Hi, I have a few questions on the handling of processes being unreachable from the cluster:</p>\n<ul>\n<li>What is the protocol/semantics for handling a storage server or a tLog that is unreachable for an extended duration (say minutes or hours to days), and eventually joining back the cluster?</li>\n<li>How soon will Master/DataDistributor/CC consider the unreachable SS as \u201cdead\u201d and, start extra replication of data after an SS is unreachable?</li>\n<li>If an unreachable SS process is not specifically <code>excluded</code> via fdbcli, is there any cost paid by rest of the cluster (something like tLogs not popping out mutation, waiting for unreachable SS to come back)?</li>\n<li>Once the SS comes back alive and tries to join back the cluster (on its own), will the Master/CC recruit it as a fresh SS process and clear its stored disk data, and then give it shards to replicate from other SS nodes?</li>\n</ul>\n<p>It would be great to get some more idea about how this aspect is handled by fdb.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-05-28T05:49:02.451Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 29.6,
+        "yours": false,
+        "topic_id": 1395,
+        "topic_slug": "ss-tlog-kick-out-and-rejoin",
+        "display_username": "gaurav",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 166,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ss-tlog-kick-out-and-rejoin/1395/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4185,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2019-05-28T16:11:48.110Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"gaurav\" data-post=\"1\" data-topic=\"1395\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/g/b487fb/48.png\" class=\"avatar\"> gaurav:</div>\n<blockquote>\n<p>How soon will Master/DataDistributor/CC consider the unreachable SS as \u201cdead\u201d and, start extra replication of data after an SS is unreachable?</p>\n</blockquote>\n</aside>\n<p>I don\u2019t know the exact numbers, but it\u2019s something on the order of seconds.</p>\n<aside class=\"quote no-group\" data-username=\"gaurav\" data-post=\"1\" data-topic=\"1395\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/g/b487fb/48.png\" class=\"avatar\"> gaurav:</div>\n<blockquote>\n<p>If an unreachable SS process is not specifically <code>excluded</code> via fdbcli, is there any cost paid by rest of the cluster (something like tLogs not popping out mutation, waiting for unreachable SS to come back)?</p>\n</blockquote>\n</aside>\n<p>If the process is dead, I don\u2019t think there is much difference between excluding it or not. If the process comes back before it\u2019s fully re-replicated, then the behavior would be different, as the excluded process will continue excluding and the other would rejoin as described below.</p>\n<aside class=\"quote no-group\" data-username=\"gaurav\" data-post=\"1\" data-topic=\"1395\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/g/b487fb/48.png\" class=\"avatar\"> gaurav:</div>\n<blockquote>\n<ul>\n<li>Once the SS comes back alive and tries to join back the cluster (on its own), will the Master/CC recruit it as a fresh SS process and clear its stored disk data, and then give it shards to replicate from other SS nodes?</li>\n</ul>\n</blockquote>\n</aside>\n<p>If all data has been re-replicated, then the data files will be deleted and it will start fresh. Otherwise, the storage server will retain its data files and maintain responsibility for any data that hadn\u2019t yet been re-replicated. It\u2019s possible that this is only a small portion of the original data assigned to that process, in which case much of the file will be unused and have to be reclaimed for reuse.</p>\n<p>Additionally, the cluster will attempt to move new data onto this process to replace data that had been moved away in order to keep the logical amount of data stored on each process balanced.</p>\n<aside class=\"quote no-group\" data-username=\"gaurav\" data-post=\"1\" data-topic=\"1395\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/g/b487fb/48.png\" class=\"avatar\"> gaurav:</div>\n<blockquote>\n<p>What is the protocol/semantics for handling a storage server or a tLog that is unreachable for an extended duration (say minutes or hours to days), and eventually joining back the cluster?</p>\n</blockquote>\n</aside>\n<p>I think this was mostly answered above for the storage server. When this happens to a log or any stateless process, the cluster will perform a recovery and recruit a new transaction subsystem to replace the old one. If a log rejoins before the data in its files is made unnecessary, then it may also participate in the recovery, though I\u2019m not certain on all the details of this. If it rejoins after the recovery from old logs is completed, though, then it too would be able to delete its files.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-05-28T16:11:48.110Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 0,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 3.2,
+        "yours": false,
+        "topic_id": 1395,
+        "topic_slug": "ss-tlog-kick-out-and-rejoin",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ss-tlog-kick-out-and-rejoin/1395/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4181,
+      4185
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2339
+    ],
+    [
+      2,
+      2338
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "SS / tLog kick-out and rejoin",
+  "id": 1395,
+  "title": "SS / tLog kick-out and rejoin",
+  "posts_count": 2,
+  "created_at": "2019-05-27T15:44:27.081Z",
+  "views": 488,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-05-28T16:11:48.110Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "ss-tlog-kick-out-and-rejoin",
+  "category_id": 7,
+  "word_count": 597,
+  "deleted_at": null,
+  "user_id": 166,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1395",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Fdb cluster is unavailable after delete a disk",
+      "id": 2232,
+      "title": "Fdb cluster is unavailable after delete a disk",
+      "slug": "fdb-cluster-is-unavailable-after-delete-a-disk",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-07-07T09:35:29.720Z",
+      "last_posted_at": "2020-07-09T08:38:11.028Z",
+      "bumped": true,
+      "bumped_at": "2020-07-09T09:28:06.173Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1154,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 585,
+            "username": "ssb",
+            "name": "Shunbo Shi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ssb/{size}/656_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can I remove a process?",
+      "id": 1428,
+      "title": "Can I remove a process?",
+      "slug": "can-i-remove-a-process",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-06-05T23:13:44.635Z",
+      "last_posted_at": "2019-06-18T14:05:53.063Z",
+      "bumped": true,
+      "bumped_at": "2019-06-18T14:05:53.063Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2178,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 594,
+            "username": "zhuyi29",
+            "name": "Zoe",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/edb3f5/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What is the data re-balancing behavior when a node is temporarily not available?",
+      "id": 1419,
+      "title": "What is the data re-balancing behavior when a node is temporarily not available?",
+      "slug": "what-is-the-data-re-balancing-behavior-when-a-node-is-temporarily-not-available",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-06-03T16:30:33.602Z",
+      "last_posted_at": "2019-06-04T07:44:20.764Z",
+      "bumped": true,
+      "bumped_at": "2019-06-04T07:44:20.764Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 693,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 545,
+            "username": "rishabh",
+            "name": "Rishabh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rishabh/{size}/540_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Recover &lsquo;unreachable&rsquo;",
+      "id": 2512,
+      "title": "Recover 'unreachable'",
+      "slug": "recover-unreachable",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-01-15T16:13:16.260Z",
+      "last_posted_at": "2021-01-15T19:00:45.997Z",
+      "bumped": true,
+      "bumped_at": "2021-01-15T19:00:45.997Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 883,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Temporary hardware failure on singly replicated cluster",
+      "id": 2293,
+      "title": "Temporary hardware failure on singly replicated cluster",
+      "slug": "temporary-hardware-failure-on-singly-replicated-cluster",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-08-14T13:20:01.952Z",
+      "last_posted_at": "2020-08-28T07:10:05.803Z",
+      "bumped": true,
+      "bumped_at": "2020-08-28T07:10:05.803Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 466,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 737,
+            "username": "aymalik",
+            "name": "Aayushi Malik",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/aca169/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 166,
+        "username": "gaurav",
+        "name": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 3
+      }
+    ],
+    "created_by": {
+      "id": 166,
+      "username": "gaurav",
+      "name": "gaurav",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    }
+  },
+  "bookmarks": []
+}

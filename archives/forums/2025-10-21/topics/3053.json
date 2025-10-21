@@ -1,0 +1,479 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10364,
+        "name": "Tudor Bosman",
+        "username": "tudor",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/tudor/{size}/1253_2.png",
+        "created_at": "2021-12-04T00:25:44.420Z",
+        "cooked": "<p>There seems to be a (small) memory leak in the C API that ASAN detects. This is annoying, because we run ASAN regularly and we\u2019ve worked pretty hard to be leak-free.</p>\n<p>Example code to reproduce:</p>\n<pre><code class=\"lang-auto\">#define FDB_API_VERSION 630\n#include &lt;foundationdb/fdb_c.h&gt;\n#include &lt;thread&gt;\n#include &lt;iostream&gt;\n#include &lt;cstdlib&gt;\n\nvoid checkError(fdb_error_t err) {\n    if (err != 0) {\n        std::cerr &lt;&lt; err &lt;&lt; \"\\n\";\n        abort();\n    }\n}\n\nint main() {\n    checkError(fdb_select_api_version(FDB_API_VERSION));\n    checkError(fdb_setup_network());\n\n    auto thread = std::thread([]() { checkError(fdb_run_network()); });\n\n    FDBDatabase* db = nullptr;\n    checkError(fdb_create_database(\"/tmp/fdb.cluster\", &amp;db));\n\n    fdb_database_destroy(db);\n    checkError(fdb_stop_network());\n    thread.join();\n}\n</code></pre>\n<p>Compiled using <code>clang++-12 -fsanitize=address -std=c++17 /tmp/a.cc -o /tmp/a -lfdb_c -ldl -lrt -lpthread</code> on x86_64 Linux, using <code>foundationdb-clients-6.3.22</code>.</p>\n<pre><code class=\"lang-auto\">=================================================================\n==9014==ERROR: LeakSanitizer: detected memory leaks\n\nDirect leak of 32 byte(s) in 1 object(s) allocated from:\n    #0 0x4972dd in malloc (/tmp/a+0x4972dd)\n    #1 0x7f3dab9d1cb7 in fdb_transaction_set_option (/lib/libfdb_c.so+0x7b1cb7)\n    #2 0x7f3dab7627f3 in fdb_transaction_set_option (/lib/libfdb_c.so+0x5427f3)\n    #3 0x7f3dab762905 in fdb_transaction_set_option (/lib/libfdb_c.so+0x542905)\n    #4 0x7f3dab762c29 in fdb_transaction_set_option (/lib/libfdb_c.so+0x542c29)\n    #5 0x7f3dab742dac in fdb_transaction_set_option (/lib/libfdb_c.so+0x522dac)\n    #6 0x7f3dab46959e in fdb_transaction_set_option (/lib/libfdb_c.so+0x24959e)\n    #7 0x7f3dab641686 in fdb_transaction_set_option (/lib/libfdb_c.so+0x421686)\n    #8 0x7f3dab6417ea in fdb_transaction_set_option (/lib/libfdb_c.so+0x4217ea)\n    #9 0x7f3dab55b19f in fdb_transaction_set_option (/lib/libfdb_c.so+0x33b19f)\n    #10 0x7f3dab741536 in fdb_transaction_set_option (/lib/libfdb_c.so+0x521536)\n    #11 0x7f3dab3ed7a1 in fdb_transaction_set_option (/lib/libfdb_c.so+0x1cd7a1)\n    #12 0x7f3dab639f3e in fdb_transaction_set_option (/lib/libfdb_c.so+0x419f3e)\n    #13 0x7f3dab3c4536 in fdb_transaction_set_option (/lib/libfdb_c.so+0x1a4536)\n    #14 0x7f3dab3993d8 in fdb_run_network (/lib/libfdb_c.so+0x1793d8)\n    #15 0x4cb4e0 in main::$_0::operator()() const (/tmp/a+0x4cb4e0)\n    #16 0x4cb4bc in void std::__invoke_impl&lt;void, main::$_0&gt;(std::__invoke_other, main::$_0&amp;&amp;) (/tmp/a+0x4cb4bc)\n    #17 0x4cb44c in std::__invoke_result&lt;main::$_0&gt;::type std::__invoke&lt;main::$_0&gt;(main::$_0&amp;&amp;) (/tmp/a+0x4cb44c)\n    #18 0x4cb424 in void std::thread::_Invoker&lt;std::tuple&lt;main::$_0&gt; &gt;::_M_invoke&lt;0ul&gt;(std::_Index_tuple&lt;0ul&gt;) (/tmp/a+0x4cb424)\n    #19 0x4cb3f4 in std::thread::_Invoker&lt;std::tuple&lt;main::$_0&gt; &gt;::operator()() (/tmp/a+0x4cb3f4)\n    #20 0x4cb378 in std::thread::_State_impl&lt;std::thread::_Invoker&lt;std::tuple&lt;main::$_0&gt; &gt; &gt;::_M_run() (/tmp/a+0x4cb378)\n    #21 0x7f3dab0ac6b3  (/lib/x86_64-linux-gnu/libstdc++.so.6+0xda6b3)\n\nObjects leaked above:\n0x60300004da10 (32 bytes)\n\nSUMMARY: AddressSanitizer: 32 byte(s) leaked in 1 allocation(s).\n</code></pre>\n<p>I know it\u2019s only 32 bytes, but, because I don\u2019t seem to have good symbol names in <code>libfdb_c.so</code>, it\u2019s difficult to exclude in <code>LSAN_OPTIONS</code>. (If I also create a transaction, the leak grows to 136 bytes.)</p>\n<p>Any thoughts? Is this expected? Am I forgetting to call some cleanup function?</p>\n<p>Thanks,<br>\n-Tudor.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2021-12-04T00:25:44.420Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 74,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 368.2,
+        "yours": false,
+        "topic_id": 3053,
+        "topic_slug": "small-memory-leak-when-using-c-api",
+        "display_username": "Tudor Bosman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1044,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/small-memory-leak-when-using-c-api/3053/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      10364
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1418
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Small memory leak when using C API",
+  "id": 3053,
+  "title": "Small memory leak when using C API",
+  "posts_count": 1,
+  "created_at": "2021-12-04T00:25:44.345Z",
+  "views": 541,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-12-04T00:25:44.420Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "small-memory-leak-when-using-c-api",
+  "category_id": 7,
+  "word_count": 429,
+  "deleted_at": null,
+  "user_id": 1044,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3053",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Memory leak when use C API normaly",
+      "id": 3590,
+      "title": "Memory leak when use C API normaly",
+      "slug": "memory-leak-when-use-c-api-normaly",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2022-10-13T08:42:35.256Z",
+      "last_posted_at": "2022-10-16T01:58:24.713Z",
+      "bumped": true,
+      "bumped_at": "2022-10-16T01:58:24.713Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 376,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1134,
+            "username": "ZhangHuiGui",
+            "name": "Zhang Hui Gui",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zhanghuigui/{size}/1377_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Memory leak in C API?",
+      "id": 554,
+      "title": "Memory leak in C API?",
+      "slug": "memory-leak-in-c-api",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-07-09T10:54:23.376Z",
+      "last_posted_at": "2018-07-10T12:55:14.679Z",
+      "bumped": true,
+      "bumped_at": "2018-07-10T12:55:14.679Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1120,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 319,
+            "username": "kirilltitov",
+            "name": "Kirill Titov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kirilltitov/{size}/328_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Memory leak in client profiling code",
+      "id": 2108,
+      "title": "Memory leak in client profiling code",
+      "slug": "memory-leak-in-client-profiling-code",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-05-07T20:05:59.143Z",
+      "last_posted_at": "2020-05-08T23:21:40.526Z",
+      "bumped": true,
+      "bumped_at": "2020-05-08T23:21:40.526Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 726,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Memory leak in C client-lib - when a timeout() is set on transaction options?",
+      "id": 1710,
+      "title": "Memory leak in C client-lib - when a timeout() is set on transaction options?",
+      "slug": "memory-leak-in-c-client-lib-when-a-timeout-is-set-on-transaction-options",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/b55b0e80a4a533be00e26d30756cb9b860ad76b1.png",
+      "created_at": "2019-11-01T07:02:02.599Z",
+      "last_posted_at": "2019-11-09T04:04:11.942Z",
+      "bumped": true,
+      "bumped_at": "2019-11-09T10:56:45.389Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 865,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "On Potential Memory Leaking due to FDB Java Library getRange on a Transaction",
+      "id": 1603,
+      "title": "On Potential Memory Leaking due to FDB Java Library getRange on a Transaction",
+      "slug": "on-potential-memory-leaking-due-to-fdb-java-library-getrange-on-a-transaction",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-08-30T22:59:33.728Z",
+      "last_posted_at": "2019-08-31T18:40:10.044Z",
+      "bumped": true,
+      "bumped_at": "2019-08-31T18:40:10.044Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 653,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 16,
+            "username": "ashishnm",
+            "name": "Ashish Motivala",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b5e925/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1044,
+        "username": "tudor",
+        "name": "Tudor Bosman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/tudor/{size}/1253_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1044,
+      "username": "tudor",
+      "name": "Tudor Bosman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/tudor/{size}/1253_2.png"
+    },
+    "last_poster": {
+      "id": 1044,
+      "username": "tudor",
+      "name": "Tudor Bosman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/tudor/{size}/1253_2.png"
+    }
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,709 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 6984,
+        "name": "Ray Jenkins",
+        "username": "rjenkins",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+        "created_at": "2020-05-12T19:17:47.421Z",
+        "cooked": "<p>Hiya Folks,</p>\n<p>Twice yesterday, across 3 separate sets of <code>fdbserver</code> processes running the <code>storage</code> role, we ran into what looks like either some pathological case in our read or write paths that caused there processes to consume a lot of memory or a potential leak. We don\u2019t have enough data either way at this point to determine the likely cause. Oddly, we did not observe a large increase in Read or Write IOPS during this time or in a spike in requests to the servers. However, it is possible we are missing some instrumentation.</p>\n<p>In both cases 3 fdbserver processes running the <code>storage</code> roles drastically increased memory usage and either hit an <code>OutOfMemory</code> condition in the Plaform/FastAlloc slab allocator code, or actually segfaulted.</p>\n<p>The interesting part is, this condition appeared simultaneously across 3 individual <code>fdbserver</code> processes which were spread across 3 AWS availability zones, so it appears to have affected an entire \u201cteam\u201d. The storage servers run 4 fdbserver processes (one per core) and the other 3 processes on the affected servers remained operational. During the time the entire team was down, fdbcli showed a Fault Tolerance of zero, as expected. The good news is our stream processing systems that work with FoundationDB eventually hit head-of-line blocking while the team was down, so no data was lost, just delayed as we waited for the processes to recover.</p>\n<p>When we hit the <code>OutOfMemory</code> condition the fdbserver process would exit cleanly and be restarted by <code>fdbmonitor</code> quickly. However, in cases when we hit a <code>SIGSEGV</code>, apport on ubuntu trapped the signal and attempted to write a .crash file. This kept the hung process up for 10-20 minutes before fdbmonitor could restart.</p>\n<p>In most cases apport gave up on writing the core dump and crash file, however I was able to capture one complete core dump. Our version of fdbserver 6.0.18 is stripped though so the backtrace isn\u2019t very useful.</p>\n<p>We have a few questions on best steps forward to debug.</p>\n<p>1.) Are there versions of 6.0.18 available that are compiled with debug symbols that we can use to gdb the core file and get a better backtrace?<br>\n2.) Are there additional debug flags we should enable to try to capture more data about the cause of the incident?<br>\n3.) Any suggestions on what else to look for in the trace log files to determine the cause?</p>\n<p>Additionally we noticed that we exhausted the ApproximateUnusedMemory16 slabs before we hit the <code>OutOfMemory</code> function.</p>\n<p>Thanks in advance for any debugging suggestions you can provide. Additional system information is provided below.</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/4c7f8a022ee38e69df8abe772878aff823a76550.png\" data-download-href=\"/uploads/short-url/aUJxpWnSACSvebjguMABjJIOUzC.png?dl=1\" title=\"Screenshot from 2020-05-12 13-15-01\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_517x162.png\" alt=\"Screenshot from 2020-05-12 13-15-01\" data-base62-sha1=\"aUJxpWnSACSvebjguMABjJIOUzC\" width=\"517\" height=\"162\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_517x162.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_775x243.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_1034x324.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">Screenshot from 2020-05-12 13-15-01</span><span class=\"informations\">3360\u00d71052 125 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div><br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6.png\" data-download-href=\"/uploads/short-url/c1URprH3G3PAstokrJuBpBns2NM.png?dl=1\" title=\"Screenshot from 2020-05-12 13-16-11\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6_2_517x159.png\" alt=\"Screenshot from 2020-05-12 13-16-11\" data-base62-sha1=\"c1URprH3G3PAstokrJuBpBns2NM\" width=\"517\" height=\"159\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6_2_517x159.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6_2_775x238.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6_2_1034x318.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">Screenshot from 2020-05-12 13-16-11</span><span class=\"informations\">3421\u00d71057 149 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"10\" Time=\"1589230953.900548\" Type=\"MemoryMetrics\" ID=\"0000000000000000\" TotalMemory16=\"262144\" ApproximateUnusedMemory16=\"0\" ActiveThreads16=\"1\" TotalMemory32=\"38141952\" ApproximateUnusedMemory32=\"37748736\" ActiveThreads32=\"1\" TotalMemory64=\"762839040\" ApproximateUnusedMemory64=\"1966080\" ActiveThreads64=\"3\" TotalMemory128=\"1171652608\" ApproximateUnusedMemory128=\"2883584\" ActiveThreads128=\"1\" TotalMemory256=\"657195008\" ApproximateUnusedMemory256=\"368705536\" ActiveThreads256=\"1\" TotalMemory512=\"1138360320\" ApproximateUnusedMemory512=\"3801088\" ActiveThreads512=\"1\" TotalMemory1024=\"86769664\" ApproximateUnusedMemory1024=\"86507520\" ActiveThreads1024=\"1\" TotalMemory2048=\"772145152\" ApproximateUnusedMemory2048=\"771883008\" ActiveThreads2048=\"1\" TotalMemory4096=\"2386427904\" ApproximateUnusedMemory4096=\"285605888\" ActiveThreads4096=\"1\" Machine=\"x.x.x.x:4503\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n</code></pre>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"40\" Time=\"1589230957.218488\" Type=\"OutOfMemory\" ID=\"0000000000000000\" Message=\"Out of memory\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1428186 0x14268f7 0x1414e01 0x1414e9c 0x1414f19 0x13f1ae0 0x13f2742 0x45b805 0x45d523 0x1427d88 0x14281b8 0x14268f7 0x1414e01 0x1414e9c 0x1414f19 0x13f1ae0 0x13f2742 0x45b805 0x45d523 0x1427d88 0x14281b8 0x14268f7 0x1414e01 0x1414e9c 0x1414f19 0x13f1ae0 0x13f2742 0x45b805 0x45d523 0x1427d88 0x14281b8 0x14268f7 0x1414e01 0x1414e9c 0x1414f19 0x13f1ae0 0x13f2742 0xa1010f 0xa2e653 0x591275 0x135ecd8 0x135f113 0x135f5d8 0x1361464 0x136051b 0x1361855 0x5...\" Machine=\"x.x.x.x:4503\" LogGroup=\"default\" Roles=\"SS\" /&gt;\n</code></pre>\n<pre><code class=\"lang-auto\">Cluster Info\n---------------------------------------\nFDB Version: 6.0.18\nConfiguration:\n  Redundancy mode   - triple\n  Storage engine    - ssd-2\nCluster:\n  FoundationDB processes - 462\n  Machines               - 126\n  Fault Tolerance        - 2 machines\n</code></pre>\n<pre><code class=\"lang-auto\">OS\n---------------------------------------\nDescription:\tUbuntu 16.04.6 LTS\nRelease:\t16.04\nCodename:\txenial\nLinux version 4.4.0-1050-aws (buildd@lgw01-amd64-017) (gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.5) ) #59-Ubuntu SMP Tue Jan 30 19:57:10 UTC 2018\n</code></pre>\n<p>The storage nodes are AWS i3.xlarge instances</p>\n<pre><code class=\"lang-auto\">H/W path    Device       Class      Description\n----------------------------------------------------------\n                         system     HVM domU\n/0                       bus        Motherboard\n/0/0                     memory     96KiB BIOS\n/0/401                   processor  Intel(R) Xeon(R) CPU E5-2686 v4 @ 2.30GHz\n/0/402                   processor  CPU\n/0/403                   processor  CPU\n/0/404                   processor  CPU\n/0/1000                  memory     30GiB System Memory\n/0/1000/0                memory     16GiB DIMM RAM\n/0/1000/1                memory     14GiB DIMM RAM\n/0/100                   bridge     440FX - 82441FX PMC [Natoma]\n/0/100/1                 bridge     82371SB PIIX3 ISA [Natoma/Triton II]\n/0/100/1.1               storage    82371SB PIIX3 IDE [Natoma/Triton II]\n/0/100/1.3               bridge     82371AB/EB/MB PIIX4 ACPI\n/0/100/2                 display    GD 5446\n/0/100/3    ens3         network    Elastic Network Adapter (ENA)\n/0/100/1e                storage    NVMe SSD Controller\n/0/100/1f                generic    Xen Platform Device\n/1          vethee219e6  network    Ethernet interface\n/2          veth1900bd7  network    Ethernet interface\n</code></pre>\n<pre><code class=\"lang-auto\">ProblemType: Crash\nArchitecture: amd64\nDate: Mon May 11 21:07:13 2020\nDistroRelease: Ubuntu 16.04\nExecutablePath: /usr/sbin/fdbserver\nExecutableTimestamp: 1547074069\nProcCmdline: /usr/sbin/fdbserver --knob_cleaning_interval 0.1 --class storage --cluster_file /etc/foundationdb/fdb.cluster --datadir /data/4503 --listen_address public --locality_zoneid us-west-2c --logdir /var/log/foundationdb --public_address auto:4503\nProcCwd: /\nProcEnviron:\n LANG=en_US.UTF-8\n PATH=(custom, no user)\nProcMaps:\n 00400000-01c72000 r-xp 00000000 ca:01 53625                              /usr/sbin/fdbserver\n 01e71000-0202a000 rw-p 01871000 ca:01 53625                              /usr/sbin/fdbserver\n 0202a000-02048000 rw-p 00000000 00:00 0 \n 0315b000-759d4000 rw-p 00000000 00:00 0                                  [heap]\n 7fd56fcc7000-7fd645d88000 rw-p 00000000 00:00 0 \n 7fd645d89000-7fd66cea9000 rw-p 00000000 00:00 0 \n 7fd66ceaa000-7fd68780a000 rw-p 00000000 00:00 0 \n 7fd68780b000-7fd6a678b000 rw-p 00000000 00:00 0 \n 7fd6a678c000-7fd6bb4ac000 rw-p 00000000 00:00 0 \n 7fd6bb4ad000-7fd6c582d000 rw-p 00000000 00:00 0 \n 7fd6c582e000-7fd6c7cce000 rw-p 00000000 00:00 0 \n 7fd6c7ce5000-7fd6d5225000 rw-p 00000000 00:00 0 \n 7fd6d5226000-7fd6db9c6000 rw-p 00000000 00:00 0 \n 7fd6db9c7000-7fd6dcce7000 rw-p 00000000 00:00 0 \n 7fd6dcd01000-7fd6e6941000 rw-p 00000000 00:00 0 \n 7fd6e6942000-7fd6e7102000 rw-p 00000000 00:00 0 \n 7fd6e7103000-7fd6e7503000 rw-p 00000000 00:00 0 \n 7fd6e7520000-7fd6ec000000 rw-p 00000000 00:00 0 \n 7fd6ec000000-7fd6ec021000 rw-p 00000000 00:00 0 \n 7fd6ec021000-7fd6f0000000 ---p 00000000 00:00 0 \n 7fd6f000a000-7fd6f300a000 rw-p 00000000 00:00 0 \n 7fd6f301b000-7fd6f30bb000 rw-p 00000000 00:00 0 \n 7fd6f30cc000-7fd6f312c000 rw-p 00000000 00:00 0 \n 7fd6f313d000-7fd6f31bd000 rw-p 00000000 00:00 0 \n 7fd6f31cf000-7fd6f32cf000 rw-p 00000000 00:00 0 \n 7fd6f32e0000-7fd6f4000000 rw-p 00000000 00:00 0 \n 7fd6f4000000-7fd6f4029000 rw-p 00000000 00:00 0 \n 7fd6f4029000-7fd6f8000000 ---p 00000000 00:00 0 \n 7fd6f801d000-7fd6f8e3d000 rw-p 00000000 00:00 0 \n 7fd6f8e4e000-7fd6f9984000 rw-p 00000000 00:00 0 \n 7fd6f9984000-7fd6f9985000 ---p 00000000 00:00 0 \n 7fd6f9985000-7fd6fa185000 rw-p 00000000 00:00 0 \n 7fd6fa185000-7fd6fa19b000 r-xp 00000000 ca:01 1965                       /lib/x86_64-linux-gnu/libgcc_s.so.1\n 7fd6fa19b000-7fd6fa39a000 ---p 00016000 ca:01 1965                       /lib/x86_64-linux-gnu/libgcc_s.so.1\n 7fd6fa39a000-7fd6fa39b000 rw-p 00015000 ca:01 1965                       /lib/x86_64-linux-gnu/libgcc_s.so.1\n 7fd6fa39b000-7fd6fa39c000 ---p 00000000 00:00 0 \n 7fd6fa39c000-7fd6fab9c000 rw-p 00000000 00:00 0 \n 7fd6fab9c000-7fd6fad5c000 r-xp 00000000 ca:01 21455                      /lib/x86_64-linux-gnu/libc-2.23.so\n 7fd6fad5c000-7fd6faf5c000 ---p 001c0000 ca:01 21455                      /lib/x86_64-linux-gnu/libc-2.23.so\n 7fd6faf5c000-7fd6faf60000 r--p 001c0000 ca:01 21455                      /lib/x86_64-linux-gnu/libc-2.23.so\n 7fd6faf60000-7fd6faf62000 rw-p 001c4000 ca:01 21455                      /lib/x86_64-linux-gnu/libc-2.23.so\n 7fd6faf62000-7fd6faf66000 rw-p 00000000 00:00 0 \n 7fd6faf66000-7fd6fb06e000 r-xp 00000000 ca:01 21458                      /lib/x86_64-linux-gnu/libm-2.23.so\n 7fd6fb06e000-7fd6fb26d000 ---p 00108000 ca:01 21458                      /lib/x86_64-linux-gnu/libm-2.23.so\n 7fd6fb26d000-7fd6fb26e000 r--p 00107000 ca:01 21458                      /lib/x86_64-linux-gnu/libm-2.23.so\n 7fd6fb26e000-7fd6fb26f000 rw-p 00108000 ca:01 21458                      /lib/x86_64-linux-gnu/libm-2.23.so\n 7fd6fb26f000-7fd6fb276000 r-xp 00000000 ca:01 21438                      /lib/x86_64-linux-gnu/librt-2.23.so\n 7fd6fb276000-7fd6fb475000 ---p 00007000 ca:01 21438                      /lib/x86_64-linux-gnu/librt-2.23.so\n 7fd6fb475000-7fd6fb476000 r--p 00006000 ca:01 21438                      /lib/x86_64-linux-gnu/librt-2.23.so\n 7fd6fb476000-7fd6fb477000 rw-p 00007000 ca:01 21438                      /lib/x86_64-linux-gnu/librt-2.23.so\n 7fd6fb477000-7fd6fb48f000 r-xp 00000000 ca:01 21442                      /lib/x86_64-linux-gnu/libpthread-2.23.so\n 7fd6fb48f000-7fd6fb68e000 ---p 00018000 ca:01 21442                      /lib/x86_64-linux-gnu/libpthread-2.23.so\n 7fd6fb68e000-7fd6fb68f000 r--p 00017000 ca:01 21442                      /lib/x86_64-linux-gnu/libpthread-2.23.so\n 7fd6fb68f000-7fd6fb690000 rw-p 00018000 ca:01 21442                      /lib/x86_64-linux-gnu/libpthread-2.23.so\n 7fd6fb690000-7fd6fb694000 rw-p 00000000 00:00 0 \n 7fd6fb694000-7fd6fb697000 r-xp 00000000 ca:01 21440                      /lib/x86_64-linux-gnu/libdl-2.23.so\n 7fd6fb697000-7fd6fb896000 ---p 00003000 ca:01 21440                      /lib/x86_64-linux-gnu/libdl-2.23.so\n 7fd6fb896000-7fd6fb897000 r--p 00002000 ca:01 21440                      /lib/x86_64-linux-gnu/libdl-2.23.so\n 7fd6fb897000-7fd6fb898000 rw-p 00003000 ca:01 21440                      /lib/x86_64-linux-gnu/libdl-2.23.so\n 7fd6fb898000-7fd6fb8be000 r-xp 00000000 ca:01 21441                      /lib/x86_64-linux-gnu/ld-2.23.so\n 7fd6fb8c4000-7fd6fb946000 rw-p 00000000 00:00 0 \n 7fd6fb946000-7fd6fb947000 ---p 00000000 00:00 0 \n 7fd6fb947000-7fd6fbab5000 rw-p 00000000 00:00 0 \n 7fd6fbab9000-7fd6fbabb000 rw-s 00000000 00:0d 336401235                  /[aio] (deleted)\n 7fd6fbabb000-7fd6fbabd000 rw-p 00000000 00:00 0 \n 7fd6fbabd000-7fd6fbabe000 r--p 00025000 ca:01 21441                      /lib/x86_64-linux-gnu/ld-2.23.so\n 7fd6fbabe000-7fd6fbabf000 rw-p 00026000 ca:01 21441                      /lib/x86_64-linux-gnu/ld-2.23.so\n 7fd6fbabf000-7fd6fbac0000 rw-p 00000000 00:00 0 \n 7fffe59bb000-7fffe59eb000 rw-p 00000000 00:00 0                          [stack]\n 7fffe59f8000-7fffe59fb000 r--p 00000000 00:00 0                          [vvar]\n 7fffe59fb000-7fffe59fd000 r-xp 00000000 00:00 0                          [vdso]\n ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]\nProcStatus:\n Name:\tfdbserver\n State:\tS (sleeping)\n Tgid:\t22423\n Ngid:\t0\n Pid:\t22423\n PPid:\t14599\n TracerPid:\t0\n Uid:\t113\t113\t113\t113\n Gid:\t117\t117\t117\t117\n FDSize:\t512\n Groups:\t\n NStgid:\t22423\n NSpid:\t22423\n NSpgid:\t14599\n NSsid:\t14599\n VmPeak:\t 8388608 kB\n VmSize:\t 8388608 kB\n VmLck:\t       0 kB\n VmPin:\t       0 kB\n VmHWM:\t 8198196 kB\n VmRSS:\t 8198196 kB\n VmData:\t 8346052 kB\n VmStk:\t     192 kB\n VmExe:\t   25032 kB\n VmLib:\t    3224 kB\n VmPTE:\t   16132 kB\n VmPMD:\t      40 kB\n VmSwap:\t       0 kB\n HugetlbPages:\t       0 kB\n Threads:\t4\n SigQ:\t0/122586\n SigPnd:\t0000000000000000\n ShdPnd:\t0000000000000000\n SigBlk:\t0000000000000000\n SigIgn:\t0000000000001000\n SigCgt:\t00000001840008c8\n CapInh:\t0000000000000000\n CapPrm:\t0000000000000000\n CapEff:\t0000000000000000\n CapBnd:\t0000003fffffffff\n CapAmb:\t0000000000000000\n Seccomp:\t0\n Cpus_allowed:\t7fff\n Cpus_allowed_list:\t0-14\n Mems_allowed:\t00000000,00000001\n Mems_allowed_list:\t0\n voluntary_ctxt_switches:\t2895\n nonvoluntary_ctxt_switches:\t13836\nSignal: 11\nUname: Linux 4.4.0-1050-aws x86_64\nUserGroups: \n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-05-12T19:17:47.421Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 47,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 241.6,
+        "yours": false,
+        "topic_id": 2115,
+        "topic_slug": "large-spikes-in-memory-usage-on-storage-processes-6-0-18",
+        "display_username": "Ray Jenkins",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/4c7f8a022ee38e69df8abe772878aff823a76550.png",
+            "internal": false,
+            "reflection": false,
+            "title": "4c7f8a022ee38e69df8abe772878aff823a76550.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6.png",
+            "internal": false,
+            "reflection": false,
+            "title": "545190d8e3b4b940f0a10c98fb3e4712b8f1c9c6.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 490,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/large-spikes-in-memory-usage-on-storage-processes-6-0-18/2115/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 6985,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2020-05-12T19:38:15.099Z",
+        "cooked": "<p>We had seen something similar on storage servers for quite some time, and we think that a recent bug fix that was released in <a href=\"https://apple.github.io/foundationdb/release-notes.html#id11\">6.2.16</a> may solve the problem we had.</p>\n<p>The high-level summary of the fix is that reverse range reads on the storage server would partially ignore the byte limit supplied to it, such that it would read a lot of data from disk but then not return most of it.</p>\n<p>Any chance you\u2019re running reverse range reads and therefore might be hitting this bug?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-05-12T19:38:15.099Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 30.6,
+        "yours": false,
+        "topic_id": 2115,
+        "topic_slug": "large-spikes-in-memory-usage-on-storage-processes-6-0-18",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/release-notes.html#id11",
+            "internal": false,
+            "reflection": false,
+            "title": "Release Notes \u2014 FoundationDB 6.2",
+            "clicks": 6
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/large-spikes-in-memory-usage-on-storage-processes-6-0-18/2115/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 6987,
+        "name": "Ray Jenkins",
+        "username": "rjenkins",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+        "created_at": "2020-05-12T21:58:14.570Z",
+        "cooked": "<p>Yes, we\u2019re using reverse range reads in several places.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-05-12T21:58:14.570Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 5.6,
+        "yours": false,
+        "topic_id": 2115,
+        "topic_slug": "large-spikes-in-memory-usage-on-storage-processes-6-0-18",
+        "display_username": "Ray Jenkins",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 490,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/large-spikes-in-memory-usage-on-storage-processes-6-0-18/2115/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      6984,
+      6985,
+      6987
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1988
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Large spikes in memory usage on storage processes, 6.0.18",
+  "id": 2115,
+  "title": "Large spikes in memory usage on storage processes, 6.0.18",
+  "posts_count": 3,
+  "created_at": "2020-05-12T19:17:47.329Z",
+  "views": 582,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2020-05-12T21:58:14.570Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "large-spikes-in-memory-usage-on-storage-processes-6-0-18",
+  "category_id": 7,
+  "word_count": 1922,
+  "deleted_at": null,
+  "user_id": 490,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_1024x320.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2115",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 3360,
+      "height": 1052,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/1X/4c7f8a022ee38e69df8abe772878aff823a76550.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 320,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/4c7f8a022ee38e69df8abe772878aff823a76550_2_1024x320.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "id": 2080,
+      "title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "slug": "foundationdb-6-2-fdbserver-going-out-of-memory",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-04-20T14:55:39.274Z",
+      "last_posted_at": "2020-04-23T04:34:49.858Z",
+      "bumped": true,
+      "bumped_at": "2020-04-23T04:34:49.858Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1037,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB out of memory",
+      "id": 3460,
+      "title": "FDB out of memory",
+      "slug": "fdb-out-of-memory",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2022-07-20T03:12:58.094Z",
+      "last_posted_at": "2022-07-22T12:33:26.077Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T12:54:40.104Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 962,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1126,
+            "username": "CodingSuen",
+            "name": "CodingSuen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Segmentation fault error and broken cluster",
+      "id": 483,
+      "title": "Segmentation fault error and broken cluster",
+      "slug": "segmentation-fault-error-and-broken-cluster",
+      "posts_count": 17,
+      "reply_count": 12,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-05-31T15:34:28.123Z",
+      "last_posted_at": "2018-06-11T17:31:13.656Z",
+      "bumped": true,
+      "bumped_at": "2018-06-11T17:31:13.656Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 4331,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Continuous out-of-memory crashes in small cluster with modest read-only workload",
+      "id": 864,
+      "title": "Continuous out-of-memory crashes in small cluster with modest read-only workload",
+      "slug": "continuous-out-of-memory-crashes-in-small-cluster-with-modest-read-only-workload",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-11-12T18:15:45.539Z",
+      "last_posted_at": "2018-11-13T22:03:20.420Z",
+      "bumped": true,
+      "bumped_at": "2018-11-13T22:03:20.420Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1256,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 424,
+            "username": "jwb",
+            "name": "Jeff Baker",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwb/{size}/413_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "&lsquo;ERROR: Out of memory&rsquo; crashed from fdbserver",
+      "id": 3556,
+      "title": "'ERROR: Out of memory' crashed from fdbserver",
+      "slug": "error-out-of-memory-crashed-from-fdbserver",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2022-09-21T17:45:03.267Z",
+      "last_posted_at": "2022-09-28T06:50:59.544Z",
+      "bumped": true,
+      "bumped_at": "2022-09-28T06:50:59.544Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings",
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 519,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1134,
+            "username": "ZhangHuiGui",
+            "name": "Zhang Hui Gui",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zhanghuigui/{size}/1377_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1133,
+            "username": "redcuckoo",
+            "name": "Yurii Momotenko",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/redcuckoo/{size}/1660_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 490,
+        "username": "rjenkins",
+        "name": "Ray Jenkins",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 490,
+      "username": "rjenkins",
+      "name": "Ray Jenkins",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png"
+    },
+    "last_poster": {
+      "id": 490,
+      "username": "rjenkins",
+      "name": "Ray Jenkins",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/release-notes.html#id11",
+        "title": "Release Notes \u2014 FoundationDB 6.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 12,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

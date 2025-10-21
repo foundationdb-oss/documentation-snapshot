@@ -1,0 +1,560 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14930,
+        "name": "Miguel Filipe",
+        "username": "msf",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png",
+        "created_at": "2025-05-14T16:54:48.820Z",
+        "cooked": "<p>Hi there,</p>\n<p>I\u2019m doing some firefighting drills of \u201cfull cluster\u201d scenarios using FDB 7.3.57 in a staging environment. Small test cluster:</p>\n<ul>\n<li>physical 3 nodes, 3 nvme drives per node for storage,</li>\n<li>fdb-logs and OS on separate drive</li>\n<li>set for double-replication,</li>\n<li>redwood engine</li>\n</ul>\n<p>Scenario 1:</p>\n<ol>\n<li>fill up cluster completely</li>\n<li>writes and reads hang (clients hang)</li>\n<li>initiate \u201crescue drill\u201d</li>\n</ol>\n<p>We\u2019ve used <code>knob_min_available_space_ratio=0.001</code> to get the fdbcli to come back alive.. but..<br>\nWe forgot to turn of the write workload and it continued to fill up the cluster\u2026and..<br>\nDue to misconfiguration we filled up node-A OS drive and that put the node offline, unresponsive. [</p>\n<p>We now can\u2019t find a way of making the cluster respond to any command.<br>\nWe have different types of data and we know we have a few options to try:</p>\n<ol>\n<li>reduce redundancy to <code>single</code></li>\n<li><code>clearrange</code> on data we\u2019re willing to drop (and restore from backup)</li>\n<li>We don\u2019t want to focus on solving node-A, because this accidental loss is a realistic event: we could loose a node to hardware failure.</li>\n<li>the goal here is to increase FoundationDB knowledge and know how to operate it also under unlikely/bad scenarios.</li>\n</ol>\n<p>However, we can\u2019t get <code>fdbcli</code> to work at all..</p>\n<pre><code class=\"lang-auto\"># fdbcli\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nThe database is unavailable; type `status' for more information.\n\nWelcome to the fdbcli. For help, type `help'.\ndb&gt; coordinators\nCluster description: b6NBkaFl\nCluster coordinators (3): 10.100.196.187:4500,10.100.196.188:4500,10.100.36.123:4500\nType `help coordinators' to learn how to change this information.\nfdb&gt; status details\n\nWARNING: Long delay (Ctrl-C to interrupt)\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nCould not communicate with all of the coordination servers.\n  The database will remain operational as long as we\n  can connect to a quorum of servers, however the fault\n  tolerance of the system is reduced as long as the\n  servers remain disconnected.\n\n  10.100.36.123:4500  (unreachable)\n  10.100.196.188:4500  (reachable)\n  10.100.196.187:4500  (reachable)\n\nTimed out fetching cluster status.\n\nConfiguration:\n  Redundancy mode        - unknown\n  Storage engine         - unknown\n  Log engine             - unknown\n  Encryption at-rest     - disabled\n  Coordinators           - unknown\n  Usable Regions         - unknown\n\nCluster:\n  FoundationDB processes - unknown\n  Zones                  - unknown\n  Machines               -\n  Machines               - unknown\n\nData:\n  Replication health     - unknown\n  Moving data            - unknown\n  Sum of key-value sizes - unknown\n  Disk space used        - unknown\n\nOperating space:\n  Unable to retrieve operating space status\n\nWorkload:\n  Read rate              - unknown\n  Write rate             - unknown\n  Transactions started   - unknown\n  Transactions committed - unknown\n  Conflict rate          - unknown\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n\nClient time: 05/14/25 16:19:41 \n</code></pre>\n<p>Anyone with some tips on how to get <code>fdbcli</code> to operate on a \u201climping\u201d cluster needing operator rescue?<br>\nI\u2019ve seen references to <code>PRIORITY_SYSTEM_IMMEDIATE</code> on the documentation, which seems to hint that I should be able to start <code>fdbcli</code> using this priority for all transactions, but I can\u2019t figure out how.. I\u2019ve tried this:</p>\n<pre><code class=\"lang-auto\">\nfdb&gt; option on PRIORITY_SYSTEM_IMMEDIATE\nOption enabled for all transactions\nfdb&gt; begin\nTransaction started\nfdb&gt; status details\n\nWARNING: Long delay (Ctrl-C to interrupt)\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nCould not communicate with all of the coordination servers.\n  The database will remain operational as long as we\n  can connect to a quorum of servers, however the fault\n  tolerance of the system is reduced as long as the\n  servers remain disconnected.\n\n  10.100.36.123:4500  (unreachable)\n  10.100.196.188:4500  (reachable)\n  10.100.196.187:4500  (reachable)\n\nTimed out fetching cluster status.\n\nConfiguration:\n  Redundancy mode        - unknown\n  Storage engine         - unknown\n  Log engine             - unknown\n  Encryption at-rest     - disabled\n ... \n</code></pre>\n<p>similar to the avoe output.. clearly didn\u2019t work running the <code>status details</code> under PRIORITY_SYSTEM_IMMEDIATE.</p>\n<p>Thanks in advance, all help is welcome</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-05-14T16:54:48.820Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 25,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 138.4,
+        "yours": false,
+        "topic_id": 4909,
+        "topic_slug": "recovery-reviving-a-storage-full-cluster",
+        "display_username": "Miguel Filipe",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1491,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/recovery-reviving-a-storage-full-cluster/4909/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14936,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2025-05-15T08:58:40.294Z",
+        "cooked": "<p>Have you checked the log of fdbcli where it hangs? That might provide some additional hints. The <code>PRIORITY_SYSTEM_IMMEDIATE</code> is already used by most fdbcli calls.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-05-15T08:58:40.294Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 18.0,
+        "yours": false,
+        "topic_id": 4909,
+        "topic_slug": "recovery-reviving-a-storage-full-cluster",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/recovery-reviving-a-storage-full-cluster/4909/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14930,
+      14936
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      160
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Recovery/Reviving a Storage Full Cluster",
+  "id": 4909,
+  "title": "Recovery/Reviving a Storage Full Cluster",
+  "posts_count": 2,
+  "created_at": "2025-05-14T16:54:48.743Z",
+  "views": 60,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2025-05-15T08:58:40.294Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "recovery-reviving-a-storage-full-cluster",
+  "category_id": 7,
+  "word_count": 659,
+  "deleted_at": null,
+  "user_id": 1491,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4909",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Full disk on one machine results in 99% performance degradation",
+      "id": 850,
+      "title": "Full disk on one machine results in 99% performance degradation",
+      "slug": "full-disk-on-one-machine-results-in-99-performance-degradation",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-11-06T00:18:11.154Z",
+      "last_posted_at": "2018-11-08T00:02:29.123Z",
+      "bumped": true,
+      "bumped_at": "2018-11-08T00:02:29.123Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2223,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 421,
+            "username": "rbranson",
+            "name": "Rick Branson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbranson/{size}/406_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to configure fdb",
+      "id": 518,
+      "title": "How to configure fdb",
+      "slug": "how-to-configure-fdb",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-06-19T13:10:32.406Z",
+      "last_posted_at": "2018-06-21T22:18:36.722Z",
+      "bumped": true,
+      "bumped_at": "2018-06-21T22:18:36.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3365,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 275,
+            "username": "vmanukyan",
+            "name": "Vruyr Manukyan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vmanukyan/{size}/329_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cluster unresponsive when some of the nodes have full disk",
+      "id": 2230,
+      "title": "Cluster unresponsive when some of the nodes have full disk",
+      "slug": "cluster-unresponsive-when-some-of-the-nodes-have-full-disk",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-07-07T01:29:20.165Z",
+      "last_posted_at": "2020-07-07T10:32:57.700Z",
+      "bumped": true,
+      "bumped_at": "2020-07-08T09:31:08.162Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 628,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cluster stuck in recovery after crash of one node",
+      "id": 3216,
+      "title": "Cluster stuck in recovery after crash of one node",
+      "slug": "cluster-stuck-in-recovery-after-crash-of-one-node",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2022-03-17T11:59:52.372Z",
+      "last_posted_at": "2022-03-18T03:45:59.162Z",
+      "bumped": true,
+      "bumped_at": "2022-03-18T03:45:59.162Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 560,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1079,
+            "username": "xozzslip",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/xozzslip/{size}/1298_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Recovery from lost all transaction node",
+      "id": 3116,
+      "title": "Recovery from lost all transaction node",
+      "slug": "recovery-from-lost-all-transaction-node",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2022-01-15T14:19:30.959Z",
+      "last_posted_at": "2022-01-16T07:32:10.343Z",
+      "bumped": true,
+      "bumped_at": "2022-01-16T07:32:10.343Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 528,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1058,
+            "username": "wangzw",
+            "name": "Zhanwei Wang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wangzw/{size}/1264_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 602,
+            "username": "ppggff",
+            "name": "ppggff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ppggff/{size}/855_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1491,
+        "username": "msf",
+        "name": "Miguel Filipe",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1491,
+      "username": "msf",
+      "name": "Miguel Filipe",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/msf/{size}/1877_2.png"
+    },
+    "last_poster": {
+      "id": 849,
+      "username": "johscheuer",
+      "name": "Johannes Scheuermann",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

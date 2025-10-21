@@ -1,0 +1,557 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11515,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2022-07-24T22:52:22.541Z",
+        "cooked": "<p>[Side note] Could we have some additional tags for <code>cloud</code> and/or <code>aws</code>? I feel like the fact that you\u2019re running on K8s in the cloud, and what cloud provider you are using and thus what disk types are available, will have a big effect on the answers to a lot of my potential questions\u2026</p>\n<p>We\u2019re looking at setting up a FoundationDB cluster in EKS on AWS. I think our initial back-of-envelope calcs were that after 5 years we\u2019d expect somewhere around 500m keys and 2TB data or so.</p>\n<p>I\u2019m doing some load tests to check what sort of sustained throughput we can get, and I also want to be able to load a much larger amount of data into the cluster (our 5 yr estimated level) in a \u2018reasonably short\u2019 space of time (like, if it took a day or two for the initial load that\u2019d be fine), so that we can test backup/restore and see how long <em>that</em> would likely take (we\u2019re aiming for a couple of hours).</p>\n<p>I\u2019m getting the sort of numbers I want for normal throughput (only a couple hundred msgs or tx per sec), <em>but</em> if I try and sustain those for a significant period of time (say, by trying to write 1m k/v pairs to the cluster) the cluster goes unavailable, and <code>fdbcli</code> reports that none of the coordinators are reachable. On one occasion I left the cluster alone for \u2018a while\u2019 (a few hours) while doing something else and when I checked back it had come back with the coordinators reachable (albeit different IPs, it seemed to have moved all 3 coordinators) and data still present. On two other occasions I tried leaving it alone overnight and it was still broken.</p>\n<p><em>At the moment</em> I\u2019m running a cluster with 3 storage nodes, which are also being selected as the coordinators. What I see when I started a load test is that the <code>log</code> node IOPS goes to 100% (according to <code>status details</code>) first, then the <code>storage</code> node IOPS climb and the <code>log</code> ones drop off a bit. <code>status json | fdbtop</code> shows \u2018100%\u2019 IOPS on the log nodes to be ~300, and on the <code>storage</code> nodes to be ~3k. I\u2019ve yet to investigate increasing the number of <code>storage</code> or <code>log</code> nodes.</p>\n<p>First question - How does FoundationDB calculate the \u2018% of max\u2019 for IOPS? I know <em>I</em> can look up the details of the <code>gp2</code> EBS volumes that are being mounted into those containers, where IOPS is based on a multipler of disk size (up to a max limit), but as far as I can tell FDB has no knowledge that it\u2019s running in AWS, its data volumes are EBS etc, so where does it get the max to calculate a % from?</p>\n<p>Second question - I\u2019m <em>currently</em> working on the assumption that the IOPS starvation is the main thing that\u2019s causing issues, because I\u2019m not seeing CPU or memory limils being hit. Should I be <em>expecting</em> things to work OK on <code>gp2</code>? If so, do I just need to configure bigger disks (for more IOPS) or more nodes (to spread the load), or has the default K8s operator setup done something really non-optimal with regards performance? Or should I really be looking at setting up <code>gp3</code> (allows configurable IOPS and much higher max values for IOPS and throughput than <code>gp2</code>) on EKS to get \u2018reasonable\u2019 performance out of FDB?</p>\n<p>Sorry if these are n00b questions and I\u2019ve just failed to find the right bit of the docs for them. If anyone wants to just point me at existing documentation articles that help answer my questions, that\u2019s fine too!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-07-24T22:59:09.200Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 305,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 1531.2,
+        "yours": false,
+        "topic_id": 3466,
+        "topic_slug": "question-how-should-we-be-setting-up-disks-in-aws-eks-for-best-performance",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/question-how-should-we-be-setting-up-disks-in-aws-eks-for-best-performance/3466/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      11515
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1185
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "[Question] How should we be setting up disks in AWS EKS for best performance?",
+  "id": 3466,
+  "title": "[Question] How should we be setting up disks in AWS EKS for best performance?",
+  "posts_count": 1,
+  "created_at": "2022-07-24T22:52:22.464Z",
+  "views": 765,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-07-24T22:52:22.541Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "question-how-should-we-be-setting-up-disks-in-aws-eks-for-best-performance",
+  "category_id": 16,
+  "word_count": 622,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3466",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Benchmarking FoundationDB on AWS",
+      "id": 410,
+      "title": "Benchmarking FoundationDB on AWS",
+      "slug": "benchmarking-foundationdb-on-aws",
+      "posts_count": 19,
+      "reply_count": 12,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2018-05-14T09:55:57.604Z",
+      "last_posted_at": "2018-10-30T16:01:15.283Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T16:01:15.283Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 9035,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 257,
+            "username": "cih.y2k",
+            "name": "cih.y2k",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cih.y2k/{size}/423_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scripts to spin up FoundationDB cluster on AWS",
+      "id": 395,
+      "title": "Scripts to spin up FoundationDB cluster on AWS",
+      "slug": "scripts-to-spin-up-foundationdb-cluster-on-aws",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-05-10T12:43:25.854Z",
+      "last_posted_at": "2018-11-01T02:09:32.154Z",
+      "bumped": true,
+      "bumped_at": "2018-11-01T02:09:32.154Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1930,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 409,
+            "username": "TommyLike",
+            "name": "Hu Sheng",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tommylike/{size}/395_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "id": 637,
+      "title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "slug": "scripts-to-deploy-benchmark-and-tinker-with-1m-operations-sec-foundationdb-cluster-on-aws",
+      "posts_count": 14,
+      "reply_count": 5,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2018-08-14T14:13:06.849Z",
+      "last_posted_at": "2018-11-06T16:58:50.747Z",
+      "bumped": true,
+      "bumped_at": "2018-11-06T16:58:50.747Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 4284,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 55,
+            "username": "bowlofstew",
+            "name": "Stewart Henderson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 409,
+            "username": "TommyLike",
+            "name": "Hu Sheng",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tommylike/{size}/395_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "AWS Deployment Options",
+      "id": 1472,
+      "title": "AWS Deployment Options",
+      "slug": "aws-deployment-options",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-19T21:27:04.156Z",
+      "last_posted_at": "2019-06-20T15:44:28.570Z",
+      "bumped": true,
+      "bumped_at": "2019-06-24T17:47:10.317Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1679,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 611,
+            "username": "yennie",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/y/c68b51/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    }
+  },
+  "bookmarks": []
+}

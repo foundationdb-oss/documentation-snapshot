@@ -1,0 +1,823 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7920,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2020-09-15T03:12:25.670Z",
+        "cooked": "<p>I\u2019m trying to get the key ranges for a directory, in order to back it up. I noticed that if a subspace has a prefix of <code>\\x01</code> for example, the range of the subspace, using <code>FDBRangeKeys()</code>, will be <code>\\x01\\x00</code> to <code>\\x01\\xff</code>. <a href=\"https://github.com/apple/foundationdb/blame/6.2.25/bindings/go/src/fdb/subspace/subspace.go#L128\" rel=\"noopener nofollow ugc\">(go bindings)</a>. (I see the <a href=\"https://github.com/apple/foundationdb/blob/6.2.25/fdbclient/Subspace.cpp#L67-L72\" rel=\"noopener nofollow ugc\">same logic in c</a>) But if someone were to write an empty key at the directory root (<code>\\x01</code> -&gt; <code>foo</code>) it wouldn\u2019t be included in the range.</p>\n<p>Similarly, the range reported would not include key/value written at <code>\\x01\\xff</code>, since <code>ExactRange</code> is end-exclusive.</p>\n<p>I noticed the backup logic is closer to what I expected\u2013If I were to back up <code>-k \\x01</code> it would back up <code>\\x01</code> (inclusive) to <code>\\x02</code> (exclusive). What is the reasoning for the subspace <code>FDBRangeKeys()</code> behavior? (My guess is it could be related to <a href=\"https://forums.foundationdb.org/t/ranges-without-explicit-end-go/773\">tuple encoding</a>?) Would it make more sense if it behaved the same as the backup range? Should we be preventing writing to subspace/directory roots?</p>\n<p>My current plan is to specify only the directory prefix and let the backup logic calculate the appropriate start and end, rather than using the directory\u2019s <code>FDBRangeKeys()</code>.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-09-15T05:31:02.672Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 207,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 1046.2,
+        "yours": false,
+        "topic_id": 2337,
+        "topic_slug": "range-keys-for-subspace-dont-include-first-or-last-key",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blame/6.2.25/bindings/go/src/fdb/subspace/subspace.go#L128",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/bindings/go/src/fdb/subspace/subspace.go at 6.2.25 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/ranges-without-explicit-end-go/773",
+            "internal": true,
+            "reflection": false,
+            "title": "Ranges without explicit end (Go)",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/6.2.25/fdbclient/Subspace.cpp#L67-L72",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/Subspace.cpp at 6.2.25 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/range-keys-for-subspace-dont-include-first-or-last-key/2337/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 7923,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2020-09-15T16:26:45.431Z",
+        "cooked": "<p>The Go binding documentation for this is not as clear, but the Python documentation for <code>Subspace.range</code> is a little more so:</p>\n<blockquote>\n<p>Returns a range representing all keys in the subspace that encode tuples strictly starting with the specifed tuple.</p>\n</blockquote>\n<p>In other words, getting the range of a subspace is intended to return all tuples that have the subspace as a prefix (generally a prefix tuple), but not the subspace prefix itself. This is why we choose the end key <code>prefix + \\xff</code> \u2013 there can be no encoded tuples that come after this. It is correct, though, that there could be non-tuple keys under this prefix that exist after it (e.g. <code>prefix + \\xff\\xff</code>).</p>\n<p>I believe the choice to include or not include the prefix itself was made because it was what we thought would be most useful for this particular API. There\u2019s no fundamental reason it needs to be so, and certainly there will be use cases for either approach.</p>\n<aside class=\"quote no-group\" data-username=\"amanda\" data-post=\"1\" data-topic=\"2337\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/48.png\" class=\"avatar\"> amanda:</div>\n<blockquote>\n<p>My current plan is to specify only the directory prefix and let the backup logic calculate the appropriate start and end, rather than using the directory\u2019s <code>FDBRangeKeys()</code> .</p>\n</blockquote>\n</aside>\n<p>This sounds like the right idea if your goal is to capture everything starting with that prefix, including the prefix itself and regardless of whether it is a tuple.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-09-15T16:26:45.431Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 12,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 70.8,
+        "yours": false,
+        "topic_id": 2337,
+        "topic_slug": "range-keys-for-subspace-dont-include-first-or-last-key",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/range-keys-for-subspace-dont-include-first-or-last-key/2337/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 7925,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2020-09-16T19:23:44.611Z",
+        "cooked": "<p>Hey A.J., thanks for the explanation. I didn\u2019t expect it to purposely only cover tuples but that makes sense. Would be great if the Go documentation reflected this</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-09-16T19:23:44.611Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 24.6,
+        "yours": false,
+        "topic_id": 2337,
+        "topic_slug": "range-keys-for-subspace-dont-include-first-or-last-key",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/range-keys-for-subspace-dont-include-first-or-last-key/2337/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 7927,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2020-09-16T23:26:17.094Z",
+        "cooked": "<p>Sure thing, I\u2019ve created <a href=\"https://github.com/apple/foundationdb/pull/3783\">https://github.com/apple/foundationdb/pull/3783</a>.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2020-09-16T23:26:17.094Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 4.4,
+        "yours": false,
+        "topic_id": 2337,
+        "topic_slug": "range-keys-for-subspace-dont-include-first-or-last-key",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/3783",
+            "internal": false,
+            "reflection": false,
+            "title": "Give more detail when describing the range API on a subspace in Go by ajbeamon \u00b7 Pull Request #3783 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 23
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 810,
+          "username": "amanda",
+          "name": "Amanda",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/range-keys-for-subspace-dont-include-first-or-last-key/2337/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7920,
+      7923,
+      7925,
+      7927
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1863
+    ],
+    [
+      2,
+      1862
+    ],
+    [
+      3,
+      1861
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Range keys for subspace don&rsquo;t include first or last key",
+  "id": 2337,
+  "title": "Range keys for subspace don't include first or last key",
+  "posts_count": 4,
+  "created_at": "2020-09-15T03:12:25.601Z",
+  "views": 880,
+  "reply_count": 2,
+  "like_count": 0,
+  "last_posted_at": "2020-09-16T23:26:17.094Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "range-keys-for-subspace-dont-include-first-or-last-key",
+  "category_id": 7,
+  "word_count": 503,
+  "deleted_at": null,
+  "user_id": 810,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2337",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Range returned by `Subspace#range` are inclusive on both ends",
+      "id": 4215,
+      "title": "Range returned by `Subspace#range` are inclusive on both ends",
+      "slug": "range-returned-by-subspace-range-are-inclusive-on-both-ends",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2023-11-10T13:19:42.471Z",
+      "last_posted_at": "2023-11-17T05:21:28.218Z",
+      "bumped": true,
+      "bumped_at": "2023-11-17T05:21:28.218Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 325,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1338,
+            "username": "nicolascouvrat",
+            "name": "Nicolas Couvrat",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/nicolascouvrat/{size}/1678_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 405,
+            "username": "harikb",
+            "name": "Hari B",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Application design using Subspace and Tuple",
+      "id": 452,
+      "title": "Application design using Subspace and Tuple",
+      "slug": "application-design-using-subspace-and-tuple",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-22T21:46:43.537Z",
+      "last_posted_at": "2018-07-14T21:02:50.010Z",
+      "bumped": true,
+      "bumped_at": "2018-07-14T21:02:50.010Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 3678,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 317,
+            "username": "Lundin",
+            "name": "Pontus Lundin",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/dfb087/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Ranges without explicit end (Go)",
+      "id": 773,
+      "title": "Ranges without explicit end (Go)",
+      "slug": "ranges-without-explicit-end-go",
+      "posts_count": 13,
+      "reply_count": 10,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2018-10-15T21:10:57.504Z",
+      "last_posted_at": "2018-10-25T14:38:53.425Z",
+      "bumped": true,
+      "bumped_at": "2018-10-25T14:38:53.425Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 3281,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 391,
+            "username": "atombender",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/atombender/{size}/688_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 378,
+            "username": "num",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/db5fbb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "id": 1355,
+      "title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "slug": "how-to-get-exact-range-of-keys-using-fdb-transaction-get-range-in-c-programming",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-05-09T12:22:07.878Z",
+      "last_posted_at": "2019-05-20T14:14:50.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-20T14:14:50.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1573,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Copying data from one &ldquo;table&rdquo; to another",
+      "id": 860,
+      "title": "Copying data from one \"table\" to another",
+      "slug": "copying-data-from-one-table-to-another",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-11-10T19:48:38.480Z",
+      "last_posted_at": "2019-09-19T21:56:33.805Z",
+      "bumped": true,
+      "bumped_at": "2019-09-19T21:56:33.805Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1653,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 810,
+        "username": "amanda",
+        "name": "Amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/pull/3783",
+        "title": "Give more detail when describing the range API on a subspace in Go by ajbeamon \u00b7 Pull Request #3783 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 23,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blame/6.2.25/bindings/go/src/fdb/subspace/subspace.go#L128",
+        "title": "foundationdb/bindings/go/src/fdb/subspace/subspace.go at 6.2.25 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 810,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/ranges-without-explicit-end-go/773",
+        "title": "Ranges without explicit end (Go)",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 810,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

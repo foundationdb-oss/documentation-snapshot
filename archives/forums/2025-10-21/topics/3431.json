@@ -1,0 +1,892 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11413,
+        "name": "Pedro Lamar\u00e3o",
+        "username": "pedrolamarao",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pedrolamarao/{size}/1375_2.png",
+        "created_at": "2022-07-06T14:15:19.960Z",
+        "cooked": "<p>Hello all! I have recently surveyed FoundationDB\u2019s documentation. It seems really impressive! I am now considering it as the future backend for a certain application. This post is a request for comments on how to do a \u201csmall setup\u201d.</p>\n<p>Our application is an asynchronous key management service. It is fundamentally read-only: in the absolute majority of the time, it just operates with keys. Only a few times per year the user \u201cwrites\u201d new keys. The implementation currently offers read-only load balancing. When the time comes to renew keys, the user must manually insert the key in every instance.</p>\n<p>I am studying options to evolve this application to allow distributed \u201cwrites\u201d. Implementing raft + a cluster protocol is one of our options. Doing something like a FoundationBD layer is another. The data set in this application is infinitesimal for modern standards. Persistence frameworks are tuned to terabytes of data; our application is specialized to secure megabytes of key material.</p>\n<p>I have searched this forum for \u201csmall setup\u201d and \u201csmall memory\u201d but found no discussion on this. Is it possible to scale FoundationDB down? Requiring an additional 4 GB of memory per node will multiply our current memory requirements. I appreciate any hint you may have!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2022-07-06T14:15:19.960Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 100,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 501.0,
+        "yours": false,
+        "topic_id": 3431,
+        "topic_slug": "scaling-down-for-small-data-sets",
+        "display_username": "Pedro Lamar\u00e3o",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1132,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/scaling-down-for-small-data-sets/3431/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11419,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2022-07-07T23:57:58.491Z",
+        "cooked": "<p>In order to run with lower memory requirements, my advice (not based on experience running in production) would be to set <code>--cache-memory</code> to something lower than the 2GiB default, and use the ssd storage engine.</p>\n<p>Some parts of foundationdb use a custom allocator that trades memory usage for speed, so that could be another opportunity to lower memory usage. There\u2019s no supported way to disable \u201cFastAlloc\u201d, so this would currently require building a patched version from source. My guess is no one would be opposed to some kind of knob that disables FastAlloc, but it\u2019s a bit complicated since FastAlloc is used before main is called so our normal knob mechanism wouldn\u2019t work here.</p>\n<p>FWIW it\u2019s convenient that your application has a low write load since high write load can cause significant  memory usage, and I can\u2019t think of any way to mitigate that. I think the best available mitigation would be to tweak some knobs so that foundationdb will throttle aggressively to keep memory usage low.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2022-07-07T23:57:58.491Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 30.8,
+        "yours": false,
+        "topic_id": 3431,
+        "topic_slug": "scaling-down-for-small-data-sets",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/scaling-down-for-small-data-sets/3431/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11431,
+        "name": "Amirouche",
+        "username": "amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "created_at": "2022-07-08T11:02:29.748Z",
+        "cooked": "<p>Hello <a class=\"mention\" href=\"/u/pedrolamarao\">@pedrolamarao</a>!</p>\n<blockquote>\n<p>Our application is an asynchronous key management service.</p>\n</blockquote>\n<p>I am not sure what \u201casynchronous\u201d means in your context.</p>\n<blockquote>\n<p>The data set in this application is infinitesimal for modern standards.</p>\n</blockquote>\n<p>Reading the rest of the paragraph, I can tell that is around megabytes of data.</p>\n<p>Quoting the documentation:</p>\n<blockquote>\n<p><code>memory</code>: Maximum resident memory used by the process. The default value is 8GiB. When specified without a unit, MiB is assumed. Setting to 0 means unlimited. This parameter does not change the memory allocation of the program. Rather, it sets a hard limit beyond which the process will kill itself and be restarted. The default value of 8GiB is double the intended memory usage in the default configuration (providing an emergency buffer to deal with memory leaks or similar problems). It is <em>not</em> recommended to decrease the value of this parameter below its default value. It may be <em>increased</em> if you wish to allocate a very large amount of storage engine memory or cache. In particular, when the <code>storage-memory</code> or <code>cache-memory</code> parameters are increased, the <code>memory</code> parameter should be increased by an equal amount.</p>\n<p><a href=\"https://apple.github.io/foundationdb/configuration.html?highlight=memory%20configuration#fdbserver-section\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Configuration \u2014 FoundationDB 7.1</a></p>\n</blockquote>\n<p>If a FoundationDB process reach 8GB of memory usage, it will be killed by FoundationDB, and the associated transactions aborted. The 8GB value does not mean that FoundationDB will allocate at startup time 8GB.</p>\n<p>Screenshot of <code>htop</code> filtered on foundationdb that is at rest:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/4/4ad1ac189dbe22541010d4c5a456cfe170026c1c.png\" data-download-href=\"/uploads/short-url/aFSyjNHa5Gsy3fvHXqpnRhxgY44.png?dl=1\" title=\"image\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/4/4ad1ac189dbe22541010d4c5a456cfe170026c1c_2_690x151.png\" alt=\"image\" data-base62-sha1=\"aFSyjNHa5Gsy3fvHXqpnRhxgY44\" width=\"690\" height=\"151\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/4/4ad1ac189dbe22541010d4c5a456cfe170026c1c_2_690x151.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/4/4ad1ac189dbe22541010d4c5a456cfe170026c1c_2_1035x226.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/2X/4/4ad1ac189dbe22541010d4c5a456cfe170026c1c_2_1380x302.png 2x\" data-dominant-color=\"384842\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">image</span><span class=\"informations\">1690\u00d7371 96.5 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg></div></a></div></p>\n<p>Less than 1GB of RAM are used by ALL process on that machine.</p>\n<p>Here is the <code>fdbcli</code> status:</p>\n<pre><code class=\"lang-plaintext\">$ fdbcli \nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nThe database is available.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; status\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - single\n  Storage engine         - memory-2\n  Coordinators           - 1\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 1\n  Zones                  - 1\n  Machines               - 1\n  Memory availability    - 8.0 GB per process on machine with least available\n  Fault Tolerance        - 0 machines\n  Server time            - 07/08/22 12:46:11\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 21 MB\n  Disk space used        - 245 MB\n\nOperating space:\n  Storage server         - 0.9 GB free on most full server\n  Log server             - 1683.7 GB free on most full server\n\nWorkload:\n  Read rate              - 21 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 9 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 07/08/22 12:46:11\n\nfdb&gt; \n</code></pre>\n<p>Canonical is working on dqlite that can help your use case. Tho, after looking around other distributed, safe, secure, and maintained resilient databases, it appears that FoundationDB, whether it is for a single box, large deployment, web-scale deployment and whether you use existing layers, or need only a mere key-value mapping, etc\u2026 FoundationDB is a better choice for you, and your employer. The only problem is that there is still no buzz around FoundationDB\u2026 It may look like a big \u201cinvestment\u201d, it is not.</p>\n<p>Whether it is FoundationDB or something else, you should benchmark the software (ping <a class=\"mention\" href=\"/u/osamarin\">@osamarin</a> who was xp with that).</p>\n<p>I am very interested in small scale deployment, many people around me think FoundationDB is overkill, and prefer REDIS or PostgreSQL for dubious reasons\u2026</p>\n<p>It appears, you need to test the following:</p>\n<ul>\n<li>Backup and restore: given the size of the data you are working with, my guess is that you can set up your own backup strategy (record the restore process wall-clock time);</li>\n<li>Cluster resilience: make sure the data is still readable when one process or machine is misbehaving;</li>\n<li>[edit] setup monitoring !</li>\n</ul>\n<p>Please share with us any findings <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2022-07-08T11:04:19.955Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 7,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 55.6,
+        "yours": false,
+        "topic_id": 3431,
+        "topic_slug": "scaling-down-for-small-data-sets",
+        "display_username": "Amirouche",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/configuration.html?highlight=memory%20configuration#fdbserver-section",
+            "internal": false,
+            "reflection": false,
+            "title": "Configuration \u2014 FoundationDB 7.1",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/4/4ad1ac189dbe22541010d4c5a456cfe170026c1c.png",
+            "internal": false,
+            "reflection": false,
+            "title": "4ad1ac189dbe22541010d4c5a456cfe170026c1c.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 41,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/scaling-down-for-small-data-sets/3431/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11473,
+        "name": "Rajiv M Ranganath",
+        "username": "rajivr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "created_at": "2022-07-14T07:05:14.364Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"andrew.noyes\" data-post=\"2\" data-topic=\"3431\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/andrew.noyes/48/443_2.png\" class=\"avatar\"> andrew.noyes:</div>\n<blockquote>\n<p>FWIW it\u2019s convenient that your application has a low write load since high write load can cause significant memory usage, and I can\u2019t think of any way to mitigate that. I think the best available mitigation would be to tweak some knobs so that foundationdb will throttle aggressively to keep memory usage low.</p>\n</blockquote>\n</aside>\n<p>When you get a chance, could you please share the knobs that we might be able change in order to trade latency/throughput for CPU/memory?</p>\n<p>I will be curious to see to what extent we might be able to scale down FoundationDB.</p>\n<p>If we are able to scale FDB down for metadata use-case (instead of managing etcd, zookeeper or using a RAFT library), that would be really useful for many things. <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2022-07-14T07:05:14.364Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 1,
+        "incoming_link_count": 0,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 24.6,
+        "yours": false,
+        "topic_id": 3431,
+        "topic_slug": "scaling-down-for-small-data-sets",
+        "display_username": "Rajiv M Ranganath",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 946,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/scaling-down-for-small-data-sets/3431/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11475,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2022-07-14T16:28:36.908Z",
+        "cooked": "<p>I was thinking of TARGET_BYTES_PER_STORAGE_SERVER, and TARGET_BYTES_PER_TLOG</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2022-07-14T16:28:36.908Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 19.2,
+        "yours": false,
+        "topic_id": 3431,
+        "topic_slug": "scaling-down-for-small-data-sets",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 946,
+          "username": "rajivr",
+          "name": "Rajiv M Ranganath",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/scaling-down-for-small-data-sets/3431/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11413,
+      11419,
+      11431,
+      11473,
+      11475
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1203
+    ],
+    [
+      2,
+      1202
+    ],
+    [
+      3,
+      1201
+    ],
+    [
+      4,
+      1196
+    ],
+    [
+      5,
+      1195
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Scaling down for small data sets",
+  "id": 3431,
+  "title": "Scaling down for small data sets",
+  "posts_count": 5,
+  "created_at": "2022-07-06T14:15:19.901Z",
+  "views": 568,
+  "reply_count": 2,
+  "like_count": 3,
+  "last_posted_at": "2022-07-14T16:28:36.908Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "scaling-down-for-small-data-sets",
+  "category_id": 7,
+  "word_count": 1138,
+  "deleted_at": null,
+  "user_id": 1132,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3431",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 4,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Constrained RAM in an application development environment",
+      "id": 347,
+      "title": "Constrained RAM in an application development environment",
+      "slug": "constrained-ram-in-an-application-development-environment",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-04T19:00:59.341Z",
+      "last_posted_at": "2018-12-28T16:56:52.931Z",
+      "bumped": true,
+      "bumped_at": "2018-12-28T16:56:52.931Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1262,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 227,
+            "username": "jweir",
+            "name": "John Weir",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jweir/{size}/196_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB RAM requirements",
+      "id": 1646,
+      "title": "FoundationDB RAM requirements",
+      "slug": "foundationdb-ram-requirements",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-09-23T20:18:31.261Z",
+      "last_posted_at": "2019-09-24T20:43:40.869Z",
+      "bumped": true,
+      "bumped_at": "2019-09-24T20:43:40.869Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2036,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 654,
+            "username": "lfmunoz",
+            "name": "Luis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lfmunoz/{size}/1109_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "1Gbps or 10Gbps network cards?",
+      "id": 1193,
+      "title": "1Gbps or 10Gbps network cards?",
+      "slug": "1gbps-or-10gbps-network-cards",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-03-03T16:42:29.610Z",
+      "last_posted_at": "2019-03-05T20:46:21.015Z",
+      "bumped": true,
+      "bumped_at": "2019-03-05T20:46:21.015Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 900,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cluster tuning cookbook",
+      "id": 520,
+      "title": "Cluster tuning cookbook",
+      "slug": "cluster-tuning-cookbook",
+      "posts_count": 27,
+      "reply_count": 19,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-06-19T14:35:25.802Z",
+      "last_posted_at": "2019-02-01T12:38:24.733Z",
+      "bumped": true,
+      "bumped_at": "2019-02-01T12:38:24.733Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 8885,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 310,
+            "username": "shamatar",
+            "name": "Alexander",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/shamatar/{size}/315_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 502,
+            "username": "nikolas.ioannou",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/5daacb/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Keyspace partitions &amp; performance",
+      "id": 168,
+      "title": "Keyspace partitions & performance",
+      "slug": "keyspace-partitions-performance",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-21T05:03:54.670Z",
+      "last_posted_at": "2018-04-22T03:29:31.049Z",
+      "bumped": true,
+      "bumped_at": "2018-04-22T03:29:31.049Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 5892,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 14,
+        "username": "andrew.noyes",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 41,
+        "username": "amirouche",
+        "name": "Amirouche",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 946,
+        "username": "rajivr",
+        "name": "Rajiv M Ranganath",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1132,
+        "username": "pedrolamarao",
+        "name": "Pedro Lamar\u00e3o",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pedrolamarao/{size}/1375_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1132,
+      "username": "pedrolamarao",
+      "name": "Pedro Lamar\u00e3o",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pedrolamarao/{size}/1375_2.png"
+    },
+    "last_poster": {
+      "id": 14,
+      "username": "andrew.noyes",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png"
+    }
+  },
+  "bookmarks": []
+}

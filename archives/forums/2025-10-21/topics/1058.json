@@ -1,0 +1,694 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 3108,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2019-01-24T23:03:42.452Z",
+        "cooked": "<p>We\u2019d like to announce some planned C API changes for the upcoming 6.1 release that will in particular affect users of the C API (e.g. bindings writers). While code written against API version 600 will continue to work in 6.1, you will not be able to support API version 610 until you have adopted these changes. I don\u2019t currently have a timeline for the release of 6.1.</p>\n<p>The general idea behind these changes is to eliminate the Cluster object from our API, requiring users to directly create a Database instead. I believe the original purpose of the Cluster was to allow opening multiple named databases, but this feature is not implemented and the only database name supported is \u2018DB\u2019. There are no plans to support multiple named databases, so we are opting to simplify the API going forward.</p>\n<p>More specifically, the changes affecting the C bindings are as follows:</p>\n<ul>\n<li>\n<code>fdb_create_cluster</code>, <code>fdb_cluster_create_database</code>, <code>fdb_cluster_set_option</code>, <code>fdb_cluster_destroy</code>, and <code>fdb_future_get_cluster</code> have all been removed.</li>\n<li>Added <code>fdb_create_database</code> that creates a new <code>FDBDatabase</code> object synchronously and removed <code>fdb_future_get_database</code>\n</li>\n</ul>\n<p>To see the release notes for this change, which also detail the API changes for the bindings that are part of this repository, see <a href=\"https://github.com/ajbeamon/foundationdb/blob/65aa5105c7799c963ced720308c13cbd8bcb4fdb/documentation/sphinx/source/release-notes.rst#bindings\" rel=\"nofollow noopener\">here</a>.</p>\n<p>If interested, you can reference the updates in these bindings to see how the C API changes were incorporated and how backward compatibility was maintained (with a minor exception in the Java bindings). The full pull request is <a href=\"https://github.com/apple/foundationdb/pull/942/files#diff-2927cadd8197b4434a7c5567c5752ebc\" rel=\"nofollow noopener\">here</a>. The changes have been merged in to the master branch, so you can begin testing your code with them immediately.</p>\n<p>If you have any questions about how to incorporate these changes or concerns about the new API, feel free to ask them here.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-01-24T23:03:42.452Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 124,
+        "reads": 60,
+        "readers_count": 59,
+        "score": 692.0,
+        "yours": false,
+        "topic_id": 1058,
+        "topic_slug": "upcoming-c-api-changes-planned-for-version-6-1",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/ajbeamon/foundationdb/blob/65aa5105c7799c963ced720308c13cbd8bcb4fdb/documentation/sphinx/source/release-notes.rst#bindings",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/release-notes.rst at 65aa5105c7799c963ced720308c13cbd8bcb4fdb \u00b7 ajbeamon/foundationdb \u00b7 GitHub",
+            "clicks": 23
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/pull/942/files#diff-2927cadd8197b4434a7c5567c5752ebc",
+            "internal": false,
+            "reflection": false,
+            "title": "Remove cluster from bindings by ajbeamon \u00b7 Pull Request #942 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 12
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 4
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/upcoming-c-api-changes-planned-for-version-6-1/1058/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 3715,
+        "name": "",
+        "username": "doublemax",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+        "created_at": "2019-03-22T08:49:02.044Z",
+        "cooked": "<p>Since you have re-design \u2018fdb_create_database()\u2019:<br>\nMaybe it would be possible to pass \u201cfdb.cluster\u201d via memory?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-03-22T08:49:02.044Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 36,
+        "readers_count": 35,
+        "score": 17.2,
+        "yours": false,
+        "topic_id": 1058,
+        "topic_slug": "upcoming-c-api-changes-planned-for-version-6-1",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 419,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/upcoming-c-api-changes-planned-for-version-6-1/1058/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 3730,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2019-03-25T15:49:43.511Z",
+        "cooked": "<p>I can see the appeal of making changes to the API simultaneously, but I don\u2019t think that this feature will be able to land in time for that to happen. It\u2019s something that I think requires some discussion to make sure that we\u2019re happy with what we end up with, but it\u2019s not currently in the priority list for things to be changed in 6.1, and I don\u2019t believe we intend to add much else to that release that\u2019s not currently in the roadmap for it.</p>\n<p>My hope is that this won\u2019t be too big of a deal API-wise, though, because this proposed feature would be an addition rather than a change.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-03-25T15:49:43.511Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 6.4,
+        "yours": false,
+        "topic_id": 1058,
+        "topic_slug": "upcoming-c-api-changes-planned-for-version-6-1",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 419,
+          "username": "doublemax",
+          "name": "",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/upcoming-c-api-changes-planned-for-version-6-1/1058/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      3108,
+      3715,
+      3730
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2462
+    ],
+    [
+      2,
+      2406
+    ],
+    [
+      3,
+      2402
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Upcoming C API changes planned for version 6.1",
+  "id": 1058,
+  "title": "Upcoming C API changes planned for version 6.1",
+  "posts_count": 3,
+  "created_at": "2019-01-24T23:03:42.319Z",
+  "views": 1987,
+  "reply_count": 1,
+  "like_count": 4,
+  "last_posted_at": "2019-03-25T15:49:43.511Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "upcoming-c-api-changes-planned-for-version-6-1",
+  "category_id": 9,
+  "word_count": 446,
+  "deleted_at": null,
+  "user_id": 12,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1058",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Will there be any new client API in 7.0?",
+      "id": 1915,
+      "title": "Will there be any new client API in 7.0?",
+      "slug": "will-there-be-any-new-client-api-in-7-0",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-01-28T14:35:10.495Z",
+      "last_posted_at": "2020-01-30T19:39:58.886Z",
+      "bumped": true,
+      "bumped_at": "2020-01-30T19:39:58.886Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 903,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "id": 437,
+      "title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "slug": "new-api-to-get-the-version-of-a-running-cluster-without-needing-a-matching-libfdb-c-library",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-05-19T12:26:50.509Z",
+      "last_posted_at": "2018-05-21T19:33:34.145Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T19:33:34.145Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2729,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "About Namespace in C client",
+      "id": 698,
+      "title": "About Namespace in C client",
+      "slug": "about-namespace-in-c-client",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-09-12T20:35:45.364Z",
+      "last_posted_at": "2018-09-14T19:52:03.412Z",
+      "bumped": true,
+      "bumped_at": "2018-09-14T19:52:03.412Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1172,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 370,
+            "username": "xli2227",
+            "name": "Xiaoyang Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/3d9bf3/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "6.1: &lsquo;fdb_create_database()&rsquo; without &lsquo;fdb.cluster&rsquo;",
+      "id": 1237,
+      "title": "6.1: 'fdb_create_database()' without 'fdb.cluster'",
+      "slug": "6-1-fdb-create-database-without-fdb-cluster",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-03-19T17:39:38.119Z",
+      "last_posted_at": "2019-03-19T19:29:57.937Z",
+      "bumped": true,
+      "bumped_at": "2019-03-19T19:29:57.937Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1022,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Client library backwards compatibility issues",
+      "id": 919,
+      "title": "Client library backwards compatibility issues",
+      "slug": "client-library-backwards-compatibility-issues",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-30T16:17:55.490Z",
+      "last_posted_at": "2018-11-30T19:21:19.862Z",
+      "bumped": true,
+      "bumped_at": "2018-11-30T19:21:19.862Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1325,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 419,
+        "username": "doublemax",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/ajbeamon/foundationdb/blob/65aa5105c7799c963ced720308c13cbd8bcb4fdb/documentation/sphinx/source/release-notes.rst#bindings",
+        "title": "foundationdb/release-notes.rst at 65aa5105c7799c963ced720308c13cbd8bcb4fdb \u00b7 ajbeamon/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 23,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/pull/942/files#diff-2927cadd8197b4434a7c5567c5752ebc",
+        "title": "Remove cluster from bindings by ajbeamon \u00b7 Pull Request #942 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 12,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

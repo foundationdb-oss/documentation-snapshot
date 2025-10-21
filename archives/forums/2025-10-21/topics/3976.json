@@ -1,0 +1,936 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12875,
+        "name": "Manuel Fontan",
+        "username": "manfontan",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png",
+        "created_at": "2023-05-24T11:03:46.696Z",
+        "cooked": "<p>Hi FDB Team,</p>\n<p>I am opening this topic to bring some light to some existing conversations.</p>\n<p>Current build and dev docker files for foundationdb are based on CentOS7 which is EOL. Making it harder to handle CVEs.<br>\nAlso the Dockerfiles seem to include a number of packages that are intended for development or debugging increasing the attack surface.</p>\n<p><a href=\"https://github.com/apple/foundationdb/blob/16df5a85174cbead534ed0991c97b7d2e385c663/packaging/docker/Dockerfile#L19\" rel=\"noopener nofollow ugc\">packaging/docker/Dockerfile#L19</a></p>\n<p>There are some open issues regarding this topic but they seem to be dormant:</p>\n<p><a href=\"https://github.com/apple/foundationdb/issues/4124\" rel=\"noopener nofollow ugc\">foundationdb &gt; issue #4124</a></p>\n<p><a href=\"https://github.com/FoundationDB/fdb-build-support/issues/25\" rel=\"noopener nofollow ugc\">fdb-build-support &gt; Issue #25</a></p>\n<p>A quick improvement would be moving to an active base image like AlmaLinux etc. As suggested in the issues. Are there any ongoing efforts to address this?</p>\n<p>Additionally listing required and optional dependencies would be nice to allow custom builds.</p>\n<p>For production environments it would be nice to have a minimal base image like <a href=\"https://github.com/GoogleContainerTools/distroless\" rel=\"noopener nofollow ugc\">distroless</a></p>\n<p>Dev and Debug tooling could be added in a debug image or using <a href=\"https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/\" rel=\"noopener nofollow ugc\">Ephemeral Containers</a></p>\n<p>Thank you very much for your time. We are looking for your feedback.</p>\n<p>Happy coding <img src=\"https://emoji.discourse-cdn.com/twitter/technologist.png?v=12\" title=\":technologist:\" class=\"emoji\" alt=\":technologist:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2023-05-24T11:10:35.140Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 111,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 574.6,
+        "yours": false,
+        "topic_id": 3976,
+        "topic_slug": "dockerfiles-base-image-update-centos-eol",
+        "display_username": "Manuel Fontan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/16df5a85174cbead534ed0991c97b7d2e385c663/packaging/docker/Dockerfile#L19",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/Dockerfile at 16df5a85174cbead534ed0991c97b7d2e385c663 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 6
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/issues/4124",
+            "internal": false,
+            "reflection": false,
+            "title": "Update Build Docker Repositories \u00b7 Issue #4124 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 5
+          },
+          {
+            "url": "https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/",
+            "internal": false,
+            "reflection": false,
+            "title": "Ephemeral Containers | Kubernetes",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-build-support/issues/25",
+            "internal": false,
+            "reflection": false,
+            "title": "Find next linux base os for build images \u00b7 Issue #25 \u00b7 FoundationDB/fdb-build-support \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/GoogleContainerTools/distroless",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - GoogleContainerTools/distroless: \ud83e\udd51 Language focused docker images, minus the operating system.",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1128,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dockerfiles-base-image-update-centos-eol/3976/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12904,
+        "name": "Aaron Molitor",
+        "username": "ammolitor",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ammolitor/{size}/1050_2.png",
+        "created_at": "2023-05-31T16:43:17.811Z",
+        "cooked": "<p>I\u2019ve had this on my list for a while now. The current next step will (most likely) be the redhat/ubi9 images, but that remains to be proven empirically. I am targeting Q3 2023 to actively work on this.</p>\n<p>If you\u2019re looking for something more modern OS (Ubuntu, Fedora, etc.), or a pattern that can be followed for other OS\u2019s, I\u2019d be glad to provide feedback on PRs in <a href=\"https://github.com/FoundationDB/fdb-build-support\">fdb-build-support</a></p>\n<p>As for the runtime images, I\u2019m not familiar enough with the FDB tooling (the fdb-kubernetes-operator, etc.) to say whether a distroless image is viable. I do agree that there are more tools in the runtime image than are truly necessary for execution, I think removing the tools packages and adding a debug type layer to that image would be useful.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2023-05-31T16:43:17.811Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 23.2,
+        "yours": false,
+        "topic_id": 3976,
+        "topic_slug": "dockerfiles-base-image-update-centos-eol",
+        "display_username": "Aaron Molitor",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-build-support",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-build-support: FoundationDB build and development resources",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 910,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dockerfiles-base-image-update-centos-eol/3976/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12906,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2023-06-01T06:30:40.227Z",
+        "cooked": "<blockquote>\n<p>I\u2019ve had this on my list for a while now. The current next step will (most likely) be the redhat/ubi9 images, but that remains to be proven empirically. I am targeting Q3 2023 to actively work on this.</p>\n</blockquote>\n<blockquote>\n<p>If you\u2019re looking for something more modern OS (Ubuntu, Fedora, etc.), or a pattern that can be followed for other OS\u2019s, I\u2019d be glad to provide feedback on PRs in <a href=\"https://github.com/FoundationDB/fdb-build-support\" rel=\"noopener nofollow ugc\">fdb-build-support</a></p>\n</blockquote>\n<blockquote>\n<p>As for the runtime images, I\u2019m not familiar enough with the FDB tooling (the fdb-kubernetes-operator, etc.) to say whether a distroless image is viable. I do agree that there are more tools in the runtime image than are truly necessary for execution, I think removing the tools packages and adding a debug type layer to that image would be useful.</p>\n</blockquote>\n<p>The operator already has a distress version: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/.github/workflows/release.yaml#L78\" rel=\"noopener nofollow ugc\">https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/.github/workflows/release.yaml#L78</a>. As the distroless images are based on Debian the operator uses Debian as a base image in the normal setup. It probably makes sense to test if we are able to provide \u201cnormal\u201d and distroless images for FDB. Happy to chat about that and help if needed <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=12\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2023-06-01T06:30:40.227Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 33.2,
+        "yours": false,
+        "topic_id": 3976,
+        "topic_slug": "dockerfiles-base-image-update-centos-eol",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/.github/workflows/release.yaml#L78",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/release.yaml at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-build-support",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-build-support: FoundationDB build and development resources",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 910,
+          "username": "ammolitor",
+          "name": "Aaron Molitor",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ammolitor/{size}/1050_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dockerfiles-base-image-update-centos-eol/3976/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13159,
+        "name": "Manuel Fontan",
+        "username": "manfontan",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png",
+        "created_at": "2023-08-10T12:19:35.904Z",
+        "cooked": "<p>Hi <a class=\"mention\" href=\"/u/ammolitor\">@ammolitor</a> any updates on this?</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2023-08-10T12:19:35.904Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 3976,
+        "topic_slug": "dockerfiles-base-image-update-centos-eol",
+        "display_username": "Manuel Fontan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1128,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/dockerfiles-base-image-update-centos-eol/3976/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12875,
+      12904,
+      12906,
+      13159
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      881
+    ],
+    [
+      2,
+      874
+    ],
+    [
+      4,
+      803
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Dockerfiles base image update CentOS EOL",
+  "id": 3976,
+  "title": "Dockerfiles base image update CentOS EOL",
+  "posts_count": 4,
+  "created_at": "2023-05-24T11:03:46.619Z",
+  "views": 440,
+  "reply_count": 1,
+  "like_count": 3,
+  "last_posted_at": "2023-08-10T12:19:35.904Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "dockerfiles-base-image-update-centos-eol",
+  "category_id": 17,
+  "word_count": 578,
+  "deleted_at": null,
+  "user_id": 1128,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3976",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Dockerized deployment",
+      "id": 1561,
+      "title": "Dockerized deployment",
+      "slug": "dockerized-deployment",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-08-05T20:20:23.097Z",
+      "last_posted_at": "2019-10-14T17:29:21.819Z",
+      "bumped": true,
+      "bumped_at": "2019-10-14T17:29:21.819Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 4402,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 307,
+            "username": "jwr",
+            "name": "Jan Rychter",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwr/{size}/302_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 372,
+            "username": "seancarroll",
+            "name": "Sean Carroll",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to build a docker image for production?",
+      "id": 1396,
+      "title": "How to build a docker image for production?",
+      "slug": "how-to-build-a-docker-image-for-production",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-27T20:30:35.775Z",
+      "last_posted_at": "2019-06-01T00:54:34.253Z",
+      "bumped": true,
+      "bumped_at": "2019-06-01T00:54:34.253Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 672,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 551,
+            "username": "falsandtru",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/falsandtru/{size}/546_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Simple Dockerfile",
+      "id": 280,
+      "title": "Simple Dockerfile",
+      "slug": "simple-dockerfile",
+      "posts_count": 17,
+      "reply_count": 10,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-04-26T09:05:55.151Z",
+      "last_posted_at": "2018-10-16T20:26:01.085Z",
+      "bumped": true,
+      "bumped_at": "2018-10-16T20:26:01.085Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 8840,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 256,
+            "username": "bjrnio",
+            "name": "Ricard Bejarano",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bjrnio/{size}/235_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 392,
+            "username": "pavibhai",
+            "name": "Pavan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/e56c9b/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB on NixOS: packaging, notes and questions",
+      "id": 251,
+      "title": "FoundationDB on NixOS: packaging, notes and questions",
+      "slug": "foundationdb-on-nixos-packaging-notes-and-questions",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-24T20:01:29.570Z",
+      "last_posted_at": "2018-04-25T22:03:31.681Z",
+      "bumped": true,
+      "bumped_at": "2018-04-25T22:03:31.681Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2219,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB Usage Poll",
+      "id": 460,
+      "title": "FoundationDB Usage Poll",
+      "slug": "foundationdb-usage-poll",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-23T21:22:03.664Z",
+      "last_posted_at": "2018-05-31T08:36:51.660Z",
+      "bumped": true,
+      "bumped_at": "2019-06-12T11:28:30.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1905,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 230,
+            "username": "umpc",
+            "name": "Justin Lowery",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1128,
+        "username": "manfontan",
+        "name": "Manuel Fontan",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 910,
+        "username": "ammolitor",
+        "name": "Aaron Molitor",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ammolitor/{size}/1050_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1128,
+      "username": "manfontan",
+      "name": "Manuel Fontan",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png"
+    },
+    "last_poster": {
+      "id": 1128,
+      "username": "manfontan",
+      "name": "Manuel Fontan",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/16df5a85174cbead534ed0991c97b7d2e385c663/packaging/docker/Dockerfile#L19",
+        "title": "foundationdb/Dockerfile at 16df5a85174cbead534ed0991c97b7d2e385c663 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 1128,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/issues/4124",
+        "title": "Update Build Docker Repositories \u00b7 Issue #4124 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 1128,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-build-support",
+        "title": "GitHub - FoundationDB/fdb-build-support: FoundationDB build and development resources",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-build-support/issues/25",
+        "title": "Find next linux base os for build images \u00b7 Issue #25 \u00b7 FoundationDB/fdb-build-support \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1128,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/",
+        "title": "Ephemeral Containers | Kubernetes",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1128,
+        "domain": "kubernetes.io",
+        "root_domain": "kubernetes.io"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/.github/workflows/release.yaml#L78",
+        "title": "fdb-kubernetes-operator/release.yaml at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/GoogleContainerTools/distroless",
+        "title": "GitHub - GoogleContainerTools/distroless: \ud83e\udd51 Language focused docker images, minus the operating system.",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1128,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

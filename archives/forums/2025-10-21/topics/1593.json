@@ -1,0 +1,699 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4945,
+        "name": "",
+        "username": "pH14",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+        "created_at": "2019-08-26T14:26:04.019Z",
+        "cooked": "<p>Not totally sure where to ask this, but I thought the FDB crowd might have ideas <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=9\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"> is anyone familiar with other interesting systems that use variants of simulation / deterministic testing? Will Wilson\u2019s talk (<a href=\"https://www.youtube.com/watch?v=4fFDFbi3toc\" rel=\"nofollow noopener\">https://www.youtube.com/watch?v=4fFDFbi3toc</a>) remains one of my favorites, and I\u2019m curious to gather more data points in how to practically integrate those ideas into applications.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-08-26T14:26:04.019Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 512,
+        "reads": 40,
+        "readers_count": 39,
+        "score": 2590.0,
+        "yours": false,
+        "topic_id": 1593,
+        "topic_slug": "systems-using-simulation-testing",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://www.youtube.com/watch?v=4fFDFbi3toc",
+            "internal": false,
+            "reflection": false,
+            "title": "YouTube",
+            "clicks": 57
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 113,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/systems-using-simulation-testing/1593/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4946,
+        "name": "Ryan Worl",
+        "username": "ryanworl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "created_at": "2019-08-26T15:02:52.362Z",
+        "cooked": "<p>I found this while researching if the Go scheduler could do this kind of thing. According to the author\u2019s LinkedIn profile, he worked at LeftHand Networks from 2006-2008, which made a SAN product and was acquired by HP.</p>\n<p>It is actually a bit funny how close the description of the benefits for FDB from various people match the author\u2019s descriptions here. A SAN and a database are pretty similar if you squint, so it makes sense why they would take this approach.</p>\n<blockquote>\n<p><strong>Larry Ruane</strong></p>\n<p>This is more difficult than just implementing deterministic scheduling \u2013  <em>all</em>  sources of nondeterminism must be eliminated. I worked on a complex distributed block-level storage product (written in C) that supported this kind of pseudo-random testing. We had to simulate (mock) all interactions with the outside world, including networking, file access and, most importantly,  <em>time</em> itself. The network and files were simulated using memory buffers. The entire simulated cluster of nodes ran within a single executable (one address space, one scheduler), which was single-threaded (we didn\u2019t use threads since we had no deterministic thread scheduler, among other reasons). Each fake network message and file IO access would appear to take a (pseudo) random variable amount of time. The scheduler (which was specific to this test mode) would use a priority queue to determine at what time the next event (network message arrival, whatever) occurs, and then simply advance the simulated clock to that time. So simulation time usually moved faster than real time!</p>\n<p>Every failure was guaranteed to be reproducible. It was amazing. We ran this test (with different random number generator starting seeds) on racks of systems 24 hours a day. It found many unbelievably subtle timing-window bugs.</p>\n<p>One enormous benefit of doing all this is that, when a failure is found, you can enable (or add) arbitrary amounts of tracing then re-run that seed. You can also add massive amounts of checking / audit code and possibly catch the bug earlier. These changes have no effect on  <em>simulated</em>  time. (I\u2019m sure you\u2019ve all seen the Heisenberg Uncertainty Principle at work when you try to reproduce bugs on a real system with tracing enabled.)</p>\n<p>Your comment, rsc, about not knowing if you\u2019ve fixed the bug is very astute. If necessary to get around this problem, I would actually \u201ctime-bomb\u201d the fix, such that it would only kick in just at the (simulated) moment the wrong decision was made (I knew when that was from tracing output), so the run would reproduce to that exact state, and then I could see it continue from that point okay (or not okay if the fix didn\u2019t work or had some bad side-effect).</p>\n<p>Since becoming interested in Go, I\u2019ve thought about this very idea, but I agree that it\u2019s a huge project, plus it takes significant forethought when designing the code. It would be great, though.</p>\n</blockquote>\n<p>Source: <a href=\"https://github.com/golang/go/issues/21916#issuecomment-363620901\" class=\"inline-onebox\">proposal: deterministic multithreading \u00b7 Issue #21916 \u00b7 golang/go \u00b7 GitHub</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-08-26T15:05:51.539Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 57,
+        "reads": 43,
+        "readers_count": 42,
+        "score": 313.6,
+        "yours": false,
+        "topic_id": 1593,
+        "topic_slug": "systems-using-simulation-testing",
+        "display_username": "Ryan Worl",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/golang/go/issues/21916#issuecomment-363620901",
+            "internal": false,
+            "reflection": false,
+            "title": "proposal: deterministic multithreading \u00b7 Issue #21916 \u00b7 golang/go \u00b7 GitHub",
+            "clicks": 29
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 81,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/systems-using-simulation-testing/1593/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 4956,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-08-27T05:37:43.880Z",
+        "cooked": "<p><a href=\"https://github.com/osrg/namazu\" rel=\"nofollow noopener\">https://github.com/osrg/namazu</a> also exists, which can do sort of simulation-like testing of systems that weren\u2019t written for it.</p>\n<p>There\u2019s a few random database/storage startup people that I\u2019ve talked to over time that have built some amount of a simulation-like system, but none of them open and released or something I could point at.</p>\n<p>It is relatively common to build something simulation-like for verifying paxos/raft implementations, but it\u2019s generally not extended to the whole system.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-08-27T05:37:59.791Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 41,
+        "readers_count": 40,
+        "score": 38.2,
+        "yours": false,
+        "topic_id": 1593,
+        "topic_slug": "systems-using-simulation-testing",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/osrg/namazu",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - osrg/namazu: \u9bf0: Programmable fuzzy scheduler for testing distributed systems",
+            "clicks": 93
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 81,
+          "username": "ryanworl",
+          "name": "Ryan Worl",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/systems-using-simulation-testing/1593/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4945,
+      4946,
+      4956
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2248
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Systems using simulation testing",
+  "id": 1593,
+  "title": "Systems using simulation testing",
+  "posts_count": 3,
+  "created_at": "2019-08-26T14:26:03.960Z",
+  "views": 1411,
+  "reply_count": 1,
+  "like_count": 2,
+  "last_posted_at": "2019-08-27T05:37:43.880Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "systems-using-simulation-testing",
+  "category_id": 7,
+  "word_count": 653,
+  "deleted_at": null,
+  "user_id": 113,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1593",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FDB Simulate with fdbserver - documentation?",
+      "id": 1594,
+      "title": "FDB Simulate with fdbserver - documentation?",
+      "slug": "fdb-simulate-with-fdbserver-documentation",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-08-26T18:23:33.098Z",
+      "last_posted_at": "2019-08-26T18:42:19.426Z",
+      "bumped": true,
+      "bumped_at": "2019-08-26T18:42:19.426Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 818,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 596,
+            "username": "JoeD",
+            "name": "Joe D",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Simulation of disk I/O",
+      "id": 2937,
+      "title": "Simulation of disk I/O",
+      "slug": "simulation-of-disk-i-o",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2021-10-11T06:00:45.013Z",
+      "last_posted_at": "2021-10-11T17:18:46.884Z",
+      "bumped": true,
+      "bumped_at": "2021-10-11T17:18:46.884Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 402,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1011,
+            "username": "Sean",
+            "name": "Sean McCauliff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sean/{size}/1198_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Show the FDB Forums: prototyping simulation runs on Kubernetes",
+      "id": 1357,
+      "title": "Show the FDB Forums: prototyping simulation runs on Kubernetes",
+      "slug": "show-the-fdb-forums-prototyping-simulation-runs-on-kubernetes",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-13T15:01:31.101Z",
+      "last_posted_at": "2019-05-13T20:44:25.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-13T20:44:25.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1046,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Run nightly tests before pull-request submission",
+      "id": 451,
+      "title": "Run nightly tests before pull-request submission",
+      "slug": "run-nightly-tests-before-pull-request-submission",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-22T14:32:19.639Z",
+      "last_posted_at": "2018-05-31T16:25:36.662Z",
+      "bumped": true,
+      "bumped_at": "2018-05-31T16:25:36.662Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1238,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 277,
+            "username": "mghandevosya",
+            "name": "Marine Ghandevosyan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/b38774/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A precise test oracle for FoundationDB simulation workloads",
+      "id": 289,
+      "title": "A precise test oracle for FoundationDB simulation workloads",
+      "slug": "a-precise-test-oracle-for-foundationdb-simulation-workloads",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-04-27T14:04:16.394Z",
+      "last_posted_at": "2018-04-30T00:17:47.601Z",
+      "bumped": true,
+      "bumped_at": "2018-04-30T00:20:48.970Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1249,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 81,
+        "username": "ryanworl",
+        "name": "Ryan Worl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 3
+      },
+      {
+        "id": 113,
+        "username": "pH14",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 113,
+      "username": "pH14",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png"
+    },
+    "last_poster": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/osrg/namazu",
+        "title": "GitHub - osrg/namazu: \u9bf0: Programmable fuzzy scheduler for testing distributed systems",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 93,
+        "user_id": 13,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=4fFDFbi3toc",
+        "title": "YouTube",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 57,
+        "user_id": 113,
+        "domain": "www.youtube.com",
+        "root_domain": "youtube.com"
+      },
+      {
+        "url": "https://github.com/golang/go/issues/21916#issuecomment-363620901",
+        "title": "proposal: deterministic multithreading \u00b7 Issue #21916 \u00b7 golang/go \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 29,
+        "user_id": 81,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

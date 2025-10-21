@@ -1,0 +1,517 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 6921,
+        "name": "Chaoguang",
+        "username": "zjuLcg",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/zjulcg/{size}/652_2.png",
+        "created_at": "2020-05-07T02:10:12.793Z",
+        "cooked": "<p>Right now, the management API can only be called through <em>fdbcli</em>. We plan to expose some of them through the <a href=\"https://github.com/apple/foundationdb/blob/master/design/special-key-space.md\" rel=\"nofollow noopener\">special-key-space</a>, which makes it possible to use multi-version clients for the management API. There are many configuration commands in <em>fdbcli</em> able to expose through special-key-space like <code>include, exclude, setclass</code> as they are transactional-based. Since the current implementation of special-key-space is transactional-based, any commands not completed through a transaction object is not able to do so.</p>\n<p>Now we come to the design for the schema of each management command. Let\u2019s take <code>include</code> and <code>exclude</code> as the start point. If we can agree on how to encode these two, then other commands should follow the same way.</p>\n<p>The current <em>fdbcli</em> command for <code>exclude</code> and <code>include</code>:<br>\n<code>exclude [FORCE] [failed] [no_wait] &lt;ADDRESS&gt;*</code><br>\n<code>include all|&lt;ADDRESS&gt;*</code></p>\n<p>Our proposal is to map <code>exclude &lt;ADDRESS&gt;*</code> to a <em>set</em> fdb call like:<br>\n<code>set(\"\\xff\\xff/configuration/exclude/&lt;ADDRESS&gt;*\" , \"true if failed | false\")</code><br>\nIn this case, the <em>include all</em> command is translated into:<br>\n<code>clearrange(\"\\xff\\xff/configuartion/exclude\", \"\\xff\\xff/configuaration/exclude0\")</code><br>\nand <em>include &lt;ADDRESS&gt;*</em> is translated into:<br>\n<code>clear(\"\\xff\\xff/configuration/exclude/&lt;ADDRESS&gt;*\")</code><br>\nFor <em>include &lt;IP&gt;</em>, it comes with<br>\n<code>clearrange(\"\\xff\\xff/configuration/exclude/&lt;IP&gt;\", \"\\xff\\xff/configuration/exclude/&lt;IP&gt;\\xff\")</code><br>\nFor <em>exclude</em> , which lists all excluded servers:<br>\n<code>getrange(\"\\xff\\xff/configuration/exclude\", \"\\xff\\xff/configuration/exclude0\")</code></p>\n<p>Similarly, <em>setclass  &lt;unset|storage|transaction|default&gt;</em> is formatted as:<br>\n<code>set(\"\\xff\\xff/configuration/class/&lt;ADDRESS&gt;\", &lt;unset|storage|transaction|default&gt;)</code></p>\n<p>However, by doing this, we are actually always doing <code>exclude</code> with <code>no_wait</code> flag and it is also unable to specify the <code>FORCE</code> flag in the <code>set</code> statement since the <code>set</code> is happening locally. In general, the way described above is not well-defined to specify optional flags like <code>FORCE</code> <code>no_wait</code> for the command.</p>\n<p>The design of the schema needs discussion. Any questions, ideas or comments will be super helpful.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2020-05-07T02:16:57.280Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 34,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 188.4,
+        "yours": false,
+        "topic_id": 2106,
+        "topic_slug": "expose-the-management-api-through-the-special-key-space",
+        "display_username": "Chaoguang",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/master/design/special-key-space.md",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/special-key-space.md at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 561,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/expose-the-management-api-through-the-special-key-space/2106/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      6921
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1994
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Expose the management API through the special-key-space",
+  "id": 2106,
+  "title": "Expose the management API through the special-key-space",
+  "posts_count": 1,
+  "created_at": "2020-05-07T02:10:12.733Z",
+  "views": 553,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2020-05-07T02:10:12.793Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "expose-the-management-api-through-the-special-key-space",
+  "category_id": 5,
+  "word_count": 330,
+  "deleted_at": null,
+  "user_id": 561,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2106",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Permanently remove excluded IP addresses",
+      "id": 1586,
+      "title": "Permanently remove excluded IP addresses",
+      "slug": "permanently-remove-excluded-ip-addresses",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-08-16T23:12:27.226Z",
+      "last_posted_at": "2019-08-20T01:06:57.823Z",
+      "bumped": true,
+      "bumped_at": "2019-08-20T01:06:57.823Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 632,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 629,
+            "username": "Sraw",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/a88e57/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "\\xFF\\xFF/status/json and &hellip;.?",
+      "id": 1709,
+      "title": "\\xFF\\xFF/status/json and ....?",
+      "slug": "xff-xff-status-json-and",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-10-31T08:04:22.800Z",
+      "last_posted_at": "2019-10-31T13:52:07.429Z",
+      "bumped": true,
+      "bumped_at": "2019-10-31T13:52:07.429Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 788,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 675,
+            "username": "dangerousvasil",
+            "name": "Vasiliy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dangerousvasil/{size}/992_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Versioning of special key space",
+      "id": 2068,
+      "title": "Versioning of special key space",
+      "slug": "versioning-of-special-key-space",
+      "posts_count": 62,
+      "reply_count": 45,
+      "highest_post_number": 62,
+      "image_url": null,
+      "created_at": "2020-04-15T16:53:38.751Z",
+      "last_posted_at": "2020-04-20T19:05:34.342Z",
+      "bumped": true,
+      "bumped_at": "2020-04-20T19:05:34.342Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 13,
+      "views": 2599,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 561,
+            "username": "zjuLcg",
+            "name": "Chaoguang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zjulcg/{size}/652_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 758,
+            "username": "TWarszawski",
+            "name": "Todd Warszawski",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/3ec8ea/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 708,
+            "username": "gabikliot",
+            "name": "Gabriel Kliot",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/gabikliot/{size}/749_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB Status as JSON",
+      "id": 374,
+      "title": "FoundationDB Status as JSON",
+      "slug": "foundationdb-status-as-json",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-05-08T05:52:54.393Z",
+      "last_posted_at": "2018-05-08T05:52:54.507Z",
+      "bumped": true,
+      "bumped_at": "2018-05-08T05:52:54.507Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 789,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Creating new database from command line using `fdbcli &ndash;exec`",
+      "id": 1735,
+      "title": "Creating new database from command line using `fdbcli --exec`",
+      "slug": "creating-new-database-from-command-line-using-fdbcli-exec",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-11-14T18:52:06.236Z",
+      "last_posted_at": "2019-11-14T20:53:04.485Z",
+      "bumped": true,
+      "bumped_at": "2019-11-14T20:53:04.485Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2474,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 660,
+            "username": "kc626",
+            "name": "Kevin Chan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/k/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 561,
+        "username": "zjuLcg",
+        "name": "Chaoguang",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/zjulcg/{size}/652_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 561,
+      "username": "zjuLcg",
+      "name": "Chaoguang",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/zjulcg/{size}/652_2.png"
+    },
+    "last_poster": {
+      "id": 561,
+      "username": "zjuLcg",
+      "name": "Chaoguang",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/zjulcg/{size}/652_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/master/design/special-key-space.md",
+        "title": "foundationdb/special-key-space.md at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 561,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

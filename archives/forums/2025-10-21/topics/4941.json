@@ -1,0 +1,513 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14992,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2025-06-12T19:05:23.110Z",
+        "cooked": "<p>I\u2019ve got the most simple \u2018snapshot\u2019 script. It\u2019s not actually <em>doing</em> any snapshotting, I\u2019m just trying to get something in there as a base doing some logging so I can see how it\u2019s being called by FDB etc.</p>\n<p>So my script exists on every host, and just contains the following:</p>\n<pre><code class=\"lang-auto\">#!/bin/sh\n\nLOG=\"/opt/snapshot/logs/unknown.log\"\n\necho \"Unparsed args: $@\" &gt;&gt; \"${LOG}\"\n\nexit 0\n</code></pre>\n<p>For testing, the file is executable by any user, and the log dir is writable by any user:</p>\n<pre><code class=\"lang-auto\">$ ls -lah /opt/snapshot/\ntotal 4.0K\ndrwxr-xr-x.  3 root root   33 Jun 12 15:54 .\ndrwxr-xr-x. 10 root root  140 Jun 12 11:17 ..\ndrwxrwxrwx.  2 root root    6 Jun 12 18:44 logs\n-rwxr-xr-x.  1 root root 1.7K Jun 12 18:48 snap.sh\n</code></pre>\n<p>It\u2019s referenced in my <code>foundationdb.conf</code> under <code>whitelist-binpath</code>:</p>\n<pre><code class=\"lang-auto\">[general]\nrestart_delay = 60\n\n[fdbmonitor]\nuser = foundationdb\ngroup = foundationdb\n\n[fdbserver.4500]\nclass = storage\ncluster-file = /mnt/fdb/4500/fdb.cluster\ncommand = /opt/foundationdb/current/bin/fdbserver\ndatadir = /mnt/fdb/4500/data\nlisten-address = public\n...\nlogdir = /var/log/foundationdb\nloggroup = main-dev\npublic-address = auto:4600:tls\n...\ntrace-format = json\nwhitelist-binpath = /opt/snapshot/snap.sh\n</code></pre>\n<p>I can run the script manually on the CLI of any given host, and get the file I expected written to the logs dir with the content I expected.</p>\n<p>But when I try and run it through <code>fdbcli</code>, first of all the CLI seems to hang, and secondly I get an error back saying the cluster isn\u2019t healthy so the snapshot can\u2019t complete:</p>\n<pre><code class=\"lang-auto\">$ fdbcli --exec 'snapshot /opt/snapshot/snap.sh --foo bar'\n\nWARNING: Long delay (Ctrl-C to interrupt)\nSnapshot command failed 2506 (Unsupported when the cluster is not fully recovered). Please cleanup any instance level snapshots created with UID 6f08a1e4ab969e6b5f33ef2c80656d4e.\n</code></pre>\n<p>My log file <em>isn\u2019t</em> written, so it\u2019s like my script isn\u2019t being called at all. Also, if I run <code>fdbcli --exec 'status details'</code> immediately after the snapshot call returns an error, I can see that some of the processes are erroring (they\u2019re not reporting metrics). In this example it\u2019s a <code>stateless</code> class node, so shouldn\u2019t even be <em>trying</em> to run the script, and when I check the process it seems <code>fdbserver</code> crashed and was recreated by <code>fdbmonitor</code>. I\u2019ve also seen <code>storage</code> nodes briefly report lag, but they didn\u2019t crash/restart.</p>\n<pre><code class=\"lang-auto\">$ fdbcli --exec 'status details'\nUsing cluster file `/mnt/fdb/4500/fdb.cluster'.\n\nUnable to retrieve all status information.\n\nConfiguration:\n  Redundancy mode        - three_data_hall\n  Storage engine         - ssd-redwood-1\n  Log engine             - ssd-2\n  Encryption at-rest     - disabled\n  Coordinators           - 9\n  Desired Commit Proxies - 3\n  Desired GRV Proxies    - 1\n  Desired Resolvers      - 1\n  Desired Logs           - 3\n  Usable Regions         - 1\n...\nData:\n  Replication health     - (Re)initializing automatic data distribution\n  Moving data            - unknown (initializing)\n  Sum of key-value sizes - unknown\n  Disk space used        - 1.515 TB\n\nOperating space:\n  Storage server         - 214.5 GB free on most full server\n  Log server             - 94.6 GB free on most full server\n\nWorkload:\n  Read rate              - 108 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 0 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n...\n  10.1.245.254:4600:tls  (  1% cpu;  2% machine; 0.000 Gbps;  0% disk IO; 0.1 GB / 6.5 GB RAM  )\n  10.1.246.11:4600:tls   (no metrics available)\n  10.1.246.11:4601:tls   (  4% cpu; 43% machine; 0.004 Gbps;  0% disk IO; 0.1 GB  )\n...\n\nCoordination servers:\n  (all reachable)\n</code></pre>\n<p>The error in the trace log is:</p>\n<pre><code class=\"lang-auto\">{  \"Severity\": \"40\", \"ErrorKind\": \"BugDetected\", \"Time\": \"1749752867.903873\", \"DateTime\": \"2025-06-12T18:27:47Z\", \"Type\": \"Crash\", \"ID\": \"0000000000000000\", \"Signal\": \"11\", \"Name\": \"Segmentation fault\", \"Trace\": \"addr2line -e fdbserver.debug -p -C -f -i 0x7f1e2523ebf0 0x270d7cc 0x1d0a318 0x1d0a23d 0x27122b8 0x27121b9 0x1d66888 0x1d65ee4 0x1c0cd98 0x1c0ccb7 0x534a1cd 0x5349aa3 0x54fe808 0x329ff99 0x7f1e252295d0\", \"ThreadID\": \"6332857270817026668\", \"Backtrace\": \"addr2line -e fdbserver.debug -p -C -f -i 0x55785ed 0x55788b3 0x5572ab4 0x55402eb 0x7f1e2523ebf0 0x270d7cc 0x1d0a318 0x1d0a23d 0x27122b8 0x27121b9 0x1d66888 0x1d65ee4 0x1c0cd98 0x1c0ccb7 0x534a1cd 0x5349aa3 0x54fe808 0x329ff99 0x7f1e252295d0\", \"Machine\": \"10.1.246.11:4600\", \"LogGroup\": \"main-dev\", \"Roles\": \"CS,DD,MS,RK\" }\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-06-12T19:05:23.110Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 32.6,
+        "yours": false,
+        "topic_id": 4941,
+        "topic_slug": "how-is-the-snapshot-backup-supposed-to-work-and-how-do-i-debug-why-it-is-failing",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-is-the-snapshot-backup-supposed-to-work-and-how-do-i-debug-why-it-is-failing/4941/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      14992
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      131
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How is the snapshot backup supposed to work, and how do I debug why it is failing?",
+  "id": 4941,
+  "title": "How is the snapshot backup supposed to work, and how do I debug why it is failing?",
+  "posts_count": 1,
+  "created_at": "2025-06-12T19:05:23.059Z",
+  "views": 46,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-06-12T19:05:23.110Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-is-the-snapshot-backup-supposed-to-work-and-how-do-i-debug-why-it-is-failing",
+  "category_id": 7,
+  "word_count": 689,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4941",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Snapshot command failed 2501 (Failed to snapshot storage nodes)",
+      "id": 4142,
+      "title": "Snapshot command failed 2501 (Failed to snapshot storage nodes)",
+      "slug": "snapshot-command-failed-2501-failed-to-snapshot-storage-nodes",
+      "posts_count": 11,
+      "reply_count": 8,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2023-09-04T09:44:51.409Z",
+      "last_posted_at": "2023-09-15T10:56:47.732Z",
+      "bumped": true,
+      "bumped_at": "2023-09-15T10:56:47.732Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 390,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1175,
+            "username": "libo-sober",
+            "name": "BoLee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1089,
+            "username": "iyuroch",
+            "name": "Ivan Yurochko",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/iyuroch/{size}/1311_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup using disk snapshots",
+      "id": 1076,
+      "title": "Backup using disk snapshots",
+      "slug": "backup-using-disk-snapshots",
+      "posts_count": 15,
+      "reply_count": 9,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-01-29T12:52:43.232Z",
+      "last_posted_at": "2019-02-14T18:12:56.795Z",
+      "bumped": true,
+      "bumped_at": "2019-02-14T18:12:56.795Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2676,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 360,
+            "username": "bjorndv",
+            "name": "Bj\u00f6rn",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/f05b48/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 417,
+            "username": "lihtnes",
+            "name": "Senthil Ramamoorthy",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/848f3c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to configure fdb",
+      "id": 518,
+      "title": "How to configure fdb",
+      "slug": "how-to-configure-fdb",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-06-19T13:10:32.406Z",
+      "last_posted_at": "2018-06-21T22:18:36.722Z",
+      "bumped": true,
+      "bumped_at": "2018-06-21T22:18:36.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3365,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 275,
+            "username": "vmanukyan",
+            "name": "Vruyr Manukyan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vmanukyan/{size}/329_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backing up the database using `fdbbackup` command returns in an error",
+      "id": 1844,
+      "title": "Backing up the database using `fdbbackup` command returns in an error",
+      "slug": "backing-up-the-database-using-fdbbackup-command-returns-in-an-error",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-16T10:49:12.154Z",
+      "last_posted_at": "2019-12-16T13:54:49.984Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T13:54:49.984Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1069,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Regarding issue faced while running fdbbackup",
+      "id": 1458,
+      "title": "Regarding issue faced while running fdbbackup",
+      "slug": "regarding-issue-faced-while-running-fdbbackup",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-06-17T12:33:04.574Z",
+      "last_posted_at": "2019-12-17T19:51:11.604Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T19:51:11.604Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2007,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 587,
+            "username": "pragawaran",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f07891/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    }
+  },
+  "bookmarks": []
+}

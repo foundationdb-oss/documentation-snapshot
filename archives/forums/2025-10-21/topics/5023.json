@@ -1,0 +1,560 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 15177,
+        "name": "LiKe",
+        "username": "zmylk",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/zmylk/{size}/2013_2.png",
+        "created_at": "2025-08-15T10:03:24.451Z",
+        "cooked": "<p>I suspect this is similar to the question</p><aside class=\"onebox githubissue\" data-onebox-src=\"https://github.com/FoundationDB/fdb-kubernetes-operator/issues/1287\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/issues/1287\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com/FoundationDB/fdb-kubernetes-operator</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"github-row\">\n  <div class=\"github-icon-container\" title=\"Issue\" data-github-private-repo=\"false\">\n\t  <svg width=\"60\" height=\"60\" class=\"github-icon\" viewBox=\"0 0 14 16\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z\"></path></svg>\n  </div>\n\n  <div class=\"github-info-container\">\n    <h4>\n      <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/issues/1287\" target=\"_blank\" rel=\"noopener nofollow ugc\">FoundationDBBackup does not reconcile or start backup</a>\n    </h4>\n\n    <div class=\"github-info\">\n      <div class=\"date\">\n        opened <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2022-07-13\" data-time=\"09:24:45\" data-timezone=\"UTC\">09:24AM - 13 Jul 22 UTC</span>\n      </div>\n\n        <div class=\"date\">\n          closed <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2022-08-30\" data-time=\"10:37:29\" data-timezone=\"UTC\">10:37AM - 30 Aug 22 UTC</span>\n        </div>\n\n      <div class=\"user\">\n        <a href=\"https://github.com/pwood\" target=\"_blank\" rel=\"noopener nofollow ugc\">\n          <img alt=\"\" src=\"https://global.discourse-cdn.com/foundationdb/original/2X/8/83ada59a7c8dfa0b7d7864b4b515d14ded2b3aa2.jpeg\" class=\"onebox-avatar-inline\" width=\"20\" height=\"20\" data-dominant-color=\"576C6E\">\n          pwood\n        </a>\n      </div>\n    </div>\n\n    <div class=\"labels\">\n        <span style=\"display:inline-block;margin-top:2px;background-color: #B8B8B8;padding: 2px;border-radius: 4px;color: #fff;margin-left: 3px;\">\n          bug\n        </span>\n    </div>\n  </div>\n</div>\n\n  <div class=\"github-row\">\n    <p class=\"github-body-container\">### What happened?\n\nWe have configured an FDB cluster using the v1.7.0 operator,<span class=\"show-more-container\"><a href=\"\" rel=\"noopener\" class=\"show-more\">\u2026</a></span><span class=\"excerpt hidden\"> this is operating correctly and can be interacted with. The cluster has reconcilled correctly. We have now moved to configure backups, however upon creating the fdbbackup object the operator never finishes reconcilling and the backup is never started.\n\n```console\n# kubectl get fdbbackup -n fdb-primary-dev primary-dev-backup                                                                                                                                                                                                                                    08:58:03\nNAME                 GENERATION   RECONCILED   AGE\nprimary-dev-backup   1                         23m\n```\n\nThe operator does attempt to create a backup.\n\n```console\n{\"level\":\"info\",\"ts\":1657699169.9587805,\"logger\":\"fdbclient\",\"msg\":\"Running command\",\"namespace\":\"fdb-primary-dev\",\"cluster\":\"primary-dev\",\"path\":\"/usr/bin/fdb/7.1/fdbbackup\",\"args\":[\"/usr/bin/fdb/7.1/fdbbackup\",\"status\",\"--json\",\"-C\",\"/tmp/1088749738\",\"--log\",\"--log\",\"--logdir\",\"/var/log/fdb\"]}\n{\"level\":\"info\",\"ts\":1657699170.037034,\"logger\":\"fdbclient\",\"msg\":\"Command completed\",\"namespace\":\"fdb-primary-dev\",\"cluster\":\"primary-dev\",\"output\":\"{\\\"SchemaVersion\\\":\\\"1....\"}\n{\"level\":\"info\",\"ts\":1657699170.0374086,\"logger\":\"fdbclient\",\"msg\":\"Running command\",\"namespace\":\"fdb-primary-dev\",\"cluster\":\"primary-dev\",\"path\":\"/usr/bin/fdb/7.1/fdbbackup\",\"args\":[\"/usr/bin/fdb/7.1/fdbbackup\",\"start\",\"-d\",\"blobstore://XXXXXXXXXXXXXXX@s3.eu-west-1.amazonaws.com/primary-dev-20220713?bucket=foundationdb-backups-dev-XXXXXXXXXX-XXXXXXXXXXX\",\"-s\",\"1200\",\"-z\",\"-C\",\"/tmp/2189325739\",\"--log\",\"--log\",\"--logdir\",\"/var/log/fdb\"]}\n{\"level\":\"error\",\"ts\":1657699180.0770085,\"logger\":\"fdbclient\",\"msg\":\"Error from FDB command\",\"namespace\":\"fdb-primary-dev\",\"cluster\":\"primary-dev\",\"code\":-1,\"stdout\":\"\",\"stderr\":\"\",\"error\":\"signal: killed\",\"stacktrace\":\"github.com/FoundationDB/fdb-kubernetes-operator/fdbclient.(*cliAdminClient).StartBackup\\n\\t/workspace/fdbclient/admin_client.go:595\\ngithub.com/FoundationDB/fdb-kubernetes-operator/controllers.startBackup.reconcile\\n\\t/workspace/controllers/start_backup.go:45\\ngithub.com/FoundationDB/fdb-kubernetes-operator/controllers.(*FoundationDBBackupReconciler).Reconcile\\n\\t/workspace/controllers/backup_controller.go:88\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).reconcileHandler\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:298\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).processNextWorkItem\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:253\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).Start.func2.2\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:214\"}\n{\"level\":\"error\",\"ts\":1657699180.0771945,\"logger\":\"controller\",\"msg\":\"Error in reconciliation\",\"namespace\":\"fdb-primary-dev\",\"backup\":\"primary-dev-backup\",\"subReconciler\":\"controllers.startBackup\",\"requeueAfter\":0,\"error\":\"signal: killed\",\"stacktrace\":\"github.com/FoundationDB/fdb-kubernetes-operator/controllers.(*FoundationDBBackupReconciler).Reconcile\\n\\t/workspace/controllers/backup_controller.go:93\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).reconcileHandler\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:298\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).processNextWorkItem\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:253\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).Start.func2.2\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:214\"}\n{\"level\":\"error\",\"ts\":1657699180.0772355,\"logger\":\"controller-runtime.manager.controller.foundationdbbackup\",\"msg\":\"Reconciler error\",\"reconciler group\":\"apps.foundationdb.org\",\"reconciler kind\":\"FoundationDBBackup\",\"name\":\"primary-dev-backup\",\"namespace\":\"fdb-primary-dev\",\"error\":\"signal: killed\",\"stacktrace\":\"sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).processNextWorkItem\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:253\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller).Start.func2.2\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.9.6/pkg/internal/controller/controller.go:214\"}\n```\n\nIf I connect to operator and look for the appropriate logs of that execution, the first obvious error I find is:\n\n```console\n&lt;Event Severity=\"20\" Time=\"1657698700.094137\" DateTime=\"2022-07-13T07:51:40Z\" Type=\"S3BlobStoreEndpointRequestFailedRetryable\" ID=\"0000000000000000\" Error=\"lookup_failed\" ErrorDescription=\"DNS lookup failed\" ErrorCode=\"1041\" SuppressedEventCount=\"0\" ConnectionEstablished=\"0\" RemoteHost=\"s3.eu-west-1.amazonaws.com\" Verb=\"HEAD\" Resource=\"/foundationdb-backups-dev-XXXXXXXXXXX-XXXXXXXXXX\" ThisTry=\"1\" RetryDelay=\"2\" ThreadID=\"3291365605512418571\" Machine=\"10.0.134.86:756\" LogGroup=\"default\" ClientDescription=\"primary-7.1.5-3291365605512418571\" /&gt;\n```\n\nThe only reference to a DNS lookup failed I can find leads me to this forum post on the fdb forum. https://forums.foundationdb.org/t/foundationdb-backup-s3-https-connection-failed/2340\n\nWhich suggests it might be a TLS configuration failure - we provide the fdbbackup k8s object with a valid CA chain for aws s3 and the client certificate, that's also provided with its key - though no TLS is required on the cluster at this point.\n\nWe can see in the fdb operator logs that the TLS configuration is not provided to fdbbackup.\n\n```console\n&lt;Event Severity=\"10\" Time=\"1657698700.064259\" DateTime=\"2022-07-13T07:51:40Z\" Type=\"Net2TLSConfig\" ID=\"0000000000000000\" CAPath=\"\" CertificatePath=\"\" KeyPath=\"\" HasPassword=\"0\" VerifyPeers=\"Check.Valid=1\" ThreadID=\"3291365605512418571\" Machine=\"10.0.134.86:756\" LogGroup=\"default\" ClientDescription=\"primary-7.1.5-3291365605512418571\" /&gt;\n```\n\nThis might be unrelated though.\n\nIf I reconsturct the start command and run it on one of the two backup agent nodes (rather than on the operator), the backup is issued and starts successfully.\n\n```console\nfdbbackup start -d blobstore://XXXXXXXXXX@s3.eu-west-1.amazonaws.com/primary-dev-20220712?bucket=foundationdb-backups-dev-XXXXXXXXXXX-XXXXXXXXX -s 1200 -z --log --log --logdir .\n```\n\nThe operator then reconcils and completes.\n\n### What did you expect to happen?\n\nThe operator to create the backup and reconcil.\n\n### How can we reproduce it (as minimally and precisely as possible)?\n\n1. Install v1.7.0 fdb-operator, in global mode.\n2. Create a cluster in its own namespace.\n3. Wait for reconcilliation.\n4. Create a backup in the same namespace as the cluster.\n\n### Anything else we need to know?\n\nI've attached the following logs and k8s objects.\n\n[fdb-operator-new-fdbbackup-logs.txt](https://github.com/FoundationDB/fdb-kubernetes-operator/files/9100809/fdb-operator-new-fdbbackup-logs.txt)\n\n[fdbackup-start-on-fdb-operator-failure.txt](https://github.com/FoundationDB/fdb-kubernetes-operator/files/9100810/fdbackup-start-on-fdb-operator-failure.txt)\n\n[fdbbackup-k8s-object.txt](https://github.com/FoundationDB/fdb-kubernetes-operator/files/9100811/fdbbackup-k8s-object.txt)\n\n[fdbbackup-start-on-backup-agent-success.txt](https://github.com/FoundationDB/fdb-kubernetes-operator/files/9100812/fdbbackup-start-on-backup-agent-success.txt)\n\n[fdbcluster-k8s-object.txt](https://github.com/FoundationDB/fdb-kubernetes-operator/files/9100813/fdbcluster-k8s-object.txt)\n\n\n### FDB Kubernetes operator\n\n&lt;details&gt;\n\n```console\n$ kubectl fdb version\n# paste output here\n```\n\nThe above does not work for me, I don't know if I've missed a stage during installation for that to work. \n\nWe install the operator using CDK8s charts, from tag v1.7.0.\n\nOperator is running the current image: foundationdb/fdb-kubernetes-operator:v1.7.0\n\n&lt;/details&gt;\n\n\n### Kubernetes version\n\n&lt;details&gt;\n\n```console\n$ kubectl version\nClient Version: version.Info{Major:\"1\", Minor:\"24\", GitVersion:\"v1.24.0\", GitCommit:\"4ce5a8954017644c5420bae81d72b09b735c21f0\", GitTreeState:\"clean\", BuildDate:\"2022-05-03T13:36:49Z\", GoVersion:\"go1.18.1\", Compiler:\"gc\", Platform:\"darwin/arm64\"}\nKustomize Version: v4.5.4\nServer Version: version.Info{Major:\"1\", Minor:\"21+\", GitVersion:\"v1.21.12-eks-a64ea69\", GitCommit:\"d4336843ba36120e9ed1491fddff5f2fec33eb77\", GitTreeState:\"clean\", BuildDate:\"2022-05-12T18:29:27Z\", GoVersion:\"go1.16.15\", Compiler:\"gc\", Platform:\"linux/amd64\"}\n```\n\n&lt;/details&gt;\n\n\n### Cloud provider\n\n&lt;details&gt;\nAWS EKS\n&lt;/details&gt;</span></p>\n  </div>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n<p>\nBut after I added the certificate, it did not solve the problem</p>\n<p>Certificate Creation Reference</p><aside class=\"onebox githubfolder\" data-onebox-src=\"https://github.com/FoundationDB/fdb-kubernetes-operator/tree/release_v1.40.0/config/test-certs\">\n  <header class=\"source\">\n      <img src=\"https://github.githubassets.com/favicons/favicon.svg\" class=\"site-icon\" alt=\"\" width=\"32\" height=\"32\">\n\n      <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/tree/release_v1.40.0/config/test-certs\" target=\"_blank\" rel=\"noopener nofollow ugc\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h3><a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/tree/release_v1.40.0/config/test-certs\" target=\"_blank\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/config/test-certs at release_v1.40.0 \u00b7...</a></h3>\n\n\n  <p><span class=\"label1\">A kubernetes operator for FoundationDB. Contribute to FoundationDB/fdb-kubernetes-operator development by creating an account on GitHub.</span></p>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>Possibly useful documents</p>\n<pre><code class=\"lang-auto\">https://github.com/FoundationDB/fdb-kubernetes-operator/blob/release_v1.40.0/docs/manual/tls.md\n</code></pre>\n<p>operator exception information</p>\n<pre><code class=\"lang-auto\">{\"level\":\"info\",\"ts\":\"2025-08-15T09:57:00Z\",\"logger\":\"fdbclient\",\"msg\":\"Running command\",\"path\":\"/usr/bin/fdb/7.1/fdbbackup\",\"args\":[\"/usr/bin/fdb/7.1/fdbbackup\",\"status\",\"--json\",\"-C\",\"/tmp/99a55c37-abb6-496f-8d67-d4cdfe9531b8-cli/2559054587\",\"--log\",\"--logdir\",\"/var/log/fdb\"]}\n{\"level\":\"info\",\"ts\":\"2025-08-15T09:57:00Z\",\"logger\":\"fdbclient\",\"msg\":\"Command completed\",\"output\":\"{\\\"SchemaVersion\\\":\\\"1....\"}\n{\"level\":\"info\",\"ts\":\"2025-08-15T09:57:00Z\",\"logger\":\"fdbclient\",\"msg\":\"Running command\",\"path\":\"/usr/bin/fdb/7.1/fdbbackup\",\"args\":[\"/usr/bin/fdb/7.1/fdbbackup\",\"start\",\"-d\",\"blobstore://seaweedfs@seaweedfs:8333/test-cluster?bucket=fdb-backups&amp;region=us-west-1&amp;secure_connection=0\",\"-s\",\"120\",\"-z\",\"-C\",\"/tmp/99a55c37-abb6-496f-8d67-d4cdfe9531b8-cli/390835421\",\"--log\",\"--logdir\",\"/var/log/fdb\"]}\n{\"level\":\"error\",\"ts\":\"2025-08-15T09:57:10Z\",\"logger\":\"fdbclient\",\"msg\":\"Error from FDB command\",\"code\":-1,\"stdout\":\"\",\"stderr\":\"\",\"error\":\"signal: killed\",\"stacktrace\":\"github.com/FoundationDB/fdb-kubernetes-operator/v2/fdbclient.(*cliAdminClient).runCommand\\n\\t/workspace/fdbclient/admin_client.go:265\\ngithub.com/FoundationDB/fdb-kubernetes-operator/v2/fdbclient.(*cliAdminClient).StartBackup\\n\\t/workspace/fdbclient/admin_client.go:835\\ngithub.com/FoundationDB/fdb-kubernetes-operator/v2/controllers.startBackup.reconcile\\n\\t/workspace/controllers/start_backup.go:52\\ngithub.com/FoundationDB/fdb-kubernetes-operator/v2/controllers.(*FoundationDBBackupReconciler).Reconcile\\n\\t/workspace/controllers/backup_controller.go:97\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Reconcile\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:119\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:340\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:300\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func2.1\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:202\"}\n{\"level\":\"error\",\"ts\":\"2025-08-15T09:57:10Z\",\"logger\":\"controller\",\"msg\":\"Error in reconciliation\",\"namespace\":\"keli\",\"backup\":\"test-cluster\",\"reconciler\":\"controllers.startBackup\",\"requeueAfter\":0,\"error\":\"signal: killed\",\"stacktrace\":\"github.com/FoundationDB/fdb-kubernetes-operator/v2/controllers.processRequeue\\n\\t/workspace/controllers/controllers.go:92\\ngithub.com/FoundationDB/fdb-kubernetes-operator/v2/controllers.(*FoundationDBBackupReconciler).Reconcile\\n\\t/workspace/controllers/backup_controller.go:102\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Reconcile\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:119\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:340\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:300\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func2.1\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:202\"}\n{\"level\":\"error\",\"ts\":\"2025-08-15T09:57:10Z\",\"msg\":\"Reconciler error\",\"controller\":\"foundationdbbackup\",\"controllerGroup\":\"apps.foundationdb.org\",\"controllerKind\":\"FoundationDBBackup\",\"FoundationDBBackup\":{\"name\":\"test-cluster\",\"namespace\":\"keli\"},\"namespace\":\"keli\",\"name\":\"test-cluster\",\"reconcileID\":\"4f6cd5ca-f30f-470f-98db-7745fb2660ef\",\"error\":\"signal: killed\",\"stacktrace\":\"sigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).reconcileHandler\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:353\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).processNextWorkItem\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:300\\nsigs.k8s.io/controller-runtime/pkg/internal/controller.(*Controller[...]).Start.func2.1\\n\\t/go/pkg/mod/sigs.k8s.io/controller-runtime@v0.21.0/pkg/internal/controller/controller.go:202\"}\n</code></pre>\n<pre><code class=\"lang-auto\">root@v-sjc031-devops-001:/opt/FoundationDB/fdb-kubernetes-operator/config/samples# kubectl describe FoundationDBBackup test-cluster\nName:         test-cluster\nNamespace:    keli\nLabels:       &lt;none&gt;\nAnnotations:  &lt;none&gt;\nAPI Version:  apps.foundationdb.org/v1beta2\nKind:         FoundationDBBackup\nMetadata:\n  Creation Timestamp:  2025-08-15T07:08:35Z\n  Generation:          1\n  Resource Version:    1245789\n  UID:                 975316fa-5ee2-4520-862b-ec259c715555\nSpec:\n  Allow Tag Override:  false\n  Blob Store Configuration:\n    Account Name:  seaweedfs@seaweedfs:8333\n    URL Parameters:\n      region=us-west-1\n      secure_connection=0\n  Cluster Name:  test-cluster\n  Image Type:    split\n  Pod Template Spec:\n    Spec:\n      Containers:\n        Env:\n          Name:   FDB_BLOB_CREDENTIALS\n          Value:  /var/backup-credentials/credentials\n          Name:   FDB_TLS_CERTIFICATE_FILE\n          Value:  /tmp/fdb-certs/tls.crt\n          Name:   FDB_TLS_CA_FILE\n          Value:  /tmp/fdb-certs/tls.crt\n          Name:   FDB_TLS_KEY_FILE\n          Value:  /tmp/fdb-certs/tls.key\n        Name:     foundationdb\n        Resources:\n          Limits:\n            Cpu:     250m\n            Memory:  128Mi\n          Requests:\n            Cpu:     250m\n            Memory:  128Mi\n        Security Context:\n          Run As Group:  0\n          Run As User:   0\n        Volume Mounts:\n          Mount Path:  /tmp/fdb-certs\n          Name:        fdb-certs\n          Mount Path:  /var/backup-credentials\n          Name:        backup-credentials\n      Init Containers:\n        Name:  foundationdb-kubernetes-init\n        Resources:\n          Limits:\n            Cpu:     100m\n            Memory:  128Mi\n          Requests:\n            Cpu:     100m\n            Memory:  128Mi\n        Security Context:\n          Run As User:  0\n      Volumes:\n        Name:  backup-credentials\n        Secret:\n          Secret Name:  backup-credentials\n        Name:           fdb-certs\n        Secret:\n          Secret Name:      fdb-kubernetes-operator-secrets\n  Snapshot Period Seconds:  120\n  Version:                  7.1.26\nStatus:\n  Agent Count:  2\n  Backup Details:\n  Deployment Configured:  true\n  Generations:\n    Needs Backup Start:  1\nEvents:\n  Type    Reason                         Age                   From                           Message\n  ----    ------                         ----                  ----                           -------\n  Normal  ReconciliationTerminatedEarly  2m2s (x14 over 169m)  foundationdbbackup-controller  signal: killed\n</code></pre>\n<p>deployment.yaml</p>\n<pre><code class=\"lang-auto\">---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  labels:\n    app: fdb-kubernetes-operator-controller-manager\n    control-plane: controller-manager\n  name: fdb-kubernetes-operator-controller-manager\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: fdb-kubernetes-operator-controller-manager\n  template:\n    metadata:\n      labels:\n        app: fdb-kubernetes-operator-controller-manager\n        control-plane: controller-manager\n    spec:\n      containers:\n      - command:\n        - /manager\n        env:\n        - name: DISABLE_SIDECAR_TLS_CHECK\n          value: \"1\"\n        - name: FDB_TLS_CERTIFICATE_FILE\n          value: /tmp/fdb-certs/tls.crt\n        - name: FDB_TLS_CA_FILE\n          value: /tmp/fdb-certs/tls.crt\n        - name: FDB_TLS_KEY_FILE\n          value: /tmp/fdb-certs/tls.key\n        - name: WATCH_NAMESPACE\n          valueFrom:\n            fieldRef:\n              fieldPath: metadata.namespace\n        image: foundationdb/fdb-kubernetes-operator:v2.11.0\n        name: manager\n        ports:\n        - containerPort: 8080\n          name: metrics\n        resources:\n          limits:\n            cpu: 500m\n            memory: 2048Mi\n          requests:\n            cpu: 500m\n            memory: 2048Mi\n        securityContext:\n          allowPrivilegeEscalation: false\n          privileged: false\n          readOnlyRootFilesystem: true\n        volumeMounts:\n        - mountPath: /tmp/fdb-certs\n          name: fdb-certs\n          readOnly: true\n        - mountPath: /tmp\n          name: tmp\n        - mountPath: /var/log/fdb\n          name: logs\n        - mountPath: /usr/bin/fdb\n          name: fdb-binaries\n      initContainers:\n      - args:\n        - --copy-library\n        - \"7.1\"\n        - --copy-binary\n        - fdbcli\n        - --copy-binary\n        - fdbbackup\n        - --copy-binary\n        - fdbrestore\n        - --output-dir\n        - /var/output-files\n        - --mode\n        - init\n        image: foundationdb/fdb-kubernetes-monitor:7.1.67\n        name: foundationdb-kubernetes-init-7-1\n        volumeMounts:\n        - mountPath: /var/output-files\n          name: fdb-binaries\n      - args:\n        - --copy-library\n        - \"7.3\"\n        - --copy-binary\n        - fdbcli\n        - --copy-binary\n        - fdbbackup\n        - --copy-binary\n        - fdbrestore\n        - --output-dir\n        - /var/output-files\n        - --mode\n        - init\n        image: foundationdb/fdb-kubernetes-monitor:7.3.63\n        name: foundationdb-kubernetes-init-7-3\n        volumeMounts:\n        - mountPath: /var/output-files\n          name: fdb-binaries\n      - args:\n        - --copy-library\n        - \"7.4\"\n        - --copy-binary\n        - fdbcli\n        - --copy-binary\n        - fdbbackup\n        - --copy-binary\n        - fdbrestore\n        - --output-dir\n        - /var/output-files\n        - --mode\n        - init\n        image: foundationdb/fdb-kubernetes-monitor:7.4.1\n        name: foundationdb-kubernetes-init-7-4\n        volumeMounts:\n        - mountPath: /var/output-files\n          name: fdb-binaries\n      securityContext:\n        fsGroup: 4059\n        runAsGroup: 4059\n        runAsUser: 4059\n      serviceAccountName: fdb-kubernetes-operator-controller-manager\n      terminationGracePeriodSeconds: 10\n      volumes:\n      - name: fdb-certs\n        secret:\n          secretName: fdb-kubernetes-operator-secrets\n      - emptyDir: {}\n        name: tmp\n      - emptyDir: {}\n        name: logs\n      - emptyDir: {}\n        name: fdb-binaries\n</code></pre>\n<p>backup.yaml</p>\n<pre><code class=\"lang-auto\">root@v-sjc031-devops-001:/opt/FoundationDB/fdb-kubernetes-operator/config/samples# cat backup.yaml\napiVersion: apps.foundationdb.org/v1beta2\nkind: FoundationDBBackup\nmetadata:\n  name: test-cluster\nspec:\n  blobStoreConfiguration:\n    accountName: seaweedfs@seaweedfs:8333\n    urlParameters:\n    - region=us-west-1\n    - secure_connection=0\n  clusterName: test-cluster\n  imageType: split\n  podTemplateSpec:\n    spec:\n      containers:\n      - env:\n        - name: FDB_BLOB_CREDENTIALS\n          value: /var/backup-credentials/credentials\n        - name: FDB_TLS_CERTIFICATE_FILE\n          value: /tmp/fdb-certs/tls.crt\n        - name: FDB_TLS_CA_FILE\n          value: /tmp/fdb-certs/tls.crt\n        - name: FDB_TLS_KEY_FILE\n          value: /tmp/fdb-certs/tls.key\n        name: foundationdb\n        resources:\n          limits:\n            cpu: 250m\n            memory: 128Mi\n          requests:\n            cpu: 250m\n            memory: 128Mi\n        securityContext:\n          runAsGroup: 0\n          runAsUser: 0\n        volumeMounts:\n        - mountPath: /tmp/fdb-certs\n          name: fdb-certs\n        - mountPath: /var/backup-credentials\n          name: backup-credentials\n      initContainers:\n      - name: foundationdb-kubernetes-init\n        resources:\n          limits:\n            cpu: 100m\n            memory: 128Mi\n          requests:\n            cpu: 100m\n            memory: 128Mi\n        securityContext:\n          runAsUser: 0\n      volumes:\n      - name: backup-credentials\n        secret:\n          secretName: backup-credentials\n      - name: fdb-certs\n        secret:\n          secretName: fdb-kubernetes-operator-secrets\n  snapshotPeriodSeconds: 120\n  version: 7.1.26\n---\napiVersion: apps.foundationdb.org/v1beta2\nkind: FoundationDBCluster\nmetadata:\n  name: test-cluster\nspec:\n  automationOptions:\n    replacements:\n      enabled: true\n  faultDomain:\n    key: foundationdb.org/none\n  imageType: split\n  labels:\n    filterOnOwnerReference: false\n    matchLabels:\n      foundationdb.org/fdb-cluster-name: test-cluster\n    processClassLabels:\n    - foundationdb.org/fdb-process-class\n    processGroupIDLabels:\n    - foundationdb.org/fdb-process-group-id\n  minimumUptimeSecondsForBounce: 60\n  processCounts:\n    cluster_controller: 1\n    stateless: -1\n  processes:\n    general:\n      customParameters:\n      - knob_disable_posix_kernel_aio=1\n      podTemplate:\n        spec:\n          containers:\n          - name: foundationdb\n            resources:\n              requests:\n                cpu: 100m\n                memory: 128Mi\n            securityContext:\n              runAsUser: 0\n          - name: foundationdb-kubernetes-sidecar\n            resources:\n              limits:\n                cpu: 100m\n                memory: 128Mi\n              requests:\n                cpu: 100m\n                memory: 128Mi\n            securityContext:\n              runAsUser: 0\n          initContainers:\n          - name: foundationdb-kubernetes-init\n            resources:\n              limits:\n                cpu: 100m\n                memory: 128Mi\n              requests:\n                cpu: 100m\n                memory: 128Mi\n            securityContext:\n              runAsUser: 0\n      volumeClaimTemplate:\n        spec:\n          storageClassName: local-path\n          resources:\n            requests:\n              storage: 16G\n  routing:\n    defineDNSLocalityFields: true\n  sidecarContainer:\n    enableLivenessProbe: true\n    enableReadinessProbe: false\n  useExplicitListenAddress: true\n  version: 7.1.26\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-08-15T10:03:24.451Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 32.4,
+        "yours": false,
+        "topic_id": 5023,
+        "topic_slug": "foundationdbbackup-cannot-be-reconciled-properly",
+        "display_username": "LiKe",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/tree/release_v1.40.0/config/test-certs",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/config/test-certs at release_v1.40.0 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/issues/1287",
+            "internal": false,
+            "reflection": false,
+            "title": "FoundationDBBackup does not reconcile or start backup \u00b7 Issue #1287 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1593,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdbbackup-cannot-be-reconciled-properly/5023/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 15285,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2025-09-01T15:34:16.417Z",
+        "cooked": "<p>Could you share the logs for the backup start command? Seems like the operator is not able to connect to the blobstore (in you example the seaweedfs instance). Does the operator and the seaweed setup run in the same namespace?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-09-01T15:34:16.417Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 1.6,
+        "yours": false,
+        "topic_id": 5023,
+        "topic_slug": "foundationdbbackup-cannot-be-reconciled-properly",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdbbackup-cannot-be-reconciled-properly/5023/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      15177,
+      15285
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      68
+    ],
+    [
+      2,
+      50
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FoundationDBBackup cannot be reconciled properly",
+  "id": 5023,
+  "title": "FoundationDBBackup cannot be reconciled properly",
+  "posts_count": 2,
+  "created_at": "2025-08-15T10:03:24.389Z",
+  "views": 30,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-09-01T15:34:16.417Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "foundationdbbackup-cannot-be-reconciled-properly",
+  "category_id": 16,
+  "word_count": 1586,
+  "deleted_at": null,
+  "user_id": 1593,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_5023",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "`fdbbackup` process not running after created by FoundationDBBackup",
+      "id": 3341,
+      "title": "`fdbbackup` process not running after created by FoundationDBBackup",
+      "slug": "fdbbackup-process-not-running-after-created-by-foundationdbbackup",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2022-05-27T03:06:01.948Z",
+      "last_posted_at": "2022-05-31T06:54:05.607Z",
+      "bumped": true,
+      "bumped_at": "2022-05-31T06:54:05.607Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 685,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 970,
+            "username": "mason",
+            "name": "mason",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Running backups on tls-enabled cluster",
+      "id": 2036,
+      "title": "Running backups on tls-enabled cluster",
+      "slug": "running-backups-on-tls-enabled-cluster",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-03-30T15:38:49.682Z",
+      "last_posted_at": "2020-04-01T10:14:45.052Z",
+      "bumped": true,
+      "bumped_at": "2020-04-01T10:14:45.052Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 776,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 746,
+            "username": "matiasholte",
+            "name": "Matias Holte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDBBackup backup command error",
+      "id": 2341,
+      "title": "FoundationDBBackup backup command error",
+      "slug": "foundationdbbackup-backup-command-error",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-09-17T20:19:07.206Z",
+      "last_posted_at": "2020-09-17T20:58:51.172Z",
+      "bumped": true,
+      "bumped_at": "2020-09-19T00:01:34.791Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 657,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 819,
+            "username": "mbuleandra",
+            "name": "Marius",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbuleandra/{size}/977_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB kubernetes operator continuously boucing processes",
+      "id": 2092,
+      "title": "FDB kubernetes operator continuously boucing processes",
+      "slug": "fdb-kubernetes-operator-continuously-boucing-processes",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-04-29T10:57:13.947Z",
+      "last_posted_at": "2020-05-03T07:18:12.844Z",
+      "bumped": true,
+      "bumped_at": "2020-05-03T07:18:12.844Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1013,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 724,
+            "username": "larshagen",
+            "name": "Lars Hagen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/larshagen/{size}/776_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Getting timeout error while reconciling foundationDB cluster in kubernetes",
+      "id": 2150,
+      "title": "Getting timeout error while reconciling foundationDB cluster in kubernetes",
+      "slug": "getting-timeout-error-while-reconciling-foundationdb-cluster-in-kubernetes",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-06-01T10:44:55.604Z",
+      "last_posted_at": "2020-06-01T16:46:30.092Z",
+      "bumped": true,
+      "bumped_at": "2020-06-01T16:46:30.092Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 789,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 772,
+            "username": "antonprabin",
+            "name": "Prabin Poulose",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1593,
+        "username": "zmylk",
+        "name": "LiKe",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/zmylk/{size}/2013_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1593,
+      "username": "zmylk",
+      "name": "LiKe",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/zmylk/{size}/2013_2.png"
+    },
+    "last_poster": {
+      "id": 849,
+      "username": "johscheuer",
+      "name": "Johannes Scheuermann",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

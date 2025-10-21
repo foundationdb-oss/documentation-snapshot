@@ -1,0 +1,569 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4876,
+        "name": "Jay Kominek",
+        "username": "jkominek",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+        "created_at": "2019-08-12T21:35:24.316Z",
+        "cooked": "<p>I\u2019d like to store records of orders which, like the getting started example, have an order ID, and a price. I\u2019ll then want to query them sorted first by <em>descending price</em>, and then by <em>ascending order ID</em>. So I can\u2019t just use an index of price and order ID and query it in reverse order, because then the order IDs would be backwards.</p>\n<p>As best as I can tell, my only option is to write a <code>FunctionKeyExpression</code> which can negate numeric values before they\u2019re stored, and then use that in the index. (And also use it as part of the sort when querying.)</p>\n<p>I\u2019ve written that function, and it appears to be working. Now I just want to check, does that seem reasonable? Was there a better way? Will there be any problem with using that function in the primary key index? (I want the records clustered by price, as my most common operation will be \u201cfind the X highest paying orders and process some of them\u201d)</p>\n<p>I\u2019ve put my code up in a gist in case anyone would care to take a look. <a href=\"https://gist.github.com/jkominek/4d7248b9eba86d39aea5489d2f60f72b\" rel=\"nofollow noopener\">https://gist.github.com/jkominek/4d7248b9eba86d39aea5489d2f60f72b</a></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-08-12T21:35:24.316Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 142,
+        "reads": 39,
+        "readers_count": 38,
+        "score": 717.8,
+        "yours": false,
+        "topic_id": 1582,
+        "topic_slug": "mixed-ascending-descending-sort",
+        "display_username": "Jay Kominek",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://gist.github.com/jkominek/4d7248b9eba86d39aea5489d2f60f72b",
+            "internal": false,
+            "reflection": false,
+            "title": "numeric negation function key expression \u00b7 GitHub",
+            "clicks": 15
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 173,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/mixed-ascending-descending-sort/1582/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4877,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2019-08-12T23:19:20.337Z",
+        "cooked": "<p>I think that\u2019s a reasonable approach to this problem. The Record Layer doesn\u2019t allow for mixed sort order natively (which is essentially what you need here), so \u201cfaking it\u201d by negating numeric types (or at least <code>long</code>s) seems reasonable.</p>\n<p>I can\u2019t think of a reason why using it in the primary key expression won\u2019t work. If I had to guess, there are a few places where we try and \u201cmatch\u201d the results the primary key with other components in an index expression, and some of those might not work (because they were written before <code>FunctionKeyExpressions</code> existed and aren\u2019t quite smart enough to handle it), but I could be wrong. Likewise, sorting by the primary key where a primary key expression includes a function may not work (due to bugs, not due to anything fundamental). But I\u2019d give it a go if I were in your position and see how it does.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-08-12T23:19:20.337Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 38,
+        "readers_count": 37,
+        "score": 27.6,
+        "yours": false,
+        "topic_id": 1582,
+        "topic_slug": "mixed-ascending-descending-sort",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/mixed-ascending-descending-sort/1582/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4876,
+      4877
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2262
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Mixed ascending/descending sort?",
+  "id": 1582,
+  "title": "Mixed ascending/descending sort?",
+  "posts_count": 2,
+  "created_at": "2019-08-12T21:35:24.255Z",
+  "views": 1070,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-08-12T23:19:20.337Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "mixed-ascending-descending-sort",
+  "category_id": 12,
+  "word_count": 354,
+  "deleted_at": null,
+  "user_id": 173,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1582",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FunctionKeyExpression is not honored when evaluating the QueryPlan",
+      "id": 1937,
+      "title": "FunctionKeyExpression is not honored when evaluating the QueryPlan",
+      "slug": "functionkeyexpression-is-not-honored-when-evaluating-the-queryplan",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-02-11T14:48:22.721Z",
+      "last_posted_at": "2020-03-04T06:45:04.928Z",
+      "bumped": true,
+      "bumped_at": "2020-03-04T06:45:04.928Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 960,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 653,
+            "username": "VibhutiD",
+            "name": "Vibhuti Dembi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vibhutid/{size}/668_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Number types in Tuples may not be null | Reverse scan",
+      "id": 1912,
+      "title": "Number types in Tuples may not be null | Reverse scan",
+      "slug": "number-types-in-tuples-may-not-be-null-reverse-scan",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-01-27T13:38:56.010Z",
+      "last_posted_at": "2020-02-20T14:50:37.088Z",
+      "bumped": true,
+      "bumped_at": "2020-02-20T14:50:37.088Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 992,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 653,
+            "username": "VibhutiD",
+            "name": "Vibhuti Dembi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vibhutid/{size}/668_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Custom ordering of keys",
+      "id": 255,
+      "title": "Custom ordering of keys",
+      "slug": "custom-ordering-of-keys",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-04-24T23:55:55.338Z",
+      "last_posted_at": "2018-04-25T00:00:55.641Z",
+      "bumped": true,
+      "bumped_at": "2018-04-25T00:00:55.641Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 597,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 52,
+            "username": "nutjob",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/f1d935/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Full range scan performed in sort when not required",
+      "id": 1995,
+      "title": "Full range scan performed in sort when not required",
+      "slug": "full-range-scan-performed-in-sort-when-not-required",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-03-02T10:49:06.926Z",
+      "last_posted_at": "2020-03-03T10:16:53.281Z",
+      "bumped": true,
+      "bumped_at": "2020-03-03T10:16:53.281Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 987,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 737,
+            "username": "aymalik",
+            "name": "Aayushi Malik",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/aca169/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Extending the Record layer query and planner",
+      "id": 3629,
+      "title": "Extending the Record layer query and planner",
+      "slug": "extending-the-record-layer-query-and-planner",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2022-10-27T17:47:43.828Z",
+      "last_posted_at": "2022-10-28T12:38:37.911Z",
+      "bumped": true,
+      "bumped_at": "2022-10-28T12:38:37.911Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 388,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 782,
+            "username": "omidb",
+            "name": "Omid Bakhshandeh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/omidb/{size}/925_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 173,
+        "username": "jkominek",
+        "name": "Jay Kominek",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 173,
+      "username": "jkominek",
+      "name": "Jay Kominek",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://gist.github.com/jkominek/4d7248b9eba86d39aea5489d2f60f72b",
+        "title": "numeric negation function key expression \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 173,
+        "domain": "gist.github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

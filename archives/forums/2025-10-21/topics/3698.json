@@ -1,0 +1,622 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12140,
+        "name": "Mathias Herberts",
+        "username": "hbs",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hbs/{size}/1419_2.png",
+        "created_at": "2022-12-19T18:11:55.783Z",
+        "cooked": "<p>Sometimes, when my app is restarted, I get repeated error 1039 (protocol version of the cluster has changed), even though nothing changed on the cluster.</p>\n<p>The issue only goes away when restarting the app.</p>\n<p>The app is launched with the following environment variables set:</p>\n<p>FDB_NETWORK_OPTION_EXTERNAL_CLIENT_LIBRARY=/usr/x86_64-pc-linux-gnu/lib/libfdb_c.so<br>\nFDB_NETWORK_OPTION_CLIENT_THREADS_PER_VERSION=8</p>\n<p>The stack trace is:</p>\n<p>java.util.concurrent.CompletionException: com.apple.foundationdb.FDBException: The protocol version of the cluster has changed<br>\nat java.util.concurrent.CompletableFuture.reportJoin(CompletableFuture.java:375)<br>\nat java.util.concurrent.CompletableFuture.join(CompletableFuture.java:1947)<br>\nat com.apple.foundationdb.RangeQuery$AsyncRangeIterator.hasNext(RangeQuery.java:263)<br>\n\u2026<br>\nCaused by: com.apple.foundationdb.FDBException: The protocol version of the cluster has changed<br>\nat com.apple.foundationdb.NativeFuture.Future_getError(Native Method)<br>\nat com.apple.foundationdb.FutureResults.getIfDone_internal(FutureResults.java:47)<br>\nat com.apple.foundationdb.FutureResults.getIfDone_internal(FutureResults.java:28)<br>\nat com.apple.foundationdb.NativeFuture.marshalWhenDone(NativeFuture.java:63)<br>\nat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)<br>\nat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)</p>\n<p>Is there anything that I may be doing wrong which is causing this error to appear?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-12-19T18:11:55.783Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 110,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 554.6,
+        "yours": false,
+        "topic_id": 3698,
+        "topic_slug": "sporadic-error-1039-when-scanning-a-range",
+        "display_username": "Mathias Herberts",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1160,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/sporadic-error-1039-when-scanning-a-range/3698/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12148,
+        "name": "Mathias Herberts",
+        "username": "hbs",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hbs/{size}/1419_2.png",
+        "created_at": "2022-12-20T21:57:13.298Z",
+        "cooked": "<p>Found the solution, the cluster_version_changed is a retry-able error which can occur when using the multi-version client, so re-running the transaction solves the issue.</p>\n<p>It is explained here: <a href=\"https://apple.github.io/foundationdb/api-general.html\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Using FoundationDB Clients \u2014 FoundationDB 7.2</a> (search for cluster_version_changed).</p>\n<p>Sorry for the noise.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-12-20T21:57:13.298Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 64.2,
+        "yours": false,
+        "topic_id": 3698,
+        "topic_slug": "sporadic-error-1039-when-scanning-a-range",
+        "display_username": "Mathias Herberts",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-general.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Using FoundationDB Clients \u2014 FoundationDB 7.2",
+            "clicks": 29
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1160,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/sporadic-error-1039-when-scanning-a-range/3698/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12140,
+      12148
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1037
+    ],
+    [
+      2,
+      1036
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Sporadic error 1039 when scanning a range",
+  "id": 3698,
+  "title": "Sporadic error 1039 when scanning a range",
+  "posts_count": 2,
+  "created_at": "2022-12-19T18:11:55.711Z",
+  "views": 369,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2022-12-20T21:57:13.298Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "sporadic-error-1039-when-scanning-a-range",
+  "category_id": 7,
+  "word_count": 233,
+  "deleted_at": null,
+  "user_id": 1160,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3698",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDB error code 1009 (Request for future version)",
+      "id": 610,
+      "title": "FoundationDB error code 1009 (Request for future version)",
+      "slug": "foundationdb-error-code-1009-request-for-future-version",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-08-03T23:10:12.599Z",
+      "last_posted_at": "2018-08-07T15:11:58.142Z",
+      "bumped": true,
+      "bumped_at": "2018-08-07T15:11:58.142Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3375,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 174,
+            "username": "seddonm1",
+            "name": "seddonm1",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/e274bd/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Client library backwards compatibility issues",
+      "id": 919,
+      "title": "Client library backwards compatibility issues",
+      "slug": "client-library-backwards-compatibility-issues",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-30T16:17:55.490Z",
+      "last_posted_at": "2018-11-30T19:21:19.862Z",
+      "bumped": true,
+      "bumped_at": "2018-11-30T19:21:19.862Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1325,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Multiversion cluster",
+      "id": 1503,
+      "title": "Multiversion cluster",
+      "slug": "multiversion-cluster",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-03T18:05:21.031Z",
+      "last_posted_at": "2019-07-03T18:08:50.605Z",
+      "bumped": true,
+      "bumped_at": "2019-07-03T18:08:50.605Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 398,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Upgrading FoundationDB",
+      "id": 191,
+      "title": "Upgrading FoundationDB",
+      "slug": "upgrading-foundationdb",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-04-21T23:51:26.311Z",
+      "last_posted_at": "2018-08-27T03:33:51.669Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T03:33:51.669Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 3852,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 133,
+            "username": "titanous",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/titanous/{size}/94_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What&rsquo;s new since 3.0.7 for the low level client API?",
+      "id": 79,
+      "title": "What's new since 3.0.7 for the low level client API?",
+      "slug": "whats-new-since-3-0-7-for-the-low-level-client-api",
+      "posts_count": 16,
+      "reply_count": 10,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2018-04-19T21:25:31.350Z",
+      "last_posted_at": "2018-04-28T11:31:44.605Z",
+      "bumped": true,
+      "bumped_at": "2018-04-28T11:31:44.605Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1223,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1160,
+        "username": "hbs",
+        "name": "Mathias Herberts",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hbs/{size}/1419_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1160,
+      "username": "hbs",
+      "name": "Mathias Herberts",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/hbs/{size}/1419_2.png"
+    },
+    "last_poster": {
+      "id": 1160,
+      "username": "hbs",
+      "name": "Mathias Herberts",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/hbs/{size}/1419_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/api-general.html",
+        "title": "Using FoundationDB Clients \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 29,
+        "user_id": 1160,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

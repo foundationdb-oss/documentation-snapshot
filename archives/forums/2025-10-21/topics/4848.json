@@ -1,0 +1,912 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14826,
+        "name": "",
+        "username": "Anthony_Lee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png",
+        "created_at": "2025-04-16T00:43:15.296Z",
+        "cooked": "<p>When reading code to understand better the internal recovery, this line of code makes me confused:<br>\n<a href=\"https://github.com/apple/foundationdb/blob/bafb5ca6a3a10735f01a909839893bbc452638e4/fdbserver/CommitProxyServer.actor.cpp#L4137\" rel=\"noopener nofollow ugc\">if (trs.size() ||<br>\n(commitData.db-&gt;get().recoveryState &gt;= RecoveryState::ACCEPTING_COMMITS &amp;&amp;<br>\nmasterLifetime.isEqual(commitData.db-&gt;get().masterLifetime) &amp;&amp; lastCommitComplete.isReady())) {\u2026}</a><br>\nwhy the condition (commitData.db-&gt;get().recoveryState &gt;= RecoveryState::ACCEPTING_COMMIT) is allowed to be bypassed?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-04-16T00:49:59.301Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 23.0,
+        "yours": false,
+        "topic_id": 4848,
+        "topic_slug": "why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/bafb5ca6a3a10735f01a909839893bbc452638e4/fdbserver/CommitProxyServer.actor.cpp#L4137",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbserver/CommitProxyServer.actor.cpp at bafb5ca6a3a10735f01a909839893bbc452638e4 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1531,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore/4848/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14839,
+        "name": "",
+        "username": "Anthony_Lee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png",
+        "created_at": "2025-04-17T20:46:13.676Z",
+        "cooked": "<p>After checking older version code which handles any type(GRV, Commit) of  transaction requests   in MasterProxyServer, I think the RecoveryState checking for client transaction is in function transactionStarter,<br>\nin current version this function is in GrvProxyServer:<br>\nASSERT(db-&gt;get().recoveryState &gt;=<br>\nRecoveryState::ACCEPTING_COMMITS);</p>\n<p>and   there is a wait in function grvProxyServerCore before it calls transactionStarter :<br>\nwhile (!(masterLifetime.isEqual(grvProxyData.db-&gt;get().masterLifetime) &amp;&amp;<br>\ngrvProxyData.db-&gt;get().recoveryState &gt;= RecoveryState::ACCEPTING_COMMITS)) {<br>\nwait(grvProxyData.db-&gt;onChange());<br>\n}</p>\n<p>In CommitProxyServer\u2019s commitProxyServerCore, the purpose of the recovery state checking in my original question is not to see if it is ok to accept client transaction but to see if empty transaction is allowed, so that makes sense. Also, ClusterController\u2019s clusterRecoveryCore send   a CommitTransactionRequest to proxy[0] and TxnStateRequests to proxies, so CommitProxy need to handle them in order for RecoveryState in CC can move forward to ACCEPTING_COMMIT. But that specific CommitTransactionRequest is not from client. This aligns with the document.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-04-18T03:48:41.452Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 12.0,
+        "yours": false,
+        "topic_id": 4848,
+        "topic_slug": "why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1531,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore/4848/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14842,
+        "name": "",
+        "username": "Anthony_Lee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png",
+        "created_at": "2025-04-18T02:28:34.406Z",
+        "cooked": "<p>There is one more issue I couldn\u2019t find answer, it seems that GrvProxyServer would reply to readVersion request without checking current RecoveryState when a GrvProxy stay in the proxy list of recovered cluster.</p>\n<p>When a GrvProxyServer is recruited the first time there is no such issue because when it runs function grvProxyServerCore it encounters <a href=\"https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L1119\" rel=\"noopener nofollow ugc\">the blocking wait</a>, after recovery state allow it pass this wait it starts actor transactionStarter to serve GetReadVersionRequest, so far so good.<br>\nIn function grvProxyServer it <a href=\"https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L1170\" rel=\"noopener nofollow ugc\">monitors dbInfo change</a>,<br>\nso when current proxy is removed from current dbInfo\u2019s proxy interfaces <a href=\"https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L1159\" rel=\"noopener nofollow ugc\">this proxy terminates</a>, this is good.</p>\n<p>But when it is still in current dbInfo\u2019s proxy list after recovery then it means the code in <a href=\"https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L917\" rel=\"noopener nofollow ugc\">loop of transactionStarter</a> will continue reply to GetReadVersionRequest no matter what the recoveryState is.</p>\n<p>I searched the code to see if somewhere else is checking recoveryState to block client transaction during recovery but found nothing.</p>\n<p>Could anyone share the idea about what the steps are to create a workload to test the scenario I described? Thanks.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-04-18T03:53:24.491Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 12.0,
+        "yours": false,
+        "topic_id": 4848,
+        "topic_slug": "why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L917",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbserver/GrvProxyServer.actor.cpp at 465834444fe2b02e03b1ef0fdd9af86af226dde5 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L1170",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbserver/GrvProxyServer.actor.cpp at 465834444fe2b02e03b1ef0fdd9af86af226dde5 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L1119",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbserver/GrvProxyServer.actor.cpp at 465834444fe2b02e03b1ef0fdd9af86af226dde5 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L1159",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbserver/GrvProxyServer.actor.cpp at 465834444fe2b02e03b1ef0fdd9af86af226dde5 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1531,
+          "username": "Anthony_Lee",
+          "name": "",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1531,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore/4848/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14845,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2025-04-20T19:06:26.214Z",
+        "cooked": "<blockquote>\n<p>But when it is still in current dbInfo\u2019s proxy list after recovery then it means the code in <a href=\"https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L917\">loop of transactionStarter</a> will continue reply to GetReadVersionRequest no matter what the recoveryState is.</p>\n</blockquote>\n<p>After a recovery happens, in the new generation, ClusterController will recruit a new transaction system, including new GRV proxies, new commit proxies, and new tlogs. So it\u2019s not possible for the old GRV proxy to be in the new transaction system.</p>\n<p>Additionally, before such recruitment, old tlogs have been locked, thus preventing transactions from the previous generation from committing. I.e., even though the old GRV proxies may linger around for a short period of time, the transaction can\u2019t be committed.</p>\n<p>For details on how recovery works, here is <a href=\"https://github.com/apple/foundationdb/blob/main/design/recovery-internals.md\">a detailed documentation</a>.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-04-20T19:06:26.214Z",
+        "reply_count": 1,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 6.6,
+        "yours": false,
+        "topic_id": 4848,
+        "topic_slug": "why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/design/recovery-internals.md",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/design/recovery-internals.md at main \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L917",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbserver/GrvProxyServer.actor.cpp at 465834444fe2b02e03b1ef0fdd9af86af226dde5 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1531,
+          "username": "Anthony_Lee",
+          "name": "",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore/4848/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14858,
+        "name": "",
+        "username": "Anthony_Lee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png",
+        "created_at": "2025-04-22T19:46:25.274Z",
+        "cooked": "<p>Thanks for the confirmation about all new proxies, my confusion comes from this piece of code:</p>\n<pre><code class=\"lang-auto\">ACTOR Future&lt;Void&gt; checkRemoved(Reference&lt;AsyncVar&lt;ServerDBInfo&gt; const&gt; db,\n                                uint64_t recoveryCount,\n                                GrvProxyInterface myInterface) {\n\tloop {\n\t\tif (db-&gt;get().recoveryCount &gt;= recoveryCount &amp;&amp;\n\t\t    std::find(db-&gt;get().client.grvProxies.begin(), db-&gt;get().client.grvProxies.end(), myInterface) ==\n\t\t        db-&gt;get().client.grvProxies.end()) {\n\t\t\tthrow worker_removed();\n\t\t}\n\t\twait(db-&gt;onChange());\n\t}\n}\n</code></pre>\n<p>After checking code that creates new proxies it seems any new proxy\u2019s interface would not be the same as any old one, so I guess it is for exact timing that above code choosing to only terminate a proxy when its interface is not in dbinfo anymore rather than anything else \u2013 the old one will be gone definitely.</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2025-04-22T19:46:25.274Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 6,
+        "readers_count": 5,
+        "score": 1.2,
+        "yours": false,
+        "topic_id": 4848,
+        "topic_slug": "why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 454,
+          "username": "jzhou",
+          "name": "Jingyu Zhou",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1531,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore/4848/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14826,
+      14839,
+      14842,
+      14845,
+      14858
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      189
+    ],
+    [
+      2,
+      187
+    ],
+    [
+      4,
+      184
+    ],
+    [
+      5,
+      182
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Why CommitProxy allows RecoveryState checking to be bypassed in commitProxyServerCore?",
+  "id": 4848,
+  "title": "Why CommitProxy allows RecoveryState checking to be bypassed in commitProxyServerCore?",
+  "posts_count": 5,
+  "created_at": "2025-04-16T00:43:15.248Z",
+  "views": 90,
+  "reply_count": 3,
+  "like_count": 0,
+  "last_posted_at": "2025-04-22T19:46:25.274Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "why-commitproxy-allows-recoverystate-checking-to-be-bypassed-in-commitproxyservercore",
+  "category_id": 8,
+  "word_count": 705,
+  "deleted_at": null,
+  "user_id": 1531,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4848",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Is fdb&rsquo;s recovery may drop committed transaction?",
+      "id": 2750,
+      "title": "Is fdb's recovery may drop committed transaction?",
+      "slug": "is-fdbs-recovery-may-drop-committed-transaction",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-06-13T15:14:11.611Z",
+      "last_posted_at": "2021-06-30T04:33:52.036Z",
+      "bumped": true,
+      "bumped_at": "2021-06-30T04:33:52.036Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 679,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 948,
+            "username": "ChinaXing",
+            "name": "chinaxing",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chinaxing/{size}/1102_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proxy all-to-all communication",
+      "id": 1540,
+      "title": "Proxy all-to-all communication",
+      "slug": "proxy-all-to-all-communication",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-07-28T14:41:39.604Z",
+      "last_posted_at": "2019-07-31T07:49:16.419Z",
+      "bumped": true,
+      "bumped_at": "2019-07-31T07:49:16.419Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 1474,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 562,
+            "username": "ddi",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ddi/{size}/721_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Understanding inter communication",
+      "id": 745,
+      "title": "Understanding inter communication",
+      "slug": "understanding-inter-communication",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2018-10-05T00:51:33.531Z",
+      "last_posted_at": "2018-10-11T17:16:52.613Z",
+      "bumped": true,
+      "bumped_at": "2018-10-11T17:16:52.613Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 3588,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 384,
+            "username": "Chandru4u",
+            "name": "Chandrashekar",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/b487fb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Technical overview of the database",
+      "id": 135,
+      "title": "Technical overview of the database",
+      "slug": "technical-overview-of-the-database",
+      "posts_count": 27,
+      "reply_count": 15,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-04-20T15:30:31.788Z",
+      "last_posted_at": "2019-01-11T23:25:47.462Z",
+      "bumped": true,
+      "bumped_at": "2019-01-11T23:25:47.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 64,
+      "views": 12958,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 96,
+            "username": "idiot",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 443,
+            "username": "junius",
+            "name": "junius",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f08c70/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why there is no document explaining FoundationDB internals?",
+      "id": 2287,
+      "title": "Why there is no document explaining FoundationDB internals?",
+      "slug": "why-there-is-no-document-explaining-foundationdb-internals",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 7,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/5d1141db6be1124bfcf166f19a272bac26168a78_2_1024x576.jpeg",
+      "created_at": "2020-08-11T04:37:58.388Z",
+      "last_posted_at": "2020-11-10T22:58:37.229Z",
+      "bumped": true,
+      "bumped_at": "2020-11-10T22:58:37.229Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1669,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 805,
+            "username": "roohitavaf",
+            "name": "Mohammad Roohitavaf",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/roohitavaf/{size}/1026_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 850,
+            "username": "random-uuid",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/90db22/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1531,
+        "username": "Anthony_Lee",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png",
+        "post_count": 4,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1531,
+      "username": "Anthony_Lee",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png"
+    },
+    "last_poster": {
+      "id": 1531,
+      "username": "Anthony_Lee",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/anthony_lee/{size}/1946_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/bafb5ca6a3a10735f01a909839893bbc452638e4/fdbserver/CommitProxyServer.actor.cpp#L4137",
+        "title": "foundationdb/fdbserver/CommitProxyServer.actor.cpp at bafb5ca6a3a10735f01a909839893bbc452638e4 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 1531,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/465834444fe2b02e03b1ef0fdd9af86af226dde5/fdbserver/GrvProxyServer.actor.cpp#L917",
+        "title": "foundationdb/fdbserver/GrvProxyServer.actor.cpp at 465834444fe2b02e03b1ef0fdd9af86af226dde5 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1531,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

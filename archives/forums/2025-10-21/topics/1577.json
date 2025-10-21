@@ -1,0 +1,881 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4841,
+        "name": "gaurav",
+        "username": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "created_at": "2019-08-09T06:20:16.652Z",
+        "cooked": "<p>Hi there!</p>\n<p>I am working on a use-case where it will be helpful if I could apply some bit-level operations on the VERSIONSTAMP_KEY (or VERSIONSTAMP_VALUE) placeholder bytes in my key/value (keeping the output length unchanged to make these operations simpler for fdb).</p>\n<p>The operations I have in mind are things like <code>reverse_bits()</code>, <code>left_shift</code> and <code>right_shift</code>, <code>mask</code> etc. only on the version_stamp portions of the bytes. Or to generalize, a function that takes 8 (or 10, if batching bytes can be made available) bytes as input and returns back 8 bytes post-transformation.</p>\n<p>This opens up the possibility to come up with very creative uses of already versatile SET_VERSIONSTAMPED_KEY/SET_VERSIONSTAMPED_VALUE options! Note that these are not just optimizations (like predicate pushdown), but rather create options that were not at all possible earlier.</p>\n<p>Do you think there is anything that is fundamentally wrong with this suggestion/approach? I believe that all the keys and values are completely filled up before giving them to resolver; so in this case, the proxy would apply these transformations when filling up the version_stamp in key or value and from that point on there should be no other change that would be needed.</p>\n<p>If the above thinking makes sense, then how would one \u201cpass\u201d these transformations to fdbserver process? I am not suggesting these to be completely dynamic transformations that are decided at run-time; if there was a possibility of an interface/contract that one could implement, compile and provide to fdbserver as dynamically linked lib, and then mention the identifier of the transformation as part of key_value operation, would this be doable? We can even prohibit passing any runtime parameters to these transformations if it makes things more tractable.  I am not at all good with C++ concepts related to this aspect, and hence doing a lot of hand-waving <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=9\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-08-09T12:04:03.821Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 27,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 141.2,
+        "yours": false,
+        "topic_id": 1577,
+        "topic_slug": "possibility-of-server-side-operations-on-versionstamp",
+        "display_username": "gaurav",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/fdb-7-0-roadmap/1660/3",
+            "internal": true,
+            "reflection": true,
+            "title": "FDB 7.0 Roadmap",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 166,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/possibility-of-server-side-operations-on-versionstamp/1577/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4844,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2019-08-09T20:37:43.135Z",
+        "cooked": "<p>I guess the more general question would be: can we have a user-provided function that modifies a mutation in the proxy at commit time (and it will get some additional input from the proxy like the write version). Do I understand your question correctly?</p>\n<p>If so, I think this is probably hard to implement and the problem is kind of related to predicate pushdown (as in both of them need some form of function push down functionality). We currently simply don\u2019t have a way of pushing a user-function to a server. Sending a shared-object file will probably meet a lot of resistance for several reasons:</p>\n<ol>\n<li>Security. This is probably the biggest one. We don\u2019t want clients to be able to inject random code into the server.</li>\n<li>Robustness: If your user-function is buggy, we don\u2019t want to crash the server.</li>\n<li>Portability: If your client runs on MacOS and your server runs on Linux, you will need to be able to cross compile (or give up this feature).</li>\n</ol>\n<p>I guess the good news is that we want to find a solution that would allow for stuff like that. There are several ways this can be done in a safe way:</p>\n<ol>\n<li>Integrate some kind of scripting language like JavaScript, Scheme, Lua\u2026 These can often be run in a sandbox which adds safety. But obviously speed could be a concern.</li>\n<li>It might be possible to use LLVM to do this. This will, however, add significant complexity to FDB (and testing).</li>\n<li>The Linux Kernel implements EBPF to do these kind of things, so <a class=\"mention\" href=\"/u/alexmiller\">@alexmiller</a> had the idea to integrate this byte-code language into fdb. I don\u2019t know how feasible this is but if that works it would probably be my favorite choice.</li>\n</ol>\n<p>But no matter what, it will take a while to get something like this implemented in a reliable way.</p>\n<p>A maybe less general approach would be to allow to nest atomic operations and define some more atomic operations. The client could provide some form of template that the server would execute. This would not be as general as pushing down a user-defined function but I guess it would solve many of the use-cases you are thinking about.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-08-09T20:37:43.135Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 10.6,
+        "yours": false,
+        "topic_id": 1577,
+        "topic_slug": "possibility-of-server-side-operations-on-versionstamp",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/possibility-of-server-side-operations-on-versionstamp/1577/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 4845,
+        "name": "gaurav",
+        "username": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "created_at": "2019-08-09T21:09:31.448Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"markus.pilman\" data-post=\"2\" data-topic=\"1577\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/markus.pilman/48/379_2.png\" class=\"avatar\"> markus.pilman:</div>\n<blockquote>\n<p>I guess the more general question would be: can we have a user-provided function that modifies a mutation in the proxy at commit time (and it will get some additional input from the proxy like the write version). Do I understand your question correctly?</p>\n</blockquote>\n</aside>\n<p>Yes, that is correct. However, I wanted to restrict this slightly to eschew the security and implementation complexity issues that you mentioned. I was requesting to be able to implement a set of fixed methods that follow some predefined fdb contract, and directly put them alongside fdbserver and load them in fdb process when bringing it up. Think of it as few more named operations like set_versionstamp_key, that are implemented by fdb users. Clients only get to choose the id of the predefined operation (and optionally some encoded params in key or value) at commit time.</p>\n<p>I also tried to restrict the request to not get into any kind of filtering/predicate push down operations, as they have been <a href=\"https://forums.foundationdb.org/t/feature-request-predicate-pushdown/954\">discussed</a> in detail earlier, and have their own set of challenges related to interfering with fdb caching.</p>\n<aside class=\"quote no-group\" data-username=\"markus.pilman\" data-post=\"2\" data-topic=\"1577\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/markus.pilman/48/379_2.png\" class=\"avatar\"> markus.pilman:</div>\n<blockquote>\n<p>A maybe less general approach would be to allow to nest atomic operations and define some more atomic operations. The client could provide some form of template that the server would execute. This would not be as general as pushing down a user-defined function but I guess it would solve many of the use-cases you are thinking about.</p>\n</blockquote>\n</aside>\n<p>Yes this is closer to what I was hoping for, for now. With one change - if users of fdb can implement these, as per some predefined contracts, and provide these to fdbserver as dynamic libraries when starting up.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-08-09T21:18:42.347Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 1,
+        "incoming_link_count": 3,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 25.2,
+        "yours": false,
+        "topic_id": 1577,
+        "topic_slug": "possibility-of-server-side-operations-on-versionstamp",
+        "display_username": "gaurav",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/feature-request-predicate-pushdown/954",
+            "internal": true,
+            "reflection": false,
+            "title": "Feature Request: Predicate pushdown",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 166,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/possibility-of-server-side-operations-on-versionstamp/1577/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 4846,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2019-08-09T21:29:09.646Z",
+        "cooked": "<p>Ah I see, I misunderstood. I though you wanted to send shared-objects to the server, but what you really want is a plug in system.</p>\n<p>Basically what we could do relatively easily is to allow for users to implement their own atomic function in c libraries that can either be preloaded or accessed through <code>dlopen</code>.</p>\n<p>The main problem I see with this is that it adds complexity that we would need to support. It is also unclear to me how the interface to access these would look like and how we could make this maintainable over a long period of time. This is why I would prefer to wait for a more general solution (which would probably be done together with predicate pushdown if we do that).</p>\n<p>Can you clarify a bit what the use-case would be that you have in mind?</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-08-09T21:29:09.646Z",
+        "reply_count": 1,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 10.6,
+        "yours": false,
+        "topic_id": 1577,
+        "topic_slug": "possibility-of-server-side-operations-on-versionstamp",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 166,
+          "username": "gaurav",
+          "name": "gaurav",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/possibility-of-server-side-operations-on-versionstamp/1577/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 4852,
+        "name": "gaurav",
+        "username": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "created_at": "2019-08-10T11:56:51.986Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"markus.pilman\" data-post=\"4\" data-topic=\"1577\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/markus.pilman/48/379_2.png\" class=\"avatar\"> markus.pilman:</div>\n<blockquote>\n<p>Can you clarify a bit what the use-case would be that you have in mind?</p>\n</blockquote>\n</aside>\n<p>I am trying to come up with a scheme where I can use the <code>commit_version</code> of the keys (keys are ordered by version_stamp) for deriving a <code>bucket</code> in which that key should be placed. This would help in distributing the keys in the key-space, to avoid write hot-spots. This would also lt me `stitch\u2019 back the keys in proper order from different buckets, with acceptable overhead.</p>\n<p>Something like <code>change_log/bucket(version_stamp, width)/version_stamp/... -&gt; ...</code>.</p>\n<p>The function <code>bucket(version, width) :=  Long.reverse(version &gt;&gt;&gt; width)</code>, where <code>width</code> determines how fast buckets are changed (<code>width=2^26</code> to change buckets every <code>~64 seconds</code>, under an assumption of default version number generation speed). In the above example, <code>width</code> will be fixed and need to be passed in every time.</p>\n<p>At the moment I am using some round-about way to achieve something closer to above - that results in complex codes and conflicts.</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2019-08-10T11:56:51.986Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 1,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 10.0,
+        "yours": false,
+        "topic_id": 1577,
+        "topic_slug": "possibility-of-server-side-operations-on-versionstamp",
+        "display_username": "gaurav",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 166,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/possibility-of-server-side-operations-on-versionstamp/1577/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4841,
+      4844,
+      4845,
+      4846,
+      4852
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2266
+    ],
+    [
+      2,
+      2265
+    ],
+    [
+      5,
+      2264
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Possibility of Server side operations on VersionStamp",
+  "id": 1577,
+  "title": "Possibility of Server side operations on VersionStamp",
+  "posts_count": 5,
+  "created_at": "2019-08-09T06:20:16.581Z",
+  "views": 1067,
+  "reply_count": 2,
+  "like_count": 0,
+  "last_posted_at": "2019-08-10T11:56:51.986Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "possibility-of-server-side-operations-on-versionstamp",
+  "category_id": 7,
+  "word_count": 1311,
+  "deleted_at": null,
+  "user_id": 166,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1577",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Use case of versionstamp and behavior of pack_with_versionstamp",
+      "id": 869,
+      "title": "Use case of versionstamp and behavior of pack_with_versionstamp",
+      "slug": "use-case-of-versionstamp-and-behavior-of-pack-with-versionstamp",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-11-14T21:14:41.993Z",
+      "last_posted_at": "2018-11-26T18:06:38.323Z",
+      "bumped": true,
+      "bumped_at": "2018-11-26T18:06:38.323Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 2402,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What is the most efficient way to generate version stamps in FDB",
+      "id": 2062,
+      "title": "What is the most efficient way to generate version stamps in FDB",
+      "slug": "what-is-the-most-efficient-way-to-generate-version-stamps-in-fdb",
+      "posts_count": 19,
+      "reply_count": 13,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2020-04-13T23:10:51.841Z",
+      "last_posted_at": "2020-07-26T16:46:50.841Z",
+      "bumped": true,
+      "bumped_at": "2020-07-26T16:46:50.841Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 2324,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Implementing VersionStamps in bindings",
+      "id": 250,
+      "title": "Implementing VersionStamps in bindings",
+      "slug": "implementing-versionstamps-in-bindings",
+      "posts_count": 25,
+      "reply_count": 18,
+      "highest_post_number": 25,
+      "image_url": null,
+      "created_at": "2018-04-24T19:05:11.830Z",
+      "last_posted_at": "2018-05-09T18:14:10.990Z",
+      "bumped": true,
+      "bumped_at": "2018-05-09T18:14:10.990Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 5417,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "VersionStamp vs CommittedVersion",
+      "id": 600,
+      "title": "VersionStamp vs CommittedVersion",
+      "slug": "versionstamp-vs-committedversion",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-07-30T06:50:38.826Z",
+      "last_posted_at": "2018-09-17T19:43:14.827Z",
+      "bumped": true,
+      "bumped_at": "2018-09-17T19:43:14.827Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 3916,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Node bindings release 0.8.0, now with Versionstamp support in the tuple layer!",
+      "id": 1035,
+      "title": "Node bindings release 0.8.0, now with Versionstamp support in the tuple layer!",
+      "slug": "node-bindings-release-0-8-0-now-with-versionstamp-support-in-the-tuple-layer",
+      "posts_count": 14,
+      "reply_count": 11,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2019-01-18T12:41:26.214Z",
+      "last_posted_at": "2019-01-29T11:37:56.955Z",
+      "bumped": true,
+      "bumped_at": "2019-01-29T11:37:56.955Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 792,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 166,
+        "username": "gaurav",
+        "name": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 3
+      },
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 166,
+      "username": "gaurav",
+      "name": "gaurav",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png"
+    },
+    "last_poster": {
+      "id": 166,
+      "username": "gaurav",
+      "name": "gaurav",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

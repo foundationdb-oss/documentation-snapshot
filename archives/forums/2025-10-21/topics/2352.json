@@ -1,0 +1,786 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7968,
+        "name": "",
+        "username": "v-pap",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+        "created_at": "2020-09-22T13:28:14.829Z",
+        "cooked": "<p>As a follow up of this post <a href=\"https://forums.foundationdb.org/t/storage-server-cpu-bottleneck-growing-data-lag/2234\" class=\"inline-onebox\">Storage Server CPU bottleneck - Growing data lag</a>, I managed to stabilize the cluster by developing a module which applies a retention policy that prunes old data, which in turn increases the locality of the inserted data. This in combination with the more aggressive knobs seem to have fixed the problem of the increasing data lag.</p>\n<p>After running two clusters with the same configuration and a similar workload, I noticed that at several intervals, the clusters produced timeouts in writes, while 1-2 logs processes where marked as \u201cdegraded\u201d.</p>\n<p>Questions:</p>\n<ol>\n<li>What exactly degraded means in the FDB context?</li>\n<li>Is there a way to find out why a process is degraded?</li>\n<li>When does a process stops being degraded?</li>\n<li>If a log process is degraded why FDB doesn\u2019t use the spare log instead?</li>\n</ol>\n<p>Relevant data:</p>\n<p>The cluster during the current workload:<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/35392ea98842d2904fcd4798c3fd55581867cd4b.png\" data-download-href=\"/uploads/short-url/7APOJTD5JDsjuWj2S8F777Qj3Gb.png?dl=1\" title=\"Cluster Overview\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/35392ea98842d2904fcd4798c3fd55581867cd4b_2_690x416.png\" alt=\"Cluster Overview\" data-base62-sha1=\"7APOJTD5JDsjuWj2S8F777Qj3Gb\" width=\"690\" height=\"416\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/35392ea98842d2904fcd4798c3fd55581867cd4b_2_690x416.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/35392ea98842d2904fcd4798c3fd55581867cd4b_2_1035x624.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/35392ea98842d2904fcd4798c3fd55581867cd4b_2_1380x832.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/35392ea98842d2904fcd4798c3fd55581867cd4b_2_10x10.png\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">Cluster Overview</span><span class=\"informations\">1467\u00d7886 97.1 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg></div></a></div><br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/f869e82519b70614f62745bb30ae408feaea429e.png\" data-download-href=\"/uploads/short-url/zrzjEsPpLDStBMOL4WRuajRruY6.png?dl=1\" title=\"Cluster Data\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f869e82519b70614f62745bb30ae408feaea429e_2_690x306.png\" alt=\"Cluster Data\" data-base62-sha1=\"zrzjEsPpLDStBMOL4WRuajRruY6\" width=\"690\" height=\"306\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f869e82519b70614f62745bb30ae408feaea429e_2_690x306.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/f869e82519b70614f62745bb30ae408feaea429e_2_1035x459.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/f869e82519b70614f62745bb30ae408feaea429e_2_1380x612.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f869e82519b70614f62745bb30ae408feaea429e_2_10x10.png\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">Cluster Data</span><span class=\"informations\">1476\u00d7656 55.3 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg></div></a></div></p>\n<p>Log stats from the same time range:<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/f276f1247d8f0863b593fc02d5ea9d6744857a00.png\" data-download-href=\"/uploads/short-url/yAWny3WnpD3Leoed1HEXTXocpHO.png?dl=1\" title=\"Cluster Logs\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f276f1247d8f0863b593fc02d5ea9d6744857a00_2_690x305.png\" alt=\"Cluster Logs\" data-base62-sha1=\"yAWny3WnpD3Leoed1HEXTXocpHO\" width=\"690\" height=\"305\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f276f1247d8f0863b593fc02d5ea9d6744857a00_2_690x305.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/f276f1247d8f0863b593fc02d5ea9d6744857a00_2_1035x457.png 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/f276f1247d8f0863b593fc02d5ea9d6744857a00_2_1380x610.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/f276f1247d8f0863b593fc02d5ea9d6744857a00_2_10x10.png\"><div class=\"meta\"><svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">Cluster Logs</span><span class=\"informations\">1540\u00d7682 92.4 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg></div></a></div></p>\n<p>Logs with <code>Severity &gt; 10</code> from a log process which is marked as degraded (log-2 in the graph)</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"20\" Time=\"1600773328.062849\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"7\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600774230.094659\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"27\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600774337.097655\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"9\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600774606.106858\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"6\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600774609.106982\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"2\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600774610.106999\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"10\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600774881.114514\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"4\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600774942.117677\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"7\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600775624.158769\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"7\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600777911.238035\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"6\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600777912.238060\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"6\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600777913.238087\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"1\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1600777927.238446\" Type=\"TLogQueueCommitSlow\" ID=\"d20368ec5628ec29\" LateProcessCount=\"5\" LoggingDelay=\"1\" Machine=\"10.16.45.5:4501\" LogGroup=\"turing2-mist-fdb\" Roles=\"TL\" /&gt;\n\n</code></pre>\n<p>Notes:</p>\n<ol>\n<li>The timestamp of the last <code>Event</code> matches the timestamp in which one log process is marked as degraded (1-&gt;2 degraded process in the relevant graph).</li>\n<li>The whole cluster is deployed on a GCE cluster with the FDB Kubernetes Operator</li>\n</ol>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-22T13:33:28.844Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 154,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 771.4,
+        "yours": false,
+        "topic_id": 2352,
+        "topic_slug": "fdb-degraded-log-processes-what-does-degraded-mean",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/storage-server-cpu-bottleneck-growing-data-lag/2234",
+            "internal": true,
+            "reflection": false,
+            "title": "Storage Server CPU bottleneck - Growing data lag",
+            "clicks": 4
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/f869e82519b70614f62745bb30ae408feaea429e.png",
+            "internal": false,
+            "reflection": false,
+            "title": "f869e82519b70614f62745bb30ae408feaea429e.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/35392ea98842d2904fcd4798c3fd55581867cd4b.png",
+            "internal": false,
+            "reflection": false,
+            "title": "35392ea98842d2904fcd4798c3fd55581867cd4b.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/f276f1247d8f0863b593fc02d5ea9d6744857a00.png",
+            "internal": false,
+            "reflection": false,
+            "title": "f276f1247d8f0863b593fc02d5ea9d6744857a00.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/sudden-spike-in-tlogqueuecommitslow-warning/4949",
+            "internal": true,
+            "reflection": true,
+            "title": "Sudden spike in TLogQueueCommitSlow warning",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 744,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-degraded-log-processes-what-does-degraded-mean/2352/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 8091,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2020-10-14T21:12:47.025Z",
+        "cooked": "<p>I hit the same thing on one of my clusters and found this: <a href=\"https://github.com/apple/foundationdb/pull/1270\" rel=\"noopener nofollow ugc\">https://github.com/apple/foundationdb/pull/1270</a></p>\n<p>Guessing \u201cdegraded\u201d has different meanings in fdb depending on context, and for TLogs it means that at some point it couldn\u2019t commit for &gt;5s. The degraded state remains for 2 days then gets reset. (Knobs: <a href=\"https://github.com/apple/foundationdb/pull/1270/files#diff-f409cd478d8df5100b9cc31fbc8a1f13cfab637930155952b7e01aa089bd2ea4\" rel=\"noopener nofollow ugc\">https://github.com/apple/foundationdb/pull/1270/files#diff-f409cd478d8df5100b9cc31fbc8a1f13cfab637930155952b7e01aa089bd2ea4</a>)</p>\n<p>I\u2019m not sure what metrics/logs I can look at to debug why it couldn\u2019t commit for &gt;5s, if anyone has any advice here</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-10-14T21:12:47.025Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 8,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 50.8,
+        "yours": false,
+        "topic_id": 2352,
+        "topic_slug": "fdb-degraded-log-processes-what-does-degraded-mean",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/1270/files#diff-f409cd478d8df5100b9cc31fbc8a1f13cfab637930155952b7e01aa089bd2ea4",
+            "internal": false,
+            "reflection": false,
+            "title": "TLogs that cannot commit for more than 5 seconds are marked as degraded by etschannen \u00b7 Pull Request #1270 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 15
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/pull/1270",
+            "internal": false,
+            "reflection": false,
+            "title": "TLogs that cannot commit for more than 5 seconds are marked as degraded by etschannen \u00b7 Pull Request #1270 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 11
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-degraded-log-processes-what-does-degraded-mean/2352/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 8092,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2020-10-15T01:02:03.928Z",
+        "cooked": "<p>Good code sleuthing!  Currently only transaction logs have a degraded state, but it\u2019s been discussed extending it to other roles.</p>\n<p>There isn\u2019t particularly anything within FDB that you can look at to find why a disk isn\u2019t <code>fsync()</code>ing.  You\u2019d be better off examining the systems itself, and checking things like <code>dmesg</code> for drive-related system errors.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-10-15T01:02:03.928Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 25.8,
+        "yours": false,
+        "topic_id": 2352,
+        "topic_slug": "fdb-degraded-log-processes-what-does-degraded-mean",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 810,
+          "username": "amanda",
+          "name": "Amanda",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-degraded-log-processes-what-does-degraded-mean/2352/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7968,
+      8091,
+      8092
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1855
+    ],
+    [
+      2,
+      1833
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FDB degraded log processes. What does degraded mean?",
+  "id": 2352,
+  "title": "FDB degraded log processes. What does degraded mean?",
+  "posts_count": 3,
+  "created_at": "2020-09-22T13:28:14.724Z",
+  "views": 945,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2020-10-15T01:02:03.928Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-degraded-log-processes-what-does-degraded-mean",
+  "category_id": 17,
+  "word_count": 733,
+  "deleted_at": null,
+  "user_id": 744,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/35392ea98842d2904fcd4798c3fd55581867cd4b_2_1024x618.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2352",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1467,
+      "height": 886,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/1X/35392ea98842d2904fcd4798c3fd55581867cd4b.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 618,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/35392ea98842d2904fcd4798c3fd55581867cd4b_2_1024x618.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Processes stop logging but appear to be doing work?",
+      "id": 1854,
+      "title": "Processes stop logging but appear to be doing work?",
+      "slug": "processes-stop-logging-but-appear-to-be-doing-work",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/c7a685b7fb79ca69a79b7733b5eb68e30e3dbb63_2_1024x640.png",
+      "created_at": "2019-12-21T20:21:08.212Z",
+      "last_posted_at": "2019-12-24T02:45:12.372Z",
+      "bumped": true,
+      "bumped_at": "2019-12-24T02:45:12.372Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 807,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 26,
+            "username": "mrz",
+            "name": "matthew zeier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mrz/{size}/26_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "WARNING: A single process is both a transaction log and a storage server",
+      "id": 1580,
+      "title": "WARNING: A single process is both a transaction log and a storage server",
+      "slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-08-11T17:20:33.378Z",
+      "last_posted_at": "2019-08-13T20:43:59.991Z",
+      "bumped": true,
+      "bumped_at": "2019-08-13T20:43:59.991Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1783,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to repair lagging process?",
+      "id": 478,
+      "title": "How to repair lagging process?",
+      "slug": "how-to-repair-lagging-process",
+      "posts_count": 10,
+      "reply_count": 8,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-05-29T08:05:25.357Z",
+      "last_posted_at": "2018-05-31T03:22:50.621Z",
+      "bumped": true,
+      "bumped_at": "2018-05-31T03:22:50.621Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2443,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 152,
+            "username": "shgxwxl",
+            "name": "Shgxwxl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/shgxwxl/{size}/127_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 230,
+            "username": "umpc",
+            "name": "Justin Lowery",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/umpc/{size}/203_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Database unavailable after shutting down a foundationdb node",
+      "id": 2113,
+      "title": "Database unavailable after shutting down a foundationdb node",
+      "slug": "database-unavailable-after-shutting-down-a-foundationdb-node",
+      "posts_count": 18,
+      "reply_count": 8,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2020-05-11T16:09:39.373Z",
+      "last_posted_at": "2021-02-05T22:16:50.767Z",
+      "bumped": true,
+      "bumped_at": "2021-02-05T22:18:40.780Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 8569,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage Server CPU bottleneck - Growing data lag",
+      "id": 2234,
+      "title": "Storage Server CPU bottleneck - Growing data lag",
+      "slug": "storage-server-cpu-bottleneck-growing-data-lag",
+      "posts_count": 23,
+      "reply_count": 18,
+      "highest_post_number": 23,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/e472648513de0e881bd62213804d5e43f9510ace_2_1023x568.png",
+      "created_at": "2020-07-08T13:46:58.378Z",
+      "last_posted_at": "2021-12-13T09:55:15.976Z",
+      "bumped": true,
+      "bumped_at": "2021-12-13T10:47:15.543Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3083,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 744,
+        "username": "v-pap",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 810,
+        "username": "amanda",
+        "name": "Amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 744,
+      "username": "v-pap",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png"
+    },
+    "last_poster": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/pull/1270/files#diff-f409cd478d8df5100b9cc31fbc8a1f13cfab637930155952b7e01aa089bd2ea4",
+        "title": "TLogs that cannot commit for more than 5 seconds are marked as degraded by etschannen \u00b7 Pull Request #1270 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 810,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/pull/1270",
+        "title": "TLogs that cannot commit for more than 5 seconds are marked as degraded by etschannen \u00b7 Pull Request #1270 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 11,
+        "user_id": 810,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/storage-server-cpu-bottleneck-growing-data-lag/2234",
+        "title": "Storage Server CPU bottleneck - Growing data lag",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 744,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

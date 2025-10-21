@@ -1,0 +1,672 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10019,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-09-27T21:04:58.299Z",
+        "cooked": "<p>Hi, I\u2019m on FDB 6.2.25. I have a cluster where all the fdbservers were previously set with <code>setclass</code> in fdbcli. I\u2019m trying to change these all back to use the command-line-specified class with <code>setclass &lt;ADDR&gt; default</code>. This worked for all fdbservers on 2 of the 3 hosts. On the last one, however, this has no effect, but there\u2019s no failure reported. I\u2019ve tried <code>setclass &lt;IP&gt;:&lt;PORT&gt; default</code> and just <code>setclass &lt;IP&gt; default</code> and neither have worked. Any advice for how to debug this?</p>\n<p>(<code>&lt;IP2&gt;</code> is the problematic one. <code>setclass default</code> worked fine with <code>IP1</code> and <code>IP2</code>)</p>\n<pre><code class=\"lang-auto\">fdb&gt; setclass\nThere are currently 12 processes in the database:\n  &lt;IP1&gt;:4500:tls: stateless (command_line)\n  &lt;IP1&gt;:4501:tls: log (command_line)\n  &lt;IP1&gt;:4502:tls: storage (command_line)\n  &lt;IP1&gt;:4503:tls: storage (command_line)\n  &lt;IP2&gt;:4500:tls: stateless (set_class)\n  &lt;IP2&gt;:4501:tls: log (set_class)\n  &lt;IP2&gt;:4502:tls: storage (set_class)\n  &lt;IP2&gt;:4503:tls: storage (set_class)\n  &lt;IP3&gt;:4500:tls: stateless (command_line)\n  &lt;IP3&gt;:4501:tls: storage (command_line)\n  &lt;IP3&gt;:4502:tls: storage (command_line)\n  &lt;IP3&gt;:4503:tls: stateless (command_line)\nfdb&gt; setclass &lt;IP2&gt; default\nfdb&gt; setclass\nThere are currently 12 processes in the database:\n  &lt;IP1&gt;:4500:tls: stateless (command_line)\n  &lt;IP1&gt;:4501:tls: log (command_line)\n  &lt;IP1&gt;:4502:tls: storage (command_line)\n  &lt;IP1&gt;:4503:tls: storage (command_line)\n  &lt;IP2&gt;:4500:tls: stateless (set_class) // nothing changed?\n  &lt;IP2&gt;:4501:tls: log (set_class)\n  &lt;IP2&gt;:4502:tls: storage (set_class)\n  &lt;IP2&gt;:4503:tls: storage (set_class)\n  &lt;IP3&gt;:4500:tls: stateless (command_line)\n  &lt;IP3&gt;:4501:tls: storage (command_line)\n  &lt;IP3&gt;:4502:tls: storage (command_line)\n  &lt;IP3&gt;:4503:tls: stateless (command_line)\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-09-27T21:04:58.299Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 46,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 233.0,
+        "yours": false,
+        "topic_id": 2912,
+        "topic_slug": "fdbcli-setclass-has-no-effect-silent-failure",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbcli-setclass-has-no-effect-silent-failure/2912/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10045,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2021-09-30T20:04:06.140Z",
+        "cooked": "<p>It seems that one deficiency here is that the <code>setclass</code> command will not report back to you if there are no processes that match the address you give it. I\u2019ve made an issue to have that problem fixed:</p>\n<aside class=\"onebox githubissue\" data-onebox-src=\"https://github.com/apple/foundationdb/issues/5705\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/issues/5705\" target=\"_blank\" rel=\"noopener\">github.com/apple/foundationdb</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"github-row\">\n  <div class=\"github-icon-container\" title=\"Issue\">\n\t  <svg width=\"60\" height=\"60\" class=\"github-icon\" viewbox=\"0 0 14 16\" aria-hidden=\"true\"><path d=\"M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z\"></path></svg>\n  </div>\n\n  <div class=\"github-info-container\">\n    <h4>\n      <a href=\"https://github.com/apple/foundationdb/issues/5705\" target=\"_blank\" rel=\"noopener\">Setting the process class via fdbcli should report if no processes were changed</a>\n    </h4>\n\n    <div class=\"github-info\">\n      <div class=\"date\">\n        opened <span class=\"discourse-local-date\" data-format=\"ll\" data-date=\"2021-09-30\" data-time=\"19:46:08\" data-timezone=\"UTC\">07:46PM - 30 Sep 21 UTC</span>\n      </div>\n\n\n      <div class=\"user\">\n        <a href=\"https://github.com/sfc-gh-ajbeamon\" target=\"_blank\" rel=\"noopener\">\n          <img alt=\"sfc-gh-ajbeamon\" src=\"https://global.discourse-cdn.com/foundationdb/original/2X/a/a4ad4d565be5e49f5a8c396182c0b8d256c319c6.png\" class=\"onebox-avatar-inline\" width=\"20\" height=\"20\">\n          sfc-gh-ajbeamon\n        </a>\n      </div>\n    </div>\n\n    <div class=\"labels\">\n    </div>\n  </div>\n</div>\n\n  <div class=\"github-row\">\n    <p class=\"github-body-container\">Calling `setclass` in `fdbcli` will try to change any process that matches the p<span class=\"show-more-container\"><a href=\"\" rel=\"noopener\" class=\"show-more\">\u2026</a></span><span class=\"excerpt hidden\">rocess filter given. If no processes are found, it silently does nothing. Instead, it should report back to the user that no processes matched the given filter.</span></p>\n  </div>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>As for why it\u2019s not working, I\u2019m not super clear. The data for these classes is stored under the prefix <code>\\xff/processClass/</code>. If you do a range read of that space, does it return anything?</p>\n<pre><code class=\"lang-auto\">fdb&gt; option on READ_SYSTEM_KEYS\nfdb&gt; getrange \\xff/processClass/\n</code></pre>\n<p>Based on your output, I would expect that you should see 4 keys corresponding with the 4 set processes. Looking at the code, it seems like the ways this could fail is if none of the worker processes matched the address you gave for some reason, if it modified the wrong key, or if it used the wrong class.</p>\n<p>You could possibly test for the first and second case by setting the class to something else and see if it changes, either according to <code>fdbcli setclass</code> or by reading the key range and seeing if it changes. We could also potentially try to decode the keys being stored in the key-space I described above, though you\u2019ll probably need some help as these aren\u2019t meant to be human readable.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-09-30T20:07:22.147Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 7.4,
+        "yours": false,
+        "topic_id": 2912,
+        "topic_slug": "fdbcli-setclass-has-no-effect-silent-failure",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/5705",
+            "internal": false,
+            "reflection": false,
+            "title": "Setting the process class via fdbcli should report if no processes were changed \u00b7 Issue #5705 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbcli-setclass-has-no-effect-silent-failure/2912/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 10046,
+        "name": "Amanda",
+        "username": "amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "created_at": "2021-09-30T21:22:50.281Z",
+        "cooked": "<p>Thanks for filing the issue! I think the <code>setclass</code> (no args) command is reading a wrong key somewhere. I just realized that my <code>&lt;IP2&gt;</code> processes in status json do say <code>command_line</code> and not <code>set_class</code> , so it looks like the change worked and is just being listed incorrectly.</p>\n<pre><code class=\"lang-auto\">            \"335e83884f7ea8d3bb11e556e61d59a5\" : {\n                \"address\" : \"&lt;IP2&gt;:4501:tls\",\n                \"class_source\" : \"command_line\",\n                \"class_type\" : \"log\",\n</code></pre>\n<p>(fdbcli setclass still shows <code>set_class</code>)</p>\n<p><code>getrange \\xff/processClass/</code> returns nothing. I do see a <code>\\xff/processClassChanges</code> key (value is a random looking string) and a <code>\\xff/processClassChangesVersion</code> (value is 1)</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-09-30T21:22:50.281Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 2912,
+        "topic_slug": "fdbcli-setclass-has-no-effect-silent-failure",
+        "display_username": "Amanda",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 810,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbcli-setclass-has-no-effect-silent-failure/2912/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10019,
+      10045,
+      10046
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1485
+    ],
+    [
+      2,
+      1482
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fdbcli setclass has no effect. Silent failure?",
+  "id": 2912,
+  "title": "Fdbcli setclass has no effect. Silent failure?",
+  "posts_count": 3,
+  "created_at": "2021-09-27T21:04:58.205Z",
+  "views": 626,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2021-09-30T21:22:50.281Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdbcli-setclass-has-no-effect-silent-failure",
+  "category_id": 17,
+  "word_count": 558,
+  "deleted_at": null,
+  "user_id": 810,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2912",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How are &lsquo;contributing_workers&rsquo; computed?",
+      "id": 360,
+      "title": "How are 'contributing_workers' computed?",
+      "slug": "how-are-contributing-workers-computed",
+      "posts_count": 20,
+      "reply_count": 13,
+      "highest_post_number": 20,
+      "image_url": null,
+      "created_at": "2018-05-07T00:53:18.538Z",
+      "last_posted_at": "2018-05-12T07:19:34.562Z",
+      "bumped": true,
+      "bumped_at": "2018-05-12T07:19:34.562Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1986,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 236,
+            "username": "marctrem",
+            "name": "Marc-Andr\u00e9 Tremblay",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/marctrem/{size}/208_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions about process classes, recruitment behavior and cluster configuration",
+      "id": 1177,
+      "title": "Questions about process classes, recruitment behavior and cluster configuration",
+      "slug": "questions-about-process-classes-recruitment-behavior-and-cluster-configuration",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-02-21T19:47:47.590Z",
+      "last_posted_at": "2019-06-15T13:16:26.887Z",
+      "bumped": true,
+      "bumped_at": "2019-06-15T13:16:26.887Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2849,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 475,
+            "username": "monsiper",
+            "name": "mehmet onsiper",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/ba9def/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 170,
+            "username": "meln1k",
+            "name": "Nikita Melkozerov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meln1k/{size}/150_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deployment with custom fdb.cluster file",
+      "id": 592,
+      "title": "Deployment with custom fdb.cluster file",
+      "slug": "deployment-with-custom-fdb-cluster-file",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-07-26T23:00:18.994Z",
+      "last_posted_at": "2018-07-27T23:44:31.722Z",
+      "bumped": true,
+      "bumped_at": "2018-07-27T23:44:31.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 4329,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Process class and machine sharing deployment questions",
+      "id": 1600,
+      "title": "Process class and machine sharing deployment questions",
+      "slug": "process-class-and-machine-sharing-deployment-questions",
+      "posts_count": 16,
+      "reply_count": 11,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-08-28T14:29:20.326Z",
+      "last_posted_at": "2019-09-03T19:26:35.853Z",
+      "bumped": true,
+      "bumped_at": "2019-09-03T19:26:35.853Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2619,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 642,
+            "username": "arob",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9fc29f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB @ Kubernetes having &ldquo;issues&rdquo;",
+      "id": 383,
+      "title": "FoundationDB @ Kubernetes having \"issues\"",
+      "slug": "foundationdb-kubernetes-having-issues",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-09T10:17:53.797Z",
+      "last_posted_at": "2018-05-11T17:28:05.081Z",
+      "bumped": true,
+      "bumped_at": "2018-05-11T17:28:05.081Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2031,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 810,
+        "username": "amanda",
+        "name": "Amanda",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    },
+    "last_poster": {
+      "id": 810,
+      "username": "amanda",
+      "name": "Amanda",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

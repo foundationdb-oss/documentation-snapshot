@@ -1,0 +1,618 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10025,
+        "name": "Ryan Worl",
+        "username": "ryanworl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "created_at": "2021-09-28T13:09:17.364Z",
+        "cooked": "<p>I have a Java application running on Ubuntu which is configured to connect to a primary FDB cluster (cluster A) and a secondary FDB cluster (cluster B). It attempts to connect to A on start-up and read the status JSON key to determine if the database is locked. If it is locked, it attempts to connect to B and read the status key JSON to determine if it is locked. This dance is to facilitate DR failover, and, any time a \u201cdatabase locked\u201d error is encountered, this process starts again. An external process manages the failover, but that\u2019s not really relevant to this issue.</p>\n<p>I am attempting to upgrade the client version as given in the title. We are first upgrading the clients and setting API version <code>620</code> and we will deal with upgrading the servers later.</p>\n<p>We receive this error after upgrading the clients.</p>\n<p><code>Caused by: java.lang.RuntimeException: Failed to read cluster.database_locked or cluster.database_lock_state.locked from status={client={cluster_file={path=/tmp/foundation-db-cluster-files15548909453389961686/CLUSTER_NAME, up_to_date=true}, coordinators={coordinators=[{address=X.Y.Z.64:4500, reachable=false}, {address=X.Y.Z.84:4500, reachable=false}, {address=X.Y.Z.125:4500, reachable=false}, {address=X.Y.Z.126:4500, reachable=false}, {address=X.Y.Z.186:4500, reachable=false}], quorum_reachable=false}, database_status={available=false, healthy=false}, messages=[{description=Unable to reach a quorum of coordinators., name=quorum_not_reachable}], timestamp=1632757513}, cluster={layers={_valid=false}}}</code></p>\n<p>The <code>Failed to read cluster.database_locked or cluster.database_lock_state.locked</code> is our error message, not something we\u2019ve received directly from the database. The remainder is the original Exception from the database.</p>\n<p>I\u2019ve verified all the coordinators are available now and were available at that time. The cluster file has the same contents between both client versions.</p>\n<p><code>CLUSTER_NAME:RANDOM_STRING_CONSTANT@X.Y.Z.64:4500,X.Y.Z.84:4500,X.Y.Z.125:4500,X.Y.Z.126:4500,X.Y.Z.186:4500</code></p>\n<p>As you can see, the IP addresses do match as X.Y.Z is a constant. The coordinators are definitely working, as the 6.2.20 clients still operate correctly.</p>\n<p>Am I missing anything obvious here?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-09-28T13:09:17.364Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 66,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 331.0,
+        "yours": false,
+        "topic_id": 2916,
+        "topic_slug": "6-2-20-to-6-3-15-client-upgrade-questions",
+        "display_username": "Ryan Worl",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 81,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/6-2-20-to-6-3-15-client-upgrade-questions/2916/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10027,
+        "name": "Clement Pang",
+        "username": "panghy",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+        "created_at": "2021-09-28T15:37:56.854Z",
+        "cooked": "<p>Do you have multi-version client setup on the upgraded boxes?</p>\n<p>You will need to have 6.2.x libs available on the box when upgrading clients to 6.3.x. You can\u2019t just set API version to 620 after upgrading. Essentially the client will have to make multiple connections to the cluster and whichever successfully connects will be used. This will work even when the cluster is upgraded later on.</p>\n<p>See <a href=\"https://apple.github.io/foundationdb/api-general.html#multi-version-client-api\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Using FoundationDB Clients \u2014 FoundationDB 6.3</a> for more details.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-09-28T15:37:56.854Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 15.8,
+        "yours": false,
+        "topic_id": 2916,
+        "topic_slug": "6-2-20-to-6-3-15-client-upgrade-questions",
+        "display_username": "Clement Pang",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-general.html#multi-version-client-api",
+            "internal": false,
+            "reflection": false,
+            "title": "Using FoundationDB Clients \u2014 FoundationDB 6.3",
+            "clicks": 16
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 38,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/6-2-20-to-6-3-15-client-upgrade-questions/2916/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10025,
+      10027
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1484
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "6.2.20 to 6.3.15 client upgrade questions",
+  "id": 2916,
+  "title": "6.2.20 to 6.3.15 client upgrade questions",
+  "posts_count": 2,
+  "created_at": "2021-09-28T13:09:17.301Z",
+  "views": 498,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-09-28T15:37:56.854Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "6-2-20-to-6-3-15-client-upgrade-questions",
+  "category_id": 17,
+  "word_count": 449,
+  "deleted_at": null,
+  "user_id": 81,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2916",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Client library backwards compatibility issues",
+      "id": 919,
+      "title": "Client library backwards compatibility issues",
+      "slug": "client-library-backwards-compatibility-issues",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-30T16:17:55.490Z",
+      "last_posted_at": "2018-11-30T19:21:19.862Z",
+      "bumped": true,
+      "bumped_at": "2018-11-30T19:21:19.862Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1325,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to setup multi-version clients with Java?",
+      "id": 1549,
+      "title": "How to setup multi-version clients with Java?",
+      "slug": "how-to-setup-multi-version-clients-with-java",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-07-30T22:41:37.609Z",
+      "last_posted_at": "2019-07-31T15:04:51.073Z",
+      "bumped": true,
+      "bumped_at": "2019-07-31T15:04:51.073Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1813,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 627,
+            "username": "Dan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/eada6e/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Updating 6.0 -&gt; 6.2",
+      "id": 1574,
+      "title": "Updating 6.0 -> 6.2",
+      "slug": "updating-6-0-6-2",
+      "posts_count": 15,
+      "reply_count": 10,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-08-08T09:23:53.694Z",
+      "last_posted_at": "2019-08-28T23:43:22.815Z",
+      "bumped": true,
+      "bumped_at": "2019-08-28T23:43:22.815Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1672,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Upgrading FoundationDB",
+      "id": 191,
+      "title": "Upgrading FoundationDB",
+      "slug": "upgrading-foundationdb",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-04-21T23:51:26.311Z",
+      "last_posted_at": "2018-08-27T03:33:51.669Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T03:33:51.669Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 3852,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 133,
+            "username": "titanous",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/titanous/{size}/94_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to troubleshoot foundation db 6.0 startup issue",
+      "id": 1372,
+      "title": "How to troubleshoot foundation db 6.0 startup issue",
+      "slug": "how-to-troubleshoot-foundation-db-6-0-startup-issue",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-05-20T03:28:02.719Z",
+      "last_posted_at": "2019-05-23T15:59:12.442Z",
+      "bumped": true,
+      "bumped_at": "2019-05-23T15:59:12.442Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 842,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 586,
+            "username": "srinivas",
+            "name": "Srinivas k",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ecccb3/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 38,
+        "username": "panghy",
+        "name": "Clement Pang",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 81,
+        "username": "ryanworl",
+        "name": "Ryan Worl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 3
+      }
+    ],
+    "created_by": {
+      "id": 81,
+      "username": "ryanworl",
+      "name": "Ryan Worl",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png"
+    },
+    "last_poster": {
+      "id": 38,
+      "username": "panghy",
+      "name": "Clement Pang",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/api-general.html#multi-version-client-api",
+        "title": "Using FoundationDB Clients \u2014 FoundationDB 6.3",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 16,
+        "user_id": 38,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

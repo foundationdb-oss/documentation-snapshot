@@ -1,0 +1,723 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14558,
+        "name": "Matthieu Patou",
+        "username": "mpatou_openai",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "created_at": "2024-11-26T16:04:11.621Z",
+        "cooked": "<p>In production in one of our cluster in 7.3.43 (our clusters handle different kind of workload so 1 is not comparable to another) we are seeing a lot of CPU (90% +) used on some storage server. I did some flamegraph profiling (<a href=\"https://gist.githubusercontent.com/mpatou-openai/f79eb1f423f8a1d6226ef49de334abc8/raw/1739e7a957cb13f257cf235322a08dc1bfce21ce/gistfile1.txt\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">__run_timers.part.0 (250,000 samples, 0.01%)</a>)  and it seems that we spend quite a lot of time in CPU sending and receiving network data for instance <code>_libc_recv</code> is taking close to 10% CPU and <code>_sys_sendmsg</code> takes 25%.</p>\n<p>I\u2019m wondering if there is tuning that is needed to reduce the share of CPU done doing network operations I haven\u2019t found really guidelines.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-11-26T16:04:11.621Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 9,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 47.8,
+        "yours": false,
+        "topic_id": 4712,
+        "topic_slug": "storage-server-spending-large-amount-of-cpu-time-in-the-network-stack",
+        "display_username": "Matthieu Patou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://gist.githubusercontent.com/mpatou-openai/f79eb1f423f8a1d6226ef49de334abc8/raw/1739e7a957cb13f257cf235322a08dc1bfce21ce/gistfile1.txt",
+            "internal": false,
+            "reflection": false,
+            "title": "__run_timers.part.0 (250,000 samples, 0.01%)",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1484,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storage-server-spending-large-amount-of-cpu-time-in-the-network-stack/4712/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14604,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2024-12-07T20:27:16.631Z",
+        "cooked": "<p>Don\u2019t know if there are tunings we can do. It might be worth looking more into the number of requests and bandwidth used by the storage server. StorageMetrics event has information about the number of requests. If the storage server is having more traffic than others, maybe the problem is related to \u201chot\u201d shard (This tool <a href=\"https://github.com/apple/foundationdb/blob/main/contrib/transaction_profiling_analyzer/transaction_profiling_analyzer.py\" class=\"inline-onebox\">foundationdb/contrib/transaction_profiling_analyzer/transaction_profiling_analyzer.py at main \u00b7 apple/foundationdb \u00b7 GitHub</a> can help debug hot shard)?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-12-07T20:27:16.631Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 7.2,
+        "yours": false,
+        "topic_id": 4712,
+        "topic_slug": "storage-server-spending-large-amount-of-cpu-time-in-the-network-stack",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/contrib/transaction_profiling_analyzer/transaction_profiling_analyzer.py",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/contrib/transaction_profiling_analyzer/transaction_profiling_analyzer.py at main \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/storage-server-spending-large-amount-of-cpu-time-in-the-network-stack/4712/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14558,
+      14604
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      329
+    ],
+    [
+      2,
+      318
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Storage server spending large amount of CPU time in the network stack",
+  "id": 4712,
+  "title": "Storage server spending large amount of CPU time in the network stack",
+  "posts_count": 2,
+  "created_at": "2024-11-26T16:04:11.568Z",
+  "views": 63,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-12-07T20:27:16.631Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "storage-server-spending-large-amount-of-cpu-time-in-the-network-stack",
+  "category_id": 17,
+  "word_count": 184,
+  "deleted_at": null,
+  "user_id": 1484,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4712",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "CPU limited storage processes",
+      "id": 2140,
+      "title": "CPU limited storage processes",
+      "slug": "cpu-limited-storage-processes",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-05-29T11:53:05.632Z",
+      "last_posted_at": "2021-05-18T11:29:51.842Z",
+      "bumped": true,
+      "bumped_at": "2021-05-18T11:29:51.842Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1567,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 741,
+            "username": "sears",
+            "name": "Russell Sears",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction/operation throughput",
+      "id": 1880,
+      "title": "Transaction/operation throughput",
+      "slug": "transaction-operation-throughput",
+      "posts_count": 11,
+      "reply_count": 5,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-01-14T22:48:44.649Z",
+      "last_posted_at": "2020-01-23T15:09:25.796Z",
+      "bumped": true,
+      "bumped_at": "2020-01-23T15:09:25.796Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2027,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Setting CPU affinity for fdbservers",
+      "id": 84,
+      "title": "Setting CPU affinity for fdbservers",
+      "slug": "setting-cpu-affinity-for-fdbservers",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-19T22:52:03.659Z",
+      "last_posted_at": "2018-11-18T01:24:39.675Z",
+      "bumped": true,
+      "bumped_at": "2018-11-18T01:24:39.675Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 44,
+            "username": "cespare",
+            "name": "Caleb Spare",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 99,
+            "username": "Ramaprakash",
+            "name": "Ramaprakash Sathyanarayan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/df705f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage Server CPU bottleneck - Growing data lag",
+      "id": 2234,
+      "title": "Storage Server CPU bottleneck - Growing data lag",
+      "slug": "storage-server-cpu-bottleneck-growing-data-lag",
+      "posts_count": 23,
+      "reply_count": 18,
+      "highest_post_number": 23,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/e472648513de0e881bd62213804d5e43f9510ace_2_1023x568.png",
+      "created_at": "2020-07-08T13:46:58.378Z",
+      "last_posted_at": "2021-12-13T09:55:15.976Z",
+      "bumped": true,
+      "bumped_at": "2021-12-13T10:47:15.543Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3083,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      },
+      {
+        "id": 1484,
+        "username": "mpatou_openai",
+        "name": "Matthieu Patou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1484,
+      "username": "mpatou_openai",
+      "name": "Matthieu Patou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png"
+    },
+    "last_poster": {
+      "id": 454,
+      "username": "jzhou",
+      "name": "Jingyu Zhou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/main/contrib/transaction_profiling_analyzer/transaction_profiling_analyzer.py",
+        "title": "foundationdb/contrib/transaction_profiling_analyzer/transaction_profiling_analyzer.py at main \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 454,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://gist.githubusercontent.com/mpatou-openai/f79eb1f423f8a1d6226ef49de334abc8/raw/1739e7a957cb13f257cf235322a08dc1bfce21ce/gistfile1.txt",
+        "title": "__run_timers.part.0 (250,000 samples, 0.01%)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 1484,
+        "domain": "gist.githubusercontent.com",
+        "root_domain": "gist.githubusercontent.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

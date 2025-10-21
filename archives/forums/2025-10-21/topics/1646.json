@@ -1,0 +1,719 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5137,
+        "name": "Luis",
+        "username": "lfmunoz",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/lfmunoz/{size}/1109_2.png",
+        "created_at": "2019-09-23T20:18:31.317Z",
+        "cooked": "<p>According to the website FoundationDB requires 4GB</p>\n<p><a href=\"https://apple.github.io/foundationdb/configuration.html#system-requirements\" class=\"onebox\" target=\"_blank\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/configuration.html#system-requirements</a></p>\n<p>Can someone explain why it needs so much and what would happen if I only have 1 GB with SSD mode?</p>\n<p>Also wouldn\u2019t the requirements depend if I am using SSD or Memory Mode,  why don\u2019t the requirements take this into account?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-09-23T20:18:31.317Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 998,
+        "reads": 88,
+        "readers_count": 87,
+        "score": 4992.6,
+        "yours": false,
+        "topic_id": 1646,
+        "topic_slug": "foundationdb-ram-requirements",
+        "display_username": "Luis",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/configuration.html#system-requirements",
+            "internal": false,
+            "reflection": false,
+            "title": "Configuration \u2014 FoundationDB 6.1",
+            "clicks": 129
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 654,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-ram-requirements/1646/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5154,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-09-24T20:37:41.442Z",
+        "cooked": "<p>I think we\u2019ve meant to change the 4GB to 8GB, as that\u2019s the bar that most knobs have been configured to meet, and how most folk are running it in production.  And that\u2019s what this guidance is meant for.  The default settings of FDB are such that in most reasonable uses, FDB won\u2019t run out of memory and die even if you subject it to a high degree of load if you have 8GB of memory per <code>fdbserver</code> process.</p>\n<p>FDB isn\u2019t meant to be a low memory usage database.  It\u2019s generally hard to acquire CPU and disk without also acquiring memory, and if the memory is available, then it\u2019s better to use it than leave it unused.  8GB per core/disk is a sort of reasonable guess at the average ratios in a server.  There\u2019s various components that are (by default) happy to hold 1-2GB of data in memory.  Notably, this is transaction logs holding the most recent N seconds of mutations in memory, or storage servers keeping a ~2GB page cache.</p>\n<p>If you only have 1GB with SSD mode, then because the page cache defaults to 2GB, you\u2019ll OOM as soon as your total data volume is &gt;1GB, and you read all of it once.  The memory storage engine has its own limits, which you can adjust with <code>--storage_memory</code>.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-09-24T20:39:13.480Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 14,
+        "reads": 83,
+        "readers_count": 82,
+        "score": 86.6,
+        "yours": false,
+        "topic_id": 1646,
+        "topic_slug": "foundationdb-ram-requirements",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-ram-requirements/1646/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 5155,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2019-09-24T20:43:40.869Z",
+        "cooked": "<p>I don\u2019t remember all the history here, but it\u2019s possible the 4GB requirement was meant to represent a rough idea of what you might need to install the packages on a machine and run some simple workloads against the resulting cluster. I don\u2019t think it\u2019s required to have the full 8GB for simple cases like that. For production, though, I agree that the listed requirement should probably be higher.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-09-24T20:43:40.869Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 16,
+        "reads": 82,
+        "readers_count": 81,
+        "score": 96.4,
+        "yours": false,
+        "topic_id": 1646,
+        "topic_slug": "foundationdb-ram-requirements",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-ram-requirements/1646/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5137,
+      5154,
+      5155
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2220
+    ],
+    [
+      2,
+      2219
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "FoundationDB RAM requirements",
+  "id": 1646,
+  "title": "FoundationDB RAM requirements",
+  "posts_count": 3,
+  "created_at": "2019-09-23T20:18:31.261Z",
+  "views": 2036,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2019-09-24T20:43:40.869Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "foundationdb-ram-requirements",
+  "category_id": 7,
+  "word_count": 363,
+  "deleted_at": null,
+  "user_id": 654,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1646",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Minimum RAM requirements (with ssd storage)",
+      "id": 703,
+      "title": "Minimum RAM requirements (with ssd storage)",
+      "slug": "minimum-ram-requirements-with-ssd-storage",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-09-13T09:59:46.212Z",
+      "last_posted_at": "2018-09-18T10:25:20.475Z",
+      "bumped": true,
+      "bumped_at": "2018-09-18T10:25:20.475Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1425,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Constrained RAM in an application development environment",
+      "id": 347,
+      "title": "Constrained RAM in an application development environment",
+      "slug": "constrained-ram-in-an-application-development-environment",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-04T19:00:59.341Z",
+      "last_posted_at": "2018-12-28T16:56:52.931Z",
+      "bumped": true,
+      "bumped_at": "2018-12-28T16:56:52.931Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1262,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 227,
+            "username": "jweir",
+            "name": "John Weir",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jweir/{size}/196_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB Server deployment resources?",
+      "id": 242,
+      "title": "FDB Server deployment resources?",
+      "slug": "fdb-server-deployment-resources",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-04-24T09:47:30.011Z",
+      "last_posted_at": "2018-05-05T23:07:13.885Z",
+      "bumped": true,
+      "bumped_at": "2018-05-05T23:07:13.885Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 2651,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 26,
+            "username": "mrz",
+            "name": "matthew zeier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mrz/{size}/26_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 11,
+            "username": "ral",
+            "name": "Richard Low",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f04885/{size}.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 43,
+            "username": "killertypo",
+            "name": "Mike McMahon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/killertypo/{size}/35_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Some Clarification on Storage Engine and Disk/IO",
+      "id": 1453,
+      "title": "Some Clarification on Storage Engine and Disk/IO",
+      "slug": "some-clarification-on-storage-engine-and-disk-io",
+      "posts_count": 13,
+      "reply_count": 8,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2019-06-13T18:18:46.358Z",
+      "last_posted_at": "2019-07-23T06:20:18.977Z",
+      "bumped": true,
+      "bumped_at": "2019-07-23T06:20:18.977Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2341,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 594,
+            "username": "zhuyi29",
+            "name": "Zoe",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/edb3f5/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "1Gbps or 10Gbps network cards?",
+      "id": 1193,
+      "title": "1Gbps or 10Gbps network cards?",
+      "slug": "1gbps-or-10gbps-network-cards",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-03-03T16:42:29.610Z",
+      "last_posted_at": "2019-03-05T20:46:21.015Z",
+      "bumped": true,
+      "bumped_at": "2019-03-05T20:46:21.015Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 900,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 654,
+        "username": "lfmunoz",
+        "name": "Luis",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/lfmunoz/{size}/1109_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 654,
+      "username": "lfmunoz",
+      "name": "Luis",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/lfmunoz/{size}/1109_2.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/configuration.html#system-requirements",
+        "title": "Configuration \u2014 FoundationDB 6.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 129,
+        "user_id": 654,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

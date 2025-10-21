@@ -1,0 +1,637 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11683,
+        "name": "T T Rz879",
+        "username": "T-TRz879",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/t-trz879/{size}/1418_2.png",
+        "created_at": "2022-09-07T06:10:46.180Z",
+        "cooked": "<p>I can\u2019t find this description in the tutorial</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-09-07T06:10:46.180Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 138,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 694.6,
+        "yours": false,
+        "topic_id": 3543,
+        "topic_slug": "how-can-i-use-the-operation-of-cas-in-java-client",
+        "display_username": "T T Rz879",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1158,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-can-i-use-the-operation-of-cas-in-java-client/3543/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11688,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2022-09-07T17:32:18.670Z",
+        "cooked": "<p><em>Probably</em> what you want is to achieve a compare and swap with serializable reads and writes in a normal transaction.</p>\n<p>There is a mutation called <a href=\"https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/MutationType.html#COMPARE_AND_CLEAR\" rel=\"noopener nofollow ugc\">COMPARE_AND_CLEAR</a>, which is kind of similar but the problem is that if the value of the key is <em>not</em> what\u2019s expected at commit time, the transaction still commits successfully and the COMPARE_AND_CLEAR mutation has no effect. Generally people seem to want the transaction to fail with <code>not_committed</code> in this case, but the only way to get a transaction to fail if the value of a key is unexpected at commit time is to read the key <sup class=\"footnote-ref\"><a href=\"#footnote-11688-1\" id=\"footnote-ref-11688-1\">[1]</a></sup>. You can see some more explanation about why we can\u2019t easily know the result of the atomic mutation here: <a href=\"https://forums.foundationdb.org/t/efficient-way-to-create-if-absent-in-fdb/2838\" class=\"inline-onebox\">Efficient way to create if absent in FDB</a>.</p>\n<p>Hope that helps. Let me know if I can clarify anything.</p>\n<hr class=\"footnotes-sep\">\n\n<ol class=\"footnotes-list\">\n<li id=\"footnote-11688-1\" class=\"footnote-item\">\n<p>Depending on your data model, it\u2019s possible that you can infer the value of a key at your transaction\u2019s read version without actually reading it, and in that case you only need to add a read conflict on that key. Be sure to add the read conflict before modifying the key - see <a href=\"https://github.com/apple/foundationdb/issues/126\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Adding an explicit read conflict range skips the keys in write cache \u00b7 Issue #126 \u00b7 apple/foundationdb \u00b7 GitHub</a> for a discussion of why. <a href=\"#footnote-ref-11688-1\" class=\"footnote-backref\">\u21a9\ufe0e</a></p>\n</li>\n</ol>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-09-07T17:32:18.670Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 8,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 44.6,
+        "yours": false,
+        "topic_id": 3543,
+        "topic_slug": "how-can-i-use-the-operation-of-cas-in-java-client",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/efficient-way-to-create-if-absent-in-fdb/2838",
+            "internal": true,
+            "reflection": false,
+            "title": "Efficient way to create if absent in FDB",
+            "clicks": 32
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/MutationType.html#COMPARE_AND_CLEAR",
+            "internal": false,
+            "reflection": false,
+            "title": "MutationType (FoundationDB Java Client API)",
+            "clicks": 20
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/issues/126",
+            "internal": false,
+            "reflection": false,
+            "title": "Adding an explicit read conflict range skips the keys in write cache \u00b7 Issue #126 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-can-i-use-the-operation-of-cas-in-java-client/3543/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11683,
+      11688
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1141
+    ],
+    [
+      2,
+      1140
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "How can i use the operation of CAS in Java Client",
+  "id": 3543,
+  "title": "How can i use the operation of CAS in Java Client",
+  "posts_count": 2,
+  "created_at": "2022-09-07T06:10:46.124Z",
+  "views": 676,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-09-07T17:32:18.670Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-can-i-use-the-operation-of-cas-in-java-client",
+  "category_id": 7,
+  "word_count": 236,
+  "deleted_at": null,
+  "user_id": 1158,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3543",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Questions regarding FDB transaction conflict on two concurrent transactions",
+      "id": 2913,
+      "title": "Questions regarding FDB transaction conflict on two concurrent transactions",
+      "slug": "questions-regarding-fdb-transaction-conflict-on-two-concurrent-transactions",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2021-09-28T06:26:34.642Z",
+      "last_posted_at": "2021-10-28T08:17:02.264Z",
+      "bumped": true,
+      "bumped_at": "2021-10-28T09:13:59.130Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2185,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimizing a single large transaction ( 10,000 keys)",
+      "id": 1961,
+      "title": "Optimizing a single large transaction ( 10,000 keys)",
+      "slug": "optimizing-a-single-large-transaction-10-000-keys",
+      "posts_count": 12,
+      "reply_count": 10,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-02-17T13:36:55.355Z",
+      "last_posted_at": "2020-02-24T11:30:42.854Z",
+      "bumped": true,
+      "bumped_at": "2020-02-24T11:30:42.854Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2373,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "id": 1833,
+      "title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "slug": "cannot-commit-transaction-that-reads-the-metadataversion-key-after-changing-it",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-12-11T22:52:33.816Z",
+      "last_posted_at": "2019-12-13T13:23:15.818Z",
+      "bumped": true,
+      "bumped_at": "2019-12-13T14:11:35.389Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1297,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Efficient way to create if absent in FDB",
+      "id": 2838,
+      "title": "Efficient way to create if absent in FDB",
+      "slug": "efficient-way-to-create-if-absent-in-fdb",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2021-08-04T05:54:34.347Z",
+      "last_posted_at": "2021-08-06T15:58:22.643Z",
+      "bumped": true,
+      "bumped_at": "2021-08-06T15:58:22.643Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1021,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 986,
+            "username": "CodeOx",
+            "name": "Chetan Mittal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/codeox/{size}/1151_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 14,
+        "username": "andrew.noyes",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1158,
+        "username": "T-TRz879",
+        "name": "T T Rz879",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/t-trz879/{size}/1418_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1158,
+      "username": "T-TRz879",
+      "name": "T T Rz879",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/t-trz879/{size}/1418_2.png"
+    },
+    "last_poster": {
+      "id": 14,
+      "username": "andrew.noyes",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/efficient-way-to-create-if-absent-in-fdb/2838",
+        "title": "Efficient way to create if absent in FDB",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 32,
+        "user_id": 14,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/javadoc/com/apple/foundationdb/MutationType.html#COMPARE_AND_CLEAR",
+        "title": "MutationType (FoundationDB Java Client API)",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 20,
+        "user_id": 14,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

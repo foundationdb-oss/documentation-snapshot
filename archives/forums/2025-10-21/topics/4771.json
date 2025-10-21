@@ -1,0 +1,624 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14700,
+        "name": "Dan Meyers",
+        "username": "danm",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "created_at": "2025-02-10T14:14:35.621Z",
+        "cooked": "<p>I\u2019m trying to avoid asking a question that\u2019s an <a href=\"https://en.wikipedia.org/wiki/XY_problem\" rel=\"noopener nofollow ugc\">XY problem</a> here.</p>\n<p>Our engineers managed to take down our dev/testing FDB (7.3, redwood) cluster over the weekend.</p>\n<p>They wanted a large volume of data of the sort that would normally be produced by our application over a number of months, to test how well some new components of the system scale beyond small datasets. So they wrote a job to generate a high volume of data as fast as possible. This meant creating a reasonably large number of initial resources, pushing requests that referenced those initial resources through the applications at a much higher rate/sec than we see in prod to generate additional data, and running various (normally) nightly tasks etc more frequently too. The result was our applications doing a much higher volume of reads (mostly) and writes to the cluster, to the point that they hit the iops limits on the volumes we have deployed for each storage process.</p>\n<p>At this point, we started to see our storage processes crashing and being restarted by <code>fdbmonitor</code>, but failing to stay up stably. The output in the logs was <code>ERROR: Out of memory</code>. This seems to have come from FDB itself exceeding the 8GB memory allocation it has by default, rather than the underlying instances running out of RAM and being killed by the kernel. We <em>didn\u2019t</em> see any noticeable change/problem in our metrics for the storage process data or durability lags, or the log queue length.</p>\n<p>We got it to stabilise by shutting down the data-generation jobs, and editing (increasing) the <code>memory</code> and <code>cache-memory</code> config options for the storage processes, but my understanding is that having to do this is generally a bit of a code smell that we\u2019re doing something wrong/unexpected with how we interact with FDB.</p>\n<p>I\u2019m trying to understand more about <em>why</em> the storage nodes would have grown beyond their normal RAM allocation, and then OOMed.</p>\n<p>My current working theory:</p>\n<ul>\n<li>Our application is using JVM virtual threads instead of a thread pool to run a lot of the system (IIRC the FDB JNI interaction pins virtual threads, so it actually spawns a new \u2018real\u2019 thread each time specifically for the FDB tx, via <code>.[read|run]Async</code> returning a <code>CompleteableFuture</code>).</li>\n<li>Several of these data-generation jobs do a lot of parallelism to try and complete ASAP.</li>\n<li>So they don\u2019t have a fixed pool of \u2018worker threads\u2019 that will be slowed down if individual transactions slow down. The only limit on the count of in-progress requests is the memory limit on the job.</li>\n<li>As such, if the FDB ratekeeper slows down tx creation to try and force the application to back off, the result will be more txes in flight simultaneously (potentially taking longer to start/return), rather than a fixed max count of in-flight txes being artificially slowed to give the DB more \u2018breathing room\u2019.</li>\n<li>It doesn\u2019t <em>look</em> like FDB will ever say \u201cI can\u2019t handle <em>any</em> more txes right now, go away\u201d, it will just <em>try</em> and slow down tx creation to exert backpressure.</li>\n</ul>\n<p>The challenge to this theory from within my team was that the ratekeeper slowing tx startup as a backpressure mechanism would surely show as increased memory (tracking more \u2018starting\u2019 txes) on the commit proxies or similar, not an issue on the storage nodes. I also wondered if there was some upper limit to how much the ratekeeper would artificially slow tx start.</p>\n<p>So, does my theory sound sensible? Am I completely off-base (quite possible)?  If so, is there something else I should be looking at to help understand what caused this so we can try to avoid anything similar in prod?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-02-10T14:27:51.398Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 43,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 218.4,
+        "yours": false,
+        "topic_id": 4771,
+        "topic_slug": "are-there-any-likely-problems-resulting-in-a-storage-role-exceeding-its-8gb-ram-and-being-killed-that-folks-can-point-me-to",
+        "display_username": "Dan Meyers",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://en.wikipedia.org/wiki/XY_problem",
+            "internal": false,
+            "reflection": false,
+            "title": "XY problem - Wikipedia",
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1142,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/are-there-any-likely-problems-resulting-in-a-storage-role-exceeding-its-8gb-ram-and-being-killed-that-folks-can-point-me-to/4771/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14704,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2025-02-13T21:07:58.972Z",
+        "cooked": "<p>Ratekeeper <em>will</em> throttle all the way to 0 normal (non-\u201csystem_priority_immediate\u201d) transactions under the right conditions, such as more than 2 Storage Queues growing beyond something like 1.8GB.</p>\n<p>Based on</p>\n<blockquote>\n<p>We <em>didn\u2019t</em> see any noticeable change/problem in our metrics for the storage process data or durability lags, or the log queue length.</p>\n</blockquote>\n<p>it sounds like that did not happen here because the cluster was still working at some non-zero transaction rate despite all the StorageServer restarts caused by OOMs.  This is not unexpected because Redwood is very fast at recovering from disk and returning to normal write throughput.  The return-to-performance time will be especially short if the writes have high key locality.</p>\n<p>As for the default memory configuration, it\u2019s probably the case that little attention has been paid to the defaults by large scale FDB users for several years and the StorageServer memory usage outside of the storage engine\u2019s page cache has grown.  FDB does not currently limit its memory usage as a reaction to its current usage vs its budget, so it is essentially up to the user to set the <code>cache-memory</code> and <code>memory</code> limits.</p>\n<ul>\n<li>The <code>cache-memory</code> option sets the page cache size for the Redwood and <code>ssd-2</code> storage engines.  They will reliably stick to this limit aside from an occasional tiny overage when too many page eviction attempts encounter temporarily pinned pages.</li>\n<li>The <code>memory</code> option sets the total memory usage (specifically RSS, not virtual memory) for the process.  For a Storage class process, this setting must be large enough to accommodate the sum of:\n<ul>\n<li><code>cache-memory</code></li>\n<li>Storage engine memory usage aside from its page cache (such as temporary memory used by reads or pending writes)</li>\n<li>StorageServer memory other than the storage engine memory listed above.<br>\nStorageServer memory will vary based on its current user workload, shard movement activity, and logical data size.</li>\n</ul>\n</li>\n</ul>\n<p>I don\u2019t think there is any documentation describing how to arrive at what <code>memory</code> should be relative to <code>cache-memory</code>, and in fact in the fleets I\u2019ve been involved with we have updated these settings occasionally based on memory usage observations.  As a general rule, I think setting <code>memory</code> to <code>(1.5 * cache_memory + 4GB)</code> would be a stable configuration.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-02-13T21:07:58.972Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 18.2,
+        "yours": false,
+        "topic_id": 4771,
+        "topic_slug": "are-there-any-likely-problems-resulting-in-a-storage-role-exceeding-its-8gb-ram-and-being-killed-that-folks-can-point-me-to",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/smaller-memory-allocations-for-stateless-pods/4797",
+            "internal": true,
+            "reflection": true,
+            "title": "Smaller memory allocations for stateless pods?",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/are-there-any-likely-problems-resulting-in-a-storage-role-exceeding-its-8gb-ram-and-being-killed-that-folks-can-point-me-to/4771/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14700,
+      14704
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      253
+    ],
+    [
+      2,
+      250
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Are there any &lsquo;likely problems&rsquo; resulting in a storage role exceeding its 8GB RAM and being killed that folks can point me to?",
+  "id": 4771,
+  "title": "Are there any 'likely problems' resulting in a storage role exceeding its 8GB RAM and being killed that folks can point me to?",
+  "posts_count": 2,
+  "created_at": "2025-02-10T14:14:35.551Z",
+  "views": 92,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2025-02-13T21:07:58.972Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "are-there-any-likely-problems-resulting-in-a-storage-role-exceeding-its-8gb-ram-and-being-killed-that-folks-can-point-me-to",
+  "category_id": 7,
+  "word_count": 1009,
+  "deleted_at": null,
+  "user_id": 1142,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4771",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "RAM used does not release after high load test",
+      "id": 3462,
+      "title": "RAM used does not release after high load test",
+      "slug": "ram-used-does-not-release-after-high-load-test",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/a/a758df3e98eaa8893f2c0a2a905dbb54dc4c66c9.png",
+      "created_at": "2022-07-21T09:13:14.332Z",
+      "last_posted_at": "2022-07-22T06:04:58.993Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T06:04:58.993Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 388,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1126,
+            "username": "CodingSuen",
+            "name": "CodingSuen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Segmentation fault error and broken cluster",
+      "id": 483,
+      "title": "Segmentation fault error and broken cluster",
+      "slug": "segmentation-fault-error-and-broken-cluster",
+      "posts_count": 17,
+      "reply_count": 12,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-05-31T15:34:28.123Z",
+      "last_posted_at": "2018-06-11T17:31:13.656Z",
+      "bumped": true,
+      "bumped_at": "2018-06-11T17:31:13.656Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 4331,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Constrained RAM in an application development environment",
+      "id": 347,
+      "title": "Constrained RAM in an application development environment",
+      "slug": "constrained-ram-in-an-application-development-environment",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-04T19:00:59.341Z",
+      "last_posted_at": "2018-12-28T16:56:52.931Z",
+      "bumped": true,
+      "bumped_at": "2018-12-28T16:56:52.931Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1262,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 227,
+            "username": "jweir",
+            "name": "John Weir",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jweir/{size}/196_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB out of memory",
+      "id": 3460,
+      "title": "FDB out of memory",
+      "slug": "fdb-out-of-memory",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2022-07-20T03:12:58.094Z",
+      "last_posted_at": "2022-07-22T12:33:26.077Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T12:54:40.104Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 962,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1126,
+            "username": "CodingSuen",
+            "name": "CodingSuen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Continuous out-of-memory crashes in small cluster with modest read-only workload",
+      "id": 864,
+      "title": "Continuous out-of-memory crashes in small cluster with modest read-only workload",
+      "slug": "continuous-out-of-memory-crashes-in-small-cluster-with-modest-read-only-workload",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-11-12T18:15:45.539Z",
+      "last_posted_at": "2018-11-13T22:03:20.420Z",
+      "bumped": true,
+      "bumped_at": "2018-11-13T22:03:20.420Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1256,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 424,
+            "username": "jwb",
+            "name": "Jeff Baker",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwb/{size}/413_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 1142,
+        "username": "danm",
+        "name": "Dan Meyers",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1142,
+      "username": "danm",
+      "name": "Dan Meyers",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    },
+    "links": [
+      {
+        "url": "https://en.wikipedia.org/wiki/XY_problem",
+        "title": "XY problem - Wikipedia",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 1142,
+        "domain": "en.wikipedia.org",
+        "root_domain": "wikipedia.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

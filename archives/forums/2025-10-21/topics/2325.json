@@ -1,0 +1,688 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7867,
+        "name": "Prabin Poulose",
+        "username": "antonprabin",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png",
+        "created_at": "2020-09-02T03:23:27.042Z",
+        "cooked": "<p>Team,<br>\nI would like to start the foundationdb service as a non-root user due to security reasons. I tried creating a new user in the available foundationdb docker image (version foundationdb-6.2.20), adding new user and group in the Dockerfile. But while starting the new image i am getting below error.</p>\n<pre><code class=\"lang-auto\">ERROR: error creating or opening process id file `/var/fdb/data/processId'.\nFatal Error: Disk i/o operation failed\nStarting FDB server on 172.17.0.2:4500\nERROR: error creating or opening process id file `/var/fdb/data/processId'.\nFatal Error: Disk i/o operation failed\n</code></pre>\n<p>Below is the required part of docker file</p>\n<pre><code class=\"lang-auto\">WORKDIR /var/fdb\n\n# Install FoundationDB Client Libraries\n\nARG FDB_ADDITIONAL_VERSIONS=\"5.1.7\"\n\nCOPY download_multiversion_libraries.bash scripts/\n\nRUN curl $FDB_WEBSITE/downloads/$FDB_VERSION/linux/libfdb_c_$FDB_VERSION.so -o /usr/lib/libfdb_c.so &amp;&amp; \\\n\tbash scripts/download_multiversion_libraries.bash $FDB_WEBSITE $FDB_ADDITIONAL_VERSIONS &amp;&amp; \\\n\trm -rf /mnt/website\n\n# Set Up Runtime Scripts and Directories\n\nCOPY fdb.bash scripts/\nCOPY create_server_environment.bash scripts/\nCOPY create_cluster_file.bash scripts/\nRUN chmod u+x scripts/*.bash &amp;&amp; \\\n\tmkdir -p logs\nVOLUME /var/fdb/data\nRUN chown -R foundationdb:foundationdb /var/fdb\nUSER foundationdb:foundationdb\nCMD /var/fdb/scripts/fdb.bash\n</code></pre>\n<p>I have added below to create the foundationdb user and group in the first part of my dockerfile.</p>\n<p>RUN groupadd -g 1000 foundationdb<br>\n&amp;&amp; useradd -m -u 1000 -g foundationdb foundationdb</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-02T03:23:27.042Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 252,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 1255.6,
+        "yours": false,
+        "topic_id": 2325,
+        "topic_slug": "docker-image-with-non-root-user",
+        "display_username": "Prabin Poulose",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 772,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/docker-image-with-non-root-user/2325/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 7869,
+        "name": "John Brownlee",
+        "username": "john_brownlee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+        "created_at": "2020-09-02T18:09:48.286Z",
+        "cooked": "<p>What kind of volume are you using? I\u2019ve seen issues like this with Kubernetes hostPath volumes being owned by root even when the pod is using a different user.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-02T18:09:48.286Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 9.6,
+        "yours": false,
+        "topic_id": 2325,
+        "topic_slug": "docker-image-with-non-root-user",
+        "display_username": "John Brownlee",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 3,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/docker-image-with-non-root-user/2325/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 7887,
+        "name": "Prabin Poulose",
+        "username": "antonprabin",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png",
+        "created_at": "2020-09-03T09:37:35.901Z",
+        "cooked": "<p>John, I am trying to do this in my docker setup created in \u201cubuntu 16.04 installed virtualbox VM\u201d on my host mac.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-03T09:38:09.160Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 4.6,
+        "yours": false,
+        "topic_id": 2325,
+        "topic_slug": "docker-image-with-non-root-user",
+        "display_username": "Prabin Poulose",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 772,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/docker-image-with-non-root-user/2325/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7867,
+      7869,
+      7887
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1876
+    ],
+    [
+      2,
+      1875
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Docker image with non-root user",
+  "id": 2325,
+  "title": "Docker image with non-root user",
+  "posts_count": 3,
+  "created_at": "2020-09-02T03:23:26.980Z",
+  "views": 1063,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2020-09-03T09:37:35.901Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "docker-image-with-non-root-user",
+  "category_id": 7,
+  "word_count": 279,
+  "deleted_at": null,
+  "user_id": 772,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2325",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Simple Dockerfile",
+      "id": 280,
+      "title": "Simple Dockerfile",
+      "slug": "simple-dockerfile",
+      "posts_count": 17,
+      "reply_count": 10,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-04-26T09:05:55.151Z",
+      "last_posted_at": "2018-10-16T20:26:01.085Z",
+      "bumped": true,
+      "bumped_at": "2018-10-16T20:26:01.085Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 8840,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 256,
+            "username": "bjrnio",
+            "name": "Ricard Bejarano",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bjrnio/{size}/235_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 392,
+            "username": "pavibhai",
+            "name": "Pavan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/e56c9b/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Trying to make docker image; fdbcli says database not created",
+      "id": 157,
+      "title": "Trying to make docker image; fdbcli says database not created",
+      "slug": "trying-to-make-docker-image-fdbcli-says-database-not-created",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-04-20T22:06:18.472Z",
+      "last_posted_at": "2019-02-12T13:13:54.630Z",
+      "bumped": true,
+      "bumped_at": "2019-02-12T13:13:54.630Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 3095,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 110,
+            "username": "jwatte",
+            "name": "Jon Watte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwatte/{size}/77_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 476,
+            "username": "dch",
+            "name": "Dave Cottlehuber",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 506,
+            "username": "shane",
+            "name": "Shane",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/dbc845/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Dockerized deployment",
+      "id": 1561,
+      "title": "Dockerized deployment",
+      "slug": "dockerized-deployment",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-08-05T20:20:23.097Z",
+      "last_posted_at": "2019-10-14T17:29:21.819Z",
+      "bumped": true,
+      "bumped_at": "2019-10-14T17:29:21.819Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 4402,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 307,
+            "username": "jwr",
+            "name": "Jan Rychter",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwr/{size}/302_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 372,
+            "username": "seancarroll",
+            "name": "Sean Carroll",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Turn off database creation in install",
+      "id": 2129,
+      "title": "Turn off database creation in install",
+      "slug": "turn-off-database-creation-in-install",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-05-20T16:11:11.863Z",
+      "last_posted_at": "2020-05-20T16:58:45.431Z",
+      "bumped": true,
+      "bumped_at": "2020-05-20T16:58:45.431Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 392,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can not connect to foundationdb docker container",
+      "id": 1856,
+      "title": "Can not connect to foundationdb docker container",
+      "slug": "can-not-connect-to-foundationdb-docker-container",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-26T14:05:22.848Z",
+      "last_posted_at": "2019-12-31T00:12:32.627Z",
+      "bumped": true,
+      "bumped_at": "2019-12-31T00:12:32.627Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1550,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 674,
+            "username": "ivvist",
+            "name": "Victor Istratenko",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/da6949/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 772,
+        "username": "antonprabin",
+        "name": "Prabin Poulose",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 3,
+        "username": "john_brownlee",
+        "name": "John Brownlee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 772,
+      "username": "antonprabin",
+      "name": "Prabin Poulose",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png"
+    },
+    "last_poster": {
+      "id": 772,
+      "username": "antonprabin",
+      "name": "Prabin Poulose",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/7cd45c/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

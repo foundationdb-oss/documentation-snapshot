@@ -1,0 +1,665 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11504,
+        "name": "CodingSuen",
+        "username": "CodingSuen",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+        "created_at": "2022-07-21T09:13:14.414Z",
+        "cooked": "<p>Hi All,<br>\nenv : ec2 ubuntu 22.04<br>\nfdb: 6.3.24<br>\n5 storage nodes: 2 cores, 16 memory, ssd<br>\n3 log nodes: 2cores, 8 memory, ssd<br>\n3 stateless nodes: 2 cores, 8 memory, ssd</p>\n<p>For workload, writes reach to 104k ops/s, then speed deincreased.<br>\n<img src=\"https://global.discourse-cdn.com/foundationdb/original/2X/a/a758df3e98eaa8893f2c0a2a905dbb54dc4c66c9.png\" alt=\"\u56fe\u7247\" data-base62-sha1=\"nSq8ZzRCZlqnQxdf8Z24D2qA0Ix\" width=\"397\" height=\"182\"><br>\nAs I know, Transactions per Second Limit decreased means the cluster performance is limited in some way by ratekeeper.<br>\n<img src=\"https://global.discourse-cdn.com/foundationdb/original/2X/e/e0214b02bd4bc1c96cb135162931cc6acd6138fa.png\" alt=\"\u56fe\u7247\" data-base62-sha1=\"vYKhz6GQibt0E2fBQtN3Bdpb8TM\" width=\"622\" height=\"193\"><br>\nWith the default knobs, the target queue size is 1.0GB, and ratekeeper will start trying to reduce the transaction rate when a storage server\u2019s queue size reaches 900MB.<br>\n<img src=\"https://global.discourse-cdn.com/foundationdb/original/2X/3/32d5b3e46128110b6bd960d431548ace61321a1a.png\" alt=\"\u56fe\u7247\" data-base62-sha1=\"7fHJe17pxTI3ztO4T22QdamRzfQ\" width=\"465\" height=\"216\"><br>\nCommand status details shows RAM used almost 100% on storage node\u2026</p>\n<pre><code class=\"lang-auto\">10.3.55.185:4500       (  0% cpu;  1% machine; 0.000 Gbps;  1% disk IO;11.7 GB / 12.0 GB RAM  )\n10.3.55.187:4500       (  1% cpu;  1% machine; 0.000 Gbps;  1% disk IO;11.8 GB / 12.0 GB RAM  )\n10.3.55.188:4500       (  1% cpu;  1% machine; 0.000 Gbps;  1% disk IO;11.9 GB / 12.0 GB RAM  )\n10.3.55.189:4500       (  1% cpu;  1% machine; 0.000 Gbps;  1% disk IO;12.0 GB / 12.0 GB RAM  )\n10.3.55.192:4500       (  1% cpu;  1% machine; 0.000 Gbps;  1% disk IO;11.9 GB / 12.0 GB RAM  )\n</code></pre>\n<p>A few hours passed, RAM still used almost 100% on storage node, seems like RAM does not release\u2026<br>\nDoes anyone has this problem?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-07-21T09:13:28.419Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 16,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 83.0,
+        "yours": false,
+        "topic_id": 3462,
+        "topic_slug": "ram-used-does-not-release-after-high-load-test",
+        "display_username": "CodingSuen",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1126,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ram-used-does-not-release-after-high-load-test/3462/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11506,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2022-07-21T16:47:35.813Z",
+        "cooked": "<p>FDB doesn\u2019t give memory back to the OS. So in your case each fdbserver process is probably holding on to some unused memory.</p>\n<p>Our custom allocator was implemented that way. I wanted to change this a while ago but failed. If an allocator wants to give back memory to the OS it needs to do some form of book-keeping and the cost of this is high enough to introduce a performance regression.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-07-21T16:47:35.813Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 22.6,
+        "yours": false,
+        "topic_id": 3462,
+        "topic_slug": "ram-used-does-not-release-after-high-load-test",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ram-used-does-not-release-after-high-load-test/3462/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11511,
+        "name": "CodingSuen",
+        "username": "CodingSuen",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+        "created_at": "2022-07-22T06:04:58.993Z",
+        "cooked": "<p>Thanks <img src=\"https://emoji.discourse-cdn.com/twitter/+1.png?v=12\" title=\":+1:\" class=\"emoji\" alt=\":+1:\" loading=\"lazy\" width=\"20\" height=\"20\"><br>\nThis issue has been bothering me for two days <img src=\"https://emoji.discourse-cdn.com/twitter/joy.png?v=12\" title=\":joy:\" class=\"emoji\" alt=\":joy:\" loading=\"lazy\" width=\"20\" height=\"20\">.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-07-22T06:04:58.993Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 2.4,
+        "yours": false,
+        "topic_id": 3462,
+        "topic_slug": "ram-used-does-not-release-after-high-load-test",
+        "display_username": "CodingSuen",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 15,
+          "username": "markus.pilman",
+          "name": "Markus Pilman",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1126,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/ram-used-does-not-release-after-high-load-test/3462/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11504,
+      11506,
+      11511
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1189
+    ],
+    [
+      2,
+      1188
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "RAM used does not release after high load test",
+  "id": 3462,
+  "title": "RAM used does not release after high load test",
+  "posts_count": 3,
+  "created_at": "2022-07-21T09:13:14.332Z",
+  "views": 388,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2022-07-22T06:04:58.993Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "ram-used-does-not-release-after-high-load-test",
+  "category_id": 17,
+  "word_count": 339,
+  "deleted_at": null,
+  "user_id": 1126,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/a/a758df3e98eaa8893f2c0a2a905dbb54dc4c66c9.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3462",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 397,
+      "height": 182,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/a/a758df3e98eaa8893f2c0a2a905dbb54dc4c66c9.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Constrained RAM in an application development environment",
+      "id": 347,
+      "title": "Constrained RAM in an application development environment",
+      "slug": "constrained-ram-in-an-application-development-environment",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-04T19:00:59.341Z",
+      "last_posted_at": "2018-12-28T16:56:52.931Z",
+      "bumped": true,
+      "bumped_at": "2018-12-28T16:56:52.931Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1262,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 227,
+            "username": "jweir",
+            "name": "John Weir",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jweir/{size}/196_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Are there any &lsquo;likely problems&rsquo; resulting in a storage role exceeding its 8GB RAM and being killed that folks can point me to?",
+      "id": 4771,
+      "title": "Are there any 'likely problems' resulting in a storage role exceeding its 8GB RAM and being killed that folks can point me to?",
+      "slug": "are-there-any-likely-problems-resulting-in-a-storage-role-exceeding-its-8gb-ram-and-being-killed-that-folks-can-point-me-to",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2025-02-10T14:14:35.551Z",
+      "last_posted_at": "2025-02-13T21:07:58.972Z",
+      "bumped": true,
+      "bumped_at": "2025-02-13T21:07:58.972Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 92,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1142,
+            "username": "danm",
+            "name": "Dan Meyers",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/danm/{size}/1393_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Segmentation fault error and broken cluster",
+      "id": 483,
+      "title": "Segmentation fault error and broken cluster",
+      "slug": "segmentation-fault-error-and-broken-cluster",
+      "posts_count": 17,
+      "reply_count": 12,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-05-31T15:34:28.123Z",
+      "last_posted_at": "2018-06-11T17:31:13.656Z",
+      "bumped": true,
+      "bumped_at": "2018-06-11T17:31:13.656Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 4331,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "id": 2080,
+      "title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "slug": "foundationdb-6-2-fdbserver-going-out-of-memory",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-04-20T14:55:39.274Z",
+      "last_posted_at": "2020-04-23T04:34:49.858Z",
+      "bumped": true,
+      "bumped_at": "2020-04-23T04:34:49.858Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1037,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB out of memory",
+      "id": 3460,
+      "title": "FDB out of memory",
+      "slug": "fdb-out-of-memory",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2022-07-20T03:12:58.094Z",
+      "last_posted_at": "2022-07-22T12:33:26.077Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T12:54:40.104Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 962,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1126,
+            "username": "CodingSuen",
+            "name": "CodingSuen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1126,
+        "username": "CodingSuen",
+        "name": "CodingSuen",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 1126,
+      "username": "CodingSuen",
+      "name": "CodingSuen",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png"
+    },
+    "last_poster": {
+      "id": 1126,
+      "username": "CodingSuen",
+      "name": "CodingSuen",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png"
+    }
+  },
+  "bookmarks": []
+}

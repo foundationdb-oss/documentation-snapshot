@@ -1,0 +1,571 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12357,
+        "name": "Peter Wood",
+        "username": "pwood",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pwood/{size}/1653_2.png",
+        "created_at": "2023-02-06T15:01:07.984Z",
+        "cooked": "<p>Hello!</p>\n<p>I\u2019ve been trying to get encrypted backups to work for a couple of days with no luck. I\u2019ve placed a 16 byte encryption key on all nodes of the cluster, in the same location (/mnt/fdb/backup-encryption-key.dat).</p>\n<p>I attempt to start the backup with:</p>\n<pre><code class=\"lang-auto\">[root@XXX ec2-user]# fdbbackup start -d blobstore://XXX@s3.eu-west-1.amazonaws.com:443/main-dev-2023020601?bucket=XXX -s 604800 -z --encryption-key-file /mnt/fdb/backup-encryption-key.dat --log --logdir .\n</code></pre>\n<p>With no delay I receive back:</p>\n<pre><code class=\"lang-auto\">Internal Error @ /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/ClientKnobCollection.h 45:\n  addr2line -e fdbbackup.debug -p -C -f -i 0xe4b63d 0xd7a935 0xe08f14 0xe0975b 0xdf338a 0xe34df7 0xe2bf3e 0xdf36e4 0x62582e 0x60b394 0x6487b1 0x5fb070 0x5620ed 0x54c2ca 0x7f63d716113a\nERROR: Could not create backup container: An internal error occurred\nERROR: An error was encountered during submission\nFatal Error: Backup error\n</code></pre>\n<p>Decoding the trace gives us:</p>\n<pre><code class=\"lang-auto\">[root@ip-10-1-244-15 ec2-user]# addr2line -e fdbbackup.debug.x86_64 -p -C -f -i 0xee35bc 0xee21d0 0xee25ce 0xe4b736 0xd7a935 0xe08f14 0xe0975b 0xdf338a 0xe34df7 0xe2bf3e 0xdf36e4 0x62582e 0x60b394 0x6487b1 0x5fb070 0x5620ed 0x54c2ca 0x7f63d716113a\nstd::string::_M_rep() const at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::basic_string(std::string const&amp;) at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.tcc:613\n (inlined by) std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; std::operator+&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;(std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const&amp;, char const*) at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:5967\n (inlined by) BaseTraceEvent::backtrace(std::string const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/Trace.cpp:1216\nstd::string::_M_rep() const at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::~basic_string() at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3640\n (inlined by) BaseTraceEvent::log() at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/Trace.cpp:1235\nBaseTraceEvent::~BaseTraceEvent() at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/Trace.cpp:1275\ninternal_error_impl(char const*, int) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/Error.cpp:61\nClientKnobCollection::getServerKnobs() const at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/ClientKnobCollection.h:45\nAsyncFileKAIO::AsyncFileKAIO(int, int, std::string const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbrpc/AsyncFileKAIO.actor.h:652 (discriminator 1)\nReference&lt;AsyncFileKAIO&gt;::Reference(AsyncFileKAIO*) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/FastRef.h:101\n (inlined by) AsyncFileKAIO::open(std::string, int, int, void*) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbrpc/AsyncFileKAIO.actor.h:153\nNet2FileSystem::open(std::string const&amp;, long, long) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbrpc/Net2FileSystem.cpp:70 (discriminator 3)\nFuture&lt;Reference&lt;IAsyncFile&gt; &gt;::Future(Future&lt;Reference&lt;IAsyncFile&gt; &gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/flow.h:807\n (inlined by) StrictFuture&lt;Reference&lt;IAsyncFile&gt; &gt;::StrictFuture(Future&lt;Reference&lt;IAsyncFile&gt; &gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/flow.h:893\n (inlined by) AsyncFileCached::Open_implActorState&lt;AsyncFileCached::Open_implActor&gt;::a_body1(int) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbrpc/AsyncFileCached.actor.h:341\nAsyncFileCached::Open_implActor::Open_implActor(std::string const&amp;, int const&amp;, int const&amp;, Reference&lt;EvictablePageCache&gt; const&amp;) at /home/foundationdb_ci/foundationdb_build_output/dbdbdbdbdbdbdbdbdbdbdbdbdbdbdbdb/fdbrpc/AsyncFileCached.actor.g.h:1248\n (inlined by) AsyncFileCached::open_impl(std::string const&amp;, int const&amp;, int const&amp;, Reference&lt;EvictablePageCache&gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbrpc/AsyncFileCached.actor.h:331\n (inlined by) AsyncFileCached::open_impl(std::string, int, int) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbrpc/AsyncFileCached.actor.cpp:81\nstd::string::_M_rep() const at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3322\n (inlined by) std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::~basic_string() at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3640\n (inlined by) AsyncFileCached::open(std::string, int, int) at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/basic_string.h:3639\n (inlined by) Net2FileSystem::open(std::string const&amp;, long, long) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbrpc/Net2FileSystem.cpp:59\nFuture&lt;Reference&lt;IAsyncFile&gt; &gt;::Future(Future&lt;Reference&lt;IAsyncFile&gt; &gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/flow.h:807\n (inlined by) StrictFuture&lt;Reference&lt;IAsyncFile&gt; &gt;::StrictFuture(Future&lt;Reference&lt;IAsyncFile&gt; &gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/flow.h:893\n (inlined by) BackupContainerFileSystemImpl::ReadEncryptionKeyActorState&lt;BackupContainerFileSystemImpl::ReadEncryptionKeyActor&gt;::a_body1(int) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/BackupContainerFileSystem.actor.cpp:1148\nBackupContainerFileSystemImpl::ReadEncryptionKeyActor::ReadEncryptionKeyActor(std::string const&amp;) at /home/foundationdb_ci/foundationdb_build_output/dbdbdbdbdbdbdbdbdbdbdbdbdbdbdbdb/fdbclient/BackupContainerFileSystem.actor.g.cpp:6054\n (inlined by) BackupContainerFileSystemImpl::readEncryptionKey(std::string const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/BackupContainerFileSystem.actor.cpp:1144\n (inlined by) BackupContainerFileSystem::setEncryptionKey(Optional&lt;std::string&gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/BackupContainerFileSystem.actor.cpp:1485\nstd::map&lt;std::string, std::string, std::less&lt;std::string&gt;, std::allocator&lt;std::pair&lt;std::string const, std::string&gt; &gt; &gt;::begin() const at /opt/rh/devtoolset-8/root/usr/include/c++/8/bits/stl_map.h:364\n (inlined by) BackupContainerS3BlobStore::BackupContainerS3BlobStore(Reference&lt;S3BlobStoreEndpoint&gt;, std::string const&amp;, std::map&lt;std::string, std::string, std::less&lt;std::string&gt;, std::allocator&lt;std::pair&lt;std::string const, std::string&gt; &gt; &gt; const&amp;, Optional&lt;std::string&gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/BackupContainerS3BlobStore.actor.cpp:152\nReference&lt;S3BlobStoreEndpoint&gt;::~Reference() at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/FastRef.h:124\n (inlined by) Reference&lt;BackupContainerS3BlobStore&gt; makeReference&lt;BackupContainerS3BlobStore, Reference&lt;S3BlobStoreEndpoint&gt;&amp;, std::string&amp;, std::map&lt;std::string, std::string, std::less&lt;std::string&gt;, std::allocator&lt;std::pair&lt;std::string const, std::string&gt; &gt; &gt;&amp;, Optional&lt;std::string&gt; const&amp;&gt;(Reference&lt;S3BlobStoreEndpoint&gt;&amp;, std::string&amp;, std::map&lt;std::string, std::string, std::less&lt;std::string&gt;, std::allocator&lt;std::pair&lt;std::string const, std::string&gt; &gt; &gt;&amp;, Optional&lt;std::string&gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/FastRef.h:185\n (inlined by) IBackupContainer::openContainer(std::string const&amp;, Optional&lt;std::string&gt; const&amp;, Optional&lt;std::string&gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbclient/BackupContainer.actor.cpp:284\nReference&lt;IBackupContainer&gt;::operator=(Reference&lt;IBackupContainer&gt;&amp;&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/FastRef.h:140\n (inlined by) openBackupContainer(char const*, std::string const&amp;, Optional&lt;std::string&gt; const&amp;, Optional&lt;std::string&gt; const&amp;) at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbbackup/backup.actor.cpp:2311\nReference&lt;IBackupContainer&gt;::~Reference() at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/flow/FastRef.h:124\n (inlined by) main at /home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbbackup/backup.actor.cpp:4014\n</code></pre>\n<p>It seems to hint at it being unable to open the encryption key, but I can\u2019t find a reason as to why that might occur. I\u2019m assuming this might not actually be an internal error, but bad input data, perhaps the encryption key format?</p>\n<p>A link to the trace log from the fdbbackup run is here: <a href=\"https://gist.github.com/pwood/be117e1f96d034f90f6c706c6cc315ea\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdbbackup encrypted failure \u00b7 GitHub</a></p>\n<p>Anyone got any advice?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-02-06T15:01:07.984Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 32.4,
+        "yours": false,
+        "topic_id": 3782,
+        "topic_slug": "encrypted-backups-fail-to-initialise",
+        "display_username": "Peter Wood",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://gist.github.com/pwood/be117e1f96d034f90f6c706c6cc315ea",
+            "internal": false,
+            "reflection": false,
+            "title": "fdbbackup encrypted failure \u00b7 GitHub",
+            "clicks": 4
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/fdb-encrypted-backup-bug-caused-by-addition-of-asyncfilekaio-latency-histograms/3930",
+            "internal": true,
+            "reflection": true,
+            "title": "FDB Encrypted Backup bug caused by addition of AsyncFileKAIO Latency Histograms?",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1154,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/encrypted-backups-fail-to-initialise/3782/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12357
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      988
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Encrypted backups fail to initialise",
+  "id": 3782,
+  "title": "Encrypted backups fail to initialise",
+  "posts_count": 1,
+  "created_at": "2023-02-06T15:01:07.912Z",
+  "views": 362,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-02-06T15:01:07.984Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "encrypted-backups-fail-to-initialise",
+  "category_id": 17,
+  "word_count": 1112,
+  "deleted_at": null,
+  "user_id": 1154,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3782",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FDB Encrypted Backup bug caused by addition of AsyncFileKAIO Latency Histograms?",
+      "id": 3930,
+      "title": "FDB Encrypted Backup bug caused by addition of AsyncFileKAIO Latency Histograms?",
+      "slug": "fdb-encrypted-backup-bug-caused-by-addition-of-asyncfilekaio-latency-histograms",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2023-04-26T09:25:01.257Z",
+      "last_posted_at": "2023-05-04T00:34:09.491Z",
+      "bumped": true,
+      "bumped_at": "2023-05-04T00:34:09.491Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 442,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1154,
+            "username": "pwood",
+            "name": "Peter Wood",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pwood/{size}/1653_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB fdbbackup",
+      "id": 1460,
+      "title": "FoundationDB fdbbackup",
+      "slug": "foundationdb-fdbbackup",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-17T18:54:47.516Z",
+      "last_posted_at": "2019-10-09T03:07:15.974Z",
+      "bumped": true,
+      "bumped_at": "2019-10-09T03:07:15.974Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2461,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 579,
+            "username": "approachcp",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 581,
+            "username": "surprisetalk",
+            "name": "Taylor Sarrafian",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/surprisetalk/{size}/579_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "&ldquo;backup failure: Could not create backup container: Operation timed out&rdquo; with version 6.3.9",
+      "id": 2703,
+      "title": "\"backup failure: Could not create backup container: Operation timed out\" with version 6.3.9",
+      "slug": "backup-failure-could-not-create-backup-container-operation-timed-out-with-version-6-3-9",
+      "posts_count": 7,
+      "reply_count": 1,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2021-05-17T11:07:44.747Z",
+      "last_posted_at": "2022-01-05T11:17:46.398Z",
+      "bumped": true,
+      "bumped_at": "2022-01-05T15:04:16.923Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1224,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 865,
+            "username": "manish-2014",
+            "name": "Manish Sharan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manish-2014/{size}/1002_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 949,
+            "username": "DenisBY",
+            "name": "Denis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/denisby/{size}/1104_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Sanity check: FoundationDB backup blobstore credentials permissions errors",
+      "id": 1944,
+      "title": "Sanity check: FoundationDB backup blobstore credentials permissions errors",
+      "slug": "sanity-check-foundationdb-backup-blobstore-credentials-permissions-errors",
+      "posts_count": 20,
+      "reply_count": 4,
+      "highest_post_number": 20,
+      "image_url": null,
+      "created_at": "2020-02-13T17:22:53.536Z",
+      "last_posted_at": "2020-02-19T00:40:20.641Z",
+      "bumped": true,
+      "bumped_at": "2020-02-19T00:40:20.641Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1493,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 484,
+            "username": "ksnavely",
+            "name": "Kyle Snavely",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ksnavely/{size}/483_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fatal Error: Backup error",
+      "id": 2061,
+      "title": "Fatal Error: Backup error",
+      "slug": "fatal-error-backup-error",
+      "posts_count": 17,
+      "reply_count": 10,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2020-04-13T22:20:13.202Z",
+      "last_posted_at": "2022-03-24T18:33:10.339Z",
+      "bumped": true,
+      "bumped_at": "2022-03-25T11:23:05.734Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1308,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 754,
+            "username": "theonlijuan",
+            "name": "Ian",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/838e76/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1154,
+        "username": "pwood",
+        "name": "Peter Wood",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pwood/{size}/1653_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1154,
+      "username": "pwood",
+      "name": "Peter Wood",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pwood/{size}/1653_2.png"
+    },
+    "last_poster": {
+      "id": 1154,
+      "username": "pwood",
+      "name": "Peter Wood",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pwood/{size}/1653_2.png"
+    },
+    "links": [
+      {
+        "url": "https://gist.github.com/pwood/be117e1f96d034f90f6c706c6cc315ea",
+        "title": "fdbbackup encrypted failure \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1154,
+        "domain": "gist.github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/fdb-encrypted-backup-bug-caused-by-addition-of-asyncfilekaio-latency-histograms/3930",
+        "title": "FDB Encrypted Backup bug caused by addition of AsyncFileKAIO Latency Histograms?",
+        "internal": true,
+        "attachment": false,
+        "reflection": true,
+        "clicks": 3,
+        "user_id": 1154,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

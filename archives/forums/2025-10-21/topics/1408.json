@@ -1,0 +1,577 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4215,
+        "name": "binzhang",
+        "username": "binzhangebay",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/6a8cbe/{size}.png",
+        "created_at": "2019-05-30T00:40:05.996Z",
+        "cooked": "<p>we have one  3 data center ( two usable regions) config FDB cluster.</p>\n<p>when usable_regions=1,  we see \u201cFault Tolerance        - 2 machines\u201d;<br>\nthen we change usable_regions=2, we start to see \u201cFault Tolerance        - 0 machines (2 without data loss)\u201d</p>\n<p>What\u2019s possible reason that fault tolerance decrease to 0 machine?</p>\n<p>fdb&gt; status details</p>\n<p>Using cluster file `/var/lib/foundationdb/fdb.cluster\u2019.</p>\n<p>Configuration:<br>\nRedundancy mode        - triple<br>\nStorage engine         - ssd-2<br>\nCoordinators           - 5<br>\nDesired Proxies        - 4</p>\n<p>Cluster:<br>\nFoundationDB processes - 48<br>\nMachines               - 36<br>\nMemory availability    - 163.2 GB per process on machine with least available<br>\nRetransmissions rate   - 2 Hz<br>\nFault Tolerance        - 0 machines (2 without data loss)<br>\nServer time            - 05/30/19 00:32:27</p>\n<p>Data:<br>\nReplication health     - Healthy (Rebalancing)<br>\nMoving data            - 0.015 GB<br>\nSum of key-value sizes - 1.405 GB<br>\nDisk space used        - 11.000 GB</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-05-30T00:40:05.996Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 41,
+        "reads": 43,
+        "readers_count": 42,
+        "score": 213.6,
+        "yours": false,
+        "topic_id": 1408,
+        "topic_slug": "fault-tolerance-changes-from-2-machines-to-0-machines-2-without-data-loss",
+        "display_username": "binzhang",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 577,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fault-tolerance-changes-from-2-machines-to-0-machines-2-without-data-loss/1408/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4291,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-06-05T23:05:50.387Z",
+        "cooked": "<p>(Sorry, I had half a reply typed out to you, meant to double check with Evan, and then forgot.)</p>\n<p>Region-ifyign a cluster is supposed to be a three part process:</p>\n<ol>\n<li><code>usable_regions=1 regions=[...]</code></li>\n<li>\n<code>usable_regions=2 regions=[...]</code> where regions has the datacenter that doesn\u2019t have a fully copy of the database currently set to a priority of <code>-1</code>.</li>\n<li>\n<code>usable_regions=2 regions=[...]</code> where regions now has a <code>&gt;=0</code> priority for both datacenters.</li>\n</ol>\n<p>What you\u2019re seeing would make sense to me if you went straight from Step 1 to Step 3, as the remote side would be down to a fault tolerance of 0, but the primary still has copies of the data.</p>\n<p>It\u2019s also possible that you only have three zoneid\u2019s in the remote DC, so if you lose one machine in the remote DC, you wouldn\u2019t be able to recover to it?</p>\n<p>\u2026or it\u2019s possible that there\u2019s a bug in status.</p>\n<p>Either way, more details on the exact steps you took and the exact layout and configuration of your cluster would be helpful. <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=9\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-06-05T23:05:50.387Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 35,
+        "readers_count": 34,
+        "score": 7.0,
+        "yours": false,
+        "topic_id": 1408,
+        "topic_slug": "fault-tolerance-changes-from-2-machines-to-0-machines-2-without-data-loss",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fault-tolerance-changes-from-2-machines-to-0-machines-2-without-data-loss/1408/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4215,
+      4291
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2337
+    ],
+    [
+      2,
+      2330
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fault Tolerance changes from &ldquo;2 machines&rdquo; to &ldquo;0 machines (2 without data loss)&rdquo;",
+  "id": 1408,
+  "title": "Fault Tolerance changes from \"2 machines\" to \"0 machines (2 without data loss)\"",
+  "posts_count": 2,
+  "created_at": "2019-05-30T00:40:05.914Z",
+  "views": 574,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-06-05T23:05:50.387Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fault-tolerance-changes-from-2-machines-to-0-machines-2-without-data-loss",
+  "category_id": 7,
+  "word_count": 318,
+  "deleted_at": null,
+  "user_id": 577,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1408",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "id": 1282,
+      "title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "slug": "6-0-18-reporting-incorrect-fault-tolerance-via-fdbcli-with-triple-redundancy-mode",
+      "posts_count": 15,
+      "reply_count": 8,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-04-04T19:04:42.341Z",
+      "last_posted_at": "2019-04-06T00:41:42.940Z",
+      "bumped": true,
+      "bumped_at": "2019-04-06T00:41:42.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1976,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Max Tolerable Zone Failures for Availability and Data",
+      "id": 2203,
+      "title": "Max Tolerable Zone Failures for Availability and Data",
+      "slug": "max-tolerable-zone-failures-for-availability-and-data",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-06-23T20:15:39.311Z",
+      "last_posted_at": "2020-06-24T22:48:08.970Z",
+      "bumped": true,
+      "bumped_at": "2020-06-24T22:48:08.970Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 607,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Ideal setup for Fault Tolerance = 3 in Triple mode",
+      "id": 1520,
+      "title": "Ideal setup for Fault Tolerance = 3 in Triple mode",
+      "slug": "ideal-setup-for-fault-tolerance-3-in-triple-mode",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-07-15T08:01:44.798Z",
+      "last_posted_at": "2019-07-15T15:36:51.994Z",
+      "bumped": true,
+      "bumped_at": "2019-07-15T15:36:51.994Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1220,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 607,
+            "username": "senthil",
+            "name": "Senthil Nathan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/senthil/{size}/720_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fault Tolerance - 0 zones after setting locality_zoneid",
+      "id": 2706,
+      "title": "Fault Tolerance - 0 zones after setting locality_zoneid",
+      "slug": "fault-tolerance-0-zones-after-setting-locality-zoneid",
+      "posts_count": 9,
+      "reply_count": 3,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-05-18T19:17:29.648Z",
+      "last_posted_at": "2021-05-19T16:26:58.309Z",
+      "bumped": true,
+      "bumped_at": "2021-05-19T16:26:58.309Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 792,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fault tolerance numer in status output",
+      "id": 3805,
+      "title": "Fault tolerance numer in status output",
+      "slug": "fault-tolerance-numer-in-status-output",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2023-02-15T00:54:35.516Z",
+      "last_posted_at": "2023-02-15T00:54:35.587Z",
+      "bumped": true,
+      "bumped_at": "2023-02-15T00:54:35.587Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 271,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1104,
+            "username": "chetan_pg",
+            "name": "chetan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 577,
+        "username": "binzhangebay",
+        "name": "binzhang",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/6a8cbe/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 577,
+      "username": "binzhangebay",
+      "name": "binzhang",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/6a8cbe/{size}.png"
+    },
+    "last_poster": {
+      "id": 13,
+      "username": "alexmiller",
+      "name": "Alex Miller",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+    }
+  },
+  "bookmarks": []
+}

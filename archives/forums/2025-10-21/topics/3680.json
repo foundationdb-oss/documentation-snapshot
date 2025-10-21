@@ -1,0 +1,535 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12082,
+        "name": "Rajiv M Ranganath",
+        "username": "rajivr",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "created_at": "2022-12-02T03:55:36.139Z",
+        "cooked": "<p>I recently encountered an API ergonomics issue with <a href=\"https://apple.github.io/foundationdb/api-c.html#c.fdb_transaction_get_range\" rel=\"noopener nofollow ugc\"><code>fdb_transaction_get_range</code></a> and its use of <code>limit = 0</code> to indicate unlimited.</p>\n<p>I\u2019m sharing the issue here for comments and hopefully as a heads-up to future binding/layer authors.</p>\n<p>In RecordLayer, there is the notion of a <a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.html\" rel=\"noopener nofollow ugc\">Cursor</a> and a <a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorContinuation.html\" rel=\"noopener nofollow ugc\">Continuation</a>, which are very useful abstractions to have when developing layers.</p>\n<p>The most basic cursor is the <a href=\"https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/KeyValueCursor.html\" rel=\"noopener nofollow ugc\">KeyValueCursor</a>. It is implemented as a FDB get range query and any key-value limit that the cursor might have would be translated directly as limits to the get range query.</p>\n<p>Here is an example from RecordLayer Tests.</p>\n<pre><code class=\"lang-auto\">cursor = KeyValueCursor.Builder.withSubspace(subspace)\n        .setContext(context)\n        .setRange(TupleRange.allOf(Tuple.from(3)))\n        .setContinuation(cursor.getNext().getContinuation().toBytes())\n        .setScanProperties(new ScanProperties(ExecuteProperties.newBuilder().setReturnedRowLimit(3).build()))\n        .build();\n</code></pre>\n<p>Cursor is designed to work across multiple transactions if a FoundationDB transaction limit (out-of-band limit) is encountered.</p>\n<p>Should a situation arise where the <code>limit</code> number of key-values could not be retrieved in one transaction, we can build a new transaction and attempt to retrieve the remaining key-values by subtracting <code>limit</code> with the number of key-values already retrieved.</p>\n<p>In the event we are not careful and build a cursor with a <code>limit = 0</code>, rather than receiving <em>zero</em> key-values, we will end up receiving key-values that we did not anticipate.</p>\n<p>The reason for this is because get range considers <code>limit = 0</code> to mean <em>unlimited</em>.</p>\n<p>Here is my <a href=\"https://gist.github.com/rajivr/7ddb7fd48cb75f3f3fa389fbaf70329e\" rel=\"noopener nofollow ugc\">Rust</a> test case that demonstrates the issue.</p>\n<p>Would it make sense to call this out more explicitly in the C API documentation?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-12-02T03:57:23.252Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 20,
+        "reads": 18,
+        "readers_count": 17,
+        "score": 118.6,
+        "yours": false,
+        "topic_id": 3680,
+        "topic_slug": "fdb-transaction-get-range-api-and-limit",
+        "display_username": "Rajiv M Ranganath",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-c.html#c.fdb_transaction_get_range",
+            "internal": false,
+            "reflection": false,
+            "title": "C API \u2014 FoundationDB 7.2",
+            "clicks": 2
+          },
+          {
+            "url": "https://gist.github.com/rajivr/7ddb7fd48cb75f3f3fa389fbaf70329e",
+            "internal": false,
+            "reflection": false,
+            "title": "Setting in-band limit to zero means unlimited. \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursor.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordCursor (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 0
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/RecordCursorContinuation.html",
+            "internal": false,
+            "reflection": false,
+            "title": "RecordCursorContinuation (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 0
+          },
+          {
+            "url": "https://javadoc.io/static/org.foundationdb/fdb-record-layer-core-pb3/2.10.164.0/com/apple/foundationdb/record/provider/foundationdb/KeyValueCursor.html",
+            "internal": false,
+            "reflection": false,
+            "title": "KeyValueCursor (fdb-record-layer-core-pb3 2.10.164.0 API)",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 946,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-transaction-get-range-api-and-limit/3680/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12082
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1055
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "`fdb_transaction_get_range` API and `limit`",
+  "id": 3680,
+  "title": "`fdb_transaction_get_range` API and `limit`",
+  "posts_count": 1,
+  "created_at": "2022-12-02T03:55:36.069Z",
+  "views": 298,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2022-12-02T03:55:36.139Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-transaction-get-range-api-and-limit",
+  "category_id": 9,
+  "word_count": 345,
+  "deleted_at": null,
+  "user_id": 946,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3680",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Why can I only range read 2857 keys?",
+      "id": 1517,
+      "title": "Why can I only range read 2857 keys?",
+      "slug": "why-can-i-only-range-read-2857-keys",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-13T06:06:58.493Z",
+      "last_posted_at": "2019-07-13T19:32:13.906Z",
+      "bumped": true,
+      "bumped_at": "2019-07-13T19:32:13.906Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 634,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why can&rsquo;t get the key-value I need for using fdb_transaction_get_range",
+      "id": 3038,
+      "title": "Why can't get the key-value I need for using fdb_transaction_get_range",
+      "slug": "why-cant-get-the-key-value-i-need-for-using-fdb-transaction-get-range",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2021-11-25T09:15:15.954Z",
+      "last_posted_at": "2021-11-27T03:37:15.102Z",
+      "bumped": true,
+      "bumped_at": "2021-11-27T03:37:15.102Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 705,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1039,
+            "username": "JiangXiNJU",
+            "name": "Jiang Xi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jiangxinju/{size}/1247_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "id": 1355,
+      "title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "slug": "how-to-get-exact-range-of-keys-using-fdb-transaction-get-range-in-c-programming",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-05-09T12:22:07.878Z",
+      "last_posted_at": "2019-05-20T14:14:50.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-20T14:14:50.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1573,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How Record Layer Provides APIs to Handle Large Range Scan Longer Than 5 seconds",
+      "id": 2400,
+      "title": "How Record Layer Provides APIs to Handle Large Range Scan Longer Than 5 seconds",
+      "slug": "how-record-layer-provides-apis-to-handle-large-range-scan-longer-than-5-seconds",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2020-10-21T09:53:59.939Z",
+      "last_posted_at": "2020-12-16T17:43:49.426Z",
+      "bumped": true,
+      "bumped_at": "2020-12-16T17:43:49.426Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1805,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 775,
+            "username": "iamquang95",
+            "name": "Quang Le Hong",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/iamquang95/{size}/889_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 34,
+            "username": "scgray",
+            "name": "Scott Gray",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/scgray/{size}/30_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Rust FDB Record Layer Work-in-progress Repository",
+      "id": 3765,
+      "title": "Rust FDB Record Layer Work-in-progress Repository",
+      "slug": "rust-fdb-record-layer-work-in-progress-repository",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2023-01-26T02:34:01.051Z",
+      "last_posted_at": "2023-01-26T08:51:56.674Z",
+      "bumped": true,
+      "bumped_at": "2023-01-26T08:51:56.674Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 1593,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 946,
+            "username": "rajivr",
+            "name": "Rajiv M Ranganath",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 499,
+            "username": "garrensmith",
+            "name": "Garren Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/garrensmith/{size}/494_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 946,
+        "username": "rajivr",
+        "name": "Rajiv M Ranganath",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 946,
+      "username": "rajivr",
+      "name": "Rajiv M Ranganath",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png"
+    },
+    "last_poster": {
+      "id": 946,
+      "username": "rajivr",
+      "name": "Rajiv M Ranganath",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/api-c.html#c.fdb_transaction_get_range",
+        "title": "C API \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://gist.github.com/rajivr/7ddb7fd48cb75f3f3fa389fbaf70329e",
+        "title": "Setting in-band limit to zero means unlimited. \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 946,
+        "domain": "gist.github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

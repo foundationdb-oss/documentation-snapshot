@@ -1,0 +1,513 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12660,
+        "name": "Oleg Samarin",
+        "username": "osamarin",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+        "created_at": "2023-03-30T12:52:19.339Z",
+        "cooked": "<p>Hello, all and foundationdb developers.</p>\n<p>I\u2019m trying to compile foundationdb 7.1.29 from sources with the clang 15 compiler and I receive the following error:</p>\n<pre><code class=\"lang-auto\">/home/oleg/git/xdb/FoundationDb/fdbserver/KeyValueStoreRocksDB.actor.cpp:272:34: error: assigning to 'rocksdb::Temperature' from incompatible type 'uint8_t' (aka 'unsigned char')\n                liveFileMetaData.temperature = static_cast&lt;uint8_t&gt;(fileMetaData.temperature);\n                                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n</code></pre>\n<p>The reason is that <code>rocksdb::Temperature</code> is not uint8_t, but it is an enum class based on uint8_t. New versions of clang compiler prohibit conversion from a base type to enum by default.</p>\n<p>Because both <code>fileMetaData.temperature</code> and <code>liveFileMetaData.temperature</code> have the same type <code>rocksdb::Temperature</code>, the intermediate casting to uint8_t is not required, and eliminating it solves the compilation problem.</p>\n<p>A short patch is here.</p>\n<pre><code class=\"lang-auto\">diff --git a/fdbserver/KeyValueStoreRocksDB.actor.cpp b/fdbserver/KeyValueStoreRocksDB.actor.cpp\nindex 6da346742..83f7697bf 100644\n--- a/fdbserver/KeyValueStoreRocksDB.actor.cpp\n+++ b/fdbserver/KeyValueStoreRocksDB.actor.cpp\n@@ -269,7 +269,7 @@ void populateMetaData(CheckpointMetaData* checkpoint, const rocksdb::ExportImpor\n \t\tliveFileMetaData.being_compacted = fileMetaData.being_compacted;\n \t\tliveFileMetaData.num_entries = fileMetaData.num_entries;\n \t\tliveFileMetaData.num_deletions = fileMetaData.num_deletions;\n-\t\tliveFileMetaData.temperature = static_cast&lt;uint8_t&gt;(fileMetaData.temperature);\n+\t\tliveFileMetaData.temperature = fileMetaData.temperature;\n \t\tliveFileMetaData.oldest_blob_file_number = fileMetaData.oldest_blob_file_number;\n \t\tliveFileMetaData.oldest_ancester_time = fileMetaData.oldest_ancester_time;\n \t\tliveFileMetaData.file_creation_time = fileMetaData.file_creation_time;\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-03-30T12:52:19.339Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 16,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 82.8,
+        "yours": false,
+        "topic_id": 3880,
+        "topic_slug": "compilation-error-with-clang-15",
+        "display_username": "Oleg Samarin",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 711,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/compilation-error-with-clang-15/3880/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12660
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      936
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Compilation error with clang 15",
+  "id": 3880,
+  "title": "Compilation error with clang 15",
+  "posts_count": 1,
+  "created_at": "2023-03-30T12:52:19.273Z",
+  "views": 254,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-03-30T12:52:19.339Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "compilation-error-with-clang-15",
+  "category_id": 5,
+  "word_count": 193,
+  "deleted_at": null,
+  "user_id": 711,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3880",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Compiling on Linux with anything other than Ubuntu 15.04 / docker possible?",
+      "id": 118,
+      "title": "Compiling on Linux with anything other than Ubuntu 15.04 / docker possible?",
+      "slug": "compiling-on-linux-with-anything-other-than-ubuntu-15-04-docker-possible",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-04-20T11:21:20.195Z",
+      "last_posted_at": "2018-04-23T01:06:08.039Z",
+      "bumped": true,
+      "bumped_at": "2018-04-23T01:06:08.039Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1149,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 77,
+            "username": "Meai",
+            "name": "Meai",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meai/{size}/500_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 78,
+            "username": "pineapple",
+            "name": "Brian Haslet",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/7993a0/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Trying to build 6.3.9 using the docker build env. running on a RHEL 7.x env. result in compile error",
+      "id": 2569,
+      "title": "Trying to build 6.3.9 using the docker build env. running on a RHEL 7.x env. result in compile error",
+      "slug": "trying-to-build-6-3-9-using-the-docker-build-env-running-on-a-rhel-7-x-env-result-in-compile-error",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2021-02-22T18:10:51.198Z",
+      "last_posted_at": "2021-02-27T15:15:47.602Z",
+      "bumped": true,
+      "bumped_at": "2021-02-27T15:15:47.602Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 539,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 890,
+            "username": "tangerine",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tangerine/{size}/1084_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Build failing on Mac",
+      "id": 555,
+      "title": "Build failing on Mac",
+      "slug": "build-failing-on-mac",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-07-09T18:48:36.004Z",
+      "last_posted_at": "2018-07-09T23:22:59.266Z",
+      "bumped": true,
+      "bumped_at": "2018-07-09T23:22:59.266Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 697,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 322,
+            "username": "ananthc",
+            "name": "Ananth Gundabattula",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthc/{size}/1068_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Building FoundationDB in Docker",
+      "id": 1907,
+      "title": "Building FoundationDB in Docker",
+      "slug": "building-foundationdb-in-docker",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-01-25T00:26:54.238Z",
+      "last_posted_at": "2020-01-28T22:21:01.008Z",
+      "bumped": true,
+      "bumped_at": "2020-01-28T22:21:01.008Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1591,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 679,
+            "username": "Daniel-B-Smith",
+            "name": "Daniel Smith",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daniel-b-smith/{size}/743_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "CMake and better IDE support",
+      "id": 334,
+      "title": "CMake and better IDE support",
+      "slug": "cmake-and-better-ide-support",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-05-03T23:09:33.328Z",
+      "last_posted_at": "2018-08-11T00:35:30.260Z",
+      "bumped": true,
+      "bumped_at": "2018-08-11T00:35:30.260Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1711,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 711,
+        "username": "osamarin",
+        "name": "Oleg Samarin",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 711,
+      "username": "osamarin",
+      "name": "Oleg Samarin",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png"
+    },
+    "last_poster": {
+      "id": 711,
+      "username": "osamarin",
+      "name": "Oleg Samarin",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png"
+    }
+  },
+  "bookmarks": []
+}

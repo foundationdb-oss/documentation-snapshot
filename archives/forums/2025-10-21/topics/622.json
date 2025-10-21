@@ -1,0 +1,769 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1847,
+        "name": "Caleb Spare",
+        "username": "cespare",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png",
+        "created_at": "2018-08-09T00:55:37.980Z",
+        "cooked": "<p>I\u2019m trying to build a new cluster. I\u2019m following directions here:</p>\n<p><a href=\"https://apple.github.io/foundationdb/building-cluster.html\" class=\"onebox\" target=\"_blank\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/building-cluster.html</a></p>\n<p>and I\u2019ve also consulted these docs:</p>\n<p><a href=\"https://apple.github.io/foundationdb/configuration.html\" class=\"onebox\" target=\"_blank\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/configuration.html</a><br>\n<a href=\"https://apple.github.io/foundationdb/administration.html\" class=\"onebox\" target=\"_blank\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/administration.html</a></p>\n<p>I ran make_public.py and it modified my fdb.cluster to use the public IP. However, <code>fdbcli</code> fails on the machine because the fdbservers are listening on 127.0.0.1 rather than the public interface.</p>\n<p>To fix this, I had to manually change \u201cauto\u201d to the server\u2019s public IP in foundationdb.conf. This made <code>fdbcli</code> work, though the status was initially unhappy (I got \u201cReplication health     - (Re)initializing automatic data distribution\u201d for a little while).</p>\n<p>I didn\u2019t see it mentioned anywhere that I\u2019d need to fix \u201cauto\u201d in the configuration file, and it\u2019s slightly unfortunate that all my servers will need different configs. This makes me think that I might be holding it wrong. Am I missing something?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-09T00:55:37.980Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 385,
+        "reads": 70,
+        "readers_count": 69,
+        "score": 1954.0,
+        "yours": false,
+        "topic_id": 622,
+        "topic_slug": "whats-the-best-procedure-for-exposing-a-public-port",
+        "display_username": "Caleb Spare",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/building-cluster.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Building a Cluster \u2014 FoundationDB 5.2",
+            "clicks": 24
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/configuration.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Configuration \u2014 FoundationDB 5.2",
+            "clicks": 9
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/administration.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Administration \u2014 FoundationDB 5.2",
+            "clicks": 8
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 44,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/whats-the-best-procedure-for-exposing-a-public-port/622/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1859,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-08-09T18:25:30.846Z",
+        "cooked": "<p>Using auto tells the server to try opening a connection to the first coordinator in the cluster file and then take the local interface that was used to connect to that coordinator.</p>\n<p>Normally I haven\u2019t had any trouble using auto for public addresses, though if there\u2019s any doubt about which interface might get chosen on your host, then specifying it manually would be a safer bet.</p>\n<p>One thing I just discovered when testing this myself, though, is that <code>make_public.py</code> did not successfully restart my server processes. Thus when I finished the conversion, those processes were still using the 127.0.0.1 interface. Restarting the server processes was sufficient to clear this up, though.</p>\n<p>Is there any chance that the same thing happened to you? If you change the values in <code>foundationdb.conf</code> back to <code>auto</code>, does it work (note this should result in the processes being restarted automatically)? I think there might be some quirkiness with starting/stopping/restarting the foundationdb service right now, which could be why <code>make_public.py</code> didn\u2019t succeed in the restart for me.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-09T18:25:30.846Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 65,
+        "readers_count": 64,
+        "score": 38.0,
+        "yours": false,
+        "topic_id": 622,
+        "topic_slug": "whats-the-best-procedure-for-exposing-a-public-port",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/whats-the-best-procedure-for-exposing-a-public-port/622/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1860,
+        "name": "Caleb Spare",
+        "username": "cespare",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png",
+        "created_at": "2018-08-09T19:22:47.275Z",
+        "cooked": "<p><a class=\"mention\" href=\"/u/ajbeamon\">@ajbeamon</a> yes, you got it precisely. Thanks.</p>\n<p>Relatedly, is there any information about opting out of the upstart scripts and whatnot and using another process manager for fdbmonitor? This wasn\u2019t the only time I ran into trouble with the scripts that came with the distribution.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-09T19:22:47.275Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 60,
+        "readers_count": 59,
+        "score": 27.0,
+        "yours": false,
+        "topic_id": 622,
+        "topic_slug": "whats-the-best-procedure-for-exposing-a-public-port",
+        "display_username": "Caleb Spare",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 44,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/whats-the-best-procedure-for-exposing-a-public-port/622/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1862,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-08-09T19:32:42.175Z",
+        "cooked": "<p>I don\u2019t know of anybody who\u2019s done that and documented anything about it. I\u2019m also not personally well-enough versed in that area to offer any guidance myself.</p>\n<p>I did just raise a GitHub issue for the problem on our end, though:</p>\n<p><a href=\"https://github.com/apple/foundationdb/issues/685\" class=\"onebox\" target=\"_blank\" rel=\"nofollow noopener\">https://github.com/apple/foundationdb/issues/685</a></p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-09T19:32:42.175Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 60,
+        "readers_count": 59,
+        "score": 42.0,
+        "yours": false,
+        "topic_id": 622,
+        "topic_slug": "whats-the-best-procedure-for-exposing-a-public-port",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/685",
+            "internal": false,
+            "reflection": false,
+            "title": "Controlling the FoundationDB service (i.e. start/stop/restart) doesn't work well in Linux \u00b7 Issue #685 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 55
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 44,
+          "username": "cespare",
+          "name": "Caleb Spare",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/whats-the-best-procedure-for-exposing-a-public-port/622/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1847,
+      1859,
+      1860,
+      1862
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2631
+    ],
+    [
+      2,
+      2630
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "What&rsquo;s the best procedure for exposing a public port?",
+  "id": 622,
+  "title": "What's the best procedure for exposing a public port?",
+  "posts_count": 4,
+  "created_at": "2018-08-09T00:55:37.895Z",
+  "views": 1492,
+  "reply_count": 1,
+  "like_count": 3,
+  "last_posted_at": "2018-08-09T19:32:42.175Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "whats-the-best-procedure-for-exposing-a-public-port",
+  "category_id": 7,
+  "word_count": 445,
+  "deleted_at": null,
+  "user_id": 44,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_622",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Deployment with custom fdb.cluster file",
+      "id": 592,
+      "title": "Deployment with custom fdb.cluster file",
+      "slug": "deployment-with-custom-fdb-cluster-file",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-07-26T23:00:18.994Z",
+      "last_posted_at": "2018-07-27T23:44:31.722Z",
+      "bumped": true,
+      "bumped_at": "2018-07-27T23:44:31.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 4329,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foudnation /usr/lib/foundationdb/make_public.py",
+      "id": 3345,
+      "title": "Foudnation /usr/lib/foundationdb/make_public.py",
+      "slug": "foudnation-usr-lib-foundationdb-make-public-py",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2022-05-27T20:38:58.595Z",
+      "last_posted_at": "2022-05-27T23:00:44.853Z",
+      "bumped": true,
+      "bumped_at": "2022-05-27T23:00:44.853Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 927,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1104,
+            "username": "chetan_pg",
+            "name": "chetan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Changing public address of (non-coordinator) fdbserver corrupted cluster",
+      "id": 2602,
+      "title": "Changing public address of (non-coordinator) fdbserver corrupted cluster",
+      "slug": "changing-public-address-of-non-coordinator-fdbserver-corrupted-cluster",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-03-12T08:26:07.697Z",
+      "last_posted_at": "2021-03-16T23:03:07.029Z",
+      "bumped": true,
+      "bumped_at": "2021-03-16T23:14:47.032Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1914,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundation + docker public access",
+      "id": 1658,
+      "title": "Foundation + docker public access",
+      "slug": "foundation-docker-public-access",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/4d5841377939ca99f304e342c8427c3bfeb88bb1.jpeg",
+      "created_at": "2019-09-30T16:19:04.968Z",
+      "last_posted_at": "2019-10-03T06:21:08.155Z",
+      "bumped": true,
+      "bumped_at": "2019-10-03T06:21:08.155Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1299,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 650,
+            "username": "Karthikn6793",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/karthikn6793/{size}/748_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Issues with V6.2 TLS Cluster",
+      "id": 1904,
+      "title": "Issues with V6.2 TLS Cluster",
+      "slug": "issues-with-v6-2-tls-cluster",
+      "posts_count": 12,
+      "reply_count": 8,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-01-23T17:31:13.342Z",
+      "last_posted_at": "2020-01-28T16:35:52.821Z",
+      "bumped": true,
+      "bumped_at": "2020-01-28T16:35:52.821Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1620,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 44,
+        "username": "cespare",
+        "name": "Caleb Spare",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 44,
+      "username": "cespare",
+      "name": "Caleb Spare",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/685",
+        "title": "Controlling the FoundationDB service (i.e. start/stop/restart) doesn't work well in Linux \u00b7 Issue #685 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 55,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/building-cluster.html",
+        "title": "Building a Cluster \u2014 FoundationDB 5.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 24,
+        "user_id": 44,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/configuration.html",
+        "title": "Configuration \u2014 FoundationDB 5.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 44,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/administration.html",
+        "title": "Administration \u2014 FoundationDB 5.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 44,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

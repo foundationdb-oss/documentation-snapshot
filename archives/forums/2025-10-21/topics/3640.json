@@ -1,0 +1,513 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11964,
+        "name": "Leo Hu",
+        "username": "lehu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+        "created_at": "2022-11-05T04:10:03.485Z",
+        "cooked": "<p>We had a fdb cluster incident today. It\u2019s solved, but we\u2019d like to know whys.</p>\n<p>We have a 3-DC fdb cluster, with 23 stateless pod and 110 storage pods at first and third DC each. After a DC-level switching op, we got a couple of errors. The first error is <strong>db unavailable</strong>.  We restarted all 23 stateless pods at DC1, the cluster became available.</p>\n<p>However, we still had the second error: <strong>\u201cUnable to start batch priority transaction after 5 seconds.\u201d</strong>.</p>\n<p>We thought we should restart transaction logs to speed up batch-priority transactions. We restarted one transaction pod. Then the cluster became unavailable again. We identified one stateless (stateless-04), which was recreated yesterday and had many errors in the trace logs. We wanted to exclude it, but got the following error.</p>\n<pre><code class=\"lang-auto\">fdb&gt; exclude 10.xxx.yyy.45:4300\nWARNING: Long delay (Ctrl-C to interrupt)\nERROR: This exclude may cause the total free space in the cluster to drop below 10%.\nType `exclude FORCE &lt;ADDRESS&gt;*' to exclude without checking free space.\n</code></pre>\n<p>The error looks scary, so we didn\u2019t FORCE, instead we removed the pod out of the cluster (by scaling down the K8s deployment to 0), then the cluster was back to normal.</p>\n<p>But the second error persisted after we brought the db up.  The cluster was slow for writing and getting the status. We scanned all fdb trace logs and found one storage pod that had thousands of \u201cN2_ConnectError\u201d errors, generated quickly. The pod was also recreated yesterday.</p>\n<p>We restarted the pod, but it didn\u2019t help. Similarly we removed the pod out of the cluster, then the batch-priority transaction error disappeared, and the cluster was back to normal.</p>\n<p><strong>\u201cBatch priority transactions can be indefinitely starved while one storage server is failed\u201d,</strong> Alex wrote in this post, <a href=\"https://forums.foundationdb.org/t/batch-priority-transactions/3106\" class=\"inline-onebox\">Batch priority transactions</a>.  <strong>It looks like we just hit it today.</strong></p>\n<p><strong>A few questions:</strong></p>\n<ul>\n<li>Why one stateless pod out of 23 would made the cluster unavailable?</li>\n<li>Why one storage pod out of 110 would indefinitely starved batch priority transactions?</li>\n<li>Are there any changes made related to these issues after v6.2.27 (the version we use)?</li>\n</ul>\n<p>Thank you in advance for helping us understand the issues for future prevention.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2022-11-05T04:10:03.485Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 18,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 93.2,
+        "yours": false,
+        "topic_id": 3640,
+        "topic_slug": "one-faulty-stateless-pod-made-cluster-unavailable-and-one-storage-server-caused-cluster-slow",
+        "display_username": "Leo Hu",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/batch-priority-transactions/3106",
+            "internal": true,
+            "reflection": false,
+            "title": "Batch priority transactions",
+            "clicks": 6
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 643,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/one-faulty-stateless-pod-made-cluster-unavailable-and-one-storage-server-caused-cluster-slow/3640/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      11964
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1082
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "One faulty stateless pod made cluster unavailable, and one storage server caused cluster slow",
+  "id": 3640,
+  "title": "One faulty stateless pod made cluster unavailable, and one storage server caused cluster slow",
+  "posts_count": 1,
+  "created_at": "2022-11-05T04:10:03.418Z",
+  "views": 301,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-11-05T04:10:03.485Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "one-faulty-stateless-pod-made-cluster-unavailable-and-one-storage-server-caused-cluster-slow",
+  "category_id": 7,
+  "word_count": 380,
+  "deleted_at": null,
+  "user_id": 643,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3640",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Fdb cluster is unavailable after delete a disk",
+      "id": 2232,
+      "title": "Fdb cluster is unavailable after delete a disk",
+      "slug": "fdb-cluster-is-unavailable-after-delete-a-disk",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-07-07T09:35:29.720Z",
+      "last_posted_at": "2020-07-09T08:38:11.028Z",
+      "bumped": true,
+      "bumped_at": "2020-07-09T09:28:06.173Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1154,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 585,
+            "username": "ssb",
+            "name": "Shunbo Shi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ssb/{size}/656_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Killing 10% of Storage Servers Leads to Unknown Read Rate in FDB Status Report",
+      "id": 1435,
+      "title": "Killing 10% of Storage Servers Leads to Unknown Read Rate in FDB Status Report",
+      "slug": "killing-10-of-storage-servers-leads-to-unknown-read-rate-in-fdb-status-report",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-06-10T09:39:49.071Z",
+      "last_posted_at": "2019-06-10T18:59:33.850Z",
+      "bumped": true,
+      "bumped_at": "2019-06-10T18:59:33.850Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 709,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 531,
+            "username": "jltz",
+            "name": "Jun Li",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c0e974/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Database unavailable after shutting down a foundationdb node",
+      "id": 2113,
+      "title": "Database unavailable after shutting down a foundationdb node",
+      "slug": "database-unavailable-after-shutting-down-a-foundationdb-node",
+      "posts_count": 18,
+      "reply_count": 8,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2020-05-11T16:09:39.373Z",
+      "last_posted_at": "2021-02-05T22:16:50.767Z",
+      "bumped": true,
+      "bumped_at": "2021-02-05T22:18:40.780Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 8569,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Full disk on one machine results in 99% performance degradation",
+      "id": 850,
+      "title": "Full disk on one machine results in 99% performance degradation",
+      "slug": "full-disk-on-one-machine-results-in-99-performance-degradation",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-11-06T00:18:11.154Z",
+      "last_posted_at": "2018-11-08T00:02:29.123Z",
+      "bumped": true,
+      "bumped_at": "2018-11-08T00:02:29.123Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2223,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 421,
+            "username": "rbranson",
+            "name": "Rick Branson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbranson/{size}/406_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Connecting to the database using `fdbcli` results in an error",
+      "id": 1841,
+      "title": "Connecting to the database using `fdbcli` results in an error",
+      "slug": "connecting-to-the-database-using-fdbcli-results-in-an-error",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-12-14T07:23:08.203Z",
+      "last_posted_at": "2019-12-17T15:06:03.064Z",
+      "bumped": true,
+      "bumped_at": "2019-12-17T15:06:03.064Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2426,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 643,
+        "username": "lehu",
+        "name": "Leo Hu",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 643,
+      "username": "lehu",
+      "name": "Leo Hu",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png"
+    },
+    "last_poster": {
+      "id": 643,
+      "username": "lehu",
+      "name": "Leo Hu",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/batch-priority-transactions/3106",
+        "title": "Batch priority transactions",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 643,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,717 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 6290,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2020-02-21T12:35:32.213Z",
+        "cooked": "<p>I\u2019m trying to create a Dockerfile for an application that uses the FoundationDB client library, to connect to an external cluster (hosted elsewhere).</p>\n<p>In my case, the dockerfile uses the <a href=\"https://hub.docker.com/_/microsoft-dotnet-core-aspnet/\" rel=\"nofollow noopener\">linux ASP.NET Core 3.1 docker images</a> provided by Microsoft, copies the application binary files, and run it. Except of course it fails at runtime when attempting to load the fdb C library!</p>\n<p>I\u2019m looking at only installing the <em>client</em> binaries on this docker image, <em>not</em> the server components (to keep the footprint small). Also, I have to start the image from an existing one (in my case <code>FROM mcr.microsoft.com/dotnet/core/aspnet:3.1</code>) so I cannot reuse any \u201cofficial\u201d foundationdb docker image.</p>\n<p>I looked at how the <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/a61d52437b08578f94098da22ca9f8260af96d7c/foundationdb-kubernetes-sidecar/Dockerfile\" rel=\"nofollow noopener\">kubernetes operator builds an image</a>, and it simply download and untar the .tar.gz files from the official download site (which include both client and server), and copy/link the binaries into place in the file system.</p>\n<p>I also looked at the <a href=\"https://github.com/FoundationDB/fdb-document-layer/blob/master/docker/Dockerfile\" rel=\"nofollow noopener\">document layer docker file</a>, but it seems to be inheriting from the <code>foundationdb-build</code> image which contains too much stuff for me.</p>\n<p>I\u2019ve also seen various Dockerfiles on this forum that download the debian packages and use <code>dpkg</code> to install both client and server (and most conversation is focused on how to start/run the fdbserver process).</p>\n<p>Finaly, there is <a href=\"https://github.com/apple/foundationdb/tree/master/packaging/docker\" rel=\"nofollow noopener\">https://github.com/apple/foundationdb/tree/master/packaging/docker</a> that seems to indicate that I can \u201cuse\u201d the image to copy binaries from it, but how do I do that?</p>\n<p>As anyone created a Dockerfile for a custom application server that only needs to <em>connect</em> to a cluster?</p>\n<p>I\u2019m guessing this would look like</p>\n<pre><code class=\"lang-auto\">FROM foobar/super-awesome-runtime:1.2.3\n\n# install fdb client binaries\nRUN curl https://www.foundationdb.org/downloads/xxxxxxx.tar.gz &amp;&amp; \\\n    tar -xvz ...... &amp;&amp; \\\n    mv xxxx yyyy &amp;&amp; \\\n    ??? &amp;&amp; \\\n    Profit !!!!\n\nWORKDIR /app\nCOPY my-awesome-application-binaries ....\n\n#TODO: inject some path or uri to download the cluster file\n\nENTRYPOINT [\"/app/my-awesome-entrypoint\"]\n</code></pre>\n<p>To inject the cluster file when the image starts, I was thinking of using en environment variable that would contain either a path or an URI, and have it downloaded by the application during startup. Has anyone done this or used a different approach?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-02-21T20:24:26.681Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 135,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 674.0,
+        "yours": false,
+        "topic_id": 1974,
+        "topic_slug": "how-to-inject-the-client-binaries-into-an-existing-application-dockerfile",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/tree/master/packaging/docker",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/packaging/docker at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-document-layer/blob/master/docker/Dockerfile",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-document-layer/Dockerfile at master \u00b7 FoundationDB/fdb-document-layer \u00b7 GitHub",
+            "clicks": 2
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/a61d52437b08578f94098da22ca9f8260af96d7c/foundationdb-kubernetes-sidecar/Dockerfile",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/Dockerfile at a61d52437b08578f94098da22ca9f8260af96d7c \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://hub.docker.com/_/microsoft-dotnet-core-aspnet/",
+            "internal": false,
+            "reflection": false,
+            "title": "Docker Hub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-inject-the-client-binaries-into-an-existing-application-dockerfile/1974/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 6294,
+        "name": "John Brownlee",
+        "username": "john_brownlee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+        "created_at": "2020-02-21T20:12:47.162Z",
+        "cooked": "<p>If you\u2019re only interested in installing the client libraries, you can download those directly. There\u2019s an example of that in the sample python docker image: <a href=\"https://github.com/apple/foundationdb/blob/master/packaging/docker/samples/python/app/Dockerfile\">https://github.com/apple/foundationdb/blob/master/packaging/docker/samples/python/app/Dockerfile</a></p>\n<p>That example is copying its primary client library from the main foundationdb image (<code>COPY --from=fdb /usr/lib/libfdb_c.so /usr/lib</code>), and it\u2019s using wget to pull the multiversion libraries. I think you could mix and match these based on your needs. The simplest thing will probably be to use curl or wget to download the libraries from the website.</p>\n<p>Having the cluster file downloaded at start time is a reasonable approach, especially if your clients are decoupled from the databases they connect to, like if they run in different environments or are managed by different teams. If you have a programmable DNS service, then storing the cluster file in a DNS TXT record could be easier than running a dedicated web service to distribute them, but it\u2019s all going to depend on the details of your infrastructure. If your clients can be slightly stateful, you may want a fallback where it reuses the old cluster file if it can\u2019t download a new one. In most cases it will be safe to re-use the old cluster file, since the connected clients will update it live when you change coordinators. I know that giving clients state to manage is often challenging in a containerized environment, but it can help protect you against your cluster file delivery service being unavailable.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-02-21T20:12:47.162Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 18,
+        "readers_count": 17,
+        "score": 23.6,
+        "yours": false,
+        "topic_id": 1974,
+        "topic_slug": "how-to-inject-the-client-binaries-into-an-existing-application-dockerfile",
+        "display_username": "John Brownlee",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/master/packaging/docker/samples/python/app/Dockerfile",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/Dockerfile at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 3,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-inject-the-client-binaries-into-an-existing-application-dockerfile/1974/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      6290,
+      6294
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2069
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How to inject the client binaries into an existing application Dockerfile?",
+  "id": 1974,
+  "title": "How to inject the client binaries into an existing application Dockerfile?",
+  "posts_count": 2,
+  "created_at": "2020-02-21T12:35:32.120Z",
+  "views": 804,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2020-02-21T20:12:47.162Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-inject-the-client-binaries-into-an-existing-application-dockerfile",
+  "category_id": 7,
+  "word_count": 673,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1974",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Simple Dockerfile",
+      "id": 280,
+      "title": "Simple Dockerfile",
+      "slug": "simple-dockerfile",
+      "posts_count": 17,
+      "reply_count": 10,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-04-26T09:05:55.151Z",
+      "last_posted_at": "2018-10-16T20:26:01.085Z",
+      "bumped": true,
+      "bumped_at": "2018-10-16T20:26:01.085Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 8840,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 256,
+            "username": "bjrnio",
+            "name": "Ricard Bejarano",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bjrnio/{size}/235_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 392,
+            "username": "pavibhai",
+            "name": "Pavan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/e56c9b/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Dockerized deployment",
+      "id": 1561,
+      "title": "Dockerized deployment",
+      "slug": "dockerized-deployment",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-08-05T20:20:23.097Z",
+      "last_posted_at": "2019-10-14T17:29:21.819Z",
+      "bumped": true,
+      "bumped_at": "2019-10-14T17:29:21.819Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 4402,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 307,
+            "username": "jwr",
+            "name": "Jan Rychter",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwr/{size}/302_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 372,
+            "username": "seancarroll",
+            "name": "Sean Carroll",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to add a server container to a cluster",
+      "id": 394,
+      "title": "How to add a server container to a cluster",
+      "slug": "how-to-add-a-server-container-to-a-cluster",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-10T12:23:45.716Z",
+      "last_posted_at": "2018-05-11T19:37:00.210Z",
+      "bumped": true,
+      "bumped_at": "2018-05-11T19:37:00.210Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2461,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Trying to make docker image; fdbcli says database not created",
+      "id": 157,
+      "title": "Trying to make docker image; fdbcli says database not created",
+      "slug": "trying-to-make-docker-image-fdbcli-says-database-not-created",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-04-20T22:06:18.472Z",
+      "last_posted_at": "2019-02-12T13:13:54.630Z",
+      "bumped": true,
+      "bumped_at": "2019-02-12T13:13:54.630Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 3095,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 110,
+            "username": "jwatte",
+            "name": "Jon Watte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwatte/{size}/77_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 476,
+            "username": "dch",
+            "name": "Dave Cottlehuber",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 506,
+            "username": "shane",
+            "name": "Shane",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/dbc845/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to create a foundation db",
+      "id": 1102,
+      "title": "How to create a foundation db",
+      "slug": "how-to-create-a-foundation-db",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-02-01T19:36:35.747Z",
+      "last_posted_at": "2019-02-01T20:10:56.364Z",
+      "bumped": true,
+      "bumped_at": "2019-02-01T20:10:56.364Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2930,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 503,
+            "username": "xiaoqin",
+            "name": "Qin Ma",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/f4b2a3/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 3,
+        "username": "john_brownlee",
+        "name": "John Brownlee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 3,
+      "username": "john_brownlee",
+      "name": "John Brownlee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/master/packaging/docker/samples/python/app/Dockerfile",
+        "title": "foundationdb/Dockerfile at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 3,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/tree/master/packaging/docker",
+        "title": "foundationdb/packaging/docker at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 53,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-document-layer/blob/master/docker/Dockerfile",
+        "title": "fdb-document-layer/Dockerfile at master \u00b7 FoundationDB/fdb-document-layer \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 53,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

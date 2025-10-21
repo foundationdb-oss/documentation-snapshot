@@ -1,0 +1,678 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5936,
+        "name": "Gabriel Kliot",
+        "username": "gabikliot",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gabikliot/{size}/749_2.png",
+        "created_at": "2020-01-09T21:49:57.856Z",
+        "cooked": "<p>I have a question about transactions with unknown results and would like to discuss ideas of providing transaction idempotency.</p>\n<p><a href=\"https://apple.github.io/foundationdb/developer-guide.html#transactions-with-unknown-results\" rel=\"nofollow noopener\">Transactions with unknown results</a> describes the problem and suggests an approach where the application will generate a unique id for each transaction that will be checked and written in the transaction loop. This will eliminate double execution. This is definitely a good approach but the problem is that every application code needs to write this extra code, which is error prone.</p>\n<p>We considered doing it generically in our binding layer, where we will automatically allocate transaction ids, write them to lets say a special directory and check for idempotency automatically. This however still has the extra overhead of additional write, potentially hot range (the directory for tx ids; could be solved by splitting to multiple directories) and the need to clean them up periodically.  The advantage of course is that we can do it completely generically for all application code and that it also does not require FBD code changes.</p>\n<p>The question here is if there is a better/more efficient way to achieve that?<br>\nMaybe someone in the community came up with a different generic approach?<br>\nMaybe there is some extra information in the FDB itself that can help solve that better (potential \u201csmall\u201d changes to FDB itself could be considered)? Maybe there is a way to query a committed_version even for transactions that failed with commit_unknown_result?<br>\nBrainstorming ideas are welcomed!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-01-09T21:51:38.360Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 133,
+        "reads": 52,
+        "readers_count": 51,
+        "score": 747.4,
+        "yours": false,
+        "topic_id": 1873,
+        "topic_slug": "automatically-providing-transaction-idempotency",
+        "display_username": "Gabriel Kliot",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#transactions-with-unknown-results",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB 6.2",
+            "clicks": 33
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/how-mvcc-works-here/2764/4",
+            "internal": true,
+            "reflection": true,
+            "title": "How MVCC works here",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 708,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/automatically-providing-transaction-idempotency/1873/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5938,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2020-01-09T22:19:29.603Z",
+        "cooked": "<p>The version doesn\u2019t help here: read and write versions are shared between several transactions. So knowing that something with version <code>x</code> (whether read or write version doesn\u2019t matter) committed, doesn\u2019t give you any additional information.</p>\n<p>We could implement the same trick (writing some transaction ID to storages with every transaction) within FDB. This would give us the benefit that we could potentially safe one round-trip at the start of the transaction: we could send the transaction ID to the proxy during the GRV request, the proxy would read this value and only give back as read version if this transaction ID doesn\u2019t exist.</p>\n<p>However, the main problem here is that cleaning up these entires from storage will be quite hard as clients can potentially wait a very long time before they retry. So I am not convinced that this will be worth the effort\u2026</p>\n<p>But generally I strongly agree that finding a better way to solve this problem would be highly valuable!</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2020-01-09T22:19:29.603Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 52,
+        "readers_count": 51,
+        "score": 25.4,
+        "yours": false,
+        "topic_id": 1873,
+        "topic_slug": "automatically-providing-transaction-idempotency",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/automatically-providing-transaction-idempotency/1873/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5936,
+      5938
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2112
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Automatically providing transaction idempotency",
+  "id": 1873,
+  "title": "Automatically providing transaction idempotency",
+  "posts_count": 2,
+  "created_at": "2020-01-09T21:49:57.799Z",
+  "views": 1045,
+  "reply_count": 0,
+  "like_count": 3,
+  "last_posted_at": "2020-01-09T22:19:29.603Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "automatically-providing-transaction-idempotency",
+  "category_id": 9,
+  "word_count": 420,
+  "deleted_at": null,
+  "user_id": 708,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1873",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Make commit_unknown_results unlikely - PR status",
+      "id": 3413,
+      "title": "Make commit_unknown_results unlikely - PR status",
+      "slug": "make-commit-unknown-results-unlikely-pr-status",
+      "posts_count": 14,
+      "reply_count": 12,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2022-07-01T00:26:40.443Z",
+      "last_posted_at": "2022-07-20T12:27:13.316Z",
+      "bumped": true,
+      "bumped_at": "2022-07-20T12:27:13.316Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 798,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 946,
+            "username": "rajivr",
+            "name": "Rajiv M Ranganath",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How MVCC works here",
+      "id": 2764,
+      "title": "How MVCC works here",
+      "slug": "how-mvcc-works-here",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-06-20T19:43:33.177Z",
+      "last_posted_at": "2021-06-22T03:19:48.917Z",
+      "bumped": true,
+      "bumped_at": "2021-06-22T03:19:48.917Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 865,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 954,
+            "username": "vorandrew",
+            "name": "Andrew Vorobyov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vorandrew/{size}/1117_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Possible to create a unique/increasing 8-byte sequence with versionstamps?",
+      "id": 1640,
+      "title": "Possible to create a unique/increasing 8-byte sequence with versionstamps?",
+      "slug": "possible-to-create-a-unique-increasing-8-byte-sequence-with-versionstamps",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-09-20T11:57:48.578Z",
+      "last_posted_at": "2019-09-27T20:52:15.412Z",
+      "bumped": true,
+      "bumped_at": "2019-09-27T20:52:15.412Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 901,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 417,
+            "username": "lihtnes",
+            "name": "Senthil Ramamoorthy",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/848f3c/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "VersionStamp vs CommittedVersion",
+      "id": 600,
+      "title": "VersionStamp vs CommittedVersion",
+      "slug": "versionstamp-vs-committedversion",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-07-30T06:50:38.826Z",
+      "last_posted_at": "2018-09-17T19:43:14.827Z",
+      "bumped": true,
+      "bumped_at": "2018-09-17T19:43:14.827Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 3916,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 708,
+        "username": "gabikliot",
+        "name": "Gabriel Kliot",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gabikliot/{size}/749_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 708,
+      "username": "gabikliot",
+      "name": "Gabriel Kliot",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/gabikliot/{size}/749_2.png"
+    },
+    "last_poster": {
+      "id": 15,
+      "username": "markus.pilman",
+      "name": "Markus Pilman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/developer-guide.html#transactions-with-unknown-results",
+        "title": "Developer Guide \u2014 FoundationDB 6.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 33,
+        "user_id": 708,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/how-mvcc-works-here/2764/4",
+        "title": "How MVCC works here",
+        "internal": true,
+        "attachment": false,
+        "reflection": true,
+        "clicks": 2,
+        "user_id": 14,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

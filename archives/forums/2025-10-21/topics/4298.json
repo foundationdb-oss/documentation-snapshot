@@ -1,0 +1,446 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13616,
+        "name": "heyjeong",
+        "username": "hyejeong",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png",
+        "created_at": "2023-12-13T07:52:50.326Z",
+        "cooked": "<p>Hi.</p>\n<p>I have FDB Cluster with total 6 machines with three_data_hall. In each region, there are 2 machines.<br>\nI am aware that FDB cluster can work even if one machine is not okay. indeed it does.</p>\n<p>But I found that fdb cluster became unhealthy with following message after sudden reboot of a machine.</p>\n<pre><code class=\"lang-auto\">$ fdb --exec \"status json\"\n.....\n      \"database_status\" : {\n            \"available\" : false,\n            \"healthy\" : false\n        },\n......\n        \"messages\" : [\n            {\n                \"description\" : \"Unable to locate the data distributor worker.\",\n                \"name\" : \"unreachable_dataDistributor_worker\"\n            },\n            {\n                \"description\" : \"Unable to read database configuration.\",\n                \"name\" : \"unreadable_configuration\"\n            }\n        ],\n</code></pre>\n<p>Later I came to know that firewalld of the machine blocked all incoming packet. outgoing packet seems okay. So I stop the fdb processes on the machine, then fdb cluster status became okay.</p>\n<p>So it seems that shutting down machine/stopping the fdb process looks okay, but being only half connected(incoming packet blocked/outgoing packet passed) has an impact on the cluster health.</p>\n<p>When I stop the fdb process on the host, only 5 machines are visible from the result of <code>fdbcli --exec status json</code><br>\nBut when incoming packet was blocked by firewalld, I could see 6 machines from the result of <code>fdbcli --exec status json</code>. Even some roles were assigned on the unreachable machine. and I found that \u201cNo route to host\u201d error occurred from other 5 machines.</p>\n<p>So I wonder</p>\n<ul>\n<li>Is there anything else I can do, besides stopping the FDB on the unreachable host?</li>\n<li>How does the fdb cluster determine a machine is alive then assign a role? why, even \u201cno route to host\u201d error occurs, does the cluster not detach the inaccessible machine?</li>\n</ul>\n<p>Thank you.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-12-13T07:58:33.921Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 29,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 147.8,
+        "yours": false,
+        "topic_id": 4298,
+        "topic_slug": "when-one-machine-becomes-inaccessible-from-the-cluster-what-impact-does-cluster-have",
+        "display_username": "heyjeong",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1311,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/when-one-machine-becomes-inaccessible-from-the-cluster-what-impact-does-cluster-have/4298/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      13616
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      679
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "When one machine becomes inaccessible from the cluster, what impact does cluster have?",
+  "id": 4298,
+  "title": "When one machine becomes inaccessible from the cluster, what impact does cluster have?",
+  "posts_count": 1,
+  "created_at": "2023-12-13T07:52:50.252Z",
+  "views": 177,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-12-13T07:52:50.326Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "when-one-machine-becomes-inaccessible-from-the-cluster-what-impact-does-cluster-have",
+  "category_id": 7,
+  "word_count": 261,
+  "deleted_at": null,
+  "user_id": 1311,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4298",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Triple ssd fdb cluster on 3 node, one node poweroff, but the fdb cluster is unavailable!",
+      "id": 2228,
+      "title": "Triple ssd fdb cluster on 3 node, one node poweroff, but the fdb cluster is unavailable!",
+      "slug": "triple-ssd-fdb-cluster-on-3-node-one-node-poweroff-but-the-fdb-cluster-is-unavailable",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-07-06T09:00:41.040Z",
+      "last_posted_at": "2020-07-07T01:23:20.838Z",
+      "bumped": true,
+      "bumped_at": "2020-07-07T01:23:20.838Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 702,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 585,
+            "username": "ssb",
+            "name": "Shunbo Shi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ssb/{size}/656_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Recover &lsquo;unreachable&rsquo;",
+      "id": 2512,
+      "title": "Recover 'unreachable'",
+      "slug": "recover-unreachable",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-01-15T16:13:16.260Z",
+      "last_posted_at": "2021-01-15T19:00:45.997Z",
+      "bumped": true,
+      "bumped_at": "2021-01-15T19:00:45.997Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 883,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdb cluster is unavailable after delete a disk",
+      "id": 2232,
+      "title": "Fdb cluster is unavailable after delete a disk",
+      "slug": "fdb-cluster-is-unavailable-after-delete-a-disk",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-07-07T09:35:29.720Z",
+      "last_posted_at": "2020-07-09T08:38:11.028Z",
+      "bumped": true,
+      "bumped_at": "2020-07-09T09:28:06.173Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1154,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 585,
+            "username": "ssb",
+            "name": "Shunbo Shi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ssb/{size}/656_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb cluster became unavailable after shutting down 1 az",
+      "id": 4122,
+      "title": "Foundationdb cluster became unavailable after shutting down 1 az",
+      "slug": "foundationdb-cluster-became-unavailable-after-shutting-down-1-az",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2023-08-23T06:06:39.067Z",
+      "last_posted_at": "2023-08-23T06:06:39.140Z",
+      "bumped": true,
+      "bumped_at": "2023-08-23T06:34:04.678Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 252,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1311,
+            "username": "hyejeong",
+            "name": "heyjeong",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Temporary hardware failure on singly replicated cluster",
+      "id": 2293,
+      "title": "Temporary hardware failure on singly replicated cluster",
+      "slug": "temporary-hardware-failure-on-singly-replicated-cluster",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-08-14T13:20:01.952Z",
+      "last_posted_at": "2020-08-28T07:10:05.803Z",
+      "bumped": true,
+      "bumped_at": "2020-08-28T07:10:05.803Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 466,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 737,
+            "username": "aymalik",
+            "name": "Aayushi Malik",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/aca169/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1311,
+        "username": "hyejeong",
+        "name": "heyjeong",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1311,
+      "username": "hyejeong",
+      "name": "heyjeong",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png"
+    },
+    "last_poster": {
+      "id": 1311,
+      "username": "hyejeong",
+      "name": "heyjeong",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

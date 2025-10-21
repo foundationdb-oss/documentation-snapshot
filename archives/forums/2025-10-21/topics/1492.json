@@ -1,0 +1,667 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4557,
+        "name": "",
+        "username": "pH14",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+        "created_at": "2019-06-26T15:27:28.867Z",
+        "cooked": "<p>One idea I\u2019ve been noodling on a bit recently is how to run continuous partition assignment on top of FDB. e.g. you have some resource (a message queue topic like in Kafka) with a bunch of partitions, and a bunch of consumers, and you want to assign each consumer a roughly even number of partitions to work on.</p>\n<p>The approach I\u2019ve seen most often in the wild is to use something like Zookeeper-or-similar to track the clients via ephemeral nodes, and then either use a dedicated leader instance or run a leader election among the clients to pick one that will look at the active participants and assign out the partitions. Another approach I\u2019ve sometimes seen is the feeding-frenzy, where each client just tries to claim locks on a certain number of partitions.</p>\n<p>Depending on the circumstances, these and other approaches can be fine, but it got me thinking about how you might do this on FDB.</p>\n<p>Couple of general requirements:</p>\n<ul>\n<li>The partition assignment is on-going, and should tolerate the addition and removal of clients over time</li>\n<li>We should minimize the time that two clients may consume the same partition simultaneously, but don\u2019t make an effort to entirely eliminate it</li>\n</ul>\n<p>We\u2019ll need a few definitions:</p>\n<ul>\n<li>\n<p>Resource definition key: <code>resource_key --&gt; # of partitions</code>. Clients are assumed to know which resource(s) they\u2019re interested in consuming in advance. We can stuff more metadata into the value here, but to start merely knowing the number of partitions in the resource is fine.</p>\n</li>\n<li>\n<p>Tracker for the current assignment round: <code>resource_key : current --&gt; {assignment_versionstamp}</code>. This gets rewritten each time we need to reassign partitions. It is watched by all active participants.</p>\n</li>\n<li>\n<p>Current assignment subspace: <code>resource_key : assignment_{assignment_versionstamp} :</code>. This is used by the clients to mark their participation in the current assignment round.</p>\n</li>\n<li>\n<p>Reassignment Settle Time (RST). How long clients wait to check who is participating in an assignment round. This can be measured in ticks of the versionstamp (we\u2019re relying on some relation between ticks and actual time: <a href=\"https://forums.foundationdb.org/t/keyspace-partitions-performance/168/7\" class=\"inline-onebox\">Keyspace partitions &amp; performance</a>)</p>\n</li>\n<li>\n<p>Minimum Reassignment Interval (MRI). The minimum amount of time to wait between reassignments, to avoid continuous reassignment. Also measured in ticks of the versionstamp</p>\n</li>\n<li>\n<p>Heartbeat Interval (HBI). Mandatory interval to trigger reassignments to handle failed nodes. Also measured in ticks of the versionstamp.</p>\n</li>\n</ul>\n<p>When a node wants to join:</p>\n<ul>\n<li>Read <code>resource_key : current</code> to find the current assignment round versionstamp.\n<ul>\n<li>\n<p>If current versionstamp is &lt;= RST-distance away, there is an active reassignment happening, and the client should try to join it.</p>\n<ul>\n<li>Write <code>resource_key : assignment_{assignment_versionstamp} : {client_versionstamp}</code> to mark participation in current assignment\n<ul>\n<li>If <code>{client_versionstamp}</code> is &lt;=  <code>{assignment_versionstamp} + RST</code>, we made it in!</li>\n<li>Otherwise, the client missed out on this assignment and can wait for <code>{assignment_versionstamp} + MRI</code> to pass and retry.</li>\n</ul>\n</li>\n</ul>\n</li>\n<li>\n<p>If the current versionstamp is &gt; MRI-distance away, the client needs to trigger a new assignment</p>\n<ul>\n<li>Set <code>resource_key : current</code> to the latest versionstamp \u2013 triggers a watch on all clients, notifying all current clients that they need to participate in a reassignment.</li>\n<li>Write <code>resource_key : assignment_{new_assignment_versionstamp} : {versionstamp}</code> to mark participation in reassignment round.</li>\n<li>Set a watch on <code>resource_key : current</code>\n</li>\n<li>Clear <code>resource_key : assignment_*</code> subspace</li>\n<li>If this whole transaction fails, some other client beat it to triggering a new reassignment. This means it can just retry to join the new-active round.</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n<p>When a node\u2019s watch is triggered:</p>\n<ul>\n<li>Set another watch on <code>resource_key : current</code>\n</li>\n<li>Read <code>resource_key : current</code> to find the latest <code>{assignment_versionstamp}</code>\n</li>\n<li>Write <code>resource_key : assignment_{assignment_versionstamp} : {versionstamp}</code> to mark participation in latest round.</li>\n</ul>\n<p>For each participating node:</p>\n<ul>\n<li>Wait for <code>assignment_versionstamp + RST</code> to pass and then read the whole <code>resource_key : assignment_{assignment_versionstamp}</code> subspace. Each node that wrote a client versionstamp between <code>[assignment_versionstamp, assignment_versionstamp + RST]</code> is participating. They can then use some agreed-upon strategy to divvy up the partitions. One simple possibility is round-robin, where the ordering of each client is determined by the position of their versionstamp in the subspace (if you wrote the lowest versionstamp, you\u2019re participant 1, etc). Each client knows how many partitions there are, so they can each calculate which partitions they can consume.</li>\n</ul>\n<p>To remove failed nodes:</p>\n<ul>\n<li>Clients will trigger a reassignment round at <code>{assignment_versionstamp} + heartbeat</code>, if none comes sooner</li>\n</ul>\n<p>Possible extensions:</p>\n<ol>\n<li>\n<p>In some cases, partition reassignment is expensive and we want to minimize the amount of shuffling that occurs each reassignment round. Clients could write their currently-consumed partitions as values when registering themselves in <code>resource_key : assignment_{assignment_versionstamp}</code>. If there are no new participants (each client had work from a previous round), the clients can skip reassigning partitions. If there are new participants, the assignment strategy could be updated to move partitions to the new entrants with the fewest possible moves.</p>\n</li>\n<li>\n<p>The # of partitions + intervals + assignment strategy could all be stuffed into the <code>resource_key</code> value, which all participants then watch. This would allow for updating these values, as each change would force a new assignment round with the new parameters.</p>\n</li>\n</ol>\n<p>I <em>think</em> this ought to work. Am I overcomplicating things? <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=9\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"></p>\n<p>Also I originally wrote this to lead up to some questions about watches, but then I just discovered <a href=\"https://forums.foundationdb.org/t/performance-characteristics-of-using-watches-for-distributed-task-scheduling/471\" class=\"inline-onebox\">Performance characteristics of using Watches for Distributed Task Scheduling</a> <img src=\"https://emoji.discourse-cdn.com/twitter/open_mouth.png?v=9\" title=\":open_mouth:\" class=\"emoji\" alt=\":open_mouth:\"></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-06-26T15:27:28.867Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 108,
+        "reads": 37,
+        "readers_count": 36,
+        "score": 547.4,
+        "yours": false,
+        "topic_id": 1492,
+        "topic_slug": "sketching-out-a-partition-assignment-strategy",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/performance-characteristics-of-using-watches-for-distributed-task-scheduling/471",
+            "internal": true,
+            "reflection": false,
+            "title": "Performance characteristics of using Watches for Distributed Task Scheduling",
+            "clicks": 4
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/keyspace-partitions-performance/168/7",
+            "internal": true,
+            "reflection": false,
+            "title": "Keyspace partitions & performance",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 113,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/sketching-out-a-partition-assignment-strategy/1492/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4559,
+        "name": "Ryan Worl",
+        "username": "ryanworl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "created_at": "2019-06-26T16:35:34.110Z",
+        "cooked": "<p>An alternative I have tried which admittedly would not allow for very flexible assignment algorithms (sticky being the most obvious) is to make a key per resource, then store a versionstamp in the value along with the ID of the node who owns it.</p>\n<p>Each client does a snapshot range read for the keys they are interested in acquiring locks from, then picks a few at random to acquire. I think you also need to add back read conflict ranges for the specific ones you acquired, but I don\u2019t remember exactly what I did. Then you use SET_VERSIONSTAMPED_VALUE to write the new version plus your own client ID into the keys you\u2019ve chosen.</p>\n<p>I don\u2019t think you\u2019re overcomplicating it for the scenario where you want more control than just random over the assignment algorithm. My use case was fine with random.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-06-26T16:35:34.110Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 16.2,
+        "yours": false,
+        "topic_id": 1492,
+        "topic_slug": "sketching-out-a-partition-assignment-strategy",
+        "display_username": "Ryan Worl",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 81,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/sketching-out-a-partition-assignment-strategy/1492/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4557,
+      4559
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2309
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Sketching out a partition assignment strategy",
+  "id": 1492,
+  "title": "Sketching out a partition assignment strategy",
+  "posts_count": 2,
+  "created_at": "2019-06-26T15:27:28.778Z",
+  "views": 1134,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-06-26T16:35:34.110Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "sketching-out-a-partition-assignment-strategy",
+  "category_id": 9,
+  "word_count": 1019,
+  "deleted_at": null,
+  "user_id": 113,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1492",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Keyspace partitions &amp; performance",
+      "id": 168,
+      "title": "Keyspace partitions & performance",
+      "slug": "keyspace-partitions-performance",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-21T05:03:54.670Z",
+      "last_posted_at": "2018-04-22T03:29:31.049Z",
+      "bumped": true,
+      "bumped_at": "2018-04-22T03:29:31.049Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 5892,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdb-zk: rough cut of Zookeeper API layer",
+      "id": 1278,
+      "title": "Fdb-zk: rough cut of Zookeeper API layer",
+      "slug": "fdb-zk-rough-cut-of-zookeeper-api-layer",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-04-03T02:54:03.579Z",
+      "last_posted_at": "2019-04-09T04:13:12.883Z",
+      "bumped": true,
+      "bumped_at": "2019-04-09T04:13:12.883Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 5102,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 113,
+            "username": "pH14",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Data Distribution Stopped - How to Restart?",
+      "id": 1626,
+      "title": "Data Distribution Stopped - How to Restart?",
+      "slug": "data-distribution-stopped-how-to-restart",
+      "posts_count": 14,
+      "reply_count": 8,
+      "highest_post_number": 14,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/815326e64932cc0dc6e18ad7f6e12f922e059ce8_2_1024x420.png",
+      "created_at": "2019-09-12T21:07:32.803Z",
+      "last_posted_at": "2019-11-12T19:57:18.277Z",
+      "bumped": true,
+      "bumped_at": "2019-11-12T19:57:18.277Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 1877,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Data distribution / Disk usage uneven: bifurcated at 2 tiers",
+      "id": 2270,
+      "title": "Data distribution / Disk usage uneven: bifurcated at 2 tiers",
+      "slug": "data-distribution-disk-usage-uneven-bifurcated-at-2-tiers",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2020-08-02T03:47:59.558Z",
+      "last_posted_at": "2020-08-06T06:17:39.778Z",
+      "bumped": true,
+      "bumped_at": "2020-08-06T06:17:39.778Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 537,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 741,
+            "username": "sears",
+            "name": "Russell Sears",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Detecting cluster availability transitions for long running clients",
+      "id": 365,
+      "title": "Detecting cluster availability transitions for long running clients",
+      "slug": "detecting-cluster-availability-transitions-for-long-running-clients",
+      "posts_count": 9,
+      "reply_count": 7,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-05-07T08:18:42.873Z",
+      "last_posted_at": "2018-05-08T17:59:06.057Z",
+      "bumped": true,
+      "bumped_at": "2018-05-08T17:59:06.057Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1318,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 81,
+        "username": "ryanworl",
+        "name": "Ryan Worl",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 3
+      },
+      {
+        "id": 113,
+        "username": "pH14",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 113,
+      "username": "pH14",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ph14/{size}/92_2.png"
+    },
+    "last_poster": {
+      "id": 81,
+      "username": "ryanworl",
+      "name": "Ryan Worl",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/performance-characteristics-of-using-watches-for-distributed-task-scheduling/471",
+        "title": "Performance characteristics of using Watches for Distributed Task Scheduling",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 113,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/keyspace-partitions-performance/168/7",
+        "title": "Keyspace partitions & performance",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 113,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

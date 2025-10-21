@@ -1,0 +1,677 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10624,
+        "name": "liyyue",
+        "username": "liyyue",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+        "created_at": "2022-01-25T08:56:53.970Z",
+        "cooked": "<p>Hi, Experts</p>\n<p>I wonder in Cloud K8S environment when I want to restart the foundationdb cluster (e.g there are 10 pods running fdb servers). How can I restart it? Just kill all pods one by one? Or there is somewhere to kick off a service restart command once to restart the whole fdb cluster? Thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-01-25T08:56:53.970Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 277,
+        "reads": 29,
+        "readers_count": 28,
+        "score": 1390.8,
+        "yours": false,
+        "topic_id": 3137,
+        "topic_slug": "how-to-restart-fdb-cluster-in-k8s-environment",
+        "display_username": "liyyue",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1022,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-restart-fdb-cluster-in-k8s-environment/3137/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10635,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2022-01-26T07:27:53.592Z",
+        "cooked": "<p>Could you define \u201crestart\u201d a little bit more? If you want to restart all fdbserver processes you can simply exec into one of the Pods and run <code>fdbcli --exec 'kill; kill all; status'</code> to restart all fdbserver processes. If you want to recreate all Pods you have to delete them either one by one or with a label selector. If you want to restart a sub set of fdbserver you can either use the kill command from above and only target the specific IP\u2019s or make use of the kubectl fdb plugin (assuming you are using the operator): <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/tree/main/kubectl-fdb\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/kubectl-fdb at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a> there is a <code>restart</code> command with different flags to target a sub set of fdbserver. One important bit I want to mention about the plugin and the restart is that it uses <code>pkill</code>, which means processes are restarted one after another and not \u201cat the same time\u201d like the kill command would do.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-01-26T07:27:53.592Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 27,
+        "readers_count": 26,
+        "score": 30.4,
+        "yours": false,
+        "topic_id": 3137,
+        "topic_slug": "how-to-restart-fdb-cluster-in-k8s-environment",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/tree/main/kubectl-fdb",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/kubectl-fdb at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 15
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-restart-fdb-cluster-in-k8s-environment/3137/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 10637,
+        "name": "liyyue",
+        "username": "liyyue",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+        "created_at": "2022-01-27T02:53:16.252Z",
+        "cooked": "<p>Thank you very much , let me try it.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-01-27T02:53:16.252Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 15.0,
+        "yours": false,
+        "topic_id": 3137,
+        "topic_slug": "how-to-restart-fdb-cluster-in-k8s-environment",
+        "display_username": "liyyue",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1022,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-restart-fdb-cluster-in-k8s-environment/3137/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10624,
+      10635,
+      10637
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1366
+    ],
+    [
+      2,
+      1365
+    ],
+    [
+      3,
+      1364
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "How to restart fdb cluster in K8S environment",
+  "id": 3137,
+  "title": "How to restart fdb cluster in K8S environment",
+  "posts_count": 3,
+  "created_at": "2022-01-25T08:56:53.913Z",
+  "views": 886,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-01-27T02:53:16.252Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-restart-fdb-cluster-in-k8s-environment",
+  "category_id": 7,
+  "word_count": 227,
+  "deleted_at": null,
+  "user_id": 1022,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3137",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDB Summit 2019: Managing FoundationDB at Scale",
+      "id": 1763,
+      "title": "FoundationDB Summit 2019: Managing FoundationDB at Scale",
+      "slug": "foundationdb-summit-2019-managing-foundationdb-at-scale",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-11-18T22:29:54.011Z",
+      "last_posted_at": "2021-10-20T14:35:55.613Z",
+      "bumped": true,
+      "bumped_at": "2021-10-20T14:35:55.613Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 900,
+      "category_id": 10,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 498,
+            "username": "janl",
+            "name": "Jan Lehnardt",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janl/{size}/493_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 990,
+            "username": "baiwfg2",
+            "name": "Lewis Chan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/baiwfg2/{size}/1173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Does K8s Operator allow fully resuming after terminating and recreating all fbd pods",
+      "id": 4158,
+      "title": "Does K8s Operator allow fully resuming after terminating and recreating all fbd pods",
+      "slug": "does-k8s-operator-allow-fully-resuming-after-terminating-and-recreating-all-fbd-pods",
+      "posts_count": 7,
+      "reply_count": 1,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2023-09-19T23:51:23.336Z",
+      "last_posted_at": "2023-09-21T09:42:48.007Z",
+      "bumped": true,
+      "bumped_at": "2023-09-21T09:42:48.007Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 416,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1322,
+            "username": "pdeva",
+            "name": "Prashant Deva",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pdeva/{size}/1655_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1089,
+            "username": "iyuroch",
+            "name": "Ivan Yurochko",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/iyuroch/{size}/1311_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Failure / Recovery scenario",
+      "id": 2384,
+      "title": "Failure / Recovery scenario",
+      "slug": "failure-recovery-scenario",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-10-10T01:06:26.706Z",
+      "last_posted_at": "2020-10-12T13:36:11.016Z",
+      "bumped": true,
+      "bumped_at": "2020-10-12T13:36:11.016Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 695,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 819,
+            "username": "mbuleandra",
+            "name": "Marius",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbuleandra/{size}/977_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB cluster with Kubernetes StatefulSet",
+      "id": 2423,
+      "title": "FDB cluster with Kubernetes StatefulSet",
+      "slug": "fdb-cluster-with-kubernetes-statefulset",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2020-11-05T01:41:09.550Z",
+      "last_posted_at": "2020-11-07T13:21:43.115Z",
+      "bumped": true,
+      "bumped_at": "2020-11-07T13:21:43.115Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1355,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 819,
+            "username": "mbuleandra",
+            "name": "Marius",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbuleandra/{size}/977_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Recovering from FoundationDB crashes",
+      "id": 2846,
+      "title": "Recovering from FoundationDB crashes",
+      "slug": "recovering-from-foundationdb-crashes",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-08-09T18:21:00.384Z",
+      "last_posted_at": "2021-08-24T18:40:23.091Z",
+      "bumped": true,
+      "bumped_at": "2021-08-24T18:40:23.091Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 921,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 927,
+            "username": "peter",
+            "name": "Peter Zeller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/peter/{size}/1064_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1022,
+        "username": "liyyue",
+        "name": "liyyue",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1022,
+      "username": "liyyue",
+      "name": "liyyue",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png"
+    },
+    "last_poster": {
+      "id": 1022,
+      "username": "liyyue",
+      "name": "liyyue",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/tree/main/kubectl-fdb",
+        "title": "fdb-kubernetes-operator/kubectl-fdb at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,666 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 6941,
+        "name": "Dave Cottlehuber",
+        "username": "dch",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+        "created_at": "2020-05-09T09:32:50.004Z",
+        "cooked": "<p>I\u2019m unable to decipher what goes in <code>foundationdb.conf</code> to have a TLS by<br>\ndefault cluster. I\u2019m hoping to provide the FreeBSD port by default with TLS<br>\nenabled, and enough instructions for an admin to deploy a single node<br>\nself-signed cert setup, to get started fast.</p>\n<ul>\n<li>TLDR: fdbserver doesn\u2019t listen on 4600 on startup</li>\n<li>logs &amp; configs: <a href=\"https://gist.github.com/dch/3fe08fdb5f10d1c653c80b6eae2f4889\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb debug failed TLS startup https://forums.foundationdb.org/t/enabling-tls-on-first-install-for-single-node-setup/2111 \u00b7 GitHub</a></li>\n</ul>\n<h2><a name=\"more-notes-1\" class=\"anchor\" href=\"#more-notes-1\"></a>more notes</h2>\n<p>Here\u2019s my setup (FreeBSD, recent master, single node), compiled against<br>\nFreeBSD 13.0-CURRENT\u2019s openssl in base, as a dynamic library (cmake<br>\ntweaked to allow that).</p>\n<h2><a name=\"basic-config-pre-tls-2\" class=\"anchor\" href=\"#basic-config-pre-tls-2\"></a>basic config pre-TLS</h2>\n<pre><code class=\"lang-auto\"># echo foundationdb:foundationdb@127.0.0.1:4500 \\\n    | tee /usr/local/etc/foundationdb/fdb.cluster\n</code></pre>\n<p>Add users to the foundationdb group so that they can read the cluster<br>\nfile, and access the DB, via <code>pw groupmod -m foundationdb $USER</code>.</p>\n<h2><a name=\"set-permissions-3\" class=\"anchor\" href=\"#set-permissions-3\"></a>set permissions</h2>\n<pre><code class=\"lang-auto\"># touch /var/run/fdbmonitor.pid\n# echo foundationdb_enable=YES &gt; /etc/rc.conf.d/foundationdb\n# zfs create zroot/var/db/foundationdb\n# chown -R foundationdb:foundationdb \\\n    /usr/local/etc/foundationdb \\\n    /var/log/foundationdb \\\n    /var/db/foundationdb \\\n    /var/run/fdbmonitor.pid\n# chmod -R u=rw,g=r,o-rwx,ug+X \\\n    /usr/local/etc/foundationdb \\\n    /var/log/foundationdb \\\n    /var/db/foundationdb \\\n    /var/run/fdbmonitor.pid\n</code></pre>\n<h2><a name=\"initialise-the-db-4\" class=\"anchor\" href=\"#initialise-the-db-4\"></a>initialise the DB</h2>\n<p>As root, <code>service foundationdb start</code> and then run the rest as a normal<br>\nuser:</p>\n<pre><code class=\"lang-auto\">$ fdbcli --exec \"configure new single memory\"\n$ fdbcli\nfdbcli\nUsing cluster file `/usr/local/etc/foundationdb/fdb.cluster'.\n\nThe database is available.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; status\n\nUsing cluster file `/usr/local/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - single\n  Storage engine         - memory-2\n  Coordinators           - 1\n\nCluster:\n  FoundationDB processes - 1\n  Zones                  - 1\n  Machines               - 1\n  Memory availability    - 25.5 GB per process on machine with least available\n  Fault Tolerance        - 0 machines\n  Server time            - 01/21/20 00:07:14\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 0 MB\n  Disk space used        - 105 MB\n\nOperating space:\n  Storage server         - 1.0 GB free on most full server\n  Log server             - 226.0 GB free on most full server\n\nWorkload:\n  Read rate              - 7 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 3 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 01/21/20 00:07:14\n\nfdb&gt; \n</code></pre>\n<h2><a name=\"use-the-db-5\" class=\"anchor\" href=\"#use-the-db-5\"></a>use the DB</h2>\n<pre><code class=\"lang-auto\">$ fdbserver --version\nFoundationDB 6.3 (v6.3.0)\nsource version\nprotocol fdb00b063010001\n\n$ fdbcli --exec \"writemode on; set poop emoji\"\n&gt;&gt;&gt; writemode on\n&gt;&gt;&gt; set poop emoji\nCommitted (1366086432)\n\n$ fdbcli --exec \"get poop emoji\"\n`poop' is `emoji'\n\n$ fdbcli --exec \"writemode on; set poop emojis\"\n&gt;&gt;&gt; writemode on\n&gt;&gt;&gt; set poop emojis\nCommitted (1382502961)\n\n$ fdbcli --exec \"get poop emoji\"\n`poop' is `emojis'\n</code></pre>\n<h2><a name=\"processes-6\" class=\"anchor\" href=\"#processes-6\"></a>processes</h2>\n<pre><code class=\"lang-auto\"># pgrep -ilU foundationdb\n77073 backup_agent\n94492 fdbmonitor\n72585 fdbserver\n\n# pgrep -ilfU foundationdb\n77073 /usr/local/bin/backup_agent \\\n    --cluster_file=/usr/local/etc/foundationdb/fdb.cluster \\\n    --logdir=/var/log/foundationdb\n94492 fdbmonitor \\\n    --conffile /usr/local/etc/foundationdb/foundationdb.conf \\\n    --lockfile /var/run/fdbmonitor.pid\n72585 /usr/local/bin/fdbserver \\\n    --cluster_file=/usr/local/etc/foundationdb/fdb.cluster \\\n    --datadir=/var/db/foundationdb/data/4500 \\\n    --listen_address=public \\\n    --logdir=/var/log/foundationdb \\\n    --public_address=auto:4500\n</code></pre>\n<h2><a name=\"files-7\" class=\"anchor\" href=\"#files-7\"></a>files</h2>\n<pre><code class=\"lang-auto\"># tree /var/db/foundationdb/ /usr/local/etc/foundationdb/ /var/log/foundationdb/\n/var/db/foundationdb/\n\u2514\u2500\u2500 data\n    \u2514\u2500\u2500 4500\n        \u251c\u2500\u2500 coordination-0.fdq\n        \u251c\u2500\u2500 coordination-1.fdq\n        \u251c\u2500\u2500 log2-V_3_LS_2-6f5d01fbbca6ef21906798ec22911edf.sqlite\n        \u251c\u2500\u2500 log2-V_3_LS_2-6f5d01fbbca6ef21906798ec22911edf.sqlite-wal\n        \u251c\u2500\u2500 logqueue-V_3_LS_2-6f5d01fbbca6ef21906798ec22911edf-0.fdq\n        \u251c\u2500\u2500 logqueue-V_3_LS_2-6f5d01fbbca6ef21906798ec22911edf-1.fdq\n        \u251c\u2500\u2500 processId\n        \u251c\u2500\u2500 storage-d528650a51442d78738b28cc972a9e61-0.fdq\n        \u2514\u2500\u2500 storage-d528650a51442d78738b28cc972a9e61-1.fdq\n/usr/local/etc/foundationdb/\n\u251c\u2500\u2500 fdb.cluster\n\u251c\u2500\u2500 foundationdb.conf\n\u2514\u2500\u2500 foundationdb.conf.sample\n/var/log/foundationdb/\n\u251c\u2500\u2500 trace.127.0.0.1.4500.1579564792.dAiyK8.0.1.xml\n\u2514\u2500\u2500 trace.127.0.0.1.4500.1579564944.GhdRBR.0.1.xml\n</code></pre>\n<h2><a name=\"switching-to-tls-8\" class=\"anchor\" href=\"#switching-to-tls-8\"></a>switching to TLS</h2>\n<blockquote>\n<p>This doesn\u2019t work yet I\u2019m just documenting what I did</p>\n</blockquote>\n<pre><code class=\"lang-auto\"># cat /usr/local/etc/foundationdb/foundationdb.conf\n## foundationdb.conf\n##\n## Configuration file for FoundationDB server processes\n## Full documentation is available at\n## https://apple.github.io/foundationdb/configuration.html#the-configuration-file\n\n[fdbmonitor]\nuser = foundationdb\ngroup = foundationdb\n\n[general]\ntrace_format = json\nrestart_delay = 60\n## by default, restart_backoff = restart_delay_reset_interval = restart_delay\n# initial_restart_delay = 0\n# restart_backoff = 60\n# restart_delay_reset_interval = 60\ncluster_file = /usr/local/etc/foundationdb/fdb.cluster\n# delete_envvars =\n# kill_on_configuration_change = true\n\n## Default parameters for individual fdbserver processes\n# https://apple.github.io/foundationdb/configuration.html#foundationdb-conf-fdbserver\n[fdbserver]\ncommand = /usr/local/bin/fdbserver\npublic_address = auto:$ID\nlisten_address = public\ndatadir = /var/db/foundationdb/data/$ID\nlogdir = /var/log/foundationdb\n# logsize = 10MiB\n# maxlogssize = 100MiB\n# machine_id =\n# datacenter_id =\n# class =\n# memory = 8GiB\n# storage_memory = 1GiB\n# cache_memory = 2GiB\n# metrics_cluster =\n# metrics_prefix =\n\n# TLS settings\n# https://apple.github.io/foundationdb/tls.html\n# https://forums.foundationdb.org/t/solved-correct-setup-of-tls-for-foundationdb/1037/4\ntls_certificate_file=/usr/local/etc/foundationdb/fdb.pem\ntls_verify_peers=Check.Valid=0\n\n\n## An individual fdbserver process with id 4500\n## Parameters set here override defaults from the [fdbserver] section\n[fdbserver.4500]\n\n[backup_agent]\ncommand = /usr/local/bin/backup_agent\nlogdir = /var/log/foundationdb\n\n[backup_agent.1]\n</code></pre>\n<p>Then stop &amp; restart DB with new TLS configs:</p>\n<pre><code class=\"lang-auto\">#### stop all the things\n# service foundationdb stop\n# cd /usr/local/etc/foundationdb\n# openssl req -x509 -nodes -days 365 -newkey rsa:2048 \\\n  -keyout private.key -out cert.crt\n# cat cert.crt private.key &gt; fdb.pem\n#### switch to TLS cluster\n# cat /usr/local/etc/foundationdb/fdb.cluster\nfoundationdb:foundationdb@127.0.0.1:4600:tls\n# ls -AFGhl /usr/local/etc/foundationdb/\ntotal 23\n-rw-r-----  1 dch  foundationdb   1.3K May  3 20:22 cert.crt\n-rw-r-----  1 dch  foundationdb    45B May  8 16:36 fdb.cluster\n-rw-r-----  1 dch  foundationdb   3.0K May  3 20:22 fdb.pem\n-rw-r-----  1 dch  foundationdb   1.6K May  9 09:11 foundationdb.conf\n-rw-r-----  1 dch  foundationdb   1.2K May  3 11:07 foundationdb.conf.sample\n-rw-r-----  1 dch  foundationdb   1.7K May  3 20:21 private.key\n# service foundationdb start# pgrep -ilfU foundationdb\n82184 /usr/local/bin/fdbserver --cluster_file --datadir --listen_address --logdir --public_address --tls_certificate_file --tls_verify_peers --trace_format\n62203 /usr/local/bin/backup_agent --cluster_file=/usr/local/etc/foundationdb/fdb.cluster --logdir=/var/log/foundationdb\n# sockstat -46l | grep fdb\nfoundationdb fdbserver82184 17 tcp4 127.0.0.1:4500        *:*\n# ldd /usr/local/bin/fdbserver\n/usr/local/bin/fdbserver:\n\tlibeio.so.1 =&gt; /usr/local/lib/libeio.so.1 (0x802a13000)\n\tlibrt.so.1 =&gt; /usr/lib/librt.so.1 (0x802a1f000)\n\tlibexecinfo.so.1 =&gt; /usr/lib/libexecinfo.so.1 (0x802a28000)\n\tlibdevstat.so.7 =&gt; /lib/libdevstat.so.7 (0x802a2e000)\n\tlibssl.so.111 =&gt; /usr/lib/libssl.so.111 (0x802a37000)   &lt;--- OpenSSL1.1.1 in base\n\tlibcrypto.so.111 =&gt; /lib/libcrypto.so.111 (0x802acf000)\n\tlibc++.so.1 =&gt; /usr/lib/libc++.so.1 (0x802d9e000)\n\tlibcxxrt.so.1 =&gt; /lib/libcxxrt.so.1 (0x802e6b000)\n\tlibm.so.5 =&gt; /lib/libm.so.5 (0x802e8e000)\n\tlibgcc_s.so.1 =&gt; /lib/libgcc_s.so.1 (0x802ec0000)\n\tlibthr.so.3 =&gt; /lib/libthr.so.3 (0x802eda000)\n\tlibc.so.7 =&gt; /lib/libc.so.7 (0x802f06000)\n\tlibelf.so.2 =&gt; /lib/libelf.so.2 (0x803312000)\n\tlibkvm.so.7 =&gt; /lib/libkvm.so.7 (0x80332e000)\n</code></pre>\n<p>At this point the fdbserver process is not listening on TLS port and I\u2019m not sure what I should do differently. TLS file permissions seem OK, &amp; I\u2019ve tried a bunch of <code>fdbserver</code> direct commandline invocations without luck.</p>\n<p>Is the config correct in <code>fdb.cluster</code> and <code>foundationdb.conf</code>?</p>\n<p>I\u2019ll attach the json logs in the gist.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-05-09T09:37:33.095Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 295,
+        "reads": 50,
+        "readers_count": 49,
+        "score": 1487.0,
+        "yours": false,
+        "topic_id": 2111,
+        "topic_slug": "enabling-tls-on-first-install-for-single-node-setup",
+        "display_username": "Dave Cottlehuber",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://gist.github.com/dch/3fe08fdb5f10d1c653c80b6eae2f4889",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb debug failed TLS startup https://forums.foundationdb.org/t/enabling-tls-on-first-install-for-single-node-setup/2111 \u00b7 GitHub",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 476,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/enabling-tls-on-first-install-for-single-node-setup/2111/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 8877,
+        "name": "",
+        "username": "Dretch",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dretch/{size}/1000_2.png",
+        "created_at": "2020-12-12T16:01:11.671Z",
+        "cooked": "<p>I had a similar issue, but with FoundationDB 6.2.28-1 on Ubuntu 18.</p>\n<p>There was a helpful log message in the systemd log:  <code>service foundationdb status -n50</code></p>\n<pre><code>Dec 12 15:45:30 gareth fdbmonitor[16107]: LogGroup=\"default\" Process=\"fdbserver.4500\": Launching /usr/sbin/fdbserver (16233) for fdbserver.4500\nDec 12 15:45:30 gareth fdbmonitor[16107]: LogGroup=\"default\" Process=\"fdbserver.4500\": ERROR: TLS state of public address auto:4500 does not match in coordinator list.\nDec 12 15:45:30 gareth fdbmonitor[16107]: LogGroup=\"default\" Process=\"fdbserver.4500\": Process 16233 exited 1, restarting in 66 seconds\n</code></pre>\n<p>Based on this message, I changed a line in foundationdb.conf from <code>public_address = auto:$ID</code> to <code>public_address = auto:$ID:tls</code> \u2026 and then FoundationDB was able to startup.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-12-12T16:01:11.671Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 51.6,
+        "yours": false,
+        "topic_id": 2111,
+        "topic_slug": "enabling-tls-on-first-install-for-single-node-setup",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 3
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 863,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/enabling-tls-on-first-install-for-single-node-setup/2111/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 9635,
+        "name": "Dave Cottlehuber",
+        "username": "dch",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+        "created_at": "2021-06-30T10:51:48.211Z",
+        "cooked": "<h1>\n<a name=\"getting-started-with-foundationdb-on-freebsd-1\" class=\"anchor\" href=\"#getting-started-with-foundationdb-on-freebsd-1\"></a>getting started with FoundationDB on FreeBSD</h1>\n<p>With some help from <span class=\"hashtag\">#CouchDB</span> folk, I have this working. Note the <code>:tls</code> at the end, and adapted ports, and <em>also</em> the requirement for fdbcli to repeat the parameters already set in the config file. I suspect there is something wrong with parameter generation for the fdbserver process.</p>\n<p>The <code>databases/foundationdb</code> port version was <code>6.3.13</code>. There is also<br>\na  <a href=\"https://freshports.org/databases/foundationdb-devel\" rel=\"noopener nofollow ugc\">7.0.0-master</a> port tracking upstream work reasonably closely.</p>\n<h2>\n<a name=\"basic-config-2\" class=\"anchor\" href=\"#basic-config-2\"></a>basic config</h2>\n<p>The port installs a basic <code>/usr/local/etc/foundationdb/foundationdb.conf</code><br>\nbut you need to set up the cluster file yourself. A starting point is:</p>\n<pre><code class=\"lang-auto\"># echo foundationdb:foundationdb@127.0.0.1:4500 \\\n    | tee /usr/local/etc/foundationdb/fdb.cluster\n</code></pre>\n<p>Alternatively, use a <code>native TLS</code> setup directly:</p>\n<pre><code class=\"lang-auto\"># echo foundationdb:foundationdb@127.0.0.1:4600:tls \\\n    | tee /usr/local/etc/foundationdb/fdb.cluster\n</code></pre>\n<p>Add users to the foundationdb group so that they can read the cluster<br>\nfile, and access the DB, via <code>pw groupmod -m foundationdb $USER</code>.</p>\n<h2>\n<a name=\"set-permissions-3\" class=\"anchor\" href=\"#set-permissions-3\"></a>set permissions</h2>\n<pre><code class=\"lang-auto\"># echo foundationdb_enable=YES &gt; /etc/rc.conf.d/foundationdb\n# zfs create zroot/var/db/foundationdb\n# chown -R foundationdb:foundationdb \\\n    /var/db/foundationdb /usr/local/etc/foundationdb\n# chmod -R ug=rw,o-rwx,ug+X \\\n    /var/db/foundationdb /usr/local/etc/foundationdb\n</code></pre>\n<h2>\n<a name=\"amend-the-config-for-tls-4\" class=\"anchor\" href=\"#amend-the-config-for-tls-4\"></a>amend the config for TLS</h2>\n<p>If you didn\u2019t use TLS above, the default port config is fine.</p>\n<pre><code class=\"lang-auto\"># /usr/local/etc/foundationdb/foundationdb.conf\n## foundationdb.conf\n##\n## Configuration file for FoundationDB server processes\n## Full documentation is available at\n## https://apple.github.io/foundationdb/configuration.html#the-configuration-file\n\n[fdbmonitor]\nuser = foundationdb\ngroup = foundationdb\n\n[general]\ntrace_format = json\nrestart_delay = 60\n## by default, restart_backoff = restart_delay_reset_interval = restart_delay\n# initial_restart_delay = 0\n# restart_backoff = 60\n# restart_delay_reset_interval = 60\ncluster_file = /usr/local/etc/foundationdb/fdb.cluster\n# delete_envvars =\n# kill_on_configuration_change = true\n\n## Default parameters for individual fdbserver processes\n[fdbserver]\ncommand = /usr/local/bin/fdbserver\npublic_address = auto:$ID:tls\nlisten_address = public\ndatadir = /var/db/foundationdb/data/$ID\nlogdir = /var/log/foundationdb\n# logsize = 10MiB\n# maxlogssize = 100MiB\n# machine_id =\n# datacenter_id =\n# class =\n# memory = 8GiB\n# storage_memory = 1GiB\n# cache_memory = 2GiB\n# metrics_cluster =\n# metrics_prefix =\n\n# TLS settings\ntls_ca_file=/usr/local/etc/foundationdb/cert.crt\ntls_key_file=/usr/local/etc/foundationdb/fdb.pem\ntls_certificate_file=/usr/local/etc/foundationdb/fdb.pem\n# required if we are using self-signed certificates\ntls_verify_peers=Check.Valid=0\n\n# NB parameters set here override defaults from the [fdbserver] section\n# each [fdbserver.XYZ] entry here will create an additional fdbserver\n# process listening on that port, and inheriting existing TLS options.\n[fdbserver.4600]\n\n[backup_agent]\ncommand = /usr/local/bin/backup_agent\nlogdir = /var/log/foundationdb\n\n[backup_agent.1]\n</code></pre>\n<h2>\n<a name=\"create-tls-certificates-as-required-5\" class=\"anchor\" href=\"#create-tls-certificates-as-required-5\"></a>create TLS certificates as required</h2>\n<pre><code class=\"lang-auto\">$ cd /usr/local/etc/foundationdb\n$ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \\\n  -keyout private.key -out cert.crt\n$ cat cert.crt private.key &gt; fdb.pem\n</code></pre>\n<h2>\n<a name=\"connect-to-the-db-6\" class=\"anchor\" href=\"#connect-to-the-db-6\"></a>connect to the DB</h2>\n<p>As root, <code>service foundationdb start</code> and then run the rest as a normal<br>\nuser. Again, note that the user requires <em>read</em> access to all of<br>\n<code>/usr/local/etc/foundationdb</code> which is unusual on FreeBSD, especially<br>\nfor TLS certificates, and also <em>write</em> access to the <code>fdb.cluster</code> file.</p>\n<p>If you are not running TLS, then skip the additional command-line<br>\nparameters.</p>\n<pre><code class=\"lang-auto\">$ fdbcli --tls_verify_peers Check.Valid=0 \\\n    --tls_key_file /usr/local/etc/foundationdb/private.key \n\nUsing cluster file `fdb.cluster'.\n\nThe database is unavailable; type `status' for more information.\n\n</code></pre>\n<h2>\n<a name=\"initialise-the-db-7\" class=\"anchor\" href=\"#initialise-the-db-7\"></a>initialise the DB</h2>\n<p>Now we have an fdb shell, it\u2019s time to initialise an in-memory DB for<br>\ntesting, and write some data. If you run status a few times quickly<br>\nafter the <code>configure new single memory</code> command, you\u2019ll also see FDB<br>\ninitialising and starting up - it\u2019s not instant.</p>\n<pre><code class=\"lang-auto\">Welcome to the fdbcli. For help, type `help'.\n\nfdb&gt; configure new single memory\nDatabase created\n\nfdb&gt; status\n\nUsing cluster file `fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - single\n  Storage engine         - memory-2\n  Coordinators           - 1\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 1\n  Zones                  - 1\n  Machines               - 1\n  Memory availability    - 8.0 GB per process on machine with least available\n  Retransmissions rate   - 0 Hz\n  Fault Tolerance        - 0 machines\n  Server time            - 06/30/21 10:30:57\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 0 MB\n  Disk space used        - 105 MB\n\nOperating space:\n  Storage server         - 1.0 GB free on most full server\n  Log server             - 4157.8 GB free on most full server\n\nWorkload:\n  Read rate              - 6 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 2 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 06/30/21 10:30:57\n\nfdb&gt; \n</code></pre>\n<h2>\n<a name=\"use-the-db-8\" class=\"anchor\" href=\"#use-the-db-8\"></a>use the DB</h2>\n<pre><code class=\"lang-auto\">fdb&gt; writemode on\nfdb&gt; set poop emoji\nCommitted (219266389)\nfdb&gt; get poop\n`poop' is `emoji'\nfdb&gt; set poop \ud83d\udca9  \nCommitted (252691029)\nfdb&gt; get poop\n`poop' is `\\xf0\\x9f\\x92\\xa9'\nfdb&gt; \n</code></pre>\n<h2>\n<a name=\"processes-when-using-tls-9\" class=\"anchor\" href=\"#processes-when-using-tls-9\"></a>processes when using TLS</h2>\n<p>Note that in the <code>fdbserver</code> entry, parameters seem to be missing from<br>\nthe supplied options. This is \u2026 unexpected.</p>\n<pre><code class=\"lang-auto\"># pgrep -ilU foundationdb\n18843 backup_agent\n6891 fdbmonitor\n44182 fdbserver\n\n# pgrep -ilf fdb\n6981 /usr/local/bin/fdbmonitor \\\n    --conffile /usr/local/etc/foundationdb/foundationdb.conf \\\n    --lockfile /var/run/fdbmonitor.pid \\\n    --daemonize\n44182 /usr/local/bin/fdbserver \\\n    --cluster_file \\\n    --datadir \\\n    --listen_address \\\n    --logdir \\\n    --public_address \\\n    --tls_ca_file \\\n    --tls_certificate_file \\\n    --tls_key_file \\\n    --tls_verify_peers \\\n    --trace_format\n18843 /usr/local/bin/backup_agent \\\n    --cluster_file=/usr/local/etc/foundationdb/fdb.cluster \\\n    --logdir=/var/log/foundationdb \\\n    --trace_format=json\n</code></pre>\n<h2>\n<a name=\"processes-without-tls-10\" class=\"anchor\" href=\"#processes-without-tls-10\"></a>processes without TLS</h2>\n<pre><code class=\"lang-auto\"># pgrep -ilfU foundationdb\n77073 /usr/local/bin/backup_agent \\\n    --cluster_file=/usr/local/etc/foundationdb/fdb.cluster \\\n    --logdir=/var/log/foundationdb\n94492 fdbmonitor \\\n    --conffile /usr/local/etc/foundationdb/foundationdb.conf \\\n    --lockfile /var/run/fdbmonitor.pid\n72585 /usr/local/bin/fdbserver \\\n    --cluster_file=/usr/local/etc/foundationdb/fdb.cluster \\\n    --datadir=/var/db/foundationdb/data/4500 \\\n    --listen_address=public \\\n    --logdir=/var/log/foundationdb \\\n    --public_address=auto:4500\n</code></pre>\n<h2>\n<a name=\"files-11\" class=\"anchor\" href=\"#files-11\"></a>files</h2>\n<pre><code class=\"lang-auto\">#  tree -AF /usr/local/etc/foundationdb/ /var/log/foundationdb/ /var/run/fdbmonitor.pid /var/db/foundationdb/\n/usr/local/etc/foundationdb/\n\u251c\u2500\u2500 cert.crt\n\u251c\u2500\u2500 fdb.cluster\n\u251c\u2500\u2500 fdb.pem\n\u251c\u2500\u2500 foundationdb.conf\n\u251c\u2500\u2500 foundationdb.conf.sample\n\u2514\u2500\u2500 private.key\n/var/log/foundationdb/\n\u251c\u2500\u2500 trace.127.0.0.1.18843.1625048558.1QF9z6.0.1.json\n\u2514\u2500\u2500 trace.127.0.0.1.4600.1625048558.jSIe2n.0.1.json\n/var/run/fdbmonitor.pid [error opening dir]\n/var/db/foundationdb/\n\u2514\u2500\u2500 data/\n    \u2514\u2500\u2500 4600/\n        \u251c\u2500\u2500 coordination-0.fdq\n        \u251c\u2500\u2500 coordination-1.fdq\n        \u251c\u2500\u2500 log2-V_4_LS_2-2ab07e66d565347b440298a035eaa3fa.sqlite\n        \u251c\u2500\u2500 log2-V_4_LS_2-2ab07e66d565347b440298a035eaa3fa.sqlite-wal\n        \u251c\u2500\u2500 logqueue-V_4_LS_2-2ab07e66d565347b440298a035eaa3fa-0.fdq\n        \u251c\u2500\u2500 logqueue-V_4_LS_2-2ab07e66d565347b440298a035eaa3fa-1.fdq\n        \u251c\u2500\u2500 processId\n        \u251c\u2500\u2500 storage-50936d3cd197ddd6b529413c8420d20c-0.fdq\n        \u2514\u2500\u2500 storage-50936d3cd197ddd6b529413c8420d20c-1.fdq\n</code></pre>\n<h2>\n<a name=\"notes-and-references-12\" class=\"anchor\" href=\"#notes-and-references-12\"></a>notes and references</h2>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-06-30T10:52:19.843Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 26,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 150.6,
+        "yours": false,
+        "topic_id": 2111,
+        "topic_slug": "enabling-tls-on-first-install-for-single-node-setup",
+        "display_username": "Dave Cottlehuber",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://freshports.org/databases/foundationdb-devel",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 476,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/enabling-tls-on-first-install-for-single-node-setup/2111/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      6941,
+      8877,
+      9635
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1992
+    ],
+    [
+      2,
+      1774
+    ],
+    [
+      3,
+      1574
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Enabling TLS on first install for single node setup",
+  "id": 2111,
+  "title": "Enabling TLS on first install for single node setup",
+  "posts_count": 3,
+  "created_at": "2020-05-09T09:32:49.925Z",
+  "views": 1232,
+  "reply_count": 0,
+  "like_count": 4,
+  "last_posted_at": "2021-06-30T10:51:48.211Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "enabling-tls-on-first-install-for-single-node-setup",
+  "category_id": 17,
+  "word_count": 2352,
+  "deleted_at": null,
+  "user_id": 476,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2111",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Issues with V6.2 TLS Cluster",
+      "id": 1904,
+      "title": "Issues with V6.2 TLS Cluster",
+      "slug": "issues-with-v6-2-tls-cluster",
+      "posts_count": 12,
+      "reply_count": 8,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-01-23T17:31:13.342Z",
+      "last_posted_at": "2020-01-28T16:35:52.821Z",
+      "bumped": true,
+      "bumped_at": "2020-01-28T16:35:52.821Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1620,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "(Solved) Correct setup of TLS for FoundationDB",
+      "id": 1037,
+      "title": "(Solved) Correct setup of TLS for FoundationDB",
+      "slug": "solved-correct-setup-of-tls-for-foundationdb",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-01-18T13:14:34.597Z",
+      "last_posted_at": "2020-12-03T19:46:59.291Z",
+      "bumped": true,
+      "bumped_at": "2020-12-03T19:46:59.291Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3516,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 483,
+            "username": "Smerity",
+            "name": "Stephen Merity",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/smerity/{size}/482_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 790,
+            "username": "shubham4060",
+            "name": "Shubham",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/0ea827/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Set up fdb to use TLS failure with N2_ConnectError",
+      "id": 3020,
+      "title": "Set up fdb to use TLS failure with N2_ConnectError",
+      "slug": "set-up-fdb-to-use-tls-failure-with-n2-connecterror",
+      "posts_count": 9,
+      "reply_count": 3,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2021-11-19T08:38:17.530Z",
+      "last_posted_at": "2021-11-23T00:53:27.886Z",
+      "bumped": true,
+      "bumped_at": "2021-11-23T05:48:39.795Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1054,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1029,
+            "username": "liuyan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/839c29/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Facing issue with TLS Setup",
+      "id": 1463,
+      "title": "Facing issue with TLS Setup",
+      "slug": "facing-issue-with-tls-setup",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-06-18T14:18:59.696Z",
+      "last_posted_at": "2019-06-21T07:46:38.493Z",
+      "bumped": true,
+      "bumped_at": "2019-06-21T07:46:38.493Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 700,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 607,
+            "username": "senthil",
+            "name": "Senthil Nathan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/senthil/{size}/720_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb 6.3.9 with TLS &ndash; fdbcli status could not communicate with a quorum of coordination servers:",
+      "id": 2704,
+      "title": "Foundationdb 6.3.9 with TLS -- fdbcli status could not communicate with a quorum of coordination servers:",
+      "slug": "foundationdb-6-3-9-with-tls-fdbcli-status-could-not-communicate-with-a-quorum-of-coordination-servers",
+      "posts_count": 12,
+      "reply_count": 4,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2021-05-17T15:56:30.003Z",
+      "last_posted_at": "2021-05-19T21:42:32.307Z",
+      "bumped": true,
+      "bumped_at": "2021-05-19T21:42:32.307Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1613,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 865,
+            "username": "manish-2014",
+            "name": "Manish Sharan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manish-2014/{size}/1002_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 476,
+        "username": "dch",
+        "name": "Dave Cottlehuber",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 863,
+        "username": "Dretch",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dretch/{size}/1000_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 476,
+      "username": "dch",
+      "name": "Dave Cottlehuber",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png"
+    },
+    "last_poster": {
+      "id": 476,
+      "username": "dch",
+      "name": "Dave Cottlehuber",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png"
+    },
+    "links": [
+      {
+        "url": "https://gist.github.com/dch/3fe08fdb5f10d1c653c80b6eae2f4889",
+        "title": "fdb debug failed TLS startup https://forums.foundationdb.org/t/enabling-tls-on-first-install-for-single-node-setup/2111 \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 476,
+        "domain": "gist.github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

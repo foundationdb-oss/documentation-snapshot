@@ -1,0 +1,867 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1016,
+        "name": "",
+        "username": "hiroshi",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+        "created_at": "2018-05-10T12:23:45.938Z",
+        "cooked": "<p>Using same docker image of <a href=\"https://forums.foundationdb.org/t/simple-dockerfile\">https://forums.foundationdb.org/t/simple-dockerfile</a></p>\n<p>I\u2019m trying to add a container to a cluster following this instruction;<br>\n<a href=\"https://apple.github.io/foundationdb/administration.html#adding-machines-to-a-cluster\" class=\"onebox\" target=\"_blank\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/administration.html#adding-machines-to-a-cluster</a></p>\n<p>Start the first server in a container.</p>\n<pre><code class=\"lang-auto\">$ docker run -ti --rm --name=fdb -h fdb  hiroshi3110/foundationdb:5.1.5-1_ubuntu-16.04 bash\nroot@fdb:~# cat /etc/foundationdb/fdb.cluster \n8YoJRcwD:WZ545WZr@127.0.0.1:4500\nroot@fdb:~# getent hosts fdb\n172.17.0.2      fdb\nroot@fdb:~# echo 8YoJRcwD:WZ545WZr@172.17.0.2:4500 &gt; /etc/foundationdb/fdb.cluster\nroot@fdb:~# /usr/lib/foundationdb/fdbmonitor \nTime=\"1525953600.858815\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Started FoundationDB Process Monitor 5.1 (v5.1.5)\nTime=\"1525953600.865933\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Watching conf file /etc/foundationdb/foundationdb.conf\nTime=\"1525953600.866062\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Watching conf dir /etc/foundationdb (2)\nTime=\"1525953600.866092\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Loading configuration /etc/foundationdb/foundationdb.conf\nTime=\"1525953600.868531\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Starting backup_agent.1\nTime=\"1525953600.869477\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Starting fdbserver.4500\nTime=\"1525953600.870077\" Severity=\"10\" LogGroup=\"default\" Process=\"backup_agent.1\": Launching /usr/lib/foundationdb/backup_agent/backup_agent (16) for backup_agent.1\nTime=\"1525953600.873488\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbserver.4500\": Launching /usr/sbin/fdbserver (17) for fdbserver.4500\nTime=\"1525953600.922129\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbserver.4500\": FDBD joined cluster.\n</code></pre>\n<p>It seems to work</p>\n<pre><code class=\"lang-auto\">$ docker exec -ti fdb fdbcli              \nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nThe database is available.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; \n</code></pre>\n<p>Then, add another server to the cluster</p>\n<pre><code class=\"lang-auto\">$ docker run -ti --rm --name=fdb2 -h fdb2 hiroshi3110/foundationdb:5.1.5-1_ubuntu-16.04 bash \nroot@fdb2:~# echo 8YoJRcwD:WZ545WZr@172.17.0.2:4500 &gt; /etc/foundationdb/fdb.cluster\nroot@fdb2:~# cat /etc/foundationdb/fdb.cluster \n8YoJRcwD:WZ545WZr@172.17.0.2:4500\nroot@fdb2:~# /usr/lib/foundationdb/fdbmonitor\nTime=\"1525953996.607291\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Started FoundationDB Process Monitor 5.1 (v5.1.5)\nTime=\"1525953996.614169\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Watching conf file /etc/foundationdb/foundationdb.conf\nTime=\"1525953996.614269\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Watching conf dir /etc/foundationdb (2)\nTime=\"1525953996.614329\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Loading configuration /etc/foundationdb/foundationdb.conf\nTime=\"1525953996.615638\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Starting backup_agent.1\nTime=\"1525953996.616053\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbmonitor\": Starting fdbserver.4500\nTime=\"1525953996.618680\" Severity=\"10\" LogGroup=\"default\" Process=\"backup_agent.1\": Launching /usr/lib/foundationdb/backup_agent/backup_agent (13) for backup_agent.1\nTime=\"1525953996.620875\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbserver.4500\": Launching /usr/sbin/fdbserver (14) for fdbserver.4500\nTime=\"1525953996.655526\" Severity=\"10\" LogGroup=\"default\" Process=\"fdbserver.4500\": FDBD joined cluster.\n</code></pre>\n<p>Database is now unavailable\u2026</p>\n<pre><code class=\"lang-auto\">$ docker exec -ti fdb fdbcli\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nThe database is unavailable; type `status' for more information.\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; status details\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nUnable to locate the master worker.\n\nUnable to retrieve all status information.\n\nConfiguration:\n  Redundancy mode        - single\n  Storage engine         - memory\n  Coordinators           - 1\n\nCluster:\n  FoundationDB processes - 1\n  Machines               - 1\n  Memory availability    - 3.4 GB per process on machine with least available\n                           &gt;&gt;&gt;&gt;&gt; (WARNING: 4.0 GB recommended) &lt;&lt;&lt;&lt;&lt;\n  Fault Tolerance        - 0 machines\n  Server time            - 05/10/18 12:08:58\n\nData:\n  Replication health     - unknown\n  Moving data            - unknown\n  Sum of key-value sizes - unknown\n  Disk space used        - unknown\n\nOperating space:\n  Unable to retrieve operating space status\n\nWorkload:\n  Read rate              - unknown\n  Write rate             - unknown\n  Transactions started   - unknown\n  Transactions committed - unknown\n  Conflict rate          - unknown\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n  172.17.0.3:4500        (  2% cpu;  5% machine; 0.000 Gbps;  0% disk IO; 0.3 GB / 3.4 GB RAM  )\n\nCoordination servers:\n  172.17.0.2:4500  (reachable)\n\nClient time: 05/10/18 12:08:55\n\nfdb&gt; \n</code></pre>\n<p>What\u2019s wrong with those steps?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-05-10T12:26:23.961Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 588,
+        "reads": 88,
+        "readers_count": 87,
+        "score": 2957.6,
+        "yours": false,
+        "topic_id": 394,
+        "topic_slug": "how-to-add-a-server-container-to-a-cluster",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/simple-dockerfile",
+            "internal": true,
+            "reflection": false,
+            "clicks": 28
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/administration.html#adding-machines-to-a-cluster",
+            "internal": false,
+            "reflection": false,
+            "title": "Administration \u2014 FoundationDB 5.1",
+            "clicks": 18
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 187,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-add-a-server-container-to-a-cluster/394/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1020,
+        "name": "Rinat Abdullin",
+        "username": "abdullin",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+        "created_at": "2018-05-10T13:57:23.977Z",
+        "cooked": "<p>I had a situation with similar symptoms while setting up clusters from pre-baked images. What worked for me:</p>\n<ol>\n<li>Stop foundationdb service on the new node</li>\n<li>Wipe its local storage (sudo rm -rf /var/lib/foundationdb/data/4500/)</li>\n<li>Restart the service.</li>\n</ol>\n<p>To put things into the context, here is the <a href=\"https://github.com/bitgn/fdb-cloud-test/blob/4a77a3b6f2221a68e390e5a994cba3e493bfa958/terraform/main.tf#L235\" rel=\"nofollow noopener\">bigger script</a> (part of Terraform config)</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-05-10T13:57:23.977Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 10,
+        "reads": 79,
+        "readers_count": 78,
+        "score": 100.8,
+        "yours": false,
+        "topic_id": 394,
+        "topic_slug": "how-to-add-a-server-container-to-a-cluster",
+        "display_username": "Rinat Abdullin",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/bitgn/fdb-cloud-test/blob/4a77a3b6f2221a68e390e5a994cba3e493bfa958/terraform/main.tf#L235",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-cloud-test/main.tf at 4a77a3b6f2221a68e390e5a994cba3e493bfa958 \u00b7 bitgn/fdb-cloud-test \u00b7 GitHub",
+            "clicks": 36
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 118,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-add-a-server-container-to-a-cluster/394/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1033,
+        "name": "",
+        "username": "hiroshi",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+        "created_at": "2018-05-11T00:06:17.277Z",
+        "cooked": "<p>Thanks!<br>\nRemoving the directory of second process before adding it to the cluster works!</p>\n<p>My docker image building did just <code>dpkg -i</code>. it start a server and create data directory for a cluster. I guess those separated cluster setup can make some kind of conflict when adding a container to another.</p>\n<pre><code class=\"lang-auto\">fdb&gt; status details\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - single\n  Storage engine         - memory\n  Coordinators           - 1\n\nCluster:\n  FoundationDB processes - 2\n  Machines               - 2\n  Memory availability    - 3.4 GB per process on machine with least available\n                           &gt;&gt;&gt;&gt;&gt; (WARNING: 4.0 GB recommended) &lt;&lt;&lt;&lt;&lt;\n  Fault Tolerance        - 0 machines\n  Server time            - 05/10/18 23:54:35\n\nData:\n  Replication health     - (Re)initializing automatic data distribution\n  Moving data            - unknown (initializing)\n  Sum of key-value sizes - unknown\n  Disk space used        - 0 MB\n\nOperating space:\n  Storage server         - 21.3 GB free on most full server\n  Log server             - 21.3 GB free on most full server\n\nWorkload:\n  Read rate              - 19 Hz\n  Write rate             - 2 Hz\n  Transactions started   - 6 Hz\n  Transactions committed - 1 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n  172.24.0.2:4500        (  8% cpu;  7% machine; 0.000 Gbps;  0% disk IO; 0.3 GB / 3.4 GB RAM  )\n  172.24.0.3:4500        (  5% cpu;  7% machine; 0.000 Gbps;  0% disk IO; 0.4 GB / 3.5 GB RAM  )\n\nCoordination servers:\n  172.24.0.2:4500  (reachable)\n\nClient time: 05/10/18 23:54:35\n</code></pre>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-05-11T00:06:17.277Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 72,
+        "readers_count": 71,
+        "score": 36.4,
+        "yours": false,
+        "topic_id": 394,
+        "topic_slug": "how-to-add-a-server-container-to-a-cluster",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 118,
+          "username": "abdullin",
+          "name": "Rinat Abdullin",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 187,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-add-a-server-container-to-a-cluster/394/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1046,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-05-11T19:37:00.210Z",
+        "cooked": "<p>See my <a href=\"https://forums.foundationdb.org/t/how-are-contributing-workers-computed/360/15?u=ajbeamon\">reply</a> to this other post for a possible explanation for this behavior.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-05-11T19:37:00.210Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 56,
+        "readers_count": 55,
+        "score": 26.2,
+        "yours": false,
+        "topic_id": 394,
+        "topic_slug": "how-to-add-a-server-container-to-a-cluster",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/how-are-contributing-workers-computed/360/15",
+            "internal": true,
+            "reflection": false,
+            "title": "How are 'contributing_workers' computed?",
+            "clicks": 70
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-add-a-server-container-to-a-cluster/394/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1016,
+      1020,
+      1033,
+      1046
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2721
+    ],
+    [
+      4,
+      2720
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How to add a server container to a cluster",
+  "id": 394,
+  "title": "How to add a server container to a cluster",
+  "posts_count": 4,
+  "created_at": "2018-05-10T12:23:45.716Z",
+  "views": 2461,
+  "reply_count": 1,
+  "like_count": 3,
+  "last_posted_at": "2018-05-11T19:37:00.210Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-add-a-server-container-to-a-cluster",
+  "category_id": 7,
+  "word_count": 1010,
+  "deleted_at": null,
+  "user_id": 187,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_394",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Trying to make docker image; fdbcli says database not created",
+      "id": 157,
+      "title": "Trying to make docker image; fdbcli says database not created",
+      "slug": "trying-to-make-docker-image-fdbcli-says-database-not-created",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-04-20T22:06:18.472Z",
+      "last_posted_at": "2019-02-12T13:13:54.630Z",
+      "bumped": true,
+      "bumped_at": "2019-02-12T13:13:54.630Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 3095,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 110,
+            "username": "jwatte",
+            "name": "Jon Watte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jwatte/{size}/77_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 476,
+            "username": "dch",
+            "name": "Dave Cottlehuber",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dch/{size}/473_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 506,
+            "username": "shane",
+            "name": "Shane",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/dbc845/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Simple Dockerfile",
+      "id": 280,
+      "title": "Simple Dockerfile",
+      "slug": "simple-dockerfile",
+      "posts_count": 17,
+      "reply_count": 10,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-04-26T09:05:55.151Z",
+      "last_posted_at": "2018-10-16T20:26:01.085Z",
+      "bumped": true,
+      "bumped_at": "2018-10-16T20:26:01.085Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 8840,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 256,
+            "username": "bjrnio",
+            "name": "Ricard Bejarano",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bjrnio/{size}/235_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 392,
+            "username": "pavibhai",
+            "name": "Pavan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/e56c9b/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How are &lsquo;contributing_workers&rsquo; computed?",
+      "id": 360,
+      "title": "How are 'contributing_workers' computed?",
+      "slug": "how-are-contributing-workers-computed",
+      "posts_count": 20,
+      "reply_count": 13,
+      "highest_post_number": 20,
+      "image_url": null,
+      "created_at": "2018-05-07T00:53:18.538Z",
+      "last_posted_at": "2018-05-12T07:19:34.562Z",
+      "bumped": true,
+      "bumped_at": "2018-05-12T07:19:34.562Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1986,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 236,
+            "username": "marctrem",
+            "name": "Marc-Andr\u00e9 Tremblay",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/marctrem/{size}/208_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundation + docker public access",
+      "id": 1658,
+      "title": "Foundation + docker public access",
+      "slug": "foundation-docker-public-access",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/4d5841377939ca99f304e342c8427c3bfeb88bb1.jpeg",
+      "created_at": "2019-09-30T16:19:04.968Z",
+      "last_posted_at": "2019-10-03T06:21:08.155Z",
+      "bumped": true,
+      "bumped_at": "2019-10-03T06:21:08.155Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1299,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 650,
+            "username": "Karthikn6793",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/karthikn6793/{size}/748_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deployment with custom fdb.cluster file",
+      "id": 592,
+      "title": "Deployment with custom fdb.cluster file",
+      "slug": "deployment-with-custom-fdb-cluster-file",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-07-26T23:00:18.994Z",
+      "last_posted_at": "2018-07-27T23:44:31.722Z",
+      "bumped": true,
+      "bumped_at": "2018-07-27T23:44:31.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 4329,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 187,
+        "username": "hiroshi",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 118,
+        "username": "abdullin",
+        "name": "Rinat Abdullin",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 187,
+      "username": "hiroshi",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/how-are-contributing-workers-computed/360/15",
+        "title": "How are 'contributing_workers' computed?",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 70,
+        "user_id": 12,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://github.com/bitgn/fdb-cloud-test/blob/4a77a3b6f2221a68e390e5a994cba3e493bfa958/terraform/main.tf#L235",
+        "title": "fdb-cloud-test/main.tf at 4a77a3b6f2221a68e390e5a994cba3e493bfa958 \u00b7 bitgn/fdb-cloud-test \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 36,
+        "user_id": 118,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/simple-dockerfile",
+        "title": null,
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 28,
+        "user_id": 187,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/administration.html#adding-machines-to-a-cluster",
+        "title": "Administration \u2014 FoundationDB 5.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 18,
+        "user_id": 187,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,767 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11023,
+        "name": "mason",
+        "username": "mason",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+        "created_at": "2022-04-28T06:36:42.850Z",
+        "cooked": "<h1>\n<a name=\"backup-to-s3-with-signature-version-4-works-in-aws-but-get-rejected-in-gcp-with-signaturedoesnotmatch-1\" class=\"anchor\" href=\"#backup-to-s3-with-signature-version-4-works-in-aws-but-get-rejected-in-gcp-with-signaturedoesnotmatch-1\"></a>Backup to S3 with Signature Version 4 works in AWS but get rejected in GCP with <code>SignatureDoesNotMatch</code>.</h1>\n<p>We want to deploy a FoundationDB cluster on Google Cloud but we noticed the <a href=\"https://forums.foundationdb.org/t/how-do-i-use-fdbbackup-with-google-cloud-storage/1469\">fdbbackup\u2019s issue regarding backup to GCS using S3 compatible protocol</a> and we decided to investigate. All our testing have been performed with <code>Signature Version 4</code> enabled.</p>\n<p>We use <code>fdbbackup</code> with the option <code>knob_http_request_aws_v4_header=true</code> set, it works for AWS S3 but not for GCP Storage. Below are both responses from AWS and GCP respectively:</p>\n<p><code>AWS</code>:</p>\n<pre data-code-wrap=\"console\"><code class=\"lang-nohighlight\">root@486fa579b364:/tmp# ./backup_agent -C /var/fdb/fdb.cluster --knob_http_verbose_level=4 --knob_http_request_aws_v4_header=true\n[cb680bf8591113d81de1b1ef05d371e3] HTTP starting PUT /ci-cd-code-deploy/data/fdb-service/kvranges/snapshot.000000533810482490/0/range,533810528742,bc9ed0fd90c96313a555204c0aeae1a6,1048576 ContentLen:47\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key_id&gt;/20220414/us-east-2/s3/aws4_request, SignedHeaders=content-md5;host;x-amz-content-sha256;x-amz-date, Signature=b3718d27efc55802aabbdf576734eaefe3c5d81e78ec6535c2201e9b41c101c6\nRequest Header: Content-Length: 47\nRequest Header: Content-MD5: v286vjzzSoN6yVcznbCqDQ==\nRequest Header: Host: s3.us-east-2.amazonaws.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20220414T034206Z\n[cb680bf8591113d81de1b1ef05d371e3] HTTP code=200 early=0, time=0.336246s PUT /ci-cd-code-deploy/data/fdb-service/kvranges/snapshot.000000533810482490/0/range,533810528742,bc9ed0fd90c96313a555204c0aeae1a6,1048576 contentLen=47 [626 out, response content len 0]\n[cb680bf8591113d81de1b1ef05d371e3] HTTP RESPONSE:  PUT /ci-cd-code-deploy/data/fdb-service/kvranges/snapshot.000000533810482490/0/range,533810528742,bc9ed0fd90c96313a555204c0aeae1a6,1048576\nResponse Code: 200\nResponse ContentLen: 0\nReponse Header: Content-Length: 0\nReponse Header: Date: Thu, 14 Apr 2022 03:42:07 GMT\nReponse Header: ETag: \"bf6f3abe3cf34a837ac957339db0aa0d\"\nReponse Header: Server: AmazonS3\nReponse Header: x-amz-id-2: GTbmvgCORy1FxDk9JiO9P/ClOafXi1yTlEqRyFpGJ4EYVazusbQHbajOzgfCpIPSFtI6ZHAMgdE=\nReponse Header: x-amz-request-id: 797DZNPQ6Z5AQ3W2\n-- RESPONSE CONTENT--\n\n--------\n\n[cb680bf8591113d81de1b1ef05d371e3] HTTP starting PUT /ci-cd-code-deploy/data/fdb-service/snapshots/snapshot,533810528742,533810528742,47 ContentLen:338\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key_id&gt;/20220414/us-east-2/s3/aws4_request, SignedHeaders=content-md5;host;x-amz-content-sha256;x-amz-date, Signature=d84baabbfaa2db988cb669477d698b9d5433135f9e1d972360cf728e4124960b\nRequest Header: Content-Length: 338\nRequest Header: Content-MD5: Rr91S5wRHm0FPf1xW7N+6g==\nRequest Header: Host: s3.us-east-2.amazonaws.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20220414T034206Z\n[cb680bf8591113d81de1b1ef05d371e3] HTTP code=200 early=0, time=0.310763s PUT /ci-cd-code-deploy/data/fdb-service/snapshots/snapshot,533810528742,533810528742,47 contentLen=338 [867 out, response content len 0]\n[cb680bf8591113d81de1b1ef05d371e3] HTTP RESPONSE:  PUT /ci-cd-code-deploy/data/fdb-service/snapshots/snapshot,533810528742,533810528742,47\nResponse Code: 200\nResponse ContentLen: 0\nReponse Header: Content-Length: 0\nReponse Header: Date: Thu, 14 Apr 2022 03:42:07 GMT\nReponse Header: ETag: \"46bf754b9c111e6d053dfd715bb37eea\"\nReponse Header: Server: AmazonS3\nReponse Header: x-amz-id-2: zabU13fM4P58xUg8110OubKffP2GiUviXWTNgdsKaReQzlM08od6zh3d+6NrhSwBQFQKj2Vlh9o=\nReponse Header: x-amz-request-id: 7972BJ07KG914DNY\n-- RESPONSE CONTENT--\n\n--------\n\n[5621d922b32d841e5d94f76be727dc3c] HTTP starting PUT /ci-cd-code-deploy/data/fdb-service/logs/0000/0005/log,533810482490,533830482490,cf235f6e28e9578bb12e8acce0a44d45,1048576 ContentLen:0\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key_id&gt;/20220414/us-east-2/s3/aws4_request, SignedHeaders=content-md5;host;x-amz-content-sha256;x-amz-date, Signature=0155973d12b2f2d9e190c4e4a916a8f8c67824e67c54ab8eb18c8fc3a2002873\nRequest Header: Content-Length: 0\nRequest Header: Content-MD5: 1B2M2Y8AsgTpgAmY7PhCfg==\nRequest Header: Host: s3.us-east-2.amazonaws.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20220414T034243Z\n[5621d922b32d841e5d94f76be727dc3c] HTTP code=200 early=0, time=0.314697s PUT /ci-cd-code-deploy/data/fdb-service/logs/0000/0005/log,533810482490,533830482490,cf235f6e28e9578bb12e8acce0a44d45,1048576 contentLen=0 [565 out, response content len 0]\n[5621d922b32d841e5d94f76be727dc3c] HTTP RESPONSE:  PUT /ci-cd-code-deploy/data/fdb-service/logs/0000/0005/log,533810482490,533830482490,cf235f6e28e9578bb12e8acce0a44d45,1048576\nResponse Code: 200\nResponse ContentLen: 0\nReponse Header: Content-Length: 0\nReponse Header: Date: Thu, 14 Apr 2022 03:42:44 GMT\nReponse Header: ETag: \"d41d8cd98f00b204e9800998ecf8427e\"\nReponse Header: Server: AmazonS3\nReponse Header: x-amz-id-2: S4iuq609dYqv4uKM0DWVc4fcXholSBGojtFkO381RJkvtfVigJCeqXgNCQUD4VxBThg1rSL4Ymg=\nReponse Header: x-amz-request-id: MT0FTXST0ZFHQ6K4\n-- RESPONSE CONTENT--\n\n--------\n\n</code></pre>\n<p><code>GCP</code>:</p>\n<pre data-code-wrap=\"console\"><code class=\"lang-nohighlight\">root@486fa579b364:/tmp# ./backup_agent -C /var/fdb/fdb.cluster --knob_http_verbose_level=4 --knob_http_request_aws_v4_header=true\n[4c81593e7235562a0ea405ad6ac3ddbc] HTTP starting PUT /fdb-backup/data/fdb/kvranges/snapshot.000000534297541501/0/range,534297584836,0a2302e1c16dad06c9a0d4809cbd8814,1048576 ContentLen:47\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key_id&gt;/20220414/googleapis/storage/aws4_request, SignedHeaders=content-md5;host;x-amz-content-sha256;x-amz-date, Signature=91dde1438bbf69f25994558b5d1fee70855138c05b78c909297e3ad2e9c29b47\nRequest Header: Content-Length: 47\nRequest Header: Content-MD5: v286vjzzSoN6yVcznbCqDQ==\nRequest Header: Host: storage.googleapis.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20220414T035013Z\n[4c81593e7235562a0ea405ad6ac3ddbc] HTTP code=403 early=0, time=0.088937s PUT /fdb-backup/data/fdb/kvranges/snapshot.000000534297541501/0/range,534297584836,0a2302e1c16dad06c9a0d4809cbd8814,1048576 contentLen=47 [654 out, response content len 760]\n[4c81593e7235562a0ea405ad6ac3ddbc] HTTP RESPONSE:  PUT /fdb-backup/data/fdb/kvranges/snapshot.000000534297541501/0/range,534297584836,0a2302e1c16dad06c9a0d4809cbd8814,1048576\nResponse Code: 403\nResponse ContentLen: 760\nReponse Header: Content-Length: 760\nReponse Header: Content-Type: application/xml; charset=UTF-8\nReponse Header: Date: Thu, 14 Apr 2022 03:50:13 GMT\nReponse Header: Server: UploadServer\nReponse Header: X-GUploader-UploadID: ADPycdtHUmG3YpVi2jJxYR3diEKsWpq9ClFpSPm4isGO4-eDEh26CMo3F9HONTuBenx3wf1dgNIZ2oZnCWt8B5nybC3Mfw\n-- RESPONSE CONTENT--\n&lt;?xml version='1.0' encoding='UTF-8'?&gt;&lt;Error&gt;&lt;Code&gt;SignatureDoesNotMatch&lt;/Code&gt;&lt;Message&gt;The request signature we calculated does not match the signature you provided. Check your Google secret key and signing method.&lt;/Message&gt;&lt;StringToSign&gt;AWS4-HMAC-SHA256\n20220414T035013Z\n20220414/googleapis/storage/aws4_request\nd412db61c6a44ed649acc4b68ce2f5f4628321bb535b4d56efbb73cd032e3a2d&lt;/StringToSign&gt;&lt;CanonicalRequest&gt;PUT\n/fdb-backup/data/fdb/kvranges/snapshot.000000534297541501/0/range,534297584836,0a2302e1c16dad06c9a0d4809cbd8814,1048576\n\ncontent-md5:v286vjzzSoN6yVcznbCqDQ==\nhost:storage.googleapis.com\nx-amz-content-sha256:UNSIGNED-PAYLOAD\nx-amz-date:20220414T035013Z\n\ncontent-md5;host;x-amz-content-sha256;x-amz-date\nUNSIGNED-PAYLOAD&lt;/CanonicalRequest&gt;&lt;/Error&gt;\n--------\n\n</code></pre>\n<p>When the request is signed by <code>fdbbackup</code> it seems to first convert it to a canonical request which is<br>\npercent encoded. When the request is sent by <code>fdbbackup</code> it is not percent encoded. There seems to be a<br>\ndifferent way of handling <code>Signature Version 4</code> on both AWS and GCP. AWS first convert the HTTP resource path<br>\nto a percent encoded one before validating the signature, on GCP the HTTP resource path is taken <code>as is</code> (not percent encoded) which cause the signature mismatch.</p>\n<p>The (<code>Signature Version 4</code>: Calculating a Signature)<a href=\"https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html\" rel=\"noopener nofollow ugc\">https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html</a><br>\ndocument specify that a resource path should be encoded before calculating the signature which makes the behavior<br>\nof <code>fdbbackup</code> correct, but GCP does not seem to have implemented this part correctly since, in GCP, the resource path URL is required to be encoded according to this document:</p>\n<p><a href=\"https://cloud.google.com/storage/docs/request-endpoints#encoding\" rel=\"noopener nofollow ugc\">https://cloud.google.com/storage/docs/request-endpoints#encoding</a><br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/2X/1/163cdd46e7020d215072a79f22101605945cdd59.png\" data-download-href=\"/uploads/short-url/3aIU9iUPUphYaEn8WLEyQhdjR1L.png?dl=1\" title=\"image\" rel=\"noopener nofollow ugc\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/1/163cdd46e7020d215072a79f22101605945cdd59_2_690x344.png\" alt=\"image\" data-base62-sha1=\"3aIU9iUPUphYaEn8WLEyQhdjR1L\" width=\"690\" height=\"344\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/1/163cdd46e7020d215072a79f22101605945cdd59_2_690x344.png, https://global.discourse-cdn.com/foundationdb/optimized/2X/1/163cdd46e7020d215072a79f22101605945cdd59_2_1035x516.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/2X/1/163cdd46e7020d215072a79f22101605945cdd59.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/1/163cdd46e7020d215072a79f22101605945cdd59_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use href=\"#far-image\"></use></svg><span class=\"filename\">image</span><span class=\"informations\">1169\u00d7584 87.1 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>So GCP, expect, an encoded URL. So, with the assumption that AWS would accept both non-encoded (we know this<br>\nalready) and encoded resource path. I added a line in the <code>doRequest()</code> method in <code>HTTP.actor.cpp</code> <a href=\"https://github.com/apple/foundationdb/blob/release-6.3/fdbclient/HTTP.actor.cpp#L356\" rel=\"noopener nofollow ugc\">https://github.com/apple/foundationdb/blob/release-6.3/fdbclient/HTTP.actor.cpp#L356</a> which effectively encode the resource path:</p>\n<pre data-code-wrap=\"c++\"><code class=\"lang-nohighlight\">    // line 356\n    resource = HTTP:awsV4URIEncode(resource, false);\n</code></pre>\n<p>With this line, it works in <code>AWS</code> and <code>GCP</code>.</p>\n<p>Here is the answer by <code>GCP</code>:</p>\n<pre data-code-wrap=\"console\"><code class=\"lang-nohighlight\">[7d0dcd1888650dd25a704c510ad7a07d] HTTP starting PUT /fdb-backup/data/fdb/kvranges/snapshot.000000544983018581/0/range%2C544983051027%2Ca09cad710edd522526be3dcfa7d39f0f%2C1048576 ContentLen:47\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key_id&gt;/20220414/googleapis/storage/aws4_request, SignedHeaders=content-md5;host;x-amz-content-sha256;x-amz-date, Signature=834a95661d0d3aa20441c2102ee9e1b78fa8e49327e3863d8ceffe7ea882de28\nRequest Header: Content-Length: 47\nRequest Header: Content-MD5: v286vjzzSoN6yVcznbCqDQ==\nRequest Header: Host: storage.googleapis.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20220414T064818Z\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP code=200 early=0, time=0.131040s PUT /fdb-backup/data/fdb/kvranges/snapshot.000000544983018581/0/range%2C544983051027%2Ca09cad710edd522526be3dcfa7d39f0f%2C1048576 contentLen=47 [660 out, response content len 0]\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP RESPONSE:  PUT /fdb-backup/data/fdb/kvranges/snapshot.000000544983018581/0/range%2C544983051027%2Ca09cad710edd522526be3dcfa7d39f0f%2C1048576\nResponse Code: 200\nResponse ContentLen: 0\nReponse Header: Content-Length: 0\nReponse Header: Content-Type: text/html; charset=UTF-8\nReponse Header: Date: Thu, 14 Apr 2022 06:48:18 GMT\nReponse Header: ETag: \"bf6f3abe3cf34a837ac957339db0aa0d\"\nReponse Header: Server: UploadServer\nReponse Header: Vary: Origin\nReponse Header: x-goog-generation: 1649918898842380\nReponse Header: x-goog-hash: md5=v286vjzzSoN6yVcznbCqDQ==\nReponse Header: x-goog-metageneration: 1\nReponse Header: x-goog-stored-content-encoding: identity\nReponse Header: x-goog-stored-content-length: 47\nReponse Header: X-GUploader-UploadID: ADPycduGfm9eg_zj8eKs3sfg52LArbXzlbCH6vNqH0iH9DhMId0I9F3MBSIhLcJ5QtIsZw9GfH1e0I7SjykxqMg3CtmZfA\n-- RESPONSE CONTENT--\n\n--------\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP starting PUT /fdb-backup/data/fdb/snapshots/snapshot%2C544983051027%2C544983051027%2C47 ContentLen:338\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key_id&gt;/20220414/googleapis/storage/aws4_request, SignedHeaders=content-md5;host;x-amz-content-sha256;x-amz-date, Signature=827be71337c275385d3638df2c9987f5da35643e6ab055614e8586a2778382eb\nRequest Header: Content-Length: 338\nRequest Header: Content-MD5: JuFDrvkLy6pr2ko+MW49Cw==\nRequest Header: Host: storage.googleapis.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20220414T064818Z\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP code=200 early=0, time=0.130198s PUT /fdb-backup/data/fdb/snapshots/snapshot%2C544983051027%2C544983051027%2C47 contentLen=338 [901 out, response content len 0]\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP RESPONSE:  PUT /fdb-backup/data/fdb/snapshots/snapshot%2C544983051027%2C544983051027%2C47\nResponse Code: 200\nResponse ContentLen: 0\nReponse Header: Content-Length: 0\nReponse Header: Content-Type: text/html; charset=UTF-8\nReponse Header: Date: Thu, 14 Apr 2022 06:48:18 GMT\nReponse Header: ETag: \"26e143aef90bcbaa6bda4a3e316e3d0b\"\nReponse Header: Server: UploadServer\nReponse Header: Vary: Origin\nReponse Header: x-goog-generation: 1649918898989197\nReponse Header: x-goog-hash: md5=JuFDrvkLy6pr2ko+MW49Cw==\nReponse Header: x-goog-metageneration: 1\nReponse Header: x-goog-stored-content-encoding: identity\nReponse Header: x-goog-stored-content-length: 338\nReponse Header: X-GUploader-UploadID: ADPycdvwBT7_tNPLIRugFypW_4mZ9jho9qKI5HlSXSB4XPzyRv3z1nt3SFdshH7uLJU3O1EvH4ihGiWg-qHBhYdOk9VrNQ\n-- RESPONSE CONTENT--\n\n--------\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP starting PUT /fdb-backup/data/fdb/logs/0000/0005/log%2C544983018581%2C545003018581%2Cae569c838a7cbaf666f55ba8a1566b15%2C1048576 ContentLen:0\nRequest Header: Accept: application/xml\nRequest Header: Authorization: AWS4-HMAC-SHA256 Credential=&lt;access_key_id&gt;/20220414/googleapis/storage/aws4_request, SignedHeaders=content-md5;host;x-amz-content-sha256;x-amz-date, Signature=8c40d50e382bd963607ee9a7585f957f9844a3237984a99873618790ef23ba4e\nRequest Header: Content-Length: 0\nRequest Header: Content-MD5: 1B2M2Y8AsgTpgAmY7PhCfg==\nRequest Header: Host: storage.googleapis.com\nRequest Header: x-amz-content-sha256: UNSIGNED-PAYLOAD\nRequest Header: x-amz-date: 20220414T064853Z\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP code=200 early=0, time=0.109839s PUT /fdb-backup/data/fdb/logs/0000/0005/log%2C544983018581%2C545003018581%2Cae569c838a7cbaf666f55ba8a1566b15%2C1048576 contentLen=0 [601 out, response content len 0]\n[7d0dcd1888650dd25a704c510ad7a07d] HTTP RESPONSE:  PUT /fdb-backup/data/fdb/logs/0000/0005/log%2C544983018581%2C545003018581%2Cae569c838a7cbaf666f55ba8a1566b15%2C1048576\nResponse Code: 200\nResponse ContentLen: 0\nReponse Header: Content-Length: 0\nReponse Header: Content-Type: text/html; charset=UTF-8\nReponse Header: Date: Thu, 14 Apr 2022 06:48:53 GMT\nReponse Header: ETag: \"d41d8cd98f00b204e9800998ecf8427e\"\nReponse Header: Server: UploadServer\nReponse Header: Vary: Origin\nReponse Header: x-goog-generation: 1649918933696708\nReponse Header: x-goog-hash: md5=1B2M2Y8AsgTpgAmY7PhCfg==\nReponse Header: x-goog-metageneration: 1\nReponse Header: x-goog-stored-content-encoding: identity\nReponse Header: x-goog-stored-content-length: 0\nReponse Header: X-GUploader-UploadID: ADPycdsuAGYnL2s1b0TlYV35JeFquezqVfXnl2l1ste3TssCOCa73oOh1INkZq4NKT0pst35xFwokt7kRAUvsKzatrCMTA\n-- RESPONSE CONTENT--\n\n--------\n</code></pre>\n<p>Would it be possible to introduce this change in the code to make the <code>fdbbackup</code> S3 backup process work in both<br>\n<code>AWS</code> and <code>GCP</code>?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-04-28T06:41:46.005Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 199,
+        "reads": 26,
+        "readers_count": 25,
+        "score": 1000.2,
+        "yours": false,
+        "topic_id": 3288,
+        "topic_slug": "backup-to-s3-with-signature-version-4-works-in-aws-but-get-rejected-in-gcp-with-signaturedoesnotmatch",
+        "display_username": "mason",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/how-do-i-use-fdbbackup-with-google-cloud-storage/1469",
+            "internal": true,
+            "reflection": false,
+            "title": "How do I use `fdbbackup` with Google Cloud Storage?",
+            "clicks": 4
+          },
+          {
+            "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Authenticating Requests: Using Query Parameters (AWS Signature Version 4) - Amazon Simple Storage Service",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/release-6.3/fdbclient/HTTP.actor.cpp#L356",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/HTTP.actor.cpp at release-6.3 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/2X/1/163cdd46e7020d215072a79f22101605945cdd59.png",
+            "internal": false,
+            "reflection": false,
+            "title": "163cdd46e7020d215072a79f22101605945cdd59.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://cloud.google.com/storage/docs/request-endpoints#encoding",
+            "internal": false,
+            "reflection": false,
+            "title": "Request endpoints \u00a0|\u00a0 Cloud Storage \u00a0|\u00a0 Google Cloud",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 970,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": "downloaded local copies of images",
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-to-s3-with-signature-version-4-works-in-aws-but-get-rejected-in-gcp-with-signaturedoesnotmatch/3288/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11024,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2022-04-28T07:54:57.794Z",
+        "cooked": "<p>There are currently a few issues how the signature is created and how some parameters are interpreted (this list is by no means complete):</p>\n<ul>\n<li><a href=\"https://github.com/apple/foundationdb/issues/6355\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Current v4 header implementation for backup only works for AWS \u00b7 Issue #6355 \u00b7 apple/foundationdb \u00b7 GitHub</a></li>\n<li><a href=\"https://github.com/apple/foundationdb/issues/6382\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">s3 backup should support virtual hosting style \u00b7 Issue #6382 \u00b7 apple/foundationdb \u00b7 GitHub</a></li>\n</ul>\n<p>and there is an outstanding PR that fixes some of these issues: <a href=\"https://github.com/apple/foundationdb/pull/6354\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Fix compatibility issue of s3 backup by wangzw \u00b7 Pull Request #6354 \u00b7 apple/foundationdb \u00b7 GitHub</a>. I\u2019m not aware of any timelines to fix all those issues and I would say that the FDB community is happy to see a contributions from the community.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2022-04-28T07:54:57.794Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 29.6,
+        "yours": false,
+        "topic_id": 3288,
+        "topic_slug": "backup-to-s3-with-signature-version-4-works-in-aws-but-get-rejected-in-gcp-with-signaturedoesnotmatch",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/6355",
+            "internal": false,
+            "reflection": false,
+            "title": "Current v4 header implementation for backup only works for AWS \u00b7 Issue #6355 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 13
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/pull/6354",
+            "internal": false,
+            "reflection": false,
+            "title": "Fix compatibility issue of s3 backup by wangzw \u00b7 Pull Request #6354 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 9
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/issues/6382",
+            "internal": false,
+            "reflection": false,
+            "title": "s3 backup should support virtual hosting style \u00b7 Issue #6382 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-to-s3-with-signature-version-4-works-in-aws-but-get-rejected-in-gcp-with-signaturedoesnotmatch/3288/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11023,
+      11024
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1273
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Backup to S3 with Signature Version 4 works in AWS but get rejected in GCP with SignatureDoesNotMatch",
+  "id": 3288,
+  "title": "Backup to S3 with Signature Version 4 works in AWS but get rejected in GCP with SignatureDoesNotMatch",
+  "posts_count": 2,
+  "created_at": "2022-04-28T06:36:42.760Z",
+  "views": 683,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2022-04-28T07:54:57.794Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "backup-to-s3-with-signature-version-4-works-in-aws-but-get-rejected-in-gcp-with-signaturedoesnotmatch",
+  "category_id": 7,
+  "word_count": 1949,
+  "deleted_at": null,
+  "user_id": 970,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/1/163cdd46e7020d215072a79f22101605945cdd59_2_1024x511.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3288",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1169,
+      "height": 584,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/2X/1/163cdd46e7020d215072a79f22101605945cdd59.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 511,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/1/163cdd46e7020d215072a79f22101605945cdd59_2_1024x511.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How do I use `fdbbackup` with Google Cloud Storage?",
+      "id": 1469,
+      "title": "How do I use `fdbbackup` with Google Cloud Storage?",
+      "slug": "how-do-i-use-fdbbackup-with-google-cloud-storage",
+      "posts_count": 13,
+      "reply_count": 4,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2019-06-19T17:15:37.202Z",
+      "last_posted_at": "2022-04-17T06:32:11.694Z",
+      "bumped": true,
+      "bumped_at": "2022-04-17T06:54:24.104Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2188,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 581,
+            "username": "surprisetalk",
+            "name": "Taylor Sarrafian",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/surprisetalk/{size}/579_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 746,
+            "username": "matiasholte",
+            "name": "Matias Holte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 677,
+            "username": "Wade",
+            "name": "Wade",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wade/{size}/826_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 970,
+            "username": "mason",
+            "name": "mason",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup: backup_error",
+      "id": 2624,
+      "title": "Fdbbackup: backup_error",
+      "slug": "fdbbackup-backup-error",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/f/f918f61d53b8958e5ae3a6e7975b55c5fd931d1a_2_1024x359.png",
+      "created_at": "2021-03-26T10:08:59.583Z",
+      "last_posted_at": "2021-05-25T22:41:19.000Z",
+      "bumped": true,
+      "bumped_at": "2021-05-25T22:41:19.000Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1217,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 908,
+            "username": "SnigdhaPathak",
+            "name": "Snigdha Pathak",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/e95f7d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 909,
+            "username": "findingnemo",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/ccd318/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "AWS Signature V4 needed for backup to S3 bucket encrypted with AWS KMS",
+      "id": 2366,
+      "title": "AWS Signature V4 needed for backup to S3 bucket encrypted with AWS KMS",
+      "slug": "aws-signature-v4-needed-for-backup-to-s3-bucket-encrypted-with-aws-kms",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2020-09-29T03:27:17.975Z",
+      "last_posted_at": "2020-10-08T18:49:52.462Z",
+      "bumped": true,
+      "bumped_at": "2020-10-08T18:49:52.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 4471,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 820,
+            "username": "kcking",
+            "name": "Kevin King",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kcking/{size}/934_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "S3 backup using V4 signature",
+      "id": 2842,
+      "title": "S3 backup using V4 signature",
+      "slug": "s3-backup-using-v4-signature",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2021-08-05T12:15:08.684Z",
+      "last_posted_at": "2021-08-11T05:42:57.181Z",
+      "bumped": true,
+      "bumped_at": "2021-08-11T05:42:57.181Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 695,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 967,
+            "username": "jhasne",
+            "name": "Jhasne",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jhasne/{size}/1137_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 677,
+            "username": "Wade",
+            "name": "Wade",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wade/{size}/826_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "id": 1131,
+      "title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "slug": "fdbbackup-expire-with-blobstore-returning-error-not-deleting-from-s3",
+      "posts_count": 19,
+      "reply_count": 11,
+      "highest_post_number": 19,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/dc9b21297880928293b7194125f1889c26a4f70a_2_1024x579.png",
+      "created_at": "2019-02-12T22:55:17.346Z",
+      "last_posted_at": "2020-01-24T13:25:04.572Z",
+      "bumped": true,
+      "bumped_at": "2020-01-24T13:25:04.572Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2227,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 634,
+            "username": "somu",
+            "name": "somasundaram",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ce73a5/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 970,
+        "username": "mason",
+        "name": "mason",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 970,
+      "username": "mason",
+      "name": "mason",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mason/{size}/1145_2.png"
+    },
+    "last_poster": {
+      "id": 849,
+      "username": "johscheuer",
+      "name": "Johannes Scheuermann",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/6355",
+        "title": "Current v4 header implementation for backup only works for AWS \u00b7 Issue #6355 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 13,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/pull/6354",
+        "title": "Fix compatibility issue of s3 backup by wangzw \u00b7 Pull Request #6354 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/how-do-i-use-fdbbackup-with-google-cloud-storage/1469",
+        "title": "How do I use `fdbbackup` with Google Cloud Storage?",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 970,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/issues/6382",
+        "title": "s3 backup should support virtual hosting style \u00b7 Issue #6382 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html",
+        "title": "Authenticating Requests: Using Query Parameters (AWS Signature Version 4) - Amazon Simple Storage Service",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 970,
+        "domain": "docs.aws.amazon.com",
+        "root_domain": "amazon.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

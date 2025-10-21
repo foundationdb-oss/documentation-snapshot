@@ -1,0 +1,665 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14373,
+        "name": "AtomicConsistent",
+        "username": "fe3071baac4c314bc238",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/a4c791/{size}.png",
+        "created_at": "2024-09-20T08:16:30.070Z",
+        "cooked": "<p>Hi,<br>\nI am currently implementing a growable array data model on foundationdb</p>\n<p>regarding the <code>push</code> functionality, the current impl does something similar to the below psuedocode.</p>\n<p><code>begin transaction; length = to_u64( get(subspace(name, \"length\"), no_snapshot) ) set(subspace(name, to_bytes(length)),  value ) set(subspace(name, \"length\"),  length + 1 ) commit;</code></p>\n<p>The following is a little slow on my M2 pro, ssd and mem engine (didn\u2019y try redwood).<br>\nTaking roughly ~9ms.<br>\nIn addition, I am not certain it guarantees serial isolation.</p>\n<p>Would appreciate improvements.<br>\nThanks</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-09-20T08:16:30.070Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 20,
+        "reads": 17,
+        "readers_count": 16,
+        "score": 103.4,
+        "yours": false,
+        "topic_id": 4627,
+        "topic_slug": "how-would-one-go-about-implementing-an-arraylist-on-fdb",
+        "display_username": "AtomicConsistent",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1471,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-would-one-go-about-implementing-an-arraylist-on-fdb/4627/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14380,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2024-09-23T10:41:17.541Z",
+        "cooked": "<p>That seems like about the data model I\u2019d expect for an array list data structure. You can see it\u2019s pretty similar to the \u201cvector\u201d data structure in the documentation: <a href=\"https://apple.github.io/foundationdb/vector.html\" class=\"inline-onebox\">Vector \u2014 FoundationDB OFF documentation</a> The docs omit a separate \u201clength\u201d field, but it does make sense to add one if you want to be able to retrieve the length in O(1) database keys read. Arguably, you could use atomic mutations here to update the length, but the main benefit of that is that it allows concurrent transactions to both modify the same key, but it\u2019s clear that this array structure is actually amenable to that. (See: <a href=\"https://apple.github.io/foundationdb/developer-guide.html#atomic-operations\">Atomic Operations</a>.)</p>\n<p>I believe the code guarantees serial isolation, assuming that \u201cappend\u201d (above) and \u201ctruncate\u201d (removing the last <em>k</em> elements) are the only operations. That\u2019s because both operations will end up reading and updating the <code>length</code> key, so no two transactions can concurrently update the same element. If you add a \u201cset\u201d operation that takes an index and sets it to a value, you should also be okay as long as you also read the length for bounds checking purposes. In theory, this would allow two \u201cset\u201d operations to happen concurrently as long as nothing changes the length, even if they happen on the same key. Whether or not these semantics are desirable are up to the use case. If the key is also read during the transaction, this would stop two updates to the same key from being concurrently updated. (There are also modifications to be made if you wanted to support, say, an append and a set operation to both succeed, but you have to be a little careful not to allow, say, a truncate and a set to a now-deleted index to be allowed concurrently.)</p>\n<p>I am a little surprised that this took 9 ms locally. There are a few things that could be going on.</p>\n<ul>\n<li>For one, there\u2019s some overhead with beginning and committing a transaction, so you\u2019ll get better performance (per operation) by batching more work together in a single transaction. You can try and get insight into that by instrumenting timing the <code>commit</code> separately from the reads. You may also want to make an explicit call to <code>get_read_version</code>, which is a necessary part of transaction initialization that happens during the first read if not called separately, just to get insight into where the time is going.</li>\n<li>There\u2019s some amount of overhead during the initial set up when connecting a client to the server (e.g., the client needs to figure out the current configuration of the FDB cluster to start routing requests correctly). This can be compounded with things like JIT compilation if you\u2019re using, say, the Java bindings. For that reason, it can make sense to give it time to warm up before making measurements.</li>\n</ul>\n<p>That being said, I\u2019m still a little surprised at 9 ms. I\u2019d expect each read to take about 1 ms apiece (maybe a little faster given that there shouldn\u2019t really be network delay). There\u2019s only one read, so that\u2019s 1 ms. Set operations are done locally in memory, so those are \u201cfree\u201d (ish). The get-read-version at the beginning of the read can take 2-3 ms, especially if the cluster is busy, as that\u2019s where FDB injects rate limiting. Commit taking 4 ms seems a little high, though not impossible</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-09-23T10:41:17.541Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 33.2,
+        "yours": false,
+        "topic_id": 4627,
+        "topic_slug": "how-would-one-go-about-implementing-an-arraylist-on-fdb",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/vector.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Vector \u2014 FoundationDB OFF documentation",
+            "clicks": 7
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#atomic-operations",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB OFF documentation",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-would-one-go-about-implementing-an-arraylist-on-fdb/4627/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14373,
+      14380
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      397
+    ],
+    [
+      2,
+      393
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How Would One Go About Implementing An &ldquo;ArrayList&rdquo; On FDB?",
+  "id": 4627,
+  "title": "How Would One Go About Implementing An \"ArrayList\" On FDB?",
+  "posts_count": 2,
+  "created_at": "2024-09-20T08:16:30.014Z",
+  "views": 84,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-09-23T10:41:17.541Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-would-one-go-about-implementing-an-arraylist-on-fdb",
+  "category_id": 7,
+  "word_count": 671,
+  "deleted_at": null,
+  "user_id": 1471,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4627",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Array with insert and delete",
+      "id": 2030,
+      "title": "Array with insert and delete",
+      "slug": "array-with-insert-and-delete",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-03-28T20:33:15.346Z",
+      "last_posted_at": "2020-04-01T21:27:13.847Z",
+      "bumped": true,
+      "bumped_at": "2020-04-01T21:27:13.847Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1153,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 749,
+            "username": "abird",
+            "name": "Alan Bird",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abird/{size}/805_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 251,
+            "username": "George",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Clj-foundationdb - Clojure bindings over Java wrapper",
+      "id": 393,
+      "title": "Clj-foundationdb - Clojure bindings over Java wrapper",
+      "slug": "clj-foundationdb-clojure-bindings-over-java-wrapper",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-05-10T09:39:50.001Z",
+      "last_posted_at": "2018-05-10T16:00:56.888Z",
+      "bumped": true,
+      "bumped_at": "2018-05-10T16:00:56.888Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1013,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 231,
+            "username": "xtreak",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/ad7895/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimizing a single large transaction ( 10,000 keys)",
+      "id": 1961,
+      "title": "Optimizing a single large transaction ( 10,000 keys)",
+      "slug": "optimizing-a-single-large-transaction-10-000-keys",
+      "posts_count": 12,
+      "reply_count": 10,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-02-17T13:36:55.355Z",
+      "last_posted_at": "2020-02-24T11:30:42.854Z",
+      "bumped": true,
+      "bumped_at": "2020-02-24T11:30:42.854Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2373,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Relax consistency guarantees",
+      "id": 1560,
+      "title": "Relax consistency guarantees",
+      "slug": "relax-consistency-guarantees",
+      "posts_count": 18,
+      "reply_count": 14,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2019-08-05T00:31:11.823Z",
+      "last_posted_at": "2019-10-30T15:35:37.702Z",
+      "bumped": true,
+      "bumped_at": "2019-10-30T15:35:37.702Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2278,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 1471,
+        "username": "fe3071baac4c314bc238",
+        "name": "AtomicConsistent",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/a4c791/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1471,
+      "username": "fe3071baac4c314bc238",
+      "name": "AtomicConsistent",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/a4c791/{size}.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/vector.html",
+        "title": "Vector \u2014 FoundationDB OFF documentation",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 8,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,633 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5719,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2019-12-04T18:52:44.418Z",
+        "cooked": "<p>I\u2019m currently tackling the issue of adding cached metadata to a lot of already-written layers in our application, using the \u201cnew\u201d metadataVersion key.</p>\n<p>These layers predate the introduction of this feature, and most of them either completely ignored the issue (caching data like subspace\u2019s prefix and praying that they NEVER change at runtime) or did not implement any cache and have a lot of latency that could be reduced.</p>\n<p>My goals are:</p>\n<ul>\n<li>Have a global \u201cAPI\u201d that looks the same across all layers (in my case in C#/.NET but could apply to any other language) that deals with the caching of state shared between multiple transactions.</li>\n<li>Make sure that multiple layers can participate in the SAME transaction, so if they all have their own cached state, they can still be sure that they are all on the same page.</li>\n<li>Be sure that the global cache implementation is bullet proof so that all the rest of the code can rely on it without doing its own checks.</li>\n<li>Include the Directory Layer in this too, because it also has a cached state (prefix of all the subspaces, and we use them a lot)</li>\n</ul>\n<p>The end result being that we could reduce the latency of transactions as much as possible.</p>\n<p>My initial naive approach is to have some way for each layer to register a lambda \u201cinit\u201d function that is called to create a new \u201cstate\u201d, that would include any data read from the database, that change infrequently, and return an object that encapsulate all of this. Then all other transaction would obtain a reference to this state and use it.</p>\n<p>By experience, I know that dealing with caches and transaction can be complex, because the cache must only be updated <em>if the transaction commits successfully</em> !</p>\n<p>So for example here, from a cold start with an empty cache, and initial metadataVersion (\u201cMV\u201d) equal to 123.<br>\n<div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef.png\" data-download-href=\"/uploads/short-url/xKeQsNSPXlTKiB8EZScaF1SRUlx.png?dl=1\" title=\"image.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef_2_690x214.png\" alt=\"image\" data-base62-sha1=\"xKeQsNSPXlTKiB8EZScaF1SRUlx\" width=\"690\" height=\"214\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef_2_690x214.png, https://global.discourse-cdn.com/foundationdb/optimized/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef_2_1035x321.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image.png</span><span class=\"informations\">1224\u00d7380 55 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>T1 reads the metadataVersion (123), check the cache which is empty. It then invoke the \u201cinit\u201d lambda of the layer which will read all the metadata from the database, create a new \u201cstate\u201d. The transaction can use this state, but it cannot be published in the cache yet (only after a commit).</p>\n<p>Once T1 commits, the cache is updated with the state at MV=123.</p>\n<p>T2 starts later, read the MV which is still 123, find a state in the cache with the same MV, and can use the state (created by another transaction).</p>\n<p>First questions:</p>\n<ul>\n<li>What if the transaction is read-only, but the \u201cinit\u201d code for the layer needs to <em>write</em> some things (to populate missing things) ? Does this mean that the \u201cinit\u201d code can only <em>read</em> metadata, and all pre-initialization should be performed elsewhere?</li>\n<li>What happens if multiple transactions (T1a, T1b) both starts roughly at the same time, and the cache is still empty? How do I know which state to insert in the cache? If they were both constructed at the same metadataversion, they <em>should</em> be identical? or maybe should I use the more recent read or commit version?</li>\n<li>How do I deal with long running transactions that are reset multiple times (ex: bulk reads, that read 5s, then reset and continue reading from previous cursor).</li>\n</ul>\n<p>Now, some other application or unrelated code does some change into another part of the cluster, and bumps the metadataversion to MV = 456, without any change to our layer\u2019s metadata:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/b2c5de65e644e2a919135a7606a2bcc7aa272d40.png\" data-download-href=\"/uploads/short-url/pvuV8uOo1swhnSOVecS9uhCyNdC.png?dl=1\" title=\"image.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/b2c5de65e644e2a919135a7606a2bcc7aa272d40_2_690x433.png\" alt=\"image\" data-base62-sha1=\"pvuV8uOo1swhnSOVecS9uhCyNdC\" width=\"690\" height=\"433\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/b2c5de65e644e2a919135a7606a2bcc7aa272d40_2_690x433.png, https://global.discourse-cdn.com/foundationdb/original/1X/b2c5de65e644e2a919135a7606a2bcc7aa272d40.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/1X/b2c5de65e644e2a919135a7606a2bcc7aa272d40.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/b2c5de65e644e2a919135a7606a2bcc7aa272d40_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">image.png</span><span class=\"informations\">867\u00d7545 54.4 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<p>T3 starts, reads the MV which is 456. This does not match the state in the cache. Before dropping the state entirely, let\u2019s say we have our own private \u201cversion\u201d key that could be quickly read. We find that this key has not changed, so we can still safely use the state from MV=123, even if we are now at MV=456 in the cluster. The transaction can continue with doing only a few quick reads, compared to having to re-read the entire state from the db.</p>\n<p>Questions:</p>\n<ul>\n<li>When is it safe to update the cache ? Do I need to also wait for a successful commit, or can I immediately update the cache to say that the state is also valid for MV=456? Let\u2019s say T4 starts right after that, but before T3 commits, can it then safely use the cache?</li>\n</ul>\n<p>Next, how do I deal with multiple rapid changes to the metadataVersion, that are observed at different time by multiple concurrent transactions, and let\u2019s say that some of the transaction lag a lot behind, and by the time they have read the new state (which is already deprecated), they attempt to update the cache while transactions started after them but that were quicker to commit, have already update the cache with the most recent state? What kind of parameters do I have to provide to the cache so that it can safely update or discard proposed state from all the callbacks of concurrent transactions?</p>\n<p>TBD: need to draw a graph for this situation as well but it\u2019s getting late! sorry <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=9\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"></p>\n<p>Questions:</p>\n<ul>\n<li>Is there a universal way to safely update the cache given the tuple (read_version, metadata_version, commit_version) of a transaction that will deal with concurrent / lagging transactions? I have a feeling that this will always be the same question for anyone wanting to do such caching.</li>\n</ul>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-12-04T18:56:14.725Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 174,
+        "reads": 44,
+        "readers_count": 43,
+        "score": 882.8,
+        "yours": false,
+        "topic_id": 1809,
+        "topic_slug": "how-to-safely-add-a-metadata-caching-layer-on-top-of-existing-layers",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef.png",
+            "internal": false,
+            "reflection": false,
+            "title": "ec81d4eb9908e4a288a66bde6b7efd3728805bef.png",
+            "clicks": 0
+          },
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/b2c5de65e644e2a919135a7606a2bcc7aa272d40.png",
+            "internal": false,
+            "reflection": false,
+            "title": "b2c5de65e644e2a919135a7606a2bcc7aa272d40.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-safely-add-a-metadata-caching-layer-on-top-of-existing-layers/1809/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5814,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2019-12-12T19:05:17.074Z",
+        "cooked": "<p>So, after <a href=\"https://github.com/apple/foundationdb/issues/1415\" rel=\"nofollow noopener\">attempting to add a cache on top of the directory layer</a> that can compose well with other layers (when used in the same transaction), the <a href=\"https://forums.foundationdb.org/t/cannot-commit-transaction-that-reads-the-metadataversion-key-after-changing-it/1833\">answer is that it is not very easy to do</a>, and require careful care and also as a few restrictions.</p>\n<ol>\n<li>\n<p>Reading the <code>\\xff/metadataVersion</code> key will FAIL after it has been changed in the same transaction. An it will also doom the transaction when it attempt to commit. The only sensible way to deal with this is to prevent the read and return \u2018null\u2019 when this is the case. <em>Ideally, this should be addressed at the binding layer with a dedicated API because it is difficult to implement correctly!</em></p>\n</li>\n<li>\n<p>When a layer A observe a \u2018null\u2019 value for the metadata version, it means that another layer B changed something somewhere previously in the current transaction. This <em>does not</em> mean that the cache of layer A is unusable, but layer A cannot know it and has to check again.</p>\n</li>\n<li>\n<p>Even if layer A detect a change and update its own cache context, it cannot use that context in the next transaction, because it can fail to commit, or another layer can interfere and prevent it from knowing what is the metadataVersion value linked to that context. The only way is to check right before a commit, and discard the newly constructed cache context. Only transactions where nobody change the metadata version can publish a new cache context for the next ones.</p>\n</li>\n<li>\n<p>Attempting to build a \u201csmart\u201d cache that will observe local schema mutation in the same transaction is very difficult to do, if the same transaction can be accessed from multiple threads. The best bet is to enforce a mutual exclusions between operations that use the cache, and operations that mutates the schema. Especially: resources obtained from the cache <em>before</em> calling methods that change the schema are <em>suspect</em> and should be read again!</p>\n</li>\n<li>\n<p>Each layer needs <em>at least</em> a local \u201cversion\u201d key on top of the global metadataVersion key, which has to be updated everytime the schema is changed, and can then be used to quickly revalidate the cache (ideally with a single read). If the layer uses a versionStamp for that key (which is sensible), then it will fall in the same trap as in 1) and has to be extra careful to not attempt to read that key again in the same transaction (locking is required if layer code is multi-threaded!)</p>\n</li>\n<li>\n<p>Any layer at level N, in the stack of layers, SHOULD NOT cache any data obtained from the cache of layer at level N-1. Instead it should request the data everytime it needs it, and rely on that layer\u2019s cache to be efficient. Ideally, any cached resource returned to the outside should have a \u201cself destruct\u201d option that the layer could trigger, if the previous cache context is invalidated, enforcing the rule of \u201cdon\u2019t put the cached resource in a static somewhere!\u201d</p>\n</li>\n</ol>\n<p>If these requirements are met, then it looks like it is possible to build multiple levels of caching built on top of each other, and should be efficient for transactions that do not mutate the schema of any of these layers.</p>\n<p>So an example when combining the Directory Layer with an hypothetical Record Layer that uses directory subspaces to store the content of tables and indexes, and has complex metadata that needs to be parsed in memory to be efficient:</p>\n<ul>\n<li>\n<p>The <strong>Directory Layer</strong> has a <code>TryOpenCached(path)</code> API that returned a new subspace instance but that will use a cache context to store the prefixes of each subspaces. In most cases, no reads will be performed (except the initial GRV but that is inevitable).</p>\n</li>\n<li>\n<p>The <strong>Record Layer</strong> has a <code>GetCachedTable(tableName)</code> method that will return a new \u201cTable\u201d instance where the metadata (schema, indexes, \u2026) comes from the cache context, but this layer HAS to call the \u201cTryOpenCached(\u2026)\u201d method on the DL everytime it wants to read/write keys from the tables or indexes. It MUST NOT store the subspace instance obtained in the transaction in its own cache, because it has NO WAY to know that the Directory Layer\u2019s cache has been invalidated since.</p>\n</li>\n</ul>\n<p>Ideally, the cached subspace instance returned by the Directory Layer has a pointer to the original cache context, and it will always check that this context is still active before encoding or decoding keys. If the original cache context is destroyed by the DL, then that instance will be poisoned and throw errors instead.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-12-12T19:05:17.074Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 138,
+        "reads": 38,
+        "readers_count": 37,
+        "score": 697.6,
+        "yours": false,
+        "topic_id": 1809,
+        "topic_slug": "how-to-safely-add-a-metadata-caching-layer-on-top-of-existing-layers",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/1415",
+            "internal": false,
+            "reflection": false,
+            "title": "Add support for the new metadata version functionality to the directory layer \u00b7 Issue #1415 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 15
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/cannot-commit-transaction-that-reads-the-metadataversion-key-after-changing-it/1833",
+            "internal": true,
+            "reflection": false,
+            "title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+            "clicks": 9
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-safely-add-a-metadata-caching-layer-on-top-of-existing-layers/1809/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5719,
+      5814
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2148
+    ],
+    [
+      2,
+      2140
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How to safely add a metadata caching &ldquo;layer&rdquo; on top of existing layers?",
+  "id": 1809,
+  "title": "How to safely add a metadata caching \"layer\" on top of existing layers?",
+  "posts_count": 2,
+  "created_at": "2019-12-04T18:52:44.332Z",
+  "views": 1311,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-12-12T19:05:17.074Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-safely-add-a-metadata-caching-layer-on-top-of-existing-layers",
+  "category_id": 7,
+  "word_count": 1678,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef_2_1024x317.png",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1809",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1224,
+      "height": 380,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef.png"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 317,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/ec81d4eb9908e4a288a66bde6b7efd3728805bef_2_1024x317.png"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "id": 1833,
+      "title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+      "slug": "cannot-commit-transaction-that-reads-the-metadataversion-key-after-changing-it",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-12-11T22:52:33.816Z",
+      "last_posted_at": "2019-12-13T13:23:15.818Z",
+      "bumped": true,
+      "bumped_at": "2019-12-13T14:11:35.389Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1297,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A new tool for managing layer metadata",
+      "id": 1191,
+      "title": "A new tool for managing layer metadata",
+      "slug": "a-new-tool-for-managing-layer-metadata",
+      "posts_count": 11,
+      "reply_count": 4,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-03-02T02:24:25.605Z",
+      "last_posted_at": "2019-04-03T23:30:21.306Z",
+      "bumped": true,
+      "bumped_at": "2019-04-03T23:30:21.306Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2506,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Should mutations performed via fdbcli always update the \\xff/metadataVersion key?",
+      "id": 2093,
+      "title": "Should mutations performed via fdbcli always update the \\xff/metadataVersion key?",
+      "slug": "should-mutations-performed-via-fdbcli-always-update-the-xff-metadataversion-key",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2020-04-29T11:39:06.923Z",
+      "last_posted_at": "2020-05-14T13:46:08.081Z",
+      "bumped": true,
+      "bumped_at": "2020-05-14T13:46:08.081Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 938,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deferred value checks as an alternative to the metadataVersion key for caching in layers",
+      "id": 2123,
+      "title": "Deferred value checks as an alternative to the metadataVersion key for caching in layers",
+      "slug": "deferred-value-checks-as-an-alternative-to-the-metadataversion-key-for-caching-in-layers",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-05-14T13:44:27.861Z",
+      "last_posted_at": "2020-05-26T14:32:11.872Z",
+      "bumped": true,
+      "bumped_at": "2020-05-26T17:43:34.902Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 849,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Implementing atomic DDL for SQL schema",
+      "id": 678,
+      "title": "Implementing atomic DDL for SQL schema",
+      "slug": "implementing-atomic-ddl-for-sql-schema",
+      "posts_count": 9,
+      "reply_count": 2,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-09-03T19:04:26.293Z",
+      "last_posted_at": "2018-09-08T15:28:47.996Z",
+      "bumped": true,
+      "bumped_at": "2018-09-08T15:28:47.996Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2146,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 251,
+            "username": "George",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/george/{size}/620_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/1415",
+        "title": "Add support for the new metadata version functionality to the directory layer \u00b7 Issue #1415 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 15,
+        "user_id": 53,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/cannot-commit-transaction-that-reads-the-metadataversion-key-after-changing-it/1833",
+        "title": "Cannot commit transaction that reads the metadataVersion key after changing it",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 53,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

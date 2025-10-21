@@ -1,0 +1,647 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11073,
+        "name": "",
+        "username": "liuyan",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/839c29/{size}.png",
+        "created_at": "2022-05-09T01:16:52.909Z",
+        "cooked": "<p>I am trying to automatically unlock db using follow command:<br>\n<code>fdbcli --exec \"unlock e37047b3d0c2860b235d684a5a29baac\"</code><br>\nthe output is like<br>\nUnlocking the database is a potentially dangerous operation.<br>\nRepeat the following passphrase if you would like to proceed (3USlDAq5EF) :<br>\nwe need to capture the passphrase  and input it back, how to do that?<br>\nI tried to use go expect, but it sounds it only capture the first line of the output, meaning couldn\u2019t get the passphrase. I also attach a simple go code:</p>\n<pre><code class=\"lang-auto\">package main\n\nimport (\n        \"fmt\"\n\n        gexpect \"github.com/ThomasRooney/gexpect\"\n)\n\nfunc main() {\n\n        child, err := gexpect.Spawn(\"fdbcli --exec \\\"unlock e37047b3d0c2860b235d684a5a29baac\\\"\")\n\n        if err != nil {\n                panic(err)\n        }\n        _, receiver := child.AsyncInteractChannels()\n        line1, open := &lt;-receiver\n        fmt.Println(line1)\n        fmt.Println(open)\n\n        child.Expect(\"):\")\n        child.SendLine(\"passphase\")\n        child.Interact()\n        child.Close()\n}\n</code></pre>\n<p>the output is:</p>\n<pre><code class=\"lang-auto\">Unlocking the database is a potentially dangerous operation.\ntrue\n</code></pre>\n<p>kindly share any advise how to capture passphase. thanks.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-05-09T01:16:52.909Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 78,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 394.6,
+        "yours": false,
+        "topic_id": 3305,
+        "topic_slug": "how-to-use-expect-to-automatically-use-fdbcli-unlock-db",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1029,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-use-expect-to-automatically-use-fdbcli-unlock-db/3305/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11079,
+        "name": "",
+        "username": "liuyan",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/839c29/{size}.png",
+        "created_at": "2022-05-09T08:58:56.706Z",
+        "cooked": "<p>@ <strong><a href=\"https://github.com/tclinken\" rel=\"noopener nofollow ugc\">tclinken</a></strong> do you have any suggestions on how to proceed? thankl you.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-05-09T08:58:56.706Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 19.4,
+        "yours": false,
+        "topic_id": 3305,
+        "topic_slug": "how-to-use-expect-to-automatically-use-fdbcli-unlock-db",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/tclinken",
+            "internal": false,
+            "reflection": false,
+            "title": "tclinken (Trevor Clinkenbeard) \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1029,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-use-expect-to-automatically-use-fdbcli-unlock-db/3305/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11082,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2022-05-09T12:47:49.963Z",
+        "cooked": "<p>You could use some python script that modifies the system keyspace. But be sure to test it properly as modifying the system keyspace can result in data corruption or complete data loss. You can look at <a href=\"https://github.com/apple/foundationdb/blob/3bf53575629a4537ae157d95de4106b27ea9c28a/fdbclient/ManagementAPI.actor.cpp#L2068\">the FDB implementation</a> to see what you need to run.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-05-09T12:47:49.963Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 19.2,
+        "yours": false,
+        "topic_id": 3305,
+        "topic_slug": "how-to-use-expect-to-automatically-use-fdbcli-unlock-db",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/3bf53575629a4537ae157d95de4106b27ea9c28a/fdbclient/ManagementAPI.actor.cpp#L2068",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/ManagementAPI.actor.cpp at 3bf53575629a4537ae157d95de4106b27ea9c28a \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 12
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-use-expect-to-automatically-use-fdbcli-unlock-db/3305/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11073,
+      11079,
+      11082
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1262
+    ],
+    [
+      3,
+      1261
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How to use expect to automatically use fdbcli unlock db?",
+  "id": 3305,
+  "title": "How to use expect to automatically use fdbcli unlock db?",
+  "posts_count": 3,
+  "created_at": "2022-05-09T01:16:52.841Z",
+  "views": 431,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2022-05-09T12:47:49.963Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-use-expect-to-automatically-use-fdbcli-unlock-db",
+  "category_id": 7,
+  "word_count": 223,
+  "deleted_at": null,
+  "user_id": 1029,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3305",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Is there a way to programatically to unlock a 6.2 database?",
+      "id": 3984,
+      "title": "Is there a way to programatically to unlock a 6.2 database?",
+      "slug": "is-there-a-way-to-programatically-to-unlock-a-6-2-database",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2023-05-26T22:31:25.465Z",
+      "last_posted_at": "2023-05-26T22:31:25.527Z",
+      "bumped": true,
+      "bumped_at": "2023-05-26T22:31:25.527Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 275,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 890,
+            "username": "tangerine",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tangerine/{size}/1084_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Creating new database from command line using `fdbcli &ndash;exec`",
+      "id": 1735,
+      "title": "Creating new database from command line using `fdbcli --exec`",
+      "slug": "creating-new-database-from-command-line-using-fdbcli-exec",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-11-14T18:52:06.236Z",
+      "last_posted_at": "2019-11-14T20:53:04.485Z",
+      "bumped": true,
+      "bumped_at": "2019-11-14T20:53:04.485Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2474,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 660,
+            "username": "kc626",
+            "name": "Kevin Chan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/k/4af34b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Restoring the backup that was taken through fdbbackup results in database lock",
+      "id": 1849,
+      "title": "Restoring the backup that was taken through fdbbackup results in database lock",
+      "slug": "restoring-the-backup-that-was-taken-through-fdbbackup-results-in-database-lock",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-12-17T19:41:16.851Z",
+      "last_posted_at": "2019-12-18T18:34:06.575Z",
+      "bumped": true,
+      "bumped_at": "2019-12-18T18:34:06.575Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 853,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Running a Go test with a Transaction",
+      "id": 1288,
+      "title": "Running a Go test with a Transaction",
+      "slug": "running-a-go-test-with-a-transaction",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-04-08T23:38:28.704Z",
+      "last_posted_at": "2020-03-19T22:39:42.212Z",
+      "bumped": true,
+      "bumped_at": "2020-03-19T22:39:42.212Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 727,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 558,
+            "username": "bancron",
+            "name": "bancron",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bancron/{size}/550_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 407,
+            "username": "pjvds",
+            "name": "Pieter Joost Van De Sande",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pjvds/{size}/394_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Run fdbbackup/fdbrestore on a TLS-enabled cluster",
+      "id": 1851,
+      "title": "Run fdbbackup/fdbrestore on a TLS-enabled cluster",
+      "slug": "run-fdbbackup-fdbrestore-on-a-tls-enabled-cluster",
+      "posts_count": 10,
+      "reply_count": 7,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-12-18T22:45:53.439Z",
+      "last_posted_at": "2019-12-19T18:48:10.897Z",
+      "bumped": true,
+      "bumped_at": "2019-12-19T18:48:10.897Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1359,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 566,
+            "username": "fengqu",
+            "name": "Feng Qu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/85f322/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1029,
+        "username": "liuyan",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/839c29/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 1029,
+      "username": "liuyan",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/839c29/{size}.png"
+    },
+    "last_poster": {
+      "id": 15,
+      "username": "markus.pilman",
+      "name": "Markus Pilman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/3bf53575629a4537ae157d95de4106b27ea9c28a/fdbclient/ManagementAPI.actor.cpp#L2068",
+        "title": "foundationdb/ManagementAPI.actor.cpp at 3bf53575629a4537ae157d95de4106b27ea9c28a \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 12,
+        "user_id": 15,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,546 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 10323,
+        "name": "Jiang Xi",
+        "username": "JiangXiNJU",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jiangxinju/{size}/1247_2.png",
+        "created_at": "2021-11-25T09:15:16.022Z",
+        "cooked": "<p>Hi. I have already set a kv (\u2018\\x00\\x05\\x00\\x00\\x00\\x00\\x00\\x00movie\u2019 \uff0c\u2019\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\u2019) into the fdb. And I can search this with fdbcli  getrange \\x00\\x05 \\x00\\xff.</p>\n<p>But when I use C API (version 630), something strange happened.<br>\nWhen the code is :</p>\n<pre><code class=\"lang-auto\"> uint8_t startUint[2] = {0x0, 0x5};\n    uint8_t endUnit[2] = {254, 254};\n    FDBFuture *future = fdb_transaction_get_range(tr, startUint, 2, 0, 1,\n                                                      endUnit, 2, 1, 0,\n                                                  0, 0, FDB_STREAMING_MODE_LARGE, 0, 0, 0);\n</code></pre>\n<p>then I get the kv.</p>\n<p>When the code is :</p>\n<pre><code class=\"lang-auto\">uint8_t startUint[2] = {0x0, 0x5};\n    uint8_t endUnit[2] = {0x0, 254};\n    FDBFuture *future = fdb_transaction_get_range(tr, startUint, 2, 0, 1,\n                                                      endUnit, 2, 1, 0,\n                                                  0, 0, FDB_STREAMING_MODE_LARGE, 0, 0, 0);\n</code></pre>\n<p>I got Nothing !<br>\nCan Anyone help ?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-11-25T09:15:16.022Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 55,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 278.0,
+        "yours": false,
+        "topic_id": 3038,
+        "topic_slug": "why-cant-get-the-key-value-i-need-for-using-fdb-transaction-get-range",
+        "display_username": "Jiang Xi",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1039,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-cant-get-the-key-value-i-need-for-using-fdb-transaction-get-range/3038/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 10334,
+        "name": "Jiang Xi",
+        "username": "JiangXiNJU",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jiangxinju/{size}/1247_2.png",
+        "created_at": "2021-11-27T03:37:15.102Z",
+        "cooked": "<p>when I fix the code as below:</p>\n<pre><code class=\"lang-auto\">uint8_t startUint[2] = {0x0, 0x5};\nuint8_t endUnit[2] = {0x0, 254};\nFDBFuture *future = fdb_transaction_get_range(tr, startUint, 2, 1, 0,\n                                                      endUnit, 2, 0, 1,\n                                                  0, 0, FDB_STREAMING_MODE_LARGE, 0, 0, 0);\n</code></pre>\n<p>I can  get the  kv again<br>\nThen  I  change the startUint[3]={0x0, 0x5,0x2}<br>\nI run</p>\n<pre><code class=\"lang-auto\">FDBFuture *future = fdb_transaction_get_range(tr, startUint, 2, 1, 0,\n                                                      endUnit, 2, 0, 1,\n                                                  0, 0, FDB_STREAMING_MODE_LARGE, 0, 0, 0);\n</code></pre>\n<p>I get the kv too !</p>\n<p>I 'm totally confused!</p>\n<p>can  anyone answer that???</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-11-27T03:37:15.102Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 3.0,
+        "yours": false,
+        "topic_id": 3038,
+        "topic_slug": "why-cant-get-the-key-value-i-need-for-using-fdb-transaction-get-range",
+        "display_username": "Jiang Xi",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1039,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/why-cant-get-the-key-value-i-need-for-using-fdb-transaction-get-range/3038/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      10323,
+      10334
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1427
+    ],
+    [
+      2,
+      1425
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Why can&rsquo;t get the key-value I need for using fdb_transaction_get_range",
+  "id": 3038,
+  "title": "Why can't get the key-value I need for using fdb_transaction_get_range",
+  "posts_count": 2,
+  "created_at": "2021-11-25T09:15:15.954Z",
+  "views": 705,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-11-27T03:37:15.102Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "why-cant-get-the-key-value-i-need-for-using-fdb-transaction-get-range",
+  "category_id": 7,
+  "word_count": 211,
+  "deleted_at": null,
+  "user_id": 1039,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3038",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "id": 1355,
+      "title": "How to get exact range of keys using fdb_transaction_get_range in C Programming",
+      "slug": "how-to-get-exact-range-of-keys-using-fdb-transaction-get-range-in-c-programming",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-05-09T12:22:07.878Z",
+      "last_posted_at": "2019-05-20T14:14:50.692Z",
+      "bumped": true,
+      "bumped_at": "2019-05-20T14:14:50.692Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1573,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 219,
+            "username": "MMcM",
+            "name": "Mike McMahon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why can I only range read 2857 keys?",
+      "id": 1517,
+      "title": "Why can I only range read 2857 keys?",
+      "slug": "why-can-i-only-range-read-2857-keys",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-13T06:06:58.493Z",
+      "last_posted_at": "2019-07-13T19:32:13.906Z",
+      "bumped": true,
+      "bumped_at": "2019-07-13T19:32:13.906Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 634,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Is it possible to fetch two different keys using &ldquo;fdb_transaction_get_range&rdquo; API in C program",
+      "id": 1388,
+      "title": "Is it possible to fetch two different keys using \"fdb_transaction_get_range\" API in C program",
+      "slug": "is-it-possible-to-fetch-two-different-keys-using-fdb-transaction-get-range-api-in-c-program",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-23T08:14:07.379Z",
+      "last_posted_at": "2019-05-23T15:43:55.444Z",
+      "bumped": true,
+      "bumped_at": "2019-05-23T15:43:55.444Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 591,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can&rsquo;t get last pair in FDBKeyValue array",
+      "id": 1252,
+      "title": "Can't get last pair in FDBKeyValue array",
+      "slug": "cant-get-last-pair-in-fdbkeyvalue-array",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-03-24T06:57:23.327Z",
+      "last_posted_at": "2019-03-25T21:53:28.346Z",
+      "bumped": true,
+      "bumped_at": "2019-03-25T22:09:28.671Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 886,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to Fetch all stored key-values at once",
+      "id": 1285,
+      "title": "How to Fetch all stored key-values at once",
+      "slug": "how-to-fetch-all-stored-key-values-at-once",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-04-05T12:12:49.636Z",
+      "last_posted_at": "2019-04-10T20:48:57.581Z",
+      "bumped": true,
+      "bumped_at": "2019-04-10T20:48:57.581Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 5507,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1039,
+        "username": "JiangXiNJU",
+        "name": "Jiang Xi",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jiangxinju/{size}/1247_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1039,
+      "username": "JiangXiNJU",
+      "name": "Jiang Xi",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jiangxinju/{size}/1247_2.png"
+    },
+    "last_poster": {
+      "id": 1039,
+      "username": "JiangXiNJU",
+      "name": "Jiang Xi",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jiangxinju/{size}/1247_2.png"
+    }
+  },
+  "bookmarks": []
+}

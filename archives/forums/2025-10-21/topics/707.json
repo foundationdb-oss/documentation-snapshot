@@ -1,0 +1,690 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2116,
+        "name": "",
+        "username": "pwliwanow",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pwliwanow/{size}/771_2.png",
+        "created_at": "2018-09-15T21:09:19.894Z",
+        "cooked": "<p>I am <strong>really</strong> impressed with FoundationDB, so lately I\u2019ve started working on a client for Scala. The goal is to create API that is type-safe and idiomatic for Scala: <a href=\"https://github.com/pwliwanow/foundationdb4s\" rel=\"nofollow noopener\">https://github.com/pwliwanow/foundationdb4s</a></p>\n<p>I\u2019ve implemented <code>ClassScheduling</code> example from the docs, to give better understanding how using the library looks like (link to the Scala implementation: <a href=\"https://github.com/pwliwanow/foundationdb4s/blob/master/example/src/main/scala/com/github/pwliwanow/foundationdb4s/example/ClassScheduling.scala\" rel=\"nofollow noopener\">https://github.com/pwliwanow/foundationdb4s/blob/master/example/src/main/scala/com/github/pwliwanow/foundationdb4s/example/ClassScheduling.scala</a>).</p>\n<p>Of course not everything is yet implemented (but more functionalities are coming!), and if you have any suggestions please let me know or create an issue on GitHub.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-09-15T21:11:42.334Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 241,
+        "reads": 49,
+        "readers_count": 48,
+        "score": 1319.8,
+        "yours": false,
+        "topic_id": 707,
+        "topic_slug": "foundationdb-client-for-scala",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/pwliwanow/foundationdb4s",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - pwliwanow/foundationdb4s: Type-safe and idiomatic Scala client for FoundationDB",
+            "clicks": 74
+          },
+          {
+            "url": "https://github.com/pwliwanow/foundationdb4s/blob/master/example/src/main/scala/com/github/pwliwanow/foundationdb4s/example/ClassScheduling.scala",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb4s/ClassScheduling.scala at master \u00b7 pwliwanow/foundationdb4s \u00b7 GitHub",
+            "clicks": 23
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 7
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 373,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-client-for-scala/707/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5363,
+        "name": "",
+        "username": "pwliwanow",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pwliwanow/{size}/771_2.png",
+        "created_at": "2019-10-19T21:42:23.509Z",
+        "cooked": "<p>In the newest release (0.10.1) there are two features added, which I think are interesting enough to be shared here:</p>\n<ol>\n<li>Compile-time derivation of tuple encoders and tuple decoders for custom case classes. For example:</li>\n</ol>\n<pre><code class=\"lang-auto\">import com.apple.foundationdb.tuple.Tuple\nimport com.github.pwliwanow.foundationdb4s.schema.{TupleDecoder, TupleEncoder}\n\ncase class Foo(a: Long, b: String, c: Boolean)\n\nimplicit val fooDecoder: TupleDecoder[Foo] = TupleDecoder.derive[Foo]\nimplicit val fooEncoder: TupleEncoder[Foo] = TupleEncoder.derive[Foo]\n\nval foo = Foo(1L, \"b\", false)\nval tuple: Tuple = fooEnoder.encode(foo)\nval decodedFoo: Foo = fooDecoder.decode(tuple)\n</code></pre>\n<p>In particular:</p>\n<ul>\n<li>Compilation will fail if given class contains field for which there doesn\u2019t exist implicit <code>TupleDecoder</code>/<code>TupleEncoder</code>.</li>\n<li>Derived codecs support schema evolution, e.g. if value was encoded using <code>TupleEncoder[(String, Int)]</code>, it is possible to read the key with <code>TupleDecoder[(String, Int, Option[A])]</code> or with <code>TupleDecoder[(String, Int, List[A])]</code> (where A is any type for which TupleDecoder[A] exist).</li>\n<li>Derivation supports nested structures.</li>\n<li>New codecs may be defined by leveraging already existing ones:</li>\n</ul>\n<pre><code class=\"lang-auto\">implicit val localDateEnc = implicitly[TupleEncoder[Long]].contramap[LocalDate](_.toEpochDay)\nimplicit val localDateDec = implicitly[TupleDecoder[Long]].map(LocalDate.ofEpochDay)\n</code></pre>\n<ol start=\"2\">\n<li>Support for application level schema for namespaces - it enables operations like <code>range</code>, <code>getRange</code>, <code>clear</code> etc. to be type-safe.</li>\n</ol>\n<p>More details in <a href=\"https://github.com/pwliwanow/foundationdb4s#application-level-schema\" rel=\"nofollow noopener\">README section about application level schema</a>. Example \u201cclass scheduling\u201d was rewritten to take advantage of those type-safe operations and to show how it can be used in an application.</p>\n<p>All questions and suggestions are very much welcome!</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-10-19T21:43:59.092Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 50.6,
+        "yours": false,
+        "topic_id": 707,
+        "topic_slug": "foundationdb-client-for-scala",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/pwliwanow/foundationdb4s#application-level-schema",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - pwliwanow/foundationdb4s: Type-safe and idiomatic Scala client for FoundationDB",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 373,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-client-for-scala/707/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 5369,
+        "name": "Binh Nguyen",
+        "username": "ngbinh",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ngbinh/{size}/694_2.png",
+        "created_at": "2019-10-21T13:07:29.342Z",
+        "cooked": "<p>. I have been using your Scala client for a while now.The new schema module looks great</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-10-21T13:07:29.342Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 29.0,
+        "yours": false,
+        "topic_id": 707,
+        "topic_slug": "foundationdb-client-for-scala",
+        "display_username": "Binh Nguyen",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 668,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/foundationdb-client-for-scala/707/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2116,
+      5363,
+      5369
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2593
+    ],
+    [
+      2,
+      2194
+    ],
+    [
+      3,
+      2192
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "FoundationDB client for Scala",
+  "id": 707,
+  "title": "FoundationDB client for Scala",
+  "posts_count": 3,
+  "created_at": "2018-09-15T21:09:19.813Z",
+  "views": 1387,
+  "reply_count": 0,
+  "like_count": 10,
+  "last_posted_at": "2019-10-21T13:07:29.342Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "foundationdb-client-for-scala",
+  "category_id": 7,
+  "word_count": 385,
+  "deleted_at": null,
+  "user_id": 373,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_707",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Evangelism - informing about FoundationDB&rsquo;s new open source status where it fits into the DB landscape",
+      "id": 279,
+      "title": "Evangelism - informing about FoundationDB's new open source status where it fits into the DB landscape",
+      "slug": "evangelism-informing-about-foundationdbs-new-open-source-status-where-it-fits-into-the-db-landscape",
+      "posts_count": 9,
+      "reply_count": 4,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-26T07:48:14.583Z",
+      "last_posted_at": "2018-05-03T23:33:08.864Z",
+      "bumped": true,
+      "bumped_at": "2018-05-03T23:33:08.864Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1941,
+      "category_id": 10,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 188,
+            "username": "sesam",
+            "name": "Simon B ",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sesam/{size}/148_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1,
+            "username": "davelester",
+            "name": "Dave Lester",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davelester/{size}/1927_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 31,
+            "username": "dicklacara",
+            "name": "Richard Applebaum",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8797f3/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Pub/Sub based on FoundationDB",
+      "id": 1074,
+      "title": "Pub/Sub based on FoundationDB",
+      "slug": "pub-sub-based-on-foundationdb",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2019-01-27T19:33:31.530Z",
+      "last_posted_at": "2019-01-27T19:33:31.626Z",
+      "bumped": true,
+      "bumped_at": "2019-01-27T19:33:31.626Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1784,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 373,
+            "username": "pwliwanow",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pwliwanow/{size}/771_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Swift language support",
+      "id": 53,
+      "title": "Swift language support",
+      "slug": "swift-language-support",
+      "posts_count": 27,
+      "reply_count": 12,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-04-19T18:01:37.126Z",
+      "last_posted_at": "2018-11-04T16:00:36.948Z",
+      "bumped": true,
+      "bumped_at": "2018-11-04T16:00:36.948Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 7309,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 31,
+            "username": "dicklacara",
+            "name": "Richard Applebaum",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8797f3/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 197,
+            "username": "nunomaia",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/f9ae1b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1,
+            "username": "davelester",
+            "name": "Dave Lester",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davelester/{size}/1927_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Request for a writeup on how resolvers work and how consistency on that layer is guaranteed",
+      "id": 109,
+      "title": "Request for a writeup on how resolvers work and how consistency on that layer is guaranteed",
+      "slug": "request-for-a-writeup-on-how-resolvers-work-and-how-consistency-on-that-layer-is-guaranteed",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-04-20T09:11:00.838Z",
+      "last_posted_at": "2018-04-20T09:11:00.948Z",
+      "bumped": true,
+      "bumped_at": "2018-04-20T09:11:00.948Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 635,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 75,
+            "username": "hypothere",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hypothere/{size}/86_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "About the Development category",
+      "id": 16,
+      "title": "About the Development category",
+      "slug": "about-the-development-category",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-03-21T13:44:44.549Z",
+      "last_posted_at": null,
+      "bumped": true,
+      "bumped_at": "2018-03-23T19:39:22.679Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": true,
+      "unpinned": null,
+      "excerpt": "Topics related to development of FoundationDB.",
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1343,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1,
+            "username": "davelester",
+            "name": "Dave Lester",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davelester/{size}/1927_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 373,
+        "username": "pwliwanow",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pwliwanow/{size}/771_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 668,
+        "username": "ngbinh",
+        "name": "Binh Nguyen",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ngbinh/{size}/694_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 373,
+      "username": "pwliwanow",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pwliwanow/{size}/771_2.png"
+    },
+    "last_poster": {
+      "id": 668,
+      "username": "ngbinh",
+      "name": "Binh Nguyen",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ngbinh/{size}/694_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/pwliwanow/foundationdb4s",
+        "title": "GitHub - pwliwanow/foundationdb4s: Type-safe and idiomatic Scala client for FoundationDB",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 74,
+        "user_id": 373,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/pwliwanow/foundationdb4s/blob/master/example/src/main/scala/com/github/pwliwanow/foundationdb4s/example/ClassScheduling.scala",
+        "title": "foundationdb4s/ClassScheduling.scala at master \u00b7 pwliwanow/foundationdb4s \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 23,
+        "user_id": 373,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/pwliwanow/foundationdb4s#application-level-schema",
+        "title": "GitHub - pwliwanow/foundationdb4s: Type-safe and idiomatic Scala client for FoundationDB",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 373,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

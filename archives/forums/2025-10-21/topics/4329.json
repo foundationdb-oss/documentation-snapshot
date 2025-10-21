@@ -1,0 +1,930 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13683,
+        "name": "Giuseppe",
+        "username": "gm42",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png",
+        "created_at": "2024-01-16T12:27:18.034Z",
+        "cooked": "<p>The current operator normalizes pod templates to always have request/limit specified: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/b0f00690ba98e6891d36d0f108d847b4079f78e1/internal/deprecations.go#L75\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/internal/deprecations.go at b0f00690ba98e6891d36d0f108d847b4079f78e1 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a></p>\n<p>This normalization is applied whenever cluster spec is loaded, not just when running the <code>deprecation</code> command.</p>\n<p>However, even if storage processes cannot use more than 1 CPU, specifying request and limit will cause CPU throttling to happen (for any process), which is detrimental to latency.</p>\n<p>Has this been considered before? e.g. allowing to <strong>not</strong> specify the upper CPU limit in pod templates?<br>\nRight now it seems impossible to achieve this; I wanted to open a PR but not before a discussion, and do not have permissions anyways.</p>\n<p>I have already measured throttling to be happening, even if in small percentages.</p>\n<p>Thanks for any insight!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-01-16T12:27:18.034Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 17.2,
+        "yours": false,
+        "topic_id": 4329,
+        "topic_slug": "cluster-spec-normalization-forces-cpu-throttling",
+        "display_username": "Giuseppe",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/b0f00690ba98e6891d36d0f108d847b4079f78e1/internal/deprecations.go#L75",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/internal/deprecations.go at b0f00690ba98e6891d36d0f108d847b4079f78e1 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1363,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-spec-normalization-forces-cpu-throttling/4329/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13685,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2024-01-17T12:06:52.836Z",
+        "cooked": "<blockquote>\n<p>Has this been considered before? e.g. allowing to <strong>not</strong> specify the upper CPU limit in pod templates?<br>\nRight now it seems impossible to achieve this; I wanted to open a PR but not before a discussion, and do not have permissions anyways.</p>\n</blockquote>\n<p>This is already possible, see: <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/warnings.md#resource-requirements\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/docs/manual/warnings.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a></p>\n<p>e.g. a spec like this would work:</p>\n<pre data-code-wrap=\"yaml\"><code class=\"lang-yaml\">apiVersion: apps.foundationdb.org/v1beta2\nkind: FoundationDBCluster\nmetadata:\n    name: sample-cluster\nspec:\n  version: 7.1.26\n  processes:\n    general:\n      podTemplate:\n        spec:\n          containers:\n            - name: foundationdb\n              resources:\n                requests:\n                  cpu: 1\n                  memory: 8Gi\n                limits:\n                  org.foundationdb/empty: 0\n</code></pre>\n<p>or if you still want to limit memory this would also work:</p>\n<pre data-code-wrap=\"yaml\"><code class=\"lang-yaml\">apiVersion: apps.foundationdb.org/v1beta2\nkind: FoundationDBCluster\nmetadata:\n    name: sample-cluster\nspec:\n  version: 7.1.26\n  processes:\n    general:\n      podTemplate:\n        spec:\n          containers:\n            - name: foundationdb\n              resources:\n                requests:\n                  cpu: 1\n                  memory: 8Gi\n                limits:\n                  memory: 8Gi\n</code></pre>\n<p>I hope this helps.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-01-17T12:06:52.836Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 27.2,
+        "yours": false,
+        "topic_id": 4329,
+        "topic_slug": "cluster-spec-normalization-forces-cpu-throttling",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/warnings.md#resource-requirements",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/docs/manual/warnings.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-spec-normalization-forces-cpu-throttling/4329/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13686,
+        "name": "Giuseppe",
+        "username": "gm42",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png",
+        "created_at": "2024-01-18T14:05:57.020Z",
+        "cooked": "<p>Thanks, for some reason the latter (limited memory but request-only for CPU) didn\u2019t work for me; will run more tests.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-01-18T14:05:57.020Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 6.6,
+        "yours": false,
+        "topic_id": 4329,
+        "topic_slug": "cluster-spec-normalization-forces-cpu-throttling",
+        "display_username": "Giuseppe",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 849,
+          "username": "johscheuer",
+          "name": "Johannes Scheuermann",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1363,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-spec-normalization-forces-cpu-throttling/4329/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13687,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2024-01-19T16:39:25.856Z",
+        "cooked": "<blockquote>\n<p>Thanks, for some reason the latter (limited memory but request-only for CPU) didn\u2019t work for me; will run more tests.</p>\n</blockquote>\n<p>If you discover that you can reproduce that and there might be a bug in the operator code, please reach out again. This is the code path where the limits are set if no limits are specified:<br>\n<a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/internal/deprecations.go#L74-L76\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/internal/deprecations.go at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a>. Based on that logic setting the memory limits should be enough.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-01-19T16:39:25.856Z",
+        "reply_count": 1,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 21.6,
+        "yours": false,
+        "topic_id": 4329,
+        "topic_slug": "cluster-spec-normalization-forces-cpu-throttling",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/internal/deprecations.go#L74-L76",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/internal/deprecations.go at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 1363,
+          "username": "gm42",
+          "name": "Giuseppe",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-spec-normalization-forces-cpu-throttling/4329/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 13797,
+        "name": "Giuseppe",
+        "username": "gm42",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png",
+        "created_at": "2024-02-22T09:29:48.475Z",
+        "cooked": "<p>It was not a problem in the operator, I could trace it back to wrong Helm values defaults; thanks for the help with this!</p>",
+        "post_number": 5,
+        "post_type": 1,
+        "posts_count": 5,
+        "updated_at": "2024-02-22T09:29:48.475Z",
+        "reply_count": 0,
+        "reply_to_post_number": 4,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 6,
+        "readers_count": 5,
+        "score": 1.2,
+        "yours": false,
+        "topic_id": 4329,
+        "topic_slug": "cluster-spec-normalization-forces-cpu-throttling",
+        "display_username": "Giuseppe",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 849,
+          "username": "johscheuer",
+          "name": "Johannes Scheuermann",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1363,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-spec-normalization-forces-cpu-throttling/4329/5",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13683,
+      13685,
+      13686,
+      13687,
+      13797
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      644
+    ],
+    [
+      2,
+      643
+    ],
+    [
+      3,
+      642
+    ],
+    [
+      4,
+      641
+    ],
+    [
+      5,
+      608
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Cluster spec normalization forces CPU throttling?",
+  "id": 4329,
+  "title": "Cluster spec normalization forces CPU throttling?",
+  "posts_count": 5,
+  "created_at": "2024-01-16T12:27:17.974Z",
+  "views": 201,
+  "reply_count": 3,
+  "like_count": 2,
+  "last_posted_at": "2024-02-22T09:29:48.475Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "cluster-spec-normalization-forces-cpu-throttling",
+  "category_id": 15,
+  "word_count": 415,
+  "deleted_at": null,
+  "user_id": 1363,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4329",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 5,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Cluster tuning cookbook",
+      "id": 520,
+      "title": "Cluster tuning cookbook",
+      "slug": "cluster-tuning-cookbook",
+      "posts_count": 27,
+      "reply_count": 19,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-06-19T14:35:25.802Z",
+      "last_posted_at": "2019-02-01T12:38:24.733Z",
+      "bumped": true,
+      "bumped_at": "2019-02-01T12:38:24.733Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 8885,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 310,
+            "username": "shamatar",
+            "name": "Alexander",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/shamatar/{size}/315_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 41,
+            "username": "amirouche",
+            "name": "Amirouche",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/amirouche/{size}/1911_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 502,
+            "username": "nikolas.ioannou",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/5daacb/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "CPU limited storage processes",
+      "id": 2140,
+      "title": "CPU limited storage processes",
+      "slug": "cpu-limited-storage-processes",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-05-29T11:53:05.632Z",
+      "last_posted_at": "2021-05-18T11:29:51.842Z",
+      "bumped": true,
+      "bumped_at": "2021-05-18T11:29:51.842Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1567,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 741,
+            "username": "sears",
+            "name": "Russell Sears",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/sears/{size}/887_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 393,
+            "username": "ex3ndr",
+            "name": "Steve Korshakov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ex3ndr/{size}/389_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationdDB Cluster Performance Issues",
+      "id": 2105,
+      "title": "FoundationdDB Cluster Performance Issues",
+      "slug": "foundationddb-cluster-performance-issues",
+      "posts_count": 12,
+      "reply_count": 6,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-05-06T16:01:40.124Z",
+      "last_posted_at": "2020-10-21T15:20:11.071Z",
+      "bumped": true,
+      "bumped_at": "2020-10-21T15:20:11.071Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance",
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1317,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 765,
+            "username": "rbtcollins",
+            "name": "Robert Collins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbtcollins/{size}/941_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Process class and machine sharing deployment questions",
+      "id": 1600,
+      "title": "Process class and machine sharing deployment questions",
+      "slug": "process-class-and-machine-sharing-deployment-questions",
+      "posts_count": 16,
+      "reply_count": 11,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-08-28T14:29:20.326Z",
+      "last_posted_at": "2019-09-03T19:26:35.853Z",
+      "bumped": true,
+      "bumped_at": "2019-09-03T19:26:35.853Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2619,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 642,
+            "username": "arob",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/9fc29f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1363,
+        "username": "gm42",
+        "name": "Giuseppe",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1363,
+      "username": "gm42",
+      "name": "Giuseppe",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png"
+    },
+    "last_poster": {
+      "id": 1363,
+      "username": "gm42",
+      "name": "Giuseppe",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/gm42/{size}/1784_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/b0f00690ba98e6891d36d0f108d847b4079f78e1/internal/deprecations.go#L75",
+        "title": "fdb-kubernetes-operator/internal/deprecations.go at b0f00690ba98e6891d36d0f108d847b4079f78e1 \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1363,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/warnings.md#resource-requirements",
+        "title": "fdb-kubernetes-operator/docs/manual/warnings.md at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/internal/deprecations.go#L74-L76",
+        "title": "fdb-kubernetes-operator/internal/deprecations.go at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

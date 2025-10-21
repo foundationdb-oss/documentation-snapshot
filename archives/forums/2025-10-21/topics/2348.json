@@ -1,0 +1,691 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7957,
+        "name": "",
+        "username": "tuk",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+        "created_at": "2020-09-20T18:50:43.006Z",
+        "cooked": "<p>In a 5 Node cluster with double redundancy,  after an outrage, on bringing all the nodes back we are observing that fdbserver  is not coming up in one of the nodes with the error</p>\n<pre><code class=\"lang-auto\">LogGroup=\"default\" Process=\"fdbserver.4500\": Internal Error @ fdbserver/storageserver.actor.cpp 2177:\nLogGroup=\"default\" Process=\"fdbserver.4500\":   addr2line -e fdbserver.debug -p -C -f -i 0x1539b59 0xb2134b 0xb7002e 0xb788e2 0xb46c5e 0xb4724b 0xb47cb2 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a\n</code></pre>\n<p>Output of status details</p>\n<pre><code class=\"lang-auto\">Using cluster file `/etc/foundationdb/fdb.cluster'.\n\nThe database is available, but has issues (type 'status' for more information).\n\nWelcome to the fdbcli. For help, type `help'.\nfdb&gt; status details\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - double\n  Storage engine         - ssd-2\n  Coordinators           - 3\n  Desired Proxies        - 1\n  Desired Logs           - 2\n\nCluster:\n  FoundationDB processes - 10 (less 0 excluded; 1 with errors)\n  Machines               - 5\n  Memory availability    - 22.1 GB per process on machine with least available\n  Retransmissions rate   - 0 Hz\n  Fault Tolerance        - 0 machines\n  Server time            - 09/20/20 16:37:32\n\nData:\n  Replication health     - UNHEALTHY: No replicas remain of some data\n  Moving data            - unknown\n  Sum of key-value sizes - unknown\n  Disk space used        - 25.563 GB\n\nOperating space:\n  Storage server         - 788.9 GB free on most full server\n  Log server             - 792.6 GB free on most full server\n\nWorkload:\n  Read rate              - 30 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 96 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n  10.87.200.35:4500      (  2% cpu;  3% machine; 0.001 Gbps;  0% disk IO; 0.4 GB / 22.1 GB RAM  )\n  10.87.200.35:4501      (  0% cpu;  3% machine; 0.001 Gbps;  0% disk IO; 0.1 GB / 22.1 GB RAM  )\n  10.87.200.36:4500      (  2% cpu;  5% machine; 0.001 Gbps;  0% disk IO; 0.6 GB / 22.4 GB RAM  )\n  10.87.200.36:4501      (  1% cpu;  5% machine; 0.001 Gbps;  0% disk IO; 0.1 GB / 22.4 GB RAM  )\n  10.87.200.37:4500      (  2% cpu;  3% machine; 0.004 Gbps;  0% disk IO; 0.6 GB / 23.2 GB RAM  )\n  10.87.200.37:4501      (  6% cpu;  3% machine; 0.004 Gbps;  1% disk IO; 0.1 GB / 23.2 GB RAM  )\n  10.87.200.38:4500      (  2% cpu;  2% machine; 0.004 Gbps;  0% disk IO; 0.5 GB / 22.9 GB RAM  )\n    Last logged error: StorageServerFailed: internal_error at Sun Sep 20 14:22:05 2020\n  10.87.200.38:4501      (  4% cpu;  2% machine; 0.004 Gbps;  0% disk IO; 0.3 GB / 22.9 GB RAM  )\n  10.87.200.39:4500      (  1% cpu;  3% machine; 0.002 Gbps;  0% disk IO; 0.6 GB / 22.2 GB RAM  )\n  10.87.200.39:4501      (  4% cpu;  3% machine; 0.002 Gbps;  0% disk IO; 0.1 GB / 22.2 GB RAM  )\n\nCoordination servers:\n  10.87.200.36:4500  (reachable)\n  10.87.200.37:4500  (reachable)\n  10.87.200.39:4500  (reachable)\n\nClient time: 09/20/20 16:37:32\n\nWARNING: A single process is both a transaction log and a storage server.\n  For best performance use dedicated disks for the transaction logs by setting process classes.\n</code></pre>\n<p>On the problematic node I am seeing <code>Severity \"40\"</code> like below</p>\n<pre><code class=\"lang-auto\">trace.10.87.200.38.4500.1600574883.ZRnVjr.1.xml:&lt;Event Severity=\"40\" Time=\"1600574884.903619\" Type=\"DeliveredToNotAssigned\" ID=\"0000000000000000\" Version=\"6609581472260\" Mutation=\"code: SetValue param1: \\x15\\x03\\x15\\x01\\x15+3\\x00\\x00\\x06\\x02\\xe9\\xc1z\\x04\\x00\\x00\\x00\\x00\\x14 param2: \\x9c\\x0atCiMxMC44Ni4wLjIwIC0+IDEwLjc4Lj\\x01\\x08\\xf0&amp;lt;EyIFtwb3J0OjUzXRIdMTAwMDA6NTE1OjkyMDE3NjA5NzQxNTIyODUwOTkaHwo\\x1d,xQxOjcyMDYwODc1MDk5NzYxODQ0MDciHB,\\x00\\xf0ZExMzUwNTY4Nzg2MDk4Njc1NTg4AVJQCCASCjEwLjg2LjAuMjAaDzI1NS4yNTUuMjU1LjI1NSIKMTAuODYuMC4yMCoNM2\\x10\\x00\\xa08zMjCUgNhSOJSA2FJCCEVORFBPSU5USAFaUwggEgs!(\\x0c3OC4\\x01\\x08\\x14xMhoPM\\x15d\\x004\\x15t\\x00I&amp;gt;(\\x00(ioOMTAuNzgu\\x01\\x08\\xf0@MTIvMzI...\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0xb212d7 0xb7002e 0xb788e2 0xb46c5e 0xb4724b 0xb47cb2 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f4df820b830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600574883.ZRnVjr.1.xml:&lt;Event Severity=\"40\" Time=\"1600574884.903619\" Type=\"InternalError\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" File=\"fdbserver/storageserver.actor.cpp\" Line=\"2177\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0x1539c7c 0xb2134b 0xb7002e 0xb788e2 0xb46c5e 0xb4724b 0xb47cb2 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f4df820b830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600574883.ZRnVjr.1.xml:&lt;Event Severity=\"40\" Time=\"1600574884.903619\" Type=\"SystemError\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0x1539a7a 0x1539cee 0xb2134b 0xb7002e 0xb788e2 0xb46c5e 0xb4724b 0xb47cb2 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f4df820b830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600574883.ZRnVjr.1.xml:&lt;Event Severity=\"40\" Time=\"1600574884.903619\" Type=\"SSUpdateError\" ID=\"b260a712e27c7bd1\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0xb0b127 0xb47d0f 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f4df820b830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600574883.ZRnVjr.1.xml:&lt;Event Severity=\"40\" Time=\"1600574884.921231\" Type=\"StorageServerFailed\" ID=\"b260a712e27c7bd1\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" Reason=\"Error\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0xbd2666 0xbd2f0f 0xbd3084 0xbbcff3 0xbbd2f7 0x49a649 0xbca854 0xbcc278 0x5268d8 0x526c17 0x49a649 0xbc4260 0xbc42e7 0x56ed90 0x77247f 0x772897 0x77300a 0x4a2a20 0x4a2a20 0x1594987 0x15956b8 0x1593fbb 0x1593a18 0x63e108 0x56ed90 0x159c97a 0x449c2f 0x7f4df820b830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600611724.p9XtOH.1.xml:&lt;Event Severity=\"40\" Time=\"1600611725.708995\" Type=\"DeliveredToNotAssigned\" ID=\"0000000000000000\" Version=\"6609581472260\" Mutation=\"code: SetValue param1: \\x15\\x03\\x15\\x01\\x15+3\\x00\\x00\\x06\\x02\\xe9\\xc1z\\x04\\x00\\x00\\x00\\x00\\x14 param2: \\x9c\\x0atCiMxMC44Ni4wLjIwIC0+IDEwLjc4Lj\\x01\\x08\\xf0&amp;lt;EyIFtwb3J0OjUzXRIdMTAwMDA6NTE1OjkyMDE3NjA5NzQxNTIyODUwOTkaHwo\\x1d,xQxOjcyMDYwODc1MDk5NzYxODQ0MDciHB,\\x00\\xf0ZExMzUwNTY4Nzg2MDk4Njc1NTg4AVJQCCASCjEwLjg2LjAuMjAaDzI1NS4yNTUuMjU1LjI1NSIKMTAuODYuMC4yMCoNM2\\x10\\x00\\xa08zMjCUgNhSOJSA2FJCCEVORFBPSU5USAFaUwggEgs!(\\x0c3OC4\\x01\\x08\\x14xMhoPM\\x15d\\x004\\x15t\\x00I&amp;gt;(\\x00(ioOMTAuNzgu\\x01\\x08\\xf0@MTIvMzI...\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0xb212d7 0xb7002e 0xb788e2 0xb46c5e 0xb4724b 0xb47cb2 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f3f629da830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600611724.p9XtOH.1.xml:&lt;Event Severity=\"40\" Time=\"1600611725.708995\" Type=\"InternalError\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" File=\"fdbserver/storageserver.actor.cpp\" Line=\"2177\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0x1539c7c 0xb2134b 0xb7002e 0xb788e2 0xb46c5e 0xb4724b 0xb47cb2 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f3f629da830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600611724.p9XtOH.1.xml:&lt;Event Severity=\"40\" Time=\"1600611725.708995\" Type=\"SystemError\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0x1539a7a 0x1539cee 0xb2134b 0xb7002e 0xb788e2 0xb46c5e 0xb4724b 0xb47cb2 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f3f629da830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600611724.p9XtOH.1.xml:&lt;Event Severity=\"40\" Time=\"1600611725.708995\" Type=\"SSUpdateError\" ID=\"b260a712e27c7bd1\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0xb0b127 0xb47d0f 0xb483a3 0xb486f2 0x4a2a20 0xb27273 0xb27452 0xb68b50 0xb25ef5 0xb25fe7 0x4a2a20 0x9e5c68 0x719970 0xb605e0 0x75f86f 0x56ed90 0x159c97a 0x449c2f 0x7f3f629da830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\ntrace.10.87.200.38.4500.1600611724.p9XtOH.1.xml:&lt;Event Severity=\"40\" Time=\"1600611725.729125\" Type=\"StorageServerFailed\" ID=\"b260a712e27c7bd1\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" Reason=\"Error\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x1579226 0x157795f 0xbd2666 0xbd2f0f 0xbd3084 0xbbcff3 0xbbd2f7 0x49a649 0xbca854 0xbcc278 0x5268d8 0x526c17 0x49a649 0xbc4260 0xbc42e7 0x56ed90 0x77247f 0x772897 0x77300a 0x4a2a20 0x4a2a20 0x1594987 0x15956b8 0x1593fbb 0x1593a18 0x63e108 0x56ed90 0x159c97a 0x449c2f 0x7f3f629da830\" Machine=\"10.87.200.38:4500\" LogGroup=\"default\" Roles=\"SS,TL\" /&gt;\n</code></pre>\n<p>foundationdb.conf is like below</p>\n<pre><code class=\"lang-auto\">[fdbmonitor]\nuser = ubuntu\ngroup = ubuntu\n\n\n[general]\nrestart_delay = 60\ncluster_file = /etc/foundationdb/fdb.cluster\n\n\n[fdbserver]\ncommand = /usr/bin/fdbserver\npublic_address = auto:$ID\nlisten_address = public\ndatadir = /var/lib/foundationdb/data/$ID\nlogdir = /var/log/foundationdb\n\n\n[fdbserver.4500]\n\n\n[fdbserver.4501]\nclass = stateless\n\n\n[backup_agent]\ncommand = /usr/lib/foundationdb/backup_agent/backup_agent\nlogdir = /var/log/foundationdb\n\n[backup_agent.1]\n</code></pre>\n<p>I read this  <a href=\"https://forums.foundationdb.org/t/temporary-hardware-failure-on-singly-replicated-cluster/2293\">discussion</a> and restarted foundationdb processes in all the nodes. But it did not help.</p>\n<p>Can someone let me know if it is possible to recover the cluster ? I am ok with removing the keyspaces for which both the replicas are missing.</p>\n<p>FDB Version - 6.1.12.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-20T18:51:21.002Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 125,
+        "reads": 41,
+        "readers_count": 40,
+        "score": 633.2,
+        "yours": false,
+        "topic_id": 2348,
+        "topic_slug": "fdbserver-error-in-a-cluster-with-double-redundancy",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/temporary-hardware-failure-on-singly-replicated-cluster/2293",
+            "internal": true,
+            "reflection": false,
+            "title": "Temporary hardware failure on singly replicated cluster",
+            "clicks": 5
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/changing-public-address-of-non-coordinator-fdbserver-corrupted-cluster/2602",
+            "internal": true,
+            "reflection": true,
+            "title": "Changing public address of (non-coordinator) fdbserver corrupted cluster",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 714,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbserver-error-in-a-cluster-with-double-redundancy/2348/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 7964,
+        "name": "",
+        "username": "andrew.noyes",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "created_at": "2020-09-21T15:52:04.838Z",
+        "cooked": "<blockquote>\n<p>DeliveredToNotAssigned</p>\n</blockquote>\n<p>This usually means that there\u2019s something wrong with the internal metadata the cluster uses to process transactions. If restoring a backup to a fresh cluster is an option here I\u2019d recommend that. If some of the keyspace is still readable, then maybe you could copy it to a fresh cluster instead.</p>\n<p>Since you noticed this after an outage it seems likely that the in-memory copy of the internal metadata was correct, but the on-disk copy restored during recovery was corrupt.</p>\n<p>Is it possible that you were writing to a key starting with <code>\\xff</code> (e.g. <code>\\xff/metadataVersion</code>) and also doing something that could cause the database to become locked (e.g. <a href=\"https://apple.github.io/foundationdb/backups.html#fdbdr-command-line-tool\" rel=\"noopener nofollow ugc\">fdbdr switch</a>)? We recently found a long-standing bug where these two things used together can cause something like this: <a href=\"https://github.com/apple/foundationdb/pull/3674\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Add read conflict on \\xff/dbLocked by sfc-gh-anoyes \u00b7 Pull Request #3674 \u00b7 apple/foundationdb \u00b7 GitHub</a>.</p>\n<p>Otherwise this sort of thing could happen if you somehow were writing to <code>\\xff</code> system keys and deleted some of the ones that encode the \u201chow to process transactions\u201d metadata, although I would expect this to show up immediately instead of after the next recovery.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-21T15:52:04.838Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 37,
+        "readers_count": 36,
+        "score": 97.4,
+        "yours": false,
+        "topic_id": 2348,
+        "topic_slug": "fdbserver-error-in-a-cluster-with-double-redundancy",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/3674",
+            "internal": false,
+            "reflection": false,
+            "clicks": 6
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/backups.html#fdbdr-command-line-tool",
+            "internal": false,
+            "reflection": false,
+            "title": "Backup, Restore, and Replication for Disaster Recovery \u2014 FoundationDB 6.2",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 3
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 14,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbserver-error-in-a-cluster-with-double-redundancy/2348/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 7966,
+        "name": "",
+        "username": "tuk",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+        "created_at": "2020-09-22T07:33:44.911Z",
+        "cooked": "<p>Thanks for replying.</p>\n<p>We are not using fdbdr.</p>\n<p>For now we have restored to a fresh cluster.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-09-22T11:25:55.285Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 6.6,
+        "yours": false,
+        "topic_id": 2348,
+        "topic_slug": "fdbserver-error-in-a-cluster-with-double-redundancy",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 14,
+          "username": "andrew.noyes",
+          "name": "",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 714,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbserver-error-in-a-cluster-with-double-redundancy/2348/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7957,
+      7964,
+      7966
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1857
+    ],
+    [
+      2,
+      1856
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fdbserver error in a cluster with double redundancy",
+  "id": 2348,
+  "title": "Fdbserver error in a cluster with double redundancy",
+  "posts_count": 3,
+  "created_at": "2020-09-20T18:50:42.932Z",
+  "views": 859,
+  "reply_count": 1,
+  "like_count": 3,
+  "last_posted_at": "2020-09-22T07:33:44.911Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdbserver-error-in-a-cluster-with-double-redundancy",
+  "category_id": 7,
+  "word_count": 1744,
+  "deleted_at": null,
+  "user_id": 714,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2348",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Fdb cluster is unavailable after delete a disk",
+      "id": 2232,
+      "title": "Fdb cluster is unavailable after delete a disk",
+      "slug": "fdb-cluster-is-unavailable-after-delete-a-disk",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-07-07T09:35:29.720Z",
+      "last_posted_at": "2020-07-09T08:38:11.028Z",
+      "bumped": true,
+      "bumped_at": "2020-07-09T09:28:06.173Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1154,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 585,
+            "username": "ssb",
+            "name": "Shunbo Shi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ssb/{size}/656_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Database unavailable after shutting down a foundationdb node",
+      "id": 2113,
+      "title": "Database unavailable after shutting down a foundationdb node",
+      "slug": "database-unavailable-after-shutting-down-a-foundationdb-node",
+      "posts_count": 18,
+      "reply_count": 8,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2020-05-11T16:09:39.373Z",
+      "last_posted_at": "2021-02-05T22:16:50.767Z",
+      "bumped": true,
+      "bumped_at": "2021-02-05T22:18:40.780Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 8569,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 810,
+            "username": "amanda",
+            "name": "Amanda",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/67e7ee/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB processes - 2 (less 0 excluded; 1 with errors)",
+      "id": 2008,
+      "title": "FoundationDB processes - 2 (less 0 excluded; 1 with errors)",
+      "slug": "foundationdb-processes-2-less-0-excluded-1-with-errors",
+      "posts_count": 8,
+      "reply_count": 8,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-03-13T03:55:51.229Z",
+      "last_posted_at": "2020-03-13T05:57:38.007Z",
+      "bumped": true,
+      "bumped_at": "2020-03-13T05:57:38.007Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 895,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 718,
+            "username": "Cliicy",
+            "name": "Dragon",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/47e85d/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cluster stuck in recovery after crash of one node",
+      "id": 3216,
+      "title": "Cluster stuck in recovery after crash of one node",
+      "slug": "cluster-stuck-in-recovery-after-crash-of-one-node",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2022-03-17T11:59:52.372Z",
+      "last_posted_at": "2022-03-18T03:45:59.162Z",
+      "bumped": true,
+      "bumped_at": "2022-03-18T03:45:59.162Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 560,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1079,
+            "username": "xozzslip",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/xozzslip/{size}/1298_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Triple ssd fdb cluster on 3 node, one node poweroff, but the fdb cluster is unavailable!",
+      "id": 2228,
+      "title": "Triple ssd fdb cluster on 3 node, one node poweroff, but the fdb cluster is unavailable!",
+      "slug": "triple-ssd-fdb-cluster-on-3-node-one-node-poweroff-but-the-fdb-cluster-is-unavailable",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2020-07-06T09:00:41.040Z",
+      "last_posted_at": "2020-07-07T01:23:20.838Z",
+      "bumped": true,
+      "bumped_at": "2020-07-07T01:23:20.838Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 702,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 585,
+            "username": "ssb",
+            "name": "Shunbo Shi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ssb/{size}/656_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 714,
+        "username": "tuk",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 14,
+        "username": "andrew.noyes",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 714,
+      "username": "tuk",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png"
+    },
+    "last_poster": {
+      "id": 714,
+      "username": "tuk",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/pull/3674",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 14,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/temporary-hardware-failure-on-singly-replicated-cluster/2293",
+        "title": "Temporary hardware failure on singly replicated cluster",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 714,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/backups.html#fdbdr-command-line-tool",
+        "title": "Backup, Restore, and Replication for Disaster Recovery \u2014 FoundationDB 6.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 14,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

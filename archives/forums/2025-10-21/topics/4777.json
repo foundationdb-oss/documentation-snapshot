@@ -1,0 +1,760 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14711,
+        "name": "Hikouki Gumo",
+        "username": "hikouki-gumo",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+        "created_at": "2025-02-18T09:29:56.674Z",
+        "cooked": "<p>Reference: <a href=\"https://github.com/apple/foundationdb/blob/main/design/backup.md\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">foundationdb/design/backup.md at main \u00b7 apple/foundationdb \u00b7 GitHub</a>.</p>\n<p>Hi, I\u2019m running fdbbackup with option -z (continuous) with snapshot-interval = 1 days, for example, take a snapshot 01:00 daily and store to S3.<br>\nAt 10:00 AM, I need to restore from the snapshot.</p>\n<ol>\n<li>\n<p>Assume continuous backup is running normally.<br>\nHow fdbrestore can restore the latest data change from 01:00 until 10:00 AM? How mutation logs and differential logs work? Because in data format, there is mutation logs only, I wonder how differential logs work.</p>\n</li>\n<li>\n<p>If something wrong and make continuous backup died at 08:00 AM. I still can restore data to 08:00 AM, right?</p>\n</li>\n</ol>\n<p>It would be nice if we can update the documentations.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2025-02-18T09:29:56.674Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 41,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 208.8,
+        "yours": false,
+        "topic_id": 4777,
+        "topic_slug": "fdbbackup-continuous-internal",
+        "display_username": "Hikouki Gumo",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/design/backup.md",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/design/backup.md at main \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1485,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-continuous-internal/4777/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14741,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2025-03-01T00:43:44.047Z",
+        "cooked": "<p>The continuous snapshot does not snapshot the database <em>at a specific time</em>, rather it takes a snapshot slowly over the time interval so that every snapshot interval there will be a complete snapshot in the backup.  Mutation logs are always written to the backup.  You can restore the cluster to any point in time after the <em>first</em> snapshot has completed.  Restore to some version V requires:</p>\n<ul>\n<li>A snapshot which ended at or before V</li>\n<li>Mutation logs covering the start version of the snapshot through V</li>\n</ul>\n<p>To see what versions you can restore to use <code>fdbbackup describe -d &lt;url&gt;</code>.  Restore will automatically find and use the correct files based on the target restore version you specify.</p>\n<blockquote>\n<p>How mutation logs and differential logs work?</p>\n</blockquote>\n<p>Mutation logs <em>are</em> differential.  A mutation log is a log of mutations aka changes in version order.  The backup contains mutation log files and keyspace snapshot files covering specific key ranges of the database at specific versions.</p>\n<blockquote>\n<ol>\n<li>If something wrong and make continuous backup died at 08:00 AM. I still can restore data to 08:00 AM, right?</li>\n</ol>\n</blockquote>\n<p>Yes, provided that the backup had reached a restorable point and you did not <code>fdbbackup expire</code> or otherwise delete the older files you would need.</p>\n<p>For example, if you started your backup at 01:00 with a 24 hour snapshot interval, then to restore to 08:00 on a Wednesday the restore process will use the snapshot which was created between 01:00 on Tuesday and 01:00 on Wednesday along with the mutation logs from 01:00 on Tuesday through your restore target of 08:00 on Wednesday.</p>\n<p>The safest way to delete old data from a backup is with <code>fdbbackup expire</code> because you can tell it what restorable time period you want and it will refuse to delete data which would affect restorability for that period.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2025-03-01T00:43:44.047Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 28.2,
+        "yours": false,
+        "topic_id": 4777,
+        "topic_slug": "fdbbackup-continuous-internal",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-continuous-internal/4777/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14742,
+        "name": "Hikouki Gumo",
+        "username": "hikouki-gumo",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+        "created_at": "2025-03-01T02:10:51.411Z",
+        "cooked": "<p>Hi <a class=\"mention\" href=\"/u/steavedhams\">@SteavedHams</a> , thanks for your reply. I would like to give more details about situation that I have to delete some specific snapshots.</p>\n<p>Previously I run continuous backup with --snapshot-interval = 1hour, then for a single date, there are 23 to 24 backup snapshots. I want to delete them to save storage but have to keep 1 snapshots for a single date (for compliance purposes). I know <code>fdbbackup expire</code> is safe but I can not do so because expire does not keep any snapshots.</p>\n<p>Here is what I understand about continuous snapshot process. After finished a snapshot version x:</p>\n<pre><code class=\"lang-auto\">    1. A new `kvranges` folder (x + 1) is created and captures ongoing point-in-time subspace.\n        \n        Ref: https://github.com/apple/foundationdb/blob/main/fdbclient/FileBackupAgent.actor.cpp#L3968\n        \n    2. Mutation logs are written continuously\n    3. Create snapshot manifest x + 1, reference all `kvranges` folder (x + 1):\n        \n        Ref: https://github.com/apple/foundationdb/blob/main/fdbclient/BackupContainerFileSystem.actor.cpp#L1214\n</code></pre>\n<p>It means an inconsistence snapshot is stored in 2 entities: 1 snapshot manifest file and exactly 1 <code>kvranges</code> folder. Then, to safe delete a specific snapshot, you can delete the snapshot manifest file and its corresponding <code>kvranges</code>. For mutation logs, I keep all from the initial snapshot.</p>\n<p>Test procedure:</p>\n<pre><code class=\"lang-auto\">1. Setup: run continuous backup, db already wrote 2 snapshots files, 3 kvranges folder. \n2. Delete snapshot files, delete corresponding kvranges of the 2nd snapshot. Keep mutation logs.\n3. Restore: success\n</code></pre>\n<p>I think this approach is safe, it would be nice if you can confirm that so that someone have the same issue can utilize this method to solve their problem.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2025-03-01T02:23:11.117Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 7,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 42.6,
+        "yours": false,
+        "topic_id": 4777,
+        "topic_slug": "fdbbackup-continuous-internal",
+        "display_username": "Hikouki Gumo",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1485,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-continuous-internal/4777/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14805,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2025-04-10T17:51:41.587Z",
+        "cooked": "<p>If I understand correctly you are proposing to save space by deleting intermediate completed snapshots, meaning not the oldest completed snapshot or the most recent completed/in-progress snapshot but some or all of the snapshots in between.  Since <code>fdbbackup expire</code> does not support this, you would have to do this externally.  Yes it would be safe to do.</p>\n<p>Some clarifications:</p>\n<blockquote>\n<pre><code>3. Create snapshot manifest x + 1, reference all `kvranges` folder (x + 1):\n</code></pre>\n</blockquote>\n<p>This is not quite correct - the snapshot manifest file does not necessarily reference <em>all</em> kvrange files in the folders for its version range.  This is because spurious backup subtask failures can cause additional snapshot files to exist in the backup which are not referenced by the backup metadata.  These additional files will overlap in key range with the files produced later by the final successful runs of backup subtasks.</p>\n<p>The snapshot manifest produced at the end of the snapshot is a set of files containing mutually exclusive key ranges which together cover exactly the key range which the backup was targeting.  The restore process requires the snapshot files to be mutually exclusive, so the backup snapshot process produces the manifest to fulfill this requirement.</p>\n<p>Any kvrange files not referenced by a snapshot manifest will be cleaned up when <code>fdbbackup expire</code> covers the file\u2019s version range.  The expiration process deletes files based on the versions in their name, it does not use the snapshot manifest contents to decide what to delete.</p>\n<p>To delete intermediate snapshots, I suggest you use <code>fdbbackup describe</code> to get the snapshot list and completed-ness for each to choose the ones you will delete.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2025-04-10T17:51:41.587Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 11,
+        "readers_count": 10,
+        "score": 22.2,
+        "yours": false,
+        "topic_id": 4777,
+        "topic_slug": "fdbbackup-continuous-internal",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "reply_to_user": {
+          "id": 1485,
+          "username": "hikouki-gumo",
+          "name": "Hikouki Gumo",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-continuous-internal/4777/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14711,
+      14741,
+      14742,
+      14805
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      246
+    ],
+    [
+      2,
+      235
+    ],
+    [
+      4,
+      194
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fdbbackup continuous internal",
+  "id": 4777,
+  "title": "Fdbbackup continuous internal",
+  "posts_count": 4,
+  "created_at": "2025-02-18T09:29:56.631Z",
+  "views": 116,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2025-04-10T17:51:41.587Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdbbackup-continuous-internal",
+  "category_id": 7,
+  "word_count": 975,
+  "deleted_at": null,
+  "user_id": 1485,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4777",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Trade-offs of -s &lt;DURATION&gt; / &ndash;snapshot_interval &lt;DURATION&gt; for continuous mode backups?",
+      "id": 1053,
+      "title": "Trade-offs of -s <DURATION> / --snapshot_interval <DURATION> for continuous mode backups?",
+      "slug": "trade-offs-of-s-duration-snapshot-interval-duration-for-continuous-mode-backups",
+      "posts_count": 8,
+      "reply_count": 5,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-01-24T16:35:07.342Z",
+      "last_posted_at": "2019-08-02T01:02:03.044Z",
+      "bumped": true,
+      "bumped_at": "2019-08-02T01:02:03.044Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1074,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 629,
+            "username": "Sraw",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/a88e57/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Question about backups: how far back in versions can restores function?",
+      "id": 2435,
+      "title": "Question about backups: how far back in versions can restores function?",
+      "slug": "question-about-backups-how-far-back-in-versions-can-restores-function",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-11-12T22:39:35.088Z",
+      "last_posted_at": "2020-11-13T02:43:30.200Z",
+      "bumped": true,
+      "bumped_at": "2020-11-13T02:43:30.200Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 467,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 484,
+            "username": "ksnavely",
+            "name": "Kyle Snavely",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ksnavely/{size}/483_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Triggering backups from an API client",
+      "id": 1629,
+      "title": "Triggering backups from an API client",
+      "slug": "triggering-backups-from-an-api-client",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-09-13T22:13:39.294Z",
+      "last_posted_at": "2019-09-16T20:06:38.331Z",
+      "bumped": true,
+      "bumped_at": "2019-09-16T20:06:38.331Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 619,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What types of FDB backups are point-in-time restorable?",
+      "id": 4565,
+      "title": "What types of FDB backups are point-in-time restorable?",
+      "slug": "what-types-of-fdb-backups-are-point-in-time-restorable",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2024-07-15T21:58:45.147Z",
+      "last_posted_at": "2024-07-23T14:17:02.804Z",
+      "bumped": true,
+      "bumped_at": "2024-07-23T14:17:02.804Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 104,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1309,
+            "username": "swr",
+            "name": "Sam Weaver",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/swr/{size}/1643_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup using disk snapshots",
+      "id": 1076,
+      "title": "Backup using disk snapshots",
+      "slug": "backup-using-disk-snapshots",
+      "posts_count": 15,
+      "reply_count": 9,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-01-29T12:52:43.232Z",
+      "last_posted_at": "2019-02-14T18:12:56.795Z",
+      "bumped": true,
+      "bumped_at": "2019-02-14T18:12:56.795Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2676,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 360,
+            "username": "bjorndv",
+            "name": "Bj\u00f6rn",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/f05b48/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 417,
+            "username": "lihtnes",
+            "name": "Senthil Ramamoorthy",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/848f3c/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 1485,
+        "username": "hikouki-gumo",
+        "name": "Hikouki Gumo",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1485,
+      "username": "hikouki-gumo",
+      "name": "Hikouki Gumo",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/b3f665/{size}.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/main/design/backup.md",
+        "title": "foundationdb/design/backup.md at main \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 1485,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

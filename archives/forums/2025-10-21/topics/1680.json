@@ -1,0 +1,552 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5344,
+        "name": "John Brownlee",
+        "username": "john_brownlee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+        "created_at": "2019-10-15T20:02:22.015Z",
+        "cooked": "<p>When we run the <code>fdbdr status</code> command on a DR that has not reached the differential stage, it will report that the DR is not complete, but also give a number of seconds behind. It\u2019s not clear to me what this seconds behind means, and it does not seem to provide an estimate of how long it will take to be caught up. Is this something we should remove from the status, or does it provide useful information?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-10-15T20:02:22.015Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 23,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 120.6,
+        "yours": false,
+        "topic_id": 1680,
+        "topic_slug": "confusion-on-fdbdr-status-output-when-dr-is-not-caught-up",
+        "display_username": "John Brownlee",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 3,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/confusion-on-fdbdr-status-output-when-dr-is-not-caught-up/1680/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5349,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2019-10-16T05:35:43.930Z",
+        "cooked": "<p>Yeah that definitely is confusing.</p>\n<p>Seconds behind always refers to only the mutation log, and it is exactly the (<em>latest committed version on primary</em>  - <em>latest mutation version committed to secondary such that all prior mutations are also committed</em>) / <em>versions per second</em>.</p>\n<p>Because versions on the primary can be advanced faster than <em>versions per second</em> due to recoveries, <em>seconds behind</em> is at best an approximation of the mutation log delta between the two clusters.  And it doesn\u2019t tell you how <em>much</em> data is in that interval or how fast it is being written to the remote side.  These things could be estimated as well.</p>\n<p>That said, in the situation where the DR has not reached the differential stage even having a mutation log lag of 0 still means the secondary is not usable for failover as it is missing ranges of data.  I think it is still useful to report seconds behind before the differential stage but we should perhaps rename it or somehow make it clear that it only refers to the mutation log.</p>\n<p>Status could potentially publish an estimate for the completion of the initial keyspace copy using the size of the primary cluster, the range bytes copied so far in the DR, and how long copying those bytes took.  Or maybe something involving recent committed throughput to the secondary.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2019-10-16T05:36:20.274Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 27,
+        "readers_count": 26,
+        "score": 5.4,
+        "yours": false,
+        "topic_id": 1680,
+        "topic_slug": "confusion-on-fdbdr-status-output-when-dr-is-not-caught-up",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/confusion-on-fdbdr-status-output-when-dr-is-not-caught-up/1680/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5344,
+      5349
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2198
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Confusion on fdbdr status output when DR is not caught up",
+  "id": 1680,
+  "title": "Confusion on fdbdr status output when DR is not caught up",
+  "posts_count": 2,
+  "created_at": "2019-10-15T20:02:21.961Z",
+  "views": 469,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-10-16T05:35:43.930Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "confusion-on-fdbdr-status-output-when-dr-is-not-caught-up",
+  "category_id": 7,
+  "word_count": 301,
+  "deleted_at": null,
+  "user_id": 3,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1680",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "DR backup database is locked",
+      "id": 1204,
+      "title": "DR backup database is locked",
+      "slug": "dr-backup-database-is-locked",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-03-07T10:11:59.621Z",
+      "last_posted_at": "2019-03-13T07:29:54.955Z",
+      "bumped": true,
+      "bumped_at": "2019-03-13T07:29:54.955Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 880,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "`fdbdr` failover duration longer than expected",
+      "id": 3269,
+      "title": "`fdbdr` failover duration longer than expected",
+      "slug": "fdbdr-failover-duration-longer-than-expected",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d838a41b930edd2e0cc5ab4180b5bcdf16142f18_2_1024x298.png",
+      "created_at": "2022-04-19T15:22:46.672Z",
+      "last_posted_at": "2022-04-25T20:37:35.964Z",
+      "bumped": true,
+      "bumped_at": "2022-04-25T20:37:35.964Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 483,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB fdbdr",
+      "id": 1449,
+      "title": "FoundationDB fdbdr",
+      "slug": "foundationdb-fdbdr",
+      "posts_count": 8,
+      "reply_count": 5,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-06-13T06:33:40.394Z",
+      "last_posted_at": "2019-06-13T22:26:26.460Z",
+      "bumped": true,
+      "bumped_at": "2019-06-13T22:52:52.665Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1383,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 579,
+            "username": "approachcp",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Database version difference",
+      "id": 1447,
+      "title": "Database version difference",
+      "slug": "database-version-difference",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-06-13T02:32:52.707Z",
+      "last_posted_at": "2019-06-13T06:00:30.546Z",
+      "bumped": true,
+      "bumped_at": "2019-06-13T06:00:30.546Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 326,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Multiple DR running simultaneously",
+      "id": 2246,
+      "title": "Multiple DR running simultaneously",
+      "slug": "multiple-dr-running-simultaneously",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-07-13T20:53:45.013Z",
+      "last_posted_at": "2020-07-13T21:27:53.792Z",
+      "bumped": true,
+      "bumped_at": "2020-07-13T21:27:53.792Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 765,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 781,
+            "username": "jarvis",
+            "name": "jar ",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/e36b37/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 3,
+        "username": "john_brownlee",
+        "name": "John Brownlee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 3,
+      "username": "john_brownlee",
+      "name": "John Brownlee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png"
+    },
+    "last_poster": {
+      "id": 7,
+      "username": "SteavedHams",
+      "name": "Steve Atherton",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png"
+    }
+  },
+  "bookmarks": []
+}

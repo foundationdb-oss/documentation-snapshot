@@ -1,0 +1,480 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14947,
+        "name": "Matthieu Patou",
+        "username": "mpatou_openai",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "created_at": "2025-05-22T21:18:43.378Z",
+        "cooked": "<p>Yesterday we ran a test for failover and fallback of FDB, failover went fairly smoothly.<br>\nBut fallback not as much.<br>\nWe had a setup with 2 FDB regions each with a main (where you have the whole set of roles/processes: storage, log, coordinators &amp; stateless) and a satellite.<br>\nIn the region with the highest priority we disconnected the main completely causing FDB to automatically fall back on the second region.<br>\nAround 3:31PM pst we re-enabled the main in high priority region for roughly ~10 minutes the cluster was stable with all stateless roles still in the lower priority region (ie. controller, master, datastributor, GRV, Commit, \u2026) and then around 3:45PM the roles switched back to the main region, data distributor realized that there was 60GB of data to move and then the DB started to unavailable for ~45 mins.</p>\n<p>When I look at the logs it\u2019s not quite clear what really triggered the database to become unavailable, looking at the logs &gt;= 20 it seems that it\u2019s somewhat aligned with</p>\n<pre><code class=\"lang-auto\">{\"date\":1747867494.564181,\"ID\":\"0000000000000000\",\"Error\":\"transaction_timed_out\",\"Roles\":\"CC\",\"ErrorDescription\":\"Operation aborted because the transaction timed out\",\"ErrorCode\":\"1031\",\"Severity\":\"20\",\"Machine\":\"10.129.2.168:4500\",\"DateTime\":\"2025-05-21T22:44:54Z\",\"Type\":\"LayerStatusError\"}\n</code></pre>\n<p>I don\u2019t have a final opinion on why the DB was not available for 45 minutes but I have the feeling looking at the &gt;10 logs that the storage in the main high pri region were lacking some critical data that prevented the DB from being available in this region.</p>\n<p>The corollary question is: should FDB fall back to the primary region even if this one is not ready ?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2025-05-22T21:18:43.378Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 6,
+        "reads": 9,
+        "readers_count": 8,
+        "score": 26.8,
+        "yours": false,
+        "topic_id": 4915,
+        "topic_slug": "fairly-large-time-to-become-available-after-fallback-in-a-multi-region-fdb",
+        "display_username": "Matthieu Patou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1484,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fairly-large-time-to-become-available-after-fallback-in-a-multi-region-fdb/4915/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      14947
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      152
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fairly large time to become available after fallback in a multi region FDB",
+  "id": 4915,
+  "title": "Fairly large time to become available after fallback in a multi region FDB",
+  "posts_count": 1,
+  "created_at": "2025-05-22T21:18:43.305Z",
+  "views": 49,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-05-22T21:18:43.378Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fairly-large-time-to-become-available-after-fallback-in-a-multi-region-fdb",
+  "category_id": 17,
+  "word_count": 278,
+  "deleted_at": null,
+  "user_id": 1484,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4915",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Two region setup: fdb doesn&rsquo;t switch back to recovered primary idc",
+      "id": 3102,
+      "title": "Two region setup: fdb doesn't switch back to recovered primary idc",
+      "slug": "two-region-setup-fdb-doesnt-switch-back-to-recovered-primary-idc",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2022-01-06T09:20:23.617Z",
+      "last_posted_at": "2022-01-25T09:00:26.631Z",
+      "bumped": true,
+      "bumped_at": "2022-01-25T09:00:26.631Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 507,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1037,
+            "username": "leonliao",
+            "name": "Leonliao",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/leonliao/{size}/1244_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Simulating FDB data center failure",
+      "id": 1790,
+      "title": "Simulating FDB data center failure",
+      "slug": "simulating-fdb-data-center-failure",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-11-27T00:51:36.820Z",
+      "last_posted_at": "2019-12-09T22:25:12.268Z",
+      "bumped": true,
+      "bumped_at": "2019-12-09T22:25:12.268Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 977,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 550,
+            "username": "ntrhieu89",
+            "name": "Hieu Nguyen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ntrhieu89/{size}/587_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Region failover: the criteria for auto failover and incremental/full refresh",
+      "id": 3031,
+      "title": "Region failover: the criteria for auto failover and incremental/full refresh",
+      "slug": "region-failover-the-criteria-for-auto-failover-and-incremental-full-refresh",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2021-11-23T20:58:48.381Z",
+      "last_posted_at": "2021-11-23T20:58:48.444Z",
+      "bumped": true,
+      "bumped_at": "2021-11-23T20:58:48.444Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 453,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Unknown FDB downtime",
+      "id": 2760,
+      "title": "Unknown FDB downtime",
+      "slug": "unknown-fdb-downtime",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/2X/b/be0059bd8213494e166802fceb9415fed949f30b.png",
+      "created_at": "2021-06-14T20:59:33.974Z",
+      "last_posted_at": "2021-06-17T16:52:55.701Z",
+      "bumped": true,
+      "bumped_at": "2021-06-17T16:52:55.701Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 733,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 742,
+            "username": "kentwang929",
+            "name": "Chung Kang Wang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kentwang929/{size}/799_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 412,
+            "username": "mengranewo",
+            "name": "Mengran Wang",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/8e8cbc/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Working High Avalable Solutions with Two Datacenters",
+      "id": 2380,
+      "title": "Working High Avalable Solutions with Two Datacenters",
+      "slug": "working-high-avalable-solutions-with-two-datacenters",
+      "posts_count": 8,
+      "reply_count": 5,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2020-10-07T09:28:40.618Z",
+      "last_posted_at": "2020-12-01T06:50:01.982Z",
+      "bumped": true,
+      "bumped_at": "2020-12-01T07:27:11.254Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1171,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1484,
+        "username": "mpatou_openai",
+        "name": "Matthieu Patou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1484,
+      "username": "mpatou_openai",
+      "name": "Matthieu Patou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png"
+    },
+    "last_poster": {
+      "id": 1484,
+      "username": "mpatou_openai",
+      "name": "Matthieu Patou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/mpatou_openai/{size}/1883_2.png"
+    }
+  },
+  "bookmarks": []
+}

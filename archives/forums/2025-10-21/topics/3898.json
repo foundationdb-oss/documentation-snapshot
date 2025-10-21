@@ -1,0 +1,581 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12704,
+        "name": "Dan Goodman",
+        "username": "danthegoodman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png",
+        "created_at": "2023-04-10T15:00:24.769Z",
+        "cooked": "<p>I am interested in setting up a FoundationDB cluster with the following requirements. I am using AWS AZ &amp; Region terminology for this. I am also quite new to FDB terminology, so please be patient with me XD I\u2019ve tried reading through all the forum posts and docs I found relevant.</p>\n<ol>\n<li>3 nodes per AZ each running as a single FDB process</li>\n<li>3 AZs per region</li>\n<li>Multi region (2 east and 1 west)</li>\n<li>Primary operation should be between the 2 east coast regions, durable replicating between them</li>\n<li>If a single AZ in east1 fails, then east2 becomes the primary.</li>\n<li>If 2 or more AZs in a single east coast region is lost, then we replicate durably to west coast (thus increasing latencies significantly, but keeping multi-region).</li>\n<li>If both east coast regions are lost, west coast is promoted to primary (this assumes they weren\u2019t lost before west coast could become consistent with east)</li>\n</ol>\n<p>My hypothesis is to ignore the AZ-granularity and actually treat the entire east coast as 1 region in FDB terms, and the west as another. I am unsure whether a DC should represent an AWS region, or an AWS AZ. Based on the configuration options I am not sure if this precise behavior can be obtained with FDB, especially if I ignore the AZ and treat each east coast AWS region as a FDB DC. As a result I would be getting varying east coast latencies depending on whether a transaction went across the AWS regions or not, but I would get the desired behavior until a majority of the east coast was lost. On top of that I might be losing majority of an AWS region, and not failing over because the DCs (AWS regions) are not aware of the locality of AZs below them.</p>\n<p>I am also not sure what <code>sattelite_logs</code> and <code>satellite_redundancy_mode</code> I would use here. My guess is that I would use <code>2</code> and <code>two_satellite_fast</code> respectively?</p>\n<p>Ultimately, my goal is to keep data on the east coast until a majority of an east coast is lost. It seems with cloud (or at least AWS) an entire region will be lost rather than just losing AZs, as schedulers like k8s will quickly provision a new node in a different AZ as needed and thus that \u201cDC\u201d will come back online. Perhaps I would need to prevent this, or have some scripting on node start to specify the DC based on the region/az a pod is created in.</p>\n<p>But perhaps this is also not the best setup and I should decide to fail over to the west coast earlier, without sync replication across coasts?</p>\n<p>Following <a href=\"https://forums.foundationdb.org/t/multi-region-configuration-spreading-copies-inside-a-region-across-azs/959\" class=\"inline-onebox\">Multi-region configuration - spreading copies inside a region across AZs</a> I see maybe I should be using the data hall for each AZ, and a DC is an AWS region, and finally each coast as an FDB region.</p>\n<p>I see that <code>In release 6.0, FoundationDB supports at most two regions.</code>, but 7.2 is the most recent version, is this still the case? I could not find anything in changelogs about this. This feels like the only limitation right now that prevents simple mapping of DC-&gt;AZ to achieve this.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-04-10T15:43:38.855Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 20,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 103.8,
+        "yours": false,
+        "topic_id": 3898,
+        "topic_slug": "help-converting-cloud-az-region-requirements-to-region-dc-setup",
+        "display_username": "Dan Goodman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 5,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/multi-region-configuration-spreading-copies-inside-a-region-across-azs/959",
+            "internal": true,
+            "reflection": false,
+            "title": "Multi-region configuration - spreading copies inside a region across AZs",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1237,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/help-converting-cloud-az-region-requirements-to-region-dc-setup/3898/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12705,
+        "name": "Dan Goodman",
+        "username": "danthegoodman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png",
+        "created_at": "2023-04-10T16:01:05.179Z",
+        "cooked": "<p>Studying the docs more it seems like the better case would actually be to have 2 east and 2 west, and fail over to the west coast when we lose a single DC (AWS region) in the east coast to keep local latencies low.</p>\n<p>To me this means using the <code>three_data_hall</code> redundancy mode, and specifying each data hall to be an AZ so to preserve appropriate spread of data will only help preserve the original DC for longer before deciding to fail over to the west coast. This prevents the situation where all required copies to keep a DC alive is stored in one AZ, so losing a single AZ only can never mean that we fail over to another region.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-04-10T16:01:05.179Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 3.2,
+        "yours": false,
+        "topic_id": 3898,
+        "topic_slug": "help-converting-cloud-az-region-requirements-to-region-dc-setup",
+        "display_username": "Dan Goodman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1237,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/help-converting-cloud-az-region-requirements-to-region-dc-setup/3898/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12704,
+      12705
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      925
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Help converting cloud AZ &amp; Region requirements to Region &amp; DC setup?",
+  "id": 3898,
+  "title": "Help converting cloud AZ & Region requirements to Region & DC setup?",
+  "posts_count": 2,
+  "created_at": "2023-04-10T15:00:24.699Z",
+  "views": 339,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-04-10T16:01:05.179Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "help-converting-cloud-az-region-requirements-to-region-dc-setup",
+  "category_id": 7,
+  "word_count": 668,
+  "deleted_at": null,
+  "user_id": 1237,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3898",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Multi-region configuration - spreading copies inside a region across AZs",
+      "id": 959,
+      "title": "Multi-region configuration - spreading copies inside a region across AZs",
+      "slug": "multi-region-configuration-spreading-copies-inside-a-region-across-azs",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-12-13T23:01:25.118Z",
+      "last_posted_at": "2018-12-18T13:38:00.340Z",
+      "bumped": true,
+      "bumped_at": "2018-12-18T13:38:00.340Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1469,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 423,
+            "username": "kocolosk",
+            "name": "Adam Kocoloski",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kocolosk/{size}/412_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 378,
+            "username": "num",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/db5fbb/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cross Datacenter/Region?",
+      "id": 186,
+      "title": "Cross Datacenter/Region?",
+      "slug": "cross-datacenter-region",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-04-21T18:09:15.229Z",
+      "last_posted_at": "2018-06-14T19:55:13.933Z",
+      "bumped": true,
+      "bumped_at": "2018-06-14T19:55:13.933Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3406,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 130,
+            "username": "aphistic",
+            "name": "Erik Davidson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aphistic/{size}/90_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 183,
+            "username": "tylerchr",
+            "name": "Tyler",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tylerchr/{size}/143_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to Configure region&rsquo;s in FoundationDB?",
+      "id": 1691,
+      "title": "How to Configure region's in FoundationDB?",
+      "slug": "how-to-configure-regions-in-foundationdb",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-10-22T13:51:23.037Z",
+      "last_posted_at": "2019-10-24T01:35:30.162Z",
+      "bumped": true,
+      "bumped_at": "2019-10-24T01:35:30.162Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1604,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 650,
+            "username": "Karthikn6793",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/karthikn6793/{size}/748_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Replication method consideration",
+      "id": 1410,
+      "title": "Replication method consideration",
+      "slug": "replication-method-consideration",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-30T12:13:55.382Z",
+      "last_posted_at": "2019-05-31T00:39:24.107Z",
+      "bumped": true,
+      "bumped_at": "2019-05-31T00:39:24.107Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 792,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 595,
+            "username": "Choboz",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/65b543/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimal configuration for more than 3 DCs",
+      "id": 1519,
+      "title": "Optimal configuration for more than 3 DCs",
+      "slug": "optimal-configuration-for-more-than-3-dcs",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-07-15T04:50:08.246Z",
+      "last_posted_at": "2019-07-15T09:32:14.332Z",
+      "bumped": true,
+      "bumped_at": "2019-07-15T09:32:14.332Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1332,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1237,
+        "username": "danthegoodman",
+        "name": "Dan Goodman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1237,
+      "username": "danthegoodman",
+      "name": "Dan Goodman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png"
+    },
+    "last_poster": {
+      "id": 1237,
+      "username": "danthegoodman",
+      "name": "Dan Goodman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/multi-region-configuration-spreading-copies-inside-a-region-across-azs/959",
+        "title": "Multi-region configuration - spreading copies inside a region across AZs",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1237,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

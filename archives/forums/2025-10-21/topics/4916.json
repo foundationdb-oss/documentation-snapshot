@@ -1,0 +1,519 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14948,
+        "name": "",
+        "username": "czephyr",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d78d45/{size}.png",
+        "created_at": "2025-05-23T10:37:22.913Z",
+        "cooked": "<p>I\u2019m trying to figure out why the <code>status json</code> output section for backups is not reporting stats in my setup.<br>\nThis is true for both 6.3 and 7.3 clusters. I have a machine running all backup_agents and no fdbserver processes that does the backups.</p>\n<pre><code class=\"lang-auto\">        \"layers\" : {\n            \"_valid\" : true,\n            \"backup\" : {\n                \"blob_recent_io\" : {\n                    \"bytes_per_second\" : 0,\n                    \"bytes_sent\" : 0,\n                    \"requests_failed\" : 0,\n                    \"requests_successful\" : 0\n                },\n                \"instances\" : {\n                    \"90201a26e6aac7c3f7760119b57f0385\" : {\n                        \"blob_stats\" : {\n                            \"recent\" : {\n                                \"bytes_per_second\" : 0,\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            },\n                            \"total\" : {\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            }\n                        },\n                        \"configured_workers\" : 10,\n                        \"id\" : \"90201a26e6aac7c3f7760119b57f0385\",\n                        \"last_updated\" : 1741195253.9706519,\n                        \"locality\" : {\n                        },\n                        \"main_thread_cpu_seconds\" : 3232.2759629999996,\n                        \"memory_usage\" : 997814272,\n                        \"networkAddress\" : \"172.26.11.150\",\n                        \"processID\" : 642601,\n                        \"process_cpu_seconds\" : 3539.0761820000002,\n                        \"resident_size\" : 531697664,\n                        \"version\" : \"7.3.59\"\n                    },\n                    \"a834a16efb6328aa035f9f8b37810aff\" : {\n                        \"blob_stats\" : {\n                            \"recent\" : {\n                                \"bytes_per_second\" : 0,\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            },\n                            \"total\" : {\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            }\n                        },\n                        \"configured_workers\" : 10,\n                        \"id\" : \"a834a16efb6328aa035f9f8b37810aff\",\n                        \"last_updated\" : 1741195227.3100455,\n                        \"locality\" : {\n                        },\n                        \"main_thread_cpu_seconds\" : 3205.2537630000002,\n                        \"memory_usage\" : 1028243456,\n                        \"networkAddress\" : \"172.26.11.150\",\n                        \"processID\" : 642599,\n                        \"process_cpu_seconds\" : 3509.1482339999998,\n                        \"resident_size\" : 560922624,\n                        \"version\" : \"7.3.59\"\n                    },\n                    \"d3cf787bf7922c060530efe18fbd5a0a\" : {\n                        \"blob_stats\" : {\n                            \"recent\" : {\n                                \"bytes_per_second\" : 0,\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            },\n                            \"total\" : {\n                                \"bytes_sent\" : 0,\n                                \"requests_failed\" : 0,\n                                \"requests_successful\" : 0\n                            }\n                        },\n                        \"configured_workers\" : 10,\n                        \"id\" : \"d3cf787bf7922c060530efe18fbd5a0a\",\n                        \"last_updated\" : 1741195228.3917904,\n                        \"locality\" : {\n                        },\n                        \"main_thread_cpu_seconds\" : 3234.0649039999998,\n                        \"memory_usage\" : 1033863168,\n                        \"networkAddress\" : \"172.26.11.150\",\n                        \"processID\" : 642600,\n                        \"process_cpu_seconds\" : 3542.051164,\n                        \"resident_size\" : 566521856,\n                        \"version\" : \"7.3.59\"\n                    }\n                },\n                \"instances_running\" : 3,\n                \"last_updated\" : 1741195253.9706519,\n                \"paused\" : false,\n                \"tags\" : {\n                    \"continuous\" : {\n                        \"current_container\" : \"file:///mnt/fdb_pp-continuous/backup-2025-03-03-08-32-59.172878\",\n                        \"current_status\" : \"is differential\",\n                        \"last_restorable_seconds_behind\" : 15.644265000000001,\n                        \"last_restorable_version\" : 96923578965246,\n                        \"mutation_log_bytes_written\" : 0,\n                        \"mutation_stream_id\" : \"c98b8a3f12c84b439b6072adb545b5ef\",\n                        \"range_bytes_written\" : 361627760053,\n                        \"running_backup\" : true,\n                        \"running_backup_is_restorable\" : true\n                    },\n                    \"default\" : {\n                        \"current_container\" : \"file:///mnt/fdb_pp/backup-2024-09-11-23-00-06.228893\",\n                        \"current_status\" : \"has been completed\",\n                        \"last_restorable_seconds_behind\" : 15101288.106191,\n                        \"last_restorable_version\" : 81822306503320,\n                        \"mutation_log_bytes_written\" : 0,\n                        \"mutation_stream_id\" : \"a6719e5c26d98504d022263d2f2541e3\",\n                        \"range_bytes_written\" : 311872883594,\n                        \"running_backup\" : false,\n                        \"running_backup_is_restorable\" : false\n                    }\n                },\n                \"total_workers\" : 30\n            }\n        },\n</code></pre>\n<p>I also see that in the configuration section no <code>backup_workers</code> are reported:</p>\n<pre><code class=\"lang-auto\">        \"configuration\" : {\n            \"backup_worker_enabled\" : 0,\n            \"blob_granules_enabled\" : 0,\n            \"commit_proxies\" : 3,\n            \"coordinators_count\" : 6,\n            [...]\n        },\n</code></pre>\n<p>I\u2019m trying out different backup setups with disks and it would be useful to see the write speed metrics.<br>\nIt takes us around 2 days to get over the first snapshot in the backup for 2TBs cluster size. This seems too long of a time, and maybe our setup could be improved.</p>\n<p>Also, is there any way to have any information about the percentage of completeness of a snapshot that is currently running?<br>\nCan I gauge it from the <code>range_bytes_written</code> value in the backup section? I assume for the first snapshot to be complete this value should reach a similar size to the <code>total_kv_size_bytes</code> value in the cluster data section?<br>\nI\u2019m guessing this assumption wont work for subsequent snapshots though because this value increases monotonically</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-05-23T10:45:21.747Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 8,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 41.6,
+        "yours": false,
+        "topic_id": 4916,
+        "topic_slug": "backup-stats-empty-in-status-json",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1511,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-stats-empty-in-status-json/4916/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14951,
+        "name": "",
+        "username": "czephyr",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d78d45/{size}.png",
+        "created_at": "2025-05-26T13:25:31.702Z",
+        "cooked": "<blockquote>\n<p>Also, is there any way to have any information about the percentage of completeness of a snapshot that is currently running?<br>\nCan I gauge it from the <code>range_bytes_written</code> value in the backup section? I assume for the first snapshot to be complete this value should reach a similar size to the <code>total_kv_size_bytes</code> value in the cluster data section?</p>\n</blockquote>\n<p>It looks like this assumption is correct from what I can see on some tests.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2025-05-26T13:25:31.702Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 5,
+        "readers_count": 4,
+        "score": 1.0,
+        "yours": false,
+        "topic_id": 4916,
+        "topic_slug": "backup-stats-empty-in-status-json",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1511,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-stats-empty-in-status-json/4916/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14948,
+      14951
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      151
+    ],
+    [
+      2,
+      148
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Backup stats empty in status json",
+  "id": 4916,
+  "title": "Backup stats empty in status json",
+  "posts_count": 2,
+  "created_at": "2025-05-23T10:37:22.835Z",
+  "views": 40,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2025-05-26T13:25:31.702Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "backup-stats-empty-in-status-json",
+  "category_id": 17,
+  "word_count": 497,
+  "deleted_at": null,
+  "user_id": 1511,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4916",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Few queries on status json",
+      "id": 684,
+      "title": "Few queries on status json",
+      "slug": "few-queries-on-status-json",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-09-08T13:43:35.838Z",
+      "last_posted_at": "2018-12-07T20:20:54.448Z",
+      "bumped": true,
+      "bumped_at": "2018-12-07T20:20:54.448Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1237,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB Status as JSON",
+      "id": 374,
+      "title": "FoundationDB Status as JSON",
+      "slug": "foundationdb-status-as-json",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-05-08T05:52:54.393Z",
+      "last_posted_at": "2018-05-08T05:52:54.507Z",
+      "bumped": true,
+      "bumped_at": "2018-05-08T05:52:54.507Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 789,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 38,
+            "username": "panghy",
+            "name": "Clement Pang",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/panghy/{size}/19_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions on status json",
+      "id": 2843,
+      "title": "Questions on status json",
+      "slug": "questions-on-status-json",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/d/d6f4658294c597dc66b291b9766a4836bf043694_2_1024x512.png",
+      "created_at": "2021-08-06T23:30:16.884Z",
+      "last_posted_at": "2021-08-21T10:40:35.086Z",
+      "bumped": true,
+      "bumped_at": "2021-08-21T10:40:35.086Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1111,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 405,
+            "username": "harikb",
+            "name": "Hari B",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backing up the database using `fdbbackup` command returns in an error",
+      "id": 1844,
+      "title": "Backing up the database using `fdbbackup` command returns in an error",
+      "slug": "backing-up-the-database-using-fdbbackup-command-returns-in-an-error",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-16T10:49:12.154Z",
+      "last_posted_at": "2019-12-16T13:54:49.984Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T13:54:49.984Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1069,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Backup &amp; restore performance tuning",
+      "id": 2078,
+      "title": "Backup & restore performance tuning",
+      "slug": "backup-restore-performance-tuning",
+      "posts_count": 18,
+      "reply_count": 16,
+      "highest_post_number": 18,
+      "image_url": null,
+      "created_at": "2020-04-18T06:43:29.997Z",
+      "last_posted_at": "2020-05-06T09:01:50.194Z",
+      "bumped": true,
+      "bumped_at": "2020-05-06T09:01:50.194Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2929,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 643,
+            "username": "lehu",
+            "name": "Leo Hu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/lehu/{size}/995_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1511,
+        "username": "czephyr",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d78d45/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1511,
+      "username": "czephyr",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d78d45/{size}.png"
+    },
+    "last_poster": {
+      "id": 1511,
+      "username": "czephyr",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d78d45/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

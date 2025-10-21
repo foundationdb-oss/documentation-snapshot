@@ -1,0 +1,564 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9706,
+        "name": "",
+        "username": "boorishwreck",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/boorishwreck/{size}/1135_2.png",
+        "created_at": "2021-07-16T02:42:49.932Z",
+        "cooked": "<p>Hi All,</p>\n<p>Trying to get fdbbackup working with a blobstore (in this case s3). First, I could get this to work by using the following command:</p>\n<pre><code class=\"lang-auto\">$ fdbbackup start -d \"blobstore://&lt;aws_api_key&gt;:&lt;aws_secret&gt;@s3.ap-southeast-2.amazonaws.com/test1?bucket=&lt;my_bucket&gt;&amp;sc=0\"\n</code></pre>\n<p>This works fine, I can see the backup marker created in my S3 bucket under <code>backup</code> prefix and the data for <code>test1</code> created under <code>data</code> prefix.</p>\n<p>The problem I\u2019m facing is I\u2019m unable to successfully complete the backup using <code>--blob_credentials</code> file. If I do the following:</p>\n<pre><code class=\"lang-auto\">$  fdbbackup start --blob_credentials aws_s3_creds.json -d \"blobstore://&lt;aws_api_key&gt;@s3.ap-southeast-2.amazonaws.com/test1?bucket=&lt;my_bucket&gt;&amp;sc=0\" \n</code></pre>\n<p>I have the following result:</p>\n<ol>\n<li>The \u201cmarker\u201d file (I\u2019m assuming this is a marker since it\u2019s a 0 sized file) is created, but</li>\n<li>The data is missing</li>\n</ol>\n<p>Checking the status:</p>\n<pre><code class=\"lang-auto\">fdbbackup status\n\nThe backup on tag `default' is in progress to blobstore://&lt;aws_api_key&gt;@s3.ap-southeast-2.amazonaws.com/test10?bucket=&lt;my_bucket&gt;&amp;sc=0.\nBackupUID: 2de7afb2bd35369ad538988461de1dc5\nBackupURL: blobstore://&lt;aws_api_key&gt;@s3.ap-southeast-2.amazonaws.com/test10?bucket=&lt;my_bucket&gt;&amp;sc=0\nSnapshot interval is 864000 seconds.  The initial snapshot is still running.\n\nDetails:\n LogBytes written - 0\n RangeBytes written - 0\n Last complete log version and timestamp        - 1279847190781, 2021/07/16.09:52:52+1000\n Last complete snapshot version and timestamp   - N/A, N/A\n Current Snapshot start version and timestamp   - 1279847190781, 2021/07/16.09:52:52+1000\n Expected snapshot end version and timestamp    - 1279847190781, 2021/07/16.09:52:52+1000\n Backup supposed to stop at next snapshot completion - Yes\n</code></pre>\n<p>Eventually I saw the following error:</p>\n<pre><code class=\"lang-auto\">Recent Errors (since initialization)\n1.33 minute(s) ago : 'HTTP response code not received or indicated failure' on 'file_backup_write_logs_5.2'\n</code></pre>\n<p>I believe my credentials file format &amp; content is correct because I can see this \u201cmarker\u201d file is created and also if I do this:</p>\n<pre><code class=\"lang-auto\">$ fdbbackup list -b \"blobstore://&lt;aws_api_key&gt;@s3.ap-southeast-2.amazonaws.com?bucket=&lt;my_bucket&gt;&amp;sc=0\" --blob_credentials aws_s3_creds.json \n</code></pre>\n<p>returns my backup here (looks like just a list of files from the backup directory not the data directory)</p>\n<p>Update: since creating this post I installed Minio in my local machine and did the same test. Interestingly I have the exact same issue: with the secret in the blobstore URL it works, but with the secret in blob_credetials file I can see the backup marker but not the actual backup.</p>\n<p>Could anyone help?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2021-07-16T06:52:52.288Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 68,
+        "reads": 34,
+        "readers_count": 33,
+        "score": 346.8,
+        "yours": false,
+        "topic_id": 2794,
+        "topic_slug": "fdbbackup-to-blobstore-failed-using-blob-credentials",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 4,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 965,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdbbackup-to-blobstore-failed-using-blob-credentials/2794/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      9706
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1559
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Fdbbackup to blobstore failed using blob_credentials",
+  "id": 2794,
+  "title": "Fdbbackup to blobstore failed using blob_credentials",
+  "posts_count": 1,
+  "created_at": "2021-07-16T02:42:49.849Z",
+  "views": 481,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-07-16T02:42:49.932Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdbbackup-to-blobstore-failed-using-blob-credentials",
+  "category_id": 7,
+  "word_count": 407,
+  "deleted_at": null,
+  "user_id": 965,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2794",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "FoundationDB fdbbackup",
+      "id": 1460,
+      "title": "FoundationDB fdbbackup",
+      "slug": "foundationdb-fdbbackup",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-17T18:54:47.516Z",
+      "last_posted_at": "2019-10-09T03:07:15.974Z",
+      "bumped": true,
+      "bumped_at": "2019-10-09T03:07:15.974Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2461,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 579,
+            "username": "approachcp",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 581,
+            "username": "surprisetalk",
+            "name": "Taylor Sarrafian",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/surprisetalk/{size}/579_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Sanity check: FoundationDB backup blobstore credentials permissions errors",
+      "id": 1944,
+      "title": "Sanity check: FoundationDB backup blobstore credentials permissions errors",
+      "slug": "sanity-check-foundationdb-backup-blobstore-credentials-permissions-errors",
+      "posts_count": 20,
+      "reply_count": 4,
+      "highest_post_number": 20,
+      "image_url": null,
+      "created_at": "2020-02-13T17:22:53.536Z",
+      "last_posted_at": "2020-02-19T00:40:20.641Z",
+      "bumped": true,
+      "bumped_at": "2020-02-19T00:40:20.641Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1493,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 484,
+            "username": "ksnavely",
+            "name": "Kyle Snavely",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ksnavely/{size}/483_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundatioDBBackup against azure blobstore - unknown error",
+      "id": 2404,
+      "title": "FoundatioDBBackup against azure blobstore - unknown error",
+      "slug": "foundatiodbbackup-against-azure-blobstore-unknown-error",
+      "posts_count": 15,
+      "reply_count": 10,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2020-10-22T08:10:38.576Z",
+      "last_posted_at": "2022-06-27T18:32:25.783Z",
+      "bumped": true,
+      "bumped_at": "2022-06-27T18:32:25.783Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 8,
+      "views": 1476,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 746,
+            "username": "matiasholte",
+            "name": "Matias Holte",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/matiasholte/{size}/1124_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 837,
+            "username": "petr-tichy",
+            "name": "Petr Tich\u00fd",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/petr-tichy/{size}/1427_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 405,
+            "username": "harikb",
+            "name": "Hari B",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDb fdbbackup to Azure Blob Store",
+      "id": 3392,
+      "title": "FoundationDb fdbbackup to Azure Blob Store",
+      "slug": "foundationdb-fdbbackup-to-azure-blob-store",
+      "posts_count": 8,
+      "reply_count": 5,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2022-06-21T22:18:36.564Z",
+      "last_posted_at": "2022-11-10T10:12:28.003Z",
+      "bumped": true,
+      "bumped_at": "2022-11-10T10:12:28.003Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 713,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 915,
+            "username": "skr1942",
+            "name": "srai",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9f8e36/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 405,
+            "username": "harikb",
+            "name": "Hari B",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1128,
+            "username": "manfontan",
+            "name": "Manuel Fontan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "id": 1131,
+      "title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "slug": "fdbbackup-expire-with-blobstore-returning-error-not-deleting-from-s3",
+      "posts_count": 19,
+      "reply_count": 11,
+      "highest_post_number": 19,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/dc9b21297880928293b7194125f1889c26a4f70a_2_1024x579.png",
+      "created_at": "2019-02-12T22:55:17.346Z",
+      "last_posted_at": "2020-01-24T13:25:04.572Z",
+      "bumped": true,
+      "bumped_at": "2020-01-24T13:25:04.572Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2227,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 634,
+            "username": "somu",
+            "name": "somasundaram",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ce73a5/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 965,
+        "username": "boorishwreck",
+        "name": "",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/boorishwreck/{size}/1135_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 965,
+      "username": "boorishwreck",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/boorishwreck/{size}/1135_2.png"
+    },
+    "last_poster": {
+      "id": 965,
+      "username": "boorishwreck",
+      "name": "",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/boorishwreck/{size}/1135_2.png"
+    }
+  },
+  "bookmarks": []
+}

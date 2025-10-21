@@ -1,0 +1,516 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9947,
+        "name": "Peter",
+        "username": "petey",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f1d935/{size}.png",
+        "created_at": "2021-09-05T17:40:47.406Z",
+        "cooked": "<p>Hey all, we\u2019ve noticed that if we keep our backup agent running for a long time, it slowly leaks sockets in \u2018CLOSE_WAIT\u2019 until running out of available handles.<br>\nWe upload our backup to an S3 storage bucket.</p>\n<p>Example:</p>\n<pre><code class=\"lang-auto\">$ pstree -p | grep backup\n           |-containerd(5834)-+-containerd-shim(12582)-+-storage(12615)-+-fdbmonitor(12650)-+-backup_agent(12657)-+-{backup_agent}(+\n           |                  |                        |                |                   |                     |-{backup_agent}(+\n           |                  |                        |                |                   |                     |-{backup_agent}(+\n           |                  |                        |                |                   |                     |-{backup_agent}(+\n           |                  |                        |                |                   |                     |-{backup_agent}(+\n           |                  |                        |                |                   |                     `-{backup_agent}(+\n</code></pre>\n<pre><code class=\"lang-auto\">ls -l /proc/12657/fd/\n...\nlrwx------. 1 root root 64 Sep  4 00:08 64 -&gt; socket:[191177707]\nlrwx------. 1 root root 64 Sep  4 08:17 65 -&gt; socket:[190092237]\nlrwx------. 1 root root 64 Sep  4 08:17 66 -&gt; socket:[190761957]\nlr-x------. 1 root root 64 Sep  2 19:23 7 -&gt; pipe:[185282974]\nlrwx------. 1 root root 64 Sep  4 08:17 70 -&gt; socket:[190464326]\nlrwx------. 1 root root 64 Sep  4 12:22 71 -&gt; socket:[190464327]\nlrwx------. 1 root root 64 Sep  4 12:22 72 -&gt; socket:[190464328]\nlrwx------. 1 root root 64 Sep  4 12:22 73 -&gt; socket:[190967685]\nlrwx------. 1 root root 64 Sep  4 20:32 74 -&gt; socket:[191421019]\nlrwx------. 1 root root 64 Sep  5 00:37 75 -&gt; socket:[190977564]\nlrwx------. 1 root root 64 Sep  5 00:37 76 -&gt; socket:[191425533]\nlrwx------. 1 root root 64 Sep  5 00:37 77 -&gt; socket:[191417785]\nl-wx------. 1 root root 64 Sep  2 19:23 8 -&gt; pipe:[185282974]\nlrwx------. 1 root root 64 Sep  5 04:43 81 -&gt; socket:[191845011]\nlrwx------. 1 root root 64 Sep  5 04:43 82 -&gt; socket:[191853202]\nlrwx------. 1 root root 64 Sep  2 19:23 9 -&gt; anon_inode:[eventfd]\n</code></pre>\n<pre><code class=\"lang-auto\">lsof -i -P | grep 12657\n...\nbackup_ag 12657    root   70u  IPv4 190464326      0t0  TCP &lt;our-ip&gt;:40498-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   71u  IPv4 190464327      0t0  TCP &lt;our-ip&gt;:40500-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   72u  IPv4 190464328      0t0  TCP &lt;our-ip&gt;:40502-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   73u  IPv4 190967685      0t0  TCP &lt;our-ip&gt;:34920-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   74u  IPv4 191421019      0t0  TCP &lt;our-ip&gt;:41056-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   75u  IPv4 190977564      0t0  TCP &lt;our-ip&gt;:59910-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   76u  IPv4 191425533      0t0  TCP &lt;our-ip&gt;:41058-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   77u  IPv4 191417785      0t0  TCP &lt;our-ip&gt;:58702-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   81u  IPv4 191845011      0t0  TCP &lt;our-ip&gt;:47550-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\nbackup_ag 12657    root   82u  IPv4 191853202      0t0  TCP &lt;our-ip&gt;:40254-&gt;aws.amazonaws.com:443 (CLOSE_WAIT)\n</code></pre>\n<p>We\u2019re getting a few <code>BlobStoreEndpointRequestFailedRetryable</code> errors in our log.</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"20\" Time=\"1630846418.525511\" Type=\"BlobStoreEndpointRequestFailedRetryable\" ID=\"0000000000000000\" Error=\"connection_failed\" ErrorDescription=\"Network connection failed\" ErrorCode=\"1026\" SuppressedEventCount=\"1\" ConnectionEstablished=\"1\" RemoteEndpoint=\"\" Verb=\"PUT\" Resource=\"\" ThisTry=\"1\" RetryDelay=\"2\" Machine=\"\" LogGroup=\"default\" /&gt;\n</code></pre>\n<p>Anybody have any thoughts on what the issue could be, or how we could gather more data?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2021-09-05T17:40:47.406Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 11,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 88.0,
+        "yours": false,
+        "topic_id": 2881,
+        "topic_slug": "backup-agent-leaking-handles-in-close-wait",
+        "display_username": "Peter",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/where-do-i-find-backup-agent-debug/3044",
+            "internal": true,
+            "reflection": true,
+            "title": "Where do I find \"backup_agent.debug\"?",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 996,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/backup-agent-leaking-handles-in-close-wait/2881/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      9947
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1507
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Backup Agent Leaking handles in CLOSE_WAIT",
+  "id": 2881,
+  "title": "Backup Agent Leaking handles in CLOSE_WAIT",
+  "posts_count": 1,
+  "created_at": "2021-09-05T17:40:47.335Z",
+  "views": 399,
+  "reply_count": 0,
+  "like_count": 2,
+  "last_posted_at": "2021-09-05T17:40:47.406Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "backup-agent-leaking-handles-in-close-wait",
+  "category_id": 17,
+  "word_count": 484,
+  "deleted_at": null,
+  "user_id": 996,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2881",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Backing up the database using `fdbbackup` command returns in an error",
+      "id": 1844,
+      "title": "Backing up the database using `fdbbackup` command returns in an error",
+      "slug": "backing-up-the-database-using-fdbbackup-command-returns-in-an-error",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-12-16T10:49:12.154Z",
+      "last_posted_at": "2019-12-16T13:54:49.984Z",
+      "bumped": true,
+      "bumped_at": "2019-12-16T13:54:49.984Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1069,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 700,
+            "username": "viveksinghggits",
+            "name": "Vivek Singh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/viveksinghggits/{size}/737_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Running backup_agent alone",
+      "id": 2107,
+      "title": "Running backup_agent alone",
+      "slug": "running-backup-agent-alone",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-05-07T14:07:10.601Z",
+      "last_posted_at": "2020-05-07T18:34:58.880Z",
+      "bumped": true,
+      "bumped_at": "2020-05-07T18:34:58.880Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 296,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb seems keep reinitialising itself after client hang",
+      "id": 1437,
+      "title": "Foundationdb seems keep reinitialising itself after client hang",
+      "slug": "foundationdb-seems-keep-reinitialising-itself-after-client-hang",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-10T10:10:13.209Z",
+      "last_posted_at": "2019-06-26T18:08:03.629Z",
+      "bumped": true,
+      "bumped_at": "2019-06-26T18:08:03.629Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1222,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 602,
+            "username": "ppggff",
+            "name": "ppggff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ppggff/{size}/855_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Segmentation fault error and broken cluster",
+      "id": 483,
+      "title": "Segmentation fault error and broken cluster",
+      "slug": "segmentation-fault-error-and-broken-cluster",
+      "posts_count": 17,
+      "reply_count": 12,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2018-05-31T15:34:28.123Z",
+      "last_posted_at": "2018-06-11T17:31:13.656Z",
+      "bumped": true,
+      "bumped_at": "2018-06-11T17:31:13.656Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 4331,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 211,
+            "username": "brk0v",
+            "name": "Viacheslav Biriukov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brk0v/{size}/173_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Trying to understand the backup mechanism better",
+      "id": 588,
+      "title": "Trying to understand the backup mechanism better",
+      "slug": "trying-to-understand-the-backup-mechanism-better",
+      "posts_count": 5,
+      "reply_count": 1,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-07-25T22:58:43.059Z",
+      "last_posted_at": "2018-08-24T23:45:52.938Z",
+      "bumped": true,
+      "bumped_at": "2018-08-24T23:45:52.938Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1453,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 9,
+            "username": "mbhaskar",
+            "name": "Bhaskar Muppana",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mbhaskar/{size}/277_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 996,
+        "username": "petey",
+        "name": "Peter",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f1d935/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 996,
+      "username": "petey",
+      "name": "Peter",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f1d935/{size}.png"
+    },
+    "last_poster": {
+      "id": 996,
+      "username": "petey",
+      "name": "Peter",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/f1d935/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/where-do-i-find-backup-agent-debug/3044",
+        "title": "Where do I find \"backup_agent.debug\"?",
+        "internal": true,
+        "attachment": false,
+        "reflection": true,
+        "clicks": 1,
+        "user_id": 810,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,701 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12439,
+        "name": "minhthucdao",
+        "username": "dmthuc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dmthuc/{size}/1522_2.png",
+        "created_at": "2023-02-15T13:57:40.979Z",
+        "cooked": "<p>We have an application that use FoundationDB as backend, we would like to build foundationdb client statically into our app. Do you have any experience or example to do it. Anyway, I have go ahead and try. At the moment I stuck at this linker error.</p>\n<pre><code class=\"lang-auto\">ld.lld: error: undefined symbol: Void wait&lt;Void&gt;(Future&lt;Void&gt; const&amp;)\n&gt;&gt;&gt; referenced by ThreadHelper.actor.h:43 (/data01/contrib/foundationdb/flow/include/flow/ThreadHelper.actor.h:43)\n&gt;&gt;&gt;               fdb_c.cpp.o:(void onMainThreadVoid&lt;ThreadSingleAssignmentVarBase::cancel()::'lambda'()&gt;(ThreadSingleAssignmentVarBase::cancel()::'lambda'(), TaskPriority)) in archive contrib/foundationdb-cmake/bindings/c/libfdb_c.a\n&gt;&gt;&gt; referenced by ThreadHelper.actor.h:787 (/data01/minh.dao/git/branches/community_stable/ClickHouse/contrib/foundationdb/flow/include/flow/ThreadHelper.actor.h:787)\n&gt;&gt;&gt;               MultiVersionTransaction.actor.cpp.o:(MultiVersionTransaction::setTimeout(Optional&lt;StringRef&gt;)) in archive contrib/foundationdb-cmake/fdbclient/libfdbclient.a\n&gt;&gt;&gt; referenced by ThreadHelper.actor.h:788 (/data01/contrib/foundationdb/flow/include/flow/ThreadHelper.actor.h:788)\n&gt;&gt;&gt;               MultiVersionTransaction.actor.cpp.o:(MultiVersionTransaction::setTimeout(Optional&lt;StringRef&gt;)) in archive contrib/foundationdb-cmake/fdbclient/libfdbclient.a\n&gt;&gt;&gt; referenced 679 more times\n</code></pre>\n<p>Do you have any idea where is the definition of the <code>wait</code> function located in the source code?<br>\nThank you very much for your help</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-02-15T13:58:06.015Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 132,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 659.2,
+        "yours": false,
+        "topic_id": 3809,
+        "topic_slug": "build-foundationdb-client-statically-into-another-app",
+        "display_username": "minhthucdao",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1216,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/build-foundationdb-client-statically-into-another-app/3809/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12444,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2023-02-17T04:39:18.714Z",
+        "cooked": "<p>Looks like the library was not properly compiled. <code>wait</code> is a <a href=\"https://github.com/apple/foundationdb/tree/main/flow#wait\">flow keyword</a>, which will be transformed by \u201cactor compiler\u201d into C++ functions and callbacks. To properly compile FDB, please use the official docker image, see <a href=\"https://github.com/FoundationDB/fdb-build-support\">instructions</a>.</p>\n<p>To link with your app, you probably want to use C binding with <a href=\"https://github.com/apple/foundationdb/releases/download/7.1.27/libfdb_c.x86_64.so\">libfdb_c.so</a>. For other languages, e.g., Java, Python, Go, use corresponding language bindings with libfdb_c.so together. Unfortunately, I can\u2019t find these language bindings in the github download page, so you will need to compile them: <code>ninja -C build_output/ packages</code>.</p>\n<p>You may install the client package, which comes with <code>fdb_c.h</code>, <code>fdb_c_options.g.h</code> and <code>libfdb_c.so</code>.</p>\n<pre><code class=\"lang-auto\"># rpm -qplv foundationdb-clients-7.1.27-1.el7.x86_64.rpm\ndrwxr-xr-x    2 root    root                        0 Jan 31 01:57 /etc/foundationdb\n-rwxr-xr-x    1 root    root                 21083104 Jan 31 02:04 /usr/bin/dr_agent\n-rwxr-xr-x    1 root    root                 21083104 Jan 31 02:04 /usr/bin/fdbbackup\n-rwxr-xr-x    1 root    root                 20023912 Jan 31 02:04 /usr/bin/fdbcli\n-rwxr-xr-x    1 root    root                 21083096 Jan 31 02:04 /usr/bin/fdbdr\n-rwxr-xr-x    1 root    root                 21083104 Jan 31 02:04 /usr/bin/fdbrestore\ndrwxrwxr-x    2 root    root                        0 Jan 31 01:57 /usr/include/foundationdb\n-rw-r--r--    1 root    root                    42948 Jan 31 01:44 /usr/include/foundationdb/fdb.options\n-rw-r--r--    1 root    root                    29019 Jan 31 01:44 /usr/include/foundationdb/fdb_c.h\n-rw-r--r--    1 root    root                    39908 Jan 31 01:45 /usr/include/foundationdb/fdb_c_options.g.h\n-rw-r--r--    1 root    root                     1264 Jan 20 23:33 /usr/include/foundationdb/fdb_c_types.h\ndrwxrwxr-x    2 root    root                        0 Jan 31 01:59 /usr/lib/foundationdb/backup_agent\n-rwxr-xr-x    1 root    root                 21083104 Jan 31 02:04 /usr/lib/foundationdb/backup_agent/backup_agent\ndrwxrwxr-x    2 root    root                        0 Jan 31 01:57 /usr/lib64/cmake/FoundationDB-Client\n-rw-r--r--    1 root    root                      788 Jan 31 01:44 /usr/lib64/cmake/FoundationDB-Client/FoundationDB-Client-release.cmake\n-rw-r--r--    1 root    root                     3190 Jan 31 01:44 /usr/lib64/cmake/FoundationDB-Client/FoundationDB-Client.cmake\n-rw-r--r--    1 root    root                       63 Jan 31 01:44 /usr/lib64/cmake/FoundationDB-Client/FoundationDB-ClientConfig.cmake\n-rw-r--r--    1 root    root                     1978 Jan 31 01:44 /usr/lib64/cmake/FoundationDB-Client/FoundationDB-ClientConfigVersion.cmake\n-rwxr-xr-x    1 root    root                 19340512 Jan 31 02:04 /usr/lib64/libfdb_c.so\n-rw-r--r--    1 root    root                      173 Jan 31 01:44 /usr/lib64/pkgconfig/foundationdb-client.pc\n</code></pre>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-02-17T04:47:09.620Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 13.2,
+        "yours": false,
+        "topic_id": 3809,
+        "topic_slug": "build-foundationdb-client-statically-into-another-app",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/FoundationDB/fdb-build-support",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-build-support: FoundationDB build and development resources",
+            "clicks": 6
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/releases/download/7.1.27/libfdb_c.x86_64.so",
+            "internal": false,
+            "reflection": false,
+            "clicks": 5
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/tree/main/flow#wait",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/flow at main \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/build-foundationdb-client-statically-into-another-app/3809/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12439,
+      12444
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      979
+    ],
+    [
+      2,
+      978
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Build foundationdb client statically into another app",
+  "id": 3809,
+  "title": "Build foundationdb client statically into another app",
+  "posts_count": 2,
+  "created_at": "2023-02-15T13:57:40.916Z",
+  "views": 485,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-02-17T04:39:18.714Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "build-foundationdb-client-statically-into-another-app",
+  "category_id": 7,
+  "word_count": 657,
+  "deleted_at": null,
+  "user_id": 1216,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3809",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to complie and debug FDB (on mac os)?",
+      "id": 176,
+      "title": "How to complie and debug FDB (on mac os)?",
+      "slug": "how-to-complie-and-debug-fdb-on-mac-os",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2018-04-21T14:09:00.980Z",
+      "last_posted_at": "2018-05-17T21:06:56.719Z",
+      "bumped": true,
+      "bumped_at": "2018-05-17T21:06:56.719Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2930,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 127,
+            "username": "Johnny-Three",
+            "name": "inolddays",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/johnny-three/{size}/111_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 65,
+            "username": "dougnukem",
+            "name": "Doug Daniels",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dougnukem/{size}/48_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Building FoundationDB C API static Library for Rust Programing language",
+      "id": 2006,
+      "title": "Building FoundationDB C API static Library for Rust Programing language",
+      "slug": "building-foundationdb-c-api-static-library-for-rust-programing-language",
+      "posts_count": 8,
+      "reply_count": 6,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2020-03-09T09:04:47.529Z",
+      "last_posted_at": "2020-03-10T06:44:18.836Z",
+      "bumped": true,
+      "bumped_at": "2020-03-10T06:44:18.836Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1285,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 739,
+            "username": "nguyenduybinh",
+            "name": "Nguyen Duy Binh",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/5f9b8f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Compiling on Linux with anything other than Ubuntu 15.04 / docker possible?",
+      "id": 118,
+      "title": "Compiling on Linux with anything other than Ubuntu 15.04 / docker possible?",
+      "slug": "compiling-on-linux-with-anything-other-than-ubuntu-15-04-docker-possible",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-04-20T11:21:20.195Z",
+      "last_posted_at": "2018-04-23T01:06:08.039Z",
+      "bumped": true,
+      "bumped_at": "2018-04-23T01:06:08.039Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1149,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 77,
+            "username": "Meai",
+            "name": "Meai",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meai/{size}/500_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 78,
+            "username": "pineapple",
+            "name": "Brian Haslet",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/p/7993a0/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 30,
+            "username": "wwilson",
+            "name": "Will Wilson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Static Library for Linux",
+      "id": 719,
+      "title": "Static Library for Linux",
+      "slug": "static-library-for-linux",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-09-21T08:26:31.925Z",
+      "last_posted_at": "2018-09-24T23:06:11.454Z",
+      "bumped": true,
+      "bumped_at": "2018-09-24T23:06:11.454Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 942,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 378,
+            "username": "num",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/db5fbb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Swift language support",
+      "id": 53,
+      "title": "Swift language support",
+      "slug": "swift-language-support",
+      "posts_count": 27,
+      "reply_count": 12,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-04-19T18:01:37.126Z",
+      "last_posted_at": "2018-11-04T16:00:36.948Z",
+      "bumped": true,
+      "bumped_at": "2018-11-04T16:00:36.948Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 9,
+      "views": 7309,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 31,
+            "username": "dicklacara",
+            "name": "Richard Applebaum",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8797f3/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 197,
+            "username": "nunomaia",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/f9ae1b/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1,
+            "username": "davelester",
+            "name": "Dave Lester",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/davelester/{size}/1927_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      },
+      {
+        "id": 1216,
+        "username": "dmthuc",
+        "name": "minhthucdao",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/dmthuc/{size}/1522_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1216,
+      "username": "dmthuc",
+      "name": "minhthucdao",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/dmthuc/{size}/1522_2.png"
+    },
+    "last_poster": {
+      "id": 454,
+      "username": "jzhou",
+      "name": "Jingyu Zhou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/FoundationDB/fdb-build-support",
+        "title": "GitHub - FoundationDB/fdb-build-support: FoundationDB build and development resources",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 454,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/releases/download/7.1.27/libfdb_c.x86_64.so",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 454,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/tree/main/flow#wait",
+        "title": "foundationdb/flow at main \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 454,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,741 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 7450,
+        "name": "jar ",
+        "username": "jarvis",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/e36b37/{size}.png",
+        "created_at": "2020-06-23T18:13:23.103Z",
+        "cooked": "<p>I have started working with FDB recently. Could anyone please expand on the following:</p>\n<ol>\n<li>What are the different types that are maintained in foundation db trace files like \u201cGetValueDebug\u201d etc ?</li>\n<li>What is the location of transaction log file? Is it stored in the data dir as configured in the configuation file ? and is there any prefix for the log files ? Also, if you could expound on the format of data stored in transaction ogs ?</li>\n</ol>\n<p>I also have few doubt related to  three_datacenter_mode:</p>\n<ol>\n<li>\n<p>Doc says that TLog processes  are maintained in 2 data centers and the third datacenter only has storage server processes, how is the data replicated in the third datacenter  and the second datacenter ( assuming second and first data center both have tlogs and client has started transaction request from first datacenter) ?</p>\n</li>\n<li>\n<p>Since three_datacenter_mode is based upon synchronous data replication, and commit latencies observe round trip latencies also, wanted to know what is the process of data replication here, couldn\u2019t find any detailed article</p>\n</li>\n</ol>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-06-23T18:32:44.210Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 397,
+        "reads": 39,
+        "readers_count": 38,
+        "score": 1997.8,
+        "yours": false,
+        "topic_id": 2202,
+        "topic_slug": "transaction-log-files-info-and-three-data-center-data-replication-model",
+        "display_username": "jar ",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 781,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/transaction-log-files-info-and-three-data-center-data-replication-model/2202/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 7451,
+        "name": "jar ",
+        "username": "jarvis",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/e36b37/{size}.png",
+        "created_at": "2020-06-23T18:26:22.062Z",
+        "cooked": "<p><a class=\"mention\" href=\"/u/ajbeamon\">@ajbeamon</a> <a class=\"mention\" href=\"/u/alloc\">@alloc</a>  if you guys have any insights</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-06-23T18:26:22.062Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 39,
+        "readers_count": 38,
+        "score": 17.8,
+        "yours": false,
+        "topic_id": 2202,
+        "topic_slug": "transaction-log-files-info-and-three-data-center-data-replication-model",
+        "display_username": "jar ",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 781,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/transaction-log-files-info-and-three-data-center-data-replication-model/2202/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 7496,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2020-07-02T15:42:02.469Z",
+        "cooked": "<blockquote>\n<ol>\n<li>What are the different types that are maintained in foundation db trace files like \u201cGetValueDebug\u201d etc ?</li>\n</ol>\n</blockquote>\n<p>We don\u2019t really have much documentation for the contents of trace files. Probably the best we have are a couple partially completed wiki pages:</p>\n<aside class=\"onebox allowlistedgeneric\" data-onebox-src=\"https://github.com/apple/foundationdb/wiki/Understanding-FoundationDB-Log-Files\">\n  <header class=\"source\">\n      <img src=\"https://github.githubassets.com/favicons/favicon.svg\" class=\"site-icon\" width=\"32\" height=\"32\">\n\n      <a href=\"https://github.com/apple/foundationdb/wiki/Understanding-FoundationDB-Log-Files\" target=\"_blank\" rel=\"noopener\">GitHub</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"aspect-image\" style=\"--aspect-ratio:690/344;\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/a/a09253e2d16c1fa1ba6ffaa6395a34e914602d54_2_690x345.png\" class=\"thumbnail\" data-dominant-color=\"F0EDEE\" width=\"690\" height=\"345\"></div>\n\n<h3><a href=\"https://github.com/apple/foundationdb/wiki/Understanding-FoundationDB-Log-Files\" target=\"_blank\" rel=\"noopener\">Understanding FoundationDB Log Files</a></h3>\n\n  <p>FoundationDB - the open source, distributed, transactional key-value store - apple/foundationdb</p>\n\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<aside class=\"onebox allowlistedgeneric\" data-onebox-src=\"https://github.com/apple/foundationdb/wiki/FoundationDB-Trace-Metrics-Definitions\">\n  <header class=\"source\">\n      <img src=\"https://github.githubassets.com/favicons/favicon.svg\" class=\"site-icon\" width=\"32\" height=\"32\">\n\n      <a href=\"https://github.com/apple/foundationdb/wiki/FoundationDB-Trace-Metrics-Definitions\" target=\"_blank\" rel=\"noopener\">GitHub</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <div class=\"aspect-image\" style=\"--aspect-ratio:690/344;\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/2X/a/a09253e2d16c1fa1ba6ffaa6395a34e914602d54_2_690x345.png\" class=\"thumbnail\" data-dominant-color=\"F0EDEE\" width=\"690\" height=\"345\"></div>\n\n<h3><a href=\"https://github.com/apple/foundationdb/wiki/FoundationDB-Trace-Metrics-Definitions\" target=\"_blank\" rel=\"noopener\">FoundationDB Trace Metrics Definitions</a></h3>\n\n  <p>FoundationDB - the open source, distributed, transactional key-value store - apple/foundationdb</p>\n\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<aside class=\"quote no-group\" data-username=\"jarvis\" data-post=\"1\" data-topic=\"2202\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/j/e36b37/48.png\" class=\"avatar\"> jarvis:</div>\n<blockquote>\n<p>What is the location of transaction log file? Is it stored in the data dir as configured in the configuation file ? and is there any prefix for the log files ? Also, if you could expound on the format of data stored in transaction ogs ?</p>\n</blockquote>\n</aside>\n<p>The transaction logs\u2019 data files (rather than trace logs) are stored in the data directory. There are two sets of files here:</p>\n<p>Disk queue - These files have the form <code>logqueue-*.fdq</code>. All mutations sent to a transaction log get appended to one of these, and storage servers gradually pop data off the front.</p>\n<p>Persistent data - These files are usually b-tree files using the <code>ssd-2</code> storage engine, and in that case will have the form <code>log*.sqlite</code> and <code>log*.sqlite-wal</code>. If the disk queue gets \u201cfull\u201d, then data gets spilled to this data structure from the queue until it can be popped or is no longer needed.</p>\n<p>The filenames of both of these also contain some version information about the log system used to generate them. There are some good write-ups of the design of this in these documents:</p>\n<aside class=\"onebox githubblob\" data-onebox-src=\"https://github.com/apple/foundationdb/blob/main/design/tlog-spilling.md.html\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/blob/main/design/tlog-spilling.md.html\" target=\"_blank\" rel=\"noopener\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/main/design/tlog-spilling.md.html\" target=\"_blank\" rel=\"noopener\">apple/foundationdb/blob/main/design/tlog-spilling.md.html</a></h4>\n\n\n      <pre><code class=\"lang-html\">&lt;meta charset=\"utf-8\"&gt;\n\n# TLog Spill-By-Reference Design\n\n## Background\n\n(This assumes a basic familiarity with [FoundationDB's architecture](https://www.youtu.be/EMwhsGsxfPU).)\n\nTransaction logs are a distributed Write-Ahead-Log for FoundationDB.  They\nreceive commits from commit proxies, and are responsible for durably storing \nthose commits, and making them available to storage servers for reading.\n\nClients send *mutations*, the list of their set, clears, atomic operations,\netc., to commit proxies. Commit proxies collect mutations into a *batch*, which\nis the list of all changes that need to be applied to the database to bring it\nfrom version `N-1` to `N`. Commit proxies then walk through their in-memory \nmapping of shard boundaries to associate one or more *tags*, a small integer \nuniquely identifying a destination storage server, with each mutation. They \nthen send a *commit*, the full list of `(tags, mutation)` for each mutation in\na batch, to the transaction logs.\n</code></pre>\n\n\n\n  This file has been truncated. <a href=\"https://github.com/apple/foundationdb/blob/main/design/tlog-spilling.md.html\" target=\"_blank\" rel=\"noopener\">show original</a>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n<aside class=\"onebox githubblob\" data-onebox-src=\"https://github.com/apple/foundationdb/blob/main/design/tlog-forward-compatibility.md.html\">\n  <header class=\"source\">\n\n      <a href=\"https://github.com/apple/foundationdb/blob/main/design/tlog-forward-compatibility.md.html\" target=\"_blank\" rel=\"noopener\">github.com</a>\n  </header>\n\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/main/design/tlog-forward-compatibility.md.html\" target=\"_blank\" rel=\"noopener\">apple/foundationdb/blob/main/design/tlog-forward-compatibility.md.html</a></h4>\n\n\n      <pre><code class=\"lang-html\">&lt;meta charset=\"utf-8\"&gt;\n\n# Forward Compatibility for Transaction Logs\n\n## Background\n\nA repeated concern with adopting FoundationDB has been that upgrades are one\nway, with no supported rollback.  If one were to upgrade a cluster running 6.0\nto a 6.1, then there's no way to roll back to 6.0 if the new version results in\nworse client application performance or unavailability.  In the interest of\nincreasing adoption, work has begun on supporting on-disk forward\ncompatibility, which allows for upgrades to be rolled back.\n\nThe traditional way of allowing roll backs is to have one version, `N`, that\nintroduces a feature, but is left as disabled.  `N+1` enables the feature, and\nthen `N+2` removes whatever was deprecated in `N`.  However, FDB currently has\na 6 month release cadence, and waiting 6 months to be able to use a new feature\nin production is unacceptably long.  Thus, the goal is to have a way to be able\nto have a sane and user-friendly, rollback-supporting upgrade path, but still\nallow features to be used immediately if desired.\n</code></pre>\n\n\n\n  This file has been truncated. <a href=\"https://github.com/apple/foundationdb/blob/main/design/tlog-forward-compatibility.md.html\" target=\"_blank\" rel=\"noopener\">show original</a>\n\n  </article>\n\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n\n  <div style=\"clear: both\"></div>\n</aside>\n\n<aside class=\"quote no-group\" data-username=\"jarvis\" data-post=\"1\" data-topic=\"2202\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/j/e36b37/48.png\" class=\"avatar\"> jarvis:</div>\n<blockquote>\n<ul>\n<li>Doc says that TLog processes are maintained in 2 data centers and the third datacenter only has storage server processes, how is the data replicated in the third datacenter and the second datacenter ( assuming second and first data center both have tlogs and client has started transaction request from first datacenter) ?</li>\n<li>Since three_datacenter_mode is based upon synchronous data replication, and commit latencies observe round trip latencies also, wanted to know what is the process of data replication here, couldn\u2019t find any detailed article</li>\n</ul>\n</blockquote>\n</aside>\n<p>I don\u2019t have a lot of experience with <code>three_datacenter</code> mode, but I think this works fairly similarly to normal configurations. Commits must synchronously write data to all the logs in the two datacenters, and storage servers asynchronously grab data from the logs.</p>\n<p>A commit from the primary datacenter would have to interact with that datacenter to initiate the commit, the data would get written to the first and second datacenter transaction logs, and then the commit would succeed. Asynchronously, the storage servers in all datacenters would grab the updated data from their transaction logs to ensure that it ends up everywhere.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-07-02T15:42:02.469Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 34,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 176.4,
+        "yours": false,
+        "topic_id": 2202,
+        "topic_slug": "transaction-log-files-info-and-three-data-center-data-replication-model",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/wiki/Understanding-FoundationDB-Log-Files",
+            "internal": false,
+            "reflection": false,
+            "title": "Understanding FoundationDB Log Files \u00b7 apple/foundationdb Wiki \u00b7 GitHub",
+            "clicks": 27
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/wiki/FoundationDB-Trace-Metrics-Definitions",
+            "internal": false,
+            "reflection": false,
+            "title": "FoundationDB Trace Metrics Definitions \u00b7 apple/foundationdb Wiki \u00b7 GitHub",
+            "clicks": 8
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/design/tlog-spilling.md.html",
+            "internal": false,
+            "reflection": false,
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/main/design/tlog-forward-compatibility.md.html",
+            "internal": false,
+            "reflection": false,
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/transaction-log-files-info-and-three-data-center-data-replication-model/2202/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      7450,
+      7451,
+      7496
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1946
+    ],
+    [
+      3,
+      1937
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Transaction Log files Info and three_data_center data replication model",
+  "id": 2202,
+  "title": "Transaction Log files Info and three_data_center data replication model",
+  "posts_count": 3,
+  "created_at": "2020-06-23T18:13:23.023Z",
+  "views": 1099,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2020-07-02T15:42:02.469Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "transaction-log-files-info-and-three-data-center-data-replication-model",
+  "category_id": 7,
+  "word_count": 651,
+  "deleted_at": null,
+  "user_id": 781,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2202",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Transaction Log",
+      "id": 785,
+      "title": "Transaction Log",
+      "slug": "transaction-log",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-10-19T09:53:24.224Z",
+      "last_posted_at": "2018-10-22T13:58:23.756Z",
+      "bumped": true,
+      "bumped_at": "2018-10-22T13:58:23.756Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2939,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 382,
+            "username": "rahul",
+            "name": "Rahul",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f14d63/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why there is no document explaining FoundationDB internals?",
+      "id": 2287,
+      "title": "Why there is no document explaining FoundationDB internals?",
+      "slug": "why-there-is-no-document-explaining-foundationdb-internals",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 7,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/5d1141db6be1124bfcf166f19a272bac26168a78_2_1024x576.jpeg",
+      "created_at": "2020-08-11T04:37:58.388Z",
+      "last_posted_at": "2020-11-10T22:58:37.229Z",
+      "bumped": true,
+      "bumped_at": "2020-11-10T22:58:37.229Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1669,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 805,
+            "username": "roohitavaf",
+            "name": "Mohammad Roohitavaf",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/roohitavaf/{size}/1026_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 850,
+            "username": "random-uuid",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/90db22/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Technical overview of the database",
+      "id": 135,
+      "title": "Technical overview of the database",
+      "slug": "technical-overview-of-the-database",
+      "posts_count": 27,
+      "reply_count": 15,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-04-20T15:30:31.788Z",
+      "last_posted_at": "2019-01-11T23:25:47.462Z",
+      "bumped": true,
+      "bumped_at": "2019-01-11T23:25:47.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 64,
+      "views": 12958,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 96,
+            "username": "idiot",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 443,
+            "username": "junius",
+            "name": "junius",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f08c70/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "About transaction",
+      "id": 442,
+      "title": "About transaction",
+      "slug": "about-transaction",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-05-21T06:14:30.713Z",
+      "last_posted_at": "2018-05-22T00:51:09.029Z",
+      "bumped": true,
+      "bumped_at": "2018-05-22T00:51:09.029Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1479,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 124,
+            "username": "coder0718",
+            "name": "Coder0718",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/coder0718/{size}/87_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Logging of transactions for debugging purposes",
+      "id": 794,
+      "title": "Logging of transactions for debugging purposes",
+      "slug": "logging-of-transactions-for-debugging-purposes",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-10-21T10:59:57.666Z",
+      "last_posted_at": "2018-10-22T19:20:33.173Z",
+      "bumped": true,
+      "bumped_at": "2018-10-22T19:20:33.173Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2345,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 399,
+            "username": "brondhaish",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/dc4da7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 781,
+        "username": "jarvis",
+        "name": "jar ",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/e36b37/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 781,
+      "username": "jarvis",
+      "name": "jar ",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/e36b37/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/wiki/Understanding-FoundationDB-Log-Files",
+        "title": "Understanding FoundationDB Log Files \u00b7 apple/foundationdb Wiki \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 27,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/wiki/FoundationDB-Trace-Metrics-Definitions",
+        "title": "FoundationDB Trace Metrics Definitions \u00b7 apple/foundationdb Wiki \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 8,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/main/design/tlog-forward-compatibility.md.html",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/main/design/tlog-spilling.md.html",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

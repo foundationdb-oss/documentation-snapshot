@@ -1,0 +1,675 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13288,
+        "name": "Brian Breniser",
+        "username": "brianbreniser",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png",
+        "created_at": "2023-09-18T19:33:57.511Z",
+        "cooked": "<p>Hi all,</p>\n<p>I need some help tweaking my Multi-dc cluster to achieve better performance while using the FDB Operator on OpenShift running in Azure. I\u2019m currently running the YCSB performance tool to determine read/write I/O performance, and comparing to some tests that were run in a single cluster setup. I\u2019m seeing around 50% of the performance compared the single cluster, even while doubling the number of machines in use. I imagine there is something about FDB I don\u2019t understand, or at least a way to gather more information than what I have. Any assistance would help me greatly!</p>\n<p>Mulit-Cluster setup</p>\n<p>Machines: 50 count of Standard-D8s_v3</p>\n<pre data-code-wrap=\"oc\"><code class=\"lang-plaintext\">NAME                                                  PHASE     TYPE              REGION    ZONE   AGE\nfdb04-dev-va7-zrbmx-master-0                          Running   Standard_D8s_v3   eastus2   1      12d\nfdb04-dev-va7-zrbmx-master-1                          Running   Standard_D8s_v3   eastus2   2      12d\nfdb04-dev-va7-zrbmx-master-2                          Running   Standard_D8s_v3   eastus2   3      12d\nfdb04-dev-va7-zrbmx-worker-eastus21-2sxzp             Running   Standard_L8s_v3   eastus2   1      22m\nfdb04-dev-va7-zrbmx-worker-eastus21-667hw             Running   Standard_L8s_v3   eastus2   1      22m\nfdb04-dev-va7-zrbmx-worker-eastus21-68cc6             Running   Standard_L8s_v3   eastus2   1      22m\nfdb04-dev-va7-zrbmx-worker-eastus21-6jjm7             Running   Standard_L8s_v3   eastus2   1      22m\n...\n</code></pre>\n<p>With relevant yaml (I have removed anything obviously non-relevant):</p>\n<pre><code class=\"lang-auto\">apiVersion: machine.openshift.io/v1beta1\nkind: MachineSet\nmetadata:\n  annotations:\n    machine.openshift.io/GPU: \"0\"\n    machine.openshift.io/memoryMb: \"65536\"\n    machine.openshift.io/vCPU: \"8\"\n  replicas: 19\n  template:\n    spec:\n      providerSpec:\n        value:\n          acceleratedNetworking: true\n          apiVersion: machine.openshift.io/v1beta1\n          image:\n            offer: aro4\n            publisher: azureopenshift\n          kind: AzureMachineProviderSpec\n          location: eastus2\n          osDisk:\n            diskSettings: {}\n            diskSizeGB: 128\n            managedDisk:\n              storageAccountType: Premium_LRS\n            osType: Linux\n\n</code></pre>\n<p>We have this exact setup replicated twice, because we were also DR testing and needed separate machinesets to bring up/down. The total machines on this cluster is 50, 3 masters and 47 workers.</p>\n<p>relevant FDB setup, we have 3 DC\u2019s in FDB setup, DC1 and DC3 are primary, whereas DC2 is only for replication. This is the FDB config for DC1 and DC3 (With namespaces changed as appropriate):</p>\n<pre><code class=\"lang-auto\">apiVersion: apps.foundationdb.org/v1beta2\nkind: FoundationDBCluster\nmetadata:\n  name: fdb-cluster-1\n  namespace: dc1\nspec:\n  # coordinatorSelection:\n  # - priority: 0\n  #   processClass: coordinator\n  # - priority: 5\n  #   processClass: storage \n  # - priority: 10\n  #   processClass: log\n  storageServersPerPod: 2\n  logServersPerPod: 2\n  automationOptions:\n    replacements:\n      enabled: true\n  processGroupIDPrefix: \"dc1\"\n  faultDomain:\n    key: kubernetes.io/hostname\n    valueFrom: spec.nodeName\n  dataCenter: \"dc1\"\n  seedConnectionString: $connectionString\n  databaseConfiguration:\n    redundancy_mode: \"triple\"\n    usable_regions: 2\n    regions:\n      - datacenters:\n          - id: dc1\n            priority: 1\n          - id: dc2\n            satellite: 1\n            priority: 2\n          - id: dc3\n            satellite: 1\n            priority: 1\n        satellite_logs: 3\n      - datacenters:\n          - id: dc3\n            priority: 0\n          - id: dc2\n            satellite: 1\n            priority: 2\n          - id: dc1\n            satellite: 1\n            priority: 1\n        satellite_logs: 3\n  labels:\n    filterOnOwnerReference: false\n    matchLabels:\n      foundationdb.org/fdb-cluster-name: fdb-cluster-1\n    processClassLabels:\n      - foundationdb.org/fdb-process-class\n    processGroupIDLabels:\n      - foundationdb.org/fdb-process-group-id\n  minimumUptimeSecondsForBounce: 60\n  # The storage process counts here are directly comparable to our single setup, which is comparable to a test setup we had years ago. I'd be willing to change log/stateless/coordinator, but so long as there isn't anything wrong with 17 storage servers, we'd like to keep this the same.\n  processCounts:\n    storage: 17\n    log: 2\n    stateless: 3\n    # coordinator: 3\n  processes:\n    log:\n      volumeClaimTemplate:\n        spec:\n          storageClassName: fdb-nvme \n          resources:\n            requests:\n              storage: 64G\n      customParameters:\n        - knob_disable_posix_kernel_aio=1\n      podTemplate:\n        spec:\n          nodeSelector:\n            topology.kubernetes.io/zone: eastus2-1\n            beta.kubernetes.io/instance-type: Standard_L8s_v3\n          serviceAccountName: fdb-dc1 \n          securityContext:\n            allowPrivilegeEscalation: false\n          hostNetwork: true\n          topologySpreadConstraints:\n          - maxSkew: 1\n            topologyKey: kubernetes.io/hostname\n            whenUnsatisfiable: DoNotSchedule\n            labelSelector:\n              matchLabels:\n                foundationdb.org/fdb-cluster-name: fdb-cluster-1\n          containers:\n            - name: foundationdb\n              resources:\n                requests:\n                  cpu: 6500m # I found over 6500/8000 and we had trouble scheduling\n                  memory: 31Gi\n              securityContext:\n                runAsUser: 0\n            - name: foundationdb-kubernetes-sidecar\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n          initContainers:\n            - name: foundationdb-kubernetes-init\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n    storage:\n      volumeClaimTemplate:\n        spec:\n          storageClassName: fdb-nvme \n          resources:\n            requests:\n              storage: 64G\n      customParameters:\n        - knob_disable_posix_kernel_aio=1\n      podTemplate:\n        spec:\n          nodeSelector:\n            beta.kubernetes.io/instance-type: Standard_L8s_v3\n          serviceAccountName: fdb-dc1 \n          securityContext:\n            allowPrivilegeEscalation: false\n          hostNetwork: true\n          topologySpreadConstraints:\n          - maxSkew: 1\n            topologyKey: kubernetes.io/hostname\n            whenUnsatisfiable: DoNotSchedule\n            labelSelector:\n              matchLabels:\n                foundationdb.org/fdb-cluster-name: fdb-cluster-1\n          containers:\n            - name: foundationdb\n              resources:\n                requests:\n                  cpu: 6500m\n                  memory: 31Gi\n              securityContext:\n                runAsUser: 0\n            - name: foundationdb-kubernetes-sidecar\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n          initContainers:\n            - name: foundationdb-kubernetes-init\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n    general:\n      volumeClaimTemplate:\n        spec:\n          resources:\n            requests:\n              storage: 16G\n      customParameters:\n        - knob_disable_posix_kernel_aio=1\n      podTemplate:\n        spec:\n          serviceAccountName: fdb-dc1 \n          securityContext:\n            allowPrivilegeEscalation: false\n          nodeSelector:\n            topology.kubernetes.io/zone: eastus2-1 \n            beta.kubernetes.io/instance-type: Standard_D4s_v3\n          hostNetwork: true\n          topologySpreadConstraints:\n          - maxSkew: 1\n            topologyKey: kubernetes.io/hostname\n            whenUnsatisfiable: DoNotSchedule\n            labelSelector:\n              matchLabels:\n                foundationdb.org/fdb-cluster-name: fdb-cluster-1\n          containers:\n            - name: foundationdb\n              resources:\n                requests:\n                  cpu: 3000m\n                  memory: 10Gi\n              securityContext:\n                runAsUser: 0\n            - name: foundationdb-kubernetes-sidecar\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n          initContainers:\n            - name: foundationdb-kubernetes-init\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n  routing:\n    headlessService: true\n    publicIPSource: pod \n  sidecarContainer:\n    enableLivenessProbe: true \n    enableReadinessProbe: true  \n  useExplicitListenAddress: true\n  version: 7.1.26\n\n</code></pre>\n<p>And DC2:</p>\n<pre><code class=\"lang-auto\">apiVersion: apps.foundationdb.org/v1beta2\nkind: FoundationDBCluster\nmetadata:\n  name: fdb-cluster-2\n  namespace: dc2\nspec:\n  # coordinatorSelection:\n  # - priority: 0\n  #   processClass: coordinator\n  # - priority: 5\n  #   processClass: storage \n  # - priority: 10\n  #   processClass: log  \n  storageServersPerPod: 2\n  logServersPerPod: 2\n  automationOptions:\n    replacements:\n      enabled: true\n  faultDomain:\n    key: kubernetes.io/hostname\n    valueFrom: spec.nodeName\n  processGroupIDPrefix: \"dc2\"\n  dataCenter: \"dc2\"\n  seedConnectionString: $connectionString\n  databaseConfiguration:\n    redundancy_mode: \"double\"\n    usable_regions: 2\n    regions:\n      - datacenters:\n          - id: dc1\n            priority: 1\n          - id: dc2\n            satellite: 1\n            priority: 2\n          - id: dc3\n            satellite: 1\n            priority: 1\n        satellite_logs: 3\n      - datacenters:\n          - id: dc3\n            priority: 0\n          - id: dc2\n            satellite: 1\n            priority: 2\n          - id: dc1\n            satellite: 1\n            priority: 1\n        satellite_logs: 3\n  labels:\n    filterOnOwnerReference: false\n    matchLabels:\n      foundationdb.org/fdb-cluster-name: fdb-cluster-2\n    processClassLabels:\n      - foundationdb.org/fdb-process-class\n    processGroupIDLabels:\n      - foundationdb.org/fdb-process-group-id\n  minimumUptimeSecondsForBounce: 60\n  processCounts:\n    storage: -1\n    log: 3\n    stateless: -1\n    # coordinator: 3\n  processes:\n    log:\n      volumeClaimTemplate:\n        spec:\n          storageClassName: fdb-nvme \n          resources:\n            requests:\n              storage: 64G\n      customParameters:\n        - knob_disable_posix_kernel_aio=1\n      podTemplate:\n        spec:\n          nodeSelector:\n            topology.kubernetes.io/zone: eastus2-2 \n            beta.kubernetes.io/instance-type: Standard_L8s_v3\n          serviceAccountName: fdb-dc2 \n          securityContext:\n            allowPrivilegeEscalation: false\n          hostNetwork: true\n          topologySpreadConstraints:\n          - maxSkew: 1\n            topologyKey: kubernetes.io/hostname\n            whenUnsatisfiable: DoNotSchedule\n            labelSelector:\n              matchLabels:\n                foundationdb.org/fdb-cluster-name: fdb-cluster-2\n          containers:\n            - name: foundationdb\n              resources:\n                requests:\n                  cpu: 6500m\n                  memory: 31Gi\n              securityContext:\n                runAsUser: 0\n            - name: foundationdb-kubernetes-sidecar\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n          initContainers:\n            - name: foundationdb-kubernetes-init\n              resources:\n                limits:\n                  cpu: 100m\n                  memory: 128Mi\n                requests:\n                  cpu: 100m\n                  memory: 128Mi\n              securityContext:\n                runAsUser: 0\n    # storage:\n    #   volumeClaimTemplate:\n    #     spec:\n    #       storageClassName: fdb-nvme \n    #       resources:\n    #         requests:\n    #           storage: 16G\n    #   customParameters:\n    #     - knob_disable_posix_kernel_aio=1\n    #   podTemplate:\n    #     spec:\n    #       nodeSelector:\n    #         topology.kubernetes.io/zone: eastus2-2 \n    #         beta.kubernetes.io/instance-type: Standard_L8s_v3\n    #       serviceAccountName: fdb-dc2\n    #       securityContext:\n    #         allowPrivilegeEscalation: false\n    #       hostNetwork: true\n    #       topologySpreadConstraints:\n    #       - maxSkew: 1\n    #         topologyKey: kubernetes.io/hostname\n    #         whenUnsatisfiable: DoNotSchedule\n    #         labelSelector:\n    #           matchLabels:\n    #             foundationdb.org/fdb-cluster-name: fdb-cluster-2\n    #       containers:\n    #         - name: foundationdb\n    #           resources:\n    #             requests:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #           securityContext:\n    #             runAsUser: 0\n    #         - name: foundationdb-kubernetes-sidecar\n    #           resources:\n    #             limits:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #             requests:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #           securityContext:\n    #             runAsUser: 0\n    #       initContainers:\n    #         - name: foundationdb-kubernetes-init\n    #           resources:\n    #             limits:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #             requests:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #           securityContext:\n    #             runAsUser: 0\n    # general:\n    #   volumeClaimTemplate:\n    #     spec:\n    #       resources:\n    #         requests:\n    #           storage: 16G\n    #   customParameters:\n    #     - knob_disable_posix_kernel_aio=1\n    #   podTemplate:\n    #     spec:\n    #       serviceAccountName: fdb-dc2\n    #       securityContext:\n    #         allowPrivilegeEscalation: false\n    #       nodeSelector:\n    #         topology.kubernetes.io/zone: eastus2-2\n    #         beta.kubernetes.io/instance-type: Standard_D4s_v3\n    #       hostNetwork: true\n    #       topologySpreadConstraints:\n    #       - maxSkew: 1\n    #         topologyKey: kubernetes.io/hostname\n    #         whenUnsatisfiable: DoNotSchedule\n    #         labelSelector:\n    #           matchLabels:\n    #             foundationdb.org/fdb-cluster-name: fdb-cluster-2\n    #       containers:\n    #         - name: foundationdb\n    #           resources:\n    #             requests:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #           securityContext:\n    #             runAsUser: 0\n    #         - name: foundationdb-kubernetes-sidecar\n    #           resources:\n    #             limits:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #             requests:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #           securityContext:\n    #             runAsUser: 0\n    #       initContainers:\n    #         - name: foundationdb-kubernetes-init\n    #           resources:\n    #             limits:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #             requests:\n    #               cpu: 100m\n    #               memory: 128Mi\n    #           securityContext:\n    #             runAsUser: 0\n  routing:\n    headlessService: true\n    publicIPSource: pod \n  sidecarContainer:\n    enableLivenessProbe: true \n    enableReadinessProbe: true  \n  useExplicitListenAddress: true\n  version: 7.1.26\n</code></pre>\n<p>As you can see, DC2 is just logs, and that is where we run YCSB.</p>\n<p>The single node FDB cluster is as follows:</p>\n<pre><code class=\"lang-auto\">apiVersion: apps.foundationdb.org/v1beta2\nkind: FoundationDBCluster\nmetadata:\n  name: fdb-cluster\n  namespace: default\nspec:\n  storageServersPerPod: 8\n  automationOptions:\n    replacements:\n      enabled: true\n  faultDomain:\n    key: foundationdb.org/none\n  labels:\n    podlabel: fdblabel\n    filterOnOwnerReference: false\n    matchLabels:\n      foundationdb.org/fdb-cluster-name: fdb-cluster\n    processClassLabels:\n    - foundationdb.org/fdb-process-class\n    processGroupIDLabels:\n    - foundationdb.org/fdb-process-group-id\n  minimumUptimeSecondsForBounce: 60\n  processCounts:\n    cluster_controller: 1\n    storage: 17\n    log: 2\n    stateless: 4\n  processes:\n    general:\n      podTemplate:\n        spec:\n          hostNetwork: true\n          topologySpreadConstraints:\n          - maxSkew: 1\n            topologyKey: kubernetes.io/hostname\n            whenUnsatisfiable: DoNotSchedule\n            labelSelector:\n              matchLabels:\n                foundationdb.org/fdb-cluster-name: fdb-cluster\n          containers:\n          - name: foundationdb\n            resources:\n              requests:\n                cpu: 7000m\n                memory: 31Gi\n            securityContext:\n              runAsUser: 0\n          - name: foundationdb-kubernetes-sidecar\n            resources:\n              limits:\n                cpu: 100m\n                memory: 128Mi\n              requests:\n                cpu: 100m\n                memory: 128Mi\n            securityContext:\n              runAsUser: 0\n          initContainers:\n          - name: foundationdb-kubernetes-init\n            resources:\n              limits:\n                cpu: 100m\n                memory: 128Mi\n              requests:\n                cpu: 100m\n                memory: 128Mi\n            securityContext:\n              runAsUser: 0\n      customParameters:\n      - knob_disable_posix_kernel_aio=1\n      volumeClaimTemplate:\n        spec:\n          storageClassName: fdb-nvme\n          resources:\n            requests:\n              storage: 64G\n  routing:\n    headlessService: true\n    publicIPSource: pod\n  sidecarContainer:\n    enableLivenessProbe: true\n    enableReadinessProbe: true\n  databaseConfiguration:\n    redundancy_mode: triple\n  useExplicitListenAddress: true\n  version: 7.1.26\n</code></pre>\n<p>My fdbcli output is mostly irrelevant right now, as we have some failures on it from DR testing, but some relevant sections are as follows:</p>\n<pre><code class=\"lang-auto\">Configuration:\n  Redundancy mode        - triple\n  Storage engine         - ssd-2\n  Coordinators           - 9\n  Exclusions             - 4 (type `exclude' for details)\n  Desired Commit Proxies - 2\n  Desired GRV Proxies    - 1\n  Desired Resolvers      - 1\n  Desired Logs           - 3\n  Desired Remote Logs    - 3\n  Desired Log Routers    - 3\n  Usable Regions         - 2\n  Regions: \n    Remote -\n        Datacenter                    - dc1\n        Satellite datacenters         - dc2, dc3\n        Satellite Logs                - 3\n    Primary -\n        Datacenter                    - dc3\n        Satellite datacenters         - dc2, dc1\n        Satellite Logs                - 3\n\n...\n\nDisk space used        - 4.288 TB\n\n...\n\n&lt;no logs are currently relevant&gt;\n&lt;Coordination servers are all reachable&gt;\n</code></pre>\n<p>We\u2019re running YCSB as a container on the same cluster, in DC2. I have a quick templating program I wrote to insert these values into the yaml for fast reconfiguration and automated testing.</p>\n<p>YCSB values:</p>\n<pre><code class=\"lang-auto\">\"ycsb-statefulset\": {\n      \"replicas\": 20,\n      \"num_keys\": 100000000,\n      \"process_per_host\": 8,\n      \"threads_per_process\": 32,\n      \"batch_size\": 100,\n      \"update_proportion\": 0.0,\n      \"read_proportion\": 1.0,\n      \"max_execution_time_seconds\": 200000\n    },\n\n</code></pre>\n<p>We tweak replicas, process_per_host and threads_per_process mostly, we\u2019re keeping batch_size the same, and currently doing read-only tests, but nothing major changes on a 90/10 ratio. num_keys of 100 million was enough that we didn\u2019t see super spiky loads (So much faster results than we expect) but doesn\u2019t take too long to test (about 30 minutes)</p>\n<p>YCSB script that uses those values:</p>\n<pre><code class=\"lang-auto\">host_index=$(echo $HOSTNAME | grep -o '[0-9]\\+')\n          cd ycsb-foundationdb-binding-0.18.0-SNAPSHOT\n          now=$(date +\"%Y_%m_%d_%H_%M_%S\")\n          log_file=\"ycsb_host_${host_index}__$now.log\"\n          workload='workloads/workloada'\n          update_proportion=0.1\n          read_proportion=0.9\n          num_keys=100000000\n          value_size_bytes=2000 \n          batch_size=100\n          operation_count=$((num_keys / batch_size))\n          num_clients=30\n          field_count=10\n          field_length=100\n          threads_per_process=32\n          max_execution_time_seconds=200000\n          keys_per_host=$((num_keys / num_clients))\n          process_per_host=16\n          keys_per_process=$((keys_per_host / process_per_host))\n          start_key_offset=0\n          start_key_per_host=$((host_index*keys_per_host+start_key_offset))\n          while true; do\n            echo \"Waiting for cluster file to be created\"\n            if [ -f $FDB_CLUSTER_FILE ]; then\n              break\n            fi\n            sleep 5\n          done\n          ycsb_load_cmd=\"./bin/ycsb load foundationdb -s \\\n            -P $workload \\\n            -p foundationdb.apiversion=620 \\\n            -p foundationdb.clusterfile=$FDB_CLUSTER_FILE \\\n            -p recordcount=$num_keys \\\n            -p insertstart=$start_key_per_host \\\n            -p insertcount=$keys_per_host \\\n            -p operationcount=$operation_count \\\n            -p maxexecutiontime=$max_execution_time_seconds \\\n            -p fieldcount=$field_count \\\n            -p fieldlength=$field_length \\\n            -p readproportion=$read_proportion \\\n            -p updateproportion=$update_proportion \\\n            -p requestdistribution=uniform \\\n            -p threadcount=$threads_per_process\"\n          ycsb_run_cmd=\"./bin/ycsb run foundationdb -s \\\n            -P $workload \\\n            -p foundationdb.apiversion=620 \\\n            -p foundationdb.clusterfile=$FDB_CLUSTER_FILE \\\n            -p recordcount=$num_keys \\\n            -p insertstart=$start_key_per_host \\\n            -p insertcount=$keys_per_host \\\n            -p operationcount=$operation_count \\\n            -p maxexecutiontime=$max_execution_time_seconds \\\n            -p fieldcount=$field_count \\\n            -p fieldlength=$field_length \\\n            -p readproportion=$read_proportion \\\n            -p updateproportion=$update_proportion \\\n            -p requestdistribution=uniform \\\n            -p threadcount=$threads_per_process\"\n          sh -c \"$ycsb_load_cmd\"\n          sh -c \"$ycsb_run_cmd\"\n          while true; do\n            echo \"finished... host $HOSTNAME\"\n            sleep 20\n          done\n</code></pre>\n<p>I know the YCSB connection to FDB hasn\u2019t been updated in awhile, it\u2019s using an old version of the api (620) where the cluster is up to date (7.1.26), but it\u2019s the best we can do to get the closest results comparable to results we did years ago.</p>\n<p>I can provide any more information if needed. Any help/ideas are much appreciated.</p>\n<p>Thanks in advance</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-09-18T19:33:57.511Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 39,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 198.2,
+        "yours": false,
+        "topic_id": 4153,
+        "topic_slug": "openshift-azure-operator-performance-tweaks",
+        "display_username": "Brian Breniser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1286,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/openshift-azure-operator-performance-tweaks/4153/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 13328,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2023-09-25T09:09:13.867Z",
+        "cooked": "<p>Doing a commit will required to push a message to all log/transaction processes (see <a href=\"https://apple.github.io/foundationdb/read-write-path.html\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">FDB Read and Write Path \u2014 FoundationDB 7.1</a> for more details). That means for every commit you hit cross AZ latencies: <a href=\"https://learn.microsoft.com/en-us/azure/reliability/availability-zones-overview\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">What are Azure availability zones? | Microsoft Learn</a> and the slowest response will be the limit on how fast you can commit. I\u2019m not sure about the inter-AZ latencies, but those tend to be much smaller.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2023-09-25T09:09:13.867Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 7.2,
+        "yours": false,
+        "topic_id": 4153,
+        "topic_slug": "openshift-azure-operator-performance-tweaks",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://learn.microsoft.com/en-us/azure/reliability/availability-zones-overview",
+            "internal": false,
+            "reflection": false,
+            "title": "What are Azure availability zones? | Microsoft Learn",
+            "clicks": 0
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/read-write-path.html",
+            "internal": false,
+            "reflection": false,
+            "title": "FDB Read and Write Path \u2014 FoundationDB 7.1",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/openshift-azure-operator-performance-tweaks/4153/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      13288,
+      13328
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      764
+    ],
+    [
+      2,
+      758
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance",
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Openshift+Azure+Operator performance tweaks",
+  "id": 4153,
+  "title": "Openshift+Azure+Operator performance tweaks",
+  "posts_count": 2,
+  "created_at": "2023-09-18T19:33:57.395Z",
+  "views": 329,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-09-25T09:09:13.867Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "openshift-azure-operator-performance-tweaks",
+  "category_id": 7,
+  "word_count": 2076,
+  "deleted_at": null,
+  "user_id": 1286,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4153",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Benchmarking FoundationDB on AWS",
+      "id": 410,
+      "title": "Benchmarking FoundationDB on AWS",
+      "slug": "benchmarking-foundationdb-on-aws",
+      "posts_count": 19,
+      "reply_count": 12,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2018-05-14T09:55:57.604Z",
+      "last_posted_at": "2018-10-30T16:01:15.283Z",
+      "bumped": true,
+      "bumped_at": "2018-10-30T16:01:15.283Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 9035,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 257,
+            "username": "cih.y2k",
+            "name": "cih.y2k",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cih.y2k/{size}/423_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why doesn&rsquo;t my cluster performance scale when I double the number of machines?",
+      "id": 640,
+      "title": "Why doesn't my cluster performance scale when I double the number of machines?",
+      "slug": "why-doesnt-my-cluster-performance-scale-when-i-double-the-number-of-machines",
+      "posts_count": 21,
+      "reply_count": 16,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-08-15T09:26:47.588Z",
+      "last_posted_at": "2018-08-17T07:32:00.164Z",
+      "bumped": true,
+      "bumped_at": "2018-08-17T07:32:00.164Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 68,
+            "username": "daverosenthal",
+            "name": "Dave Rosenthal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daverosenthal/{size}/51_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "id": 637,
+      "title": "Scripts to deploy, benchmark, and tinker with 1M operations/sec FoundationDB cluster on AWS",
+      "slug": "scripts-to-deploy-benchmark-and-tinker-with-1m-operations-sec-foundationdb-cluster-on-aws",
+      "posts_count": 14,
+      "reply_count": 5,
+      "highest_post_number": 14,
+      "image_url": null,
+      "created_at": "2018-08-14T14:13:06.849Z",
+      "last_posted_at": "2018-11-06T16:58:50.747Z",
+      "bumped": true,
+      "bumped_at": "2018-11-06T16:58:50.747Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 4284,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 55,
+            "username": "bowlofstew",
+            "name": "Stewart Henderson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/aca169/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 409,
+            "username": "TommyLike",
+            "name": "Hu Sheng",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tommylike/{size}/395_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to speed up balancing?",
+      "id": 1565,
+      "title": "How to speed up balancing?",
+      "slug": "how-to-speed-up-balancing",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2019-08-06T08:49:50.107Z",
+      "last_posted_at": "2019-08-21T00:41:02.788Z",
+      "bumped": true,
+      "bumped_at": "2019-08-21T00:41:02.788Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1541,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 629,
+            "username": "Sraw",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/a88e57/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1286,
+        "username": "brianbreniser",
+        "name": "Brian Breniser",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1286,
+      "username": "brianbreniser",
+      "name": "Brian Breniser",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/5f9b8f/{size}.png"
+    },
+    "last_poster": {
+      "id": 849,
+      "username": "johscheuer",
+      "name": "Johannes Scheuermann",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

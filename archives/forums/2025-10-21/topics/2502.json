@@ -1,0 +1,678 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 8912,
+        "name": "Carlito",
+        "username": "COran",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png",
+        "created_at": "2020-12-29T14:02:35.563Z",
+        "cooked": "<p>Hi Folks,</p>\n<p>I\u2019m trying to restore a backup from S3 to an empty FDB cluster. The context is the following : I have a FDB cluster running on k8s with backup process running on it. It uploads with success on S3 via minIO.</p>\n<pre><code class=\"lang-auto\">fdbbackup list -b \"blobstore://admin@127.0.0.1:9000?bucket=xxxx&amp;sc=0\" --blob_credentials=/etc/fdb/blob_cred.json\nblobstore://admin@127.0.0.1:9000/blabla?bucket=xxxx&amp;sc=0\n</code></pre>\n<p>Then I created another FDB cluster (empty) with a same settings. I\u2019m able to reach S3 through minIO from the pod where I want to do the <code>fdbrestore</code>. But when I\u2019m running the following command :</p>\n<pre><code class=\"lang-auto\">fdbrestore start -w --log -r \"blobstore://admin@127.0.0.1:9000/blabla?bucket=xxxx&amp;sc=0\" --blob_credentials=/etc/fdb/blob_cred.json --dest_cluster_file=/etc/foundationdb/fdb.cluster\n</code></pre>\n<p>I have the following output when I\u2019m check the status of the restore :</p>\n<pre><code class=\"lang-auto\">Tag: default  UID: 22edfe20b449050db4d04d90a42efc71  State: starting  Blocks: 0/0  BlocksInProgress: 0  Files: 0  BytesWritten: 0  ApplyVersionLag: 0  LastError: ''HTTP response code not received or indicated failure' on 'restore_start'' 274s ago.\n  URL: blobstore://admin@127.0.0.1:9000/blabla?bucket=xxxx&amp;sc=0  Range: ''-'\\xff'  AddPrefix: ''  RemovePrefix: ''  Version: 1885133112347\n</code></pre>\n<p>I suspect to have some issue with minIO but I\u2019m not sure how to debug it. Then I checked the traces I had when I did start the restore : I noticed some weird logs.</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"10\" Time=\"1609247923.979622\" Type=\"ConnectedOutgoing\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" PeerAddr=\"10.128.140.100:4500\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247923.986947\" Type=\"BlobStoreEndpointNewConnection\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" RemoteEndpoint=\"127.0.0.1:9000\" ExpiresIn=\"120\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247923.987410\" Type=\"AsyncFileOpened\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" Filename=\"/etc/fdb/blob_cred.json\" Fd=\"11\" Flags=\"2228225\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247923.987633\" Type=\"AsyncFileClosed\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" Fd=\"11\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247924.048588\" Type=\"BlobStoreEndpointReusingConnected\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" RemoteEndpoint=\"127.0.0.1:9000\" ExpiresIn=\"119.939\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247924.142139\" Type=\"BackupContainerDescribe2\" ID=\"0000000000000000\" URL=\"blobstore://admin@127.0.0.1:9000/blabla?bucket=xxxx&amp;amp;sc=0\" LogStartVersionOverride=\"-1\" ExpiredEndVersion=\"-1\" UnreliableEndVersion=\"-1\" LogBeginVersion=\"1315974786096\" LogEndVersion=\"1896493112348\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247925.998811\" Type=\"ConnectionClosed\" ID=\"2a781cf640f78cf0\" Error=\"connection_unreferenced\" ErrorDescription=\"No peer references for connection\" ErrorCode=\"1048\" SuppressedEventCount=\"0\" PeerAddr=\"10.128.140.100:4500\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247925.998811\" Type=\"PeerDestroy\" ID=\"0000000000000000\" Error=\"connection_unreferenced\" ErrorDescription=\"No peer references for connection\" ErrorCode=\"1048\" SuppressedEventCount=\"0\" PeerAddr=\"10.128.140.100:4500\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1609247925.998811\" Type=\"N2_ReadProbeError\" ID=\"2a781cf640f78cf0\" SuppressedEventCount=\"0\" ErrorCode=\"125\" Message=\"Operation canceled\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247926.538969\" Type=\"AsyncFileOpened\" ID=\"0000000000000000\" SuppressedEventCount=\"3\" Filename=\"/etc/fdb/blob_cred.json\" Fd=\"15\" Flags=\"2228225\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1609247926.538969\" Type=\"AsyncFileClosed\" ID=\"0000000000000000\" SuppressedEventCount=\"3\" Fd=\"15\" Machine=\"10.136.138.248:7359\" LogGroup=\"default\" /&gt;\n</code></pre>\n<p>Can those errors explain the failures I have for the restore ? Does it means my coordinators pods are not reachable ? Which is weird because the <code>status details</code> from the fdbcli is telling me that everything is ok.</p>\n<p>If you have any tips for debugging, it would be appreciate. <img src=\"https://emoji.discourse-cdn.com/twitter/bowing_man.png?v=9\" title=\":bowing_man:\" class=\"emoji\" alt=\":bowing_man:\"></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2020-12-29T14:03:30.713Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 101,
+        "reads": 44,
+        "readers_count": 43,
+        "score": 503.8,
+        "yours": false,
+        "topic_id": 2502,
+        "topic_slug": "trying-to-restore-a-backup-from-s3",
+        "display_username": "Carlito",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 872,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/trying-to-restore-a-backup-from-s3/2502/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 8913,
+        "name": "Steve Atherton",
+        "username": "SteavedHams",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "created_at": "2021-01-03T10:15:46.214Z",
+        "cooked": "<p>Those events are not errors, most of them are info and one is a warning.</p>\n<p>I suspect you do not have any backup agents on your destination cluster.</p>\n<p><code>fdbrestore</code> only controls restore jobs, it does not do any of the restore work.  As with backup, <code>backup_agent</code> does all the restore work too.  You need 1 or more backup agents in your cluster with access to your backup data.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-01-03T10:15:46.214Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 38,
+        "readers_count": 37,
+        "score": 17.6,
+        "yours": false,
+        "topic_id": 2502,
+        "topic_slug": "trying-to-restore-a-backup-from-s3",
+        "display_username": "Steve Atherton",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 7,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/trying-to-restore-a-backup-from-s3/2502/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 8924,
+        "name": "Carlito",
+        "username": "COran",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png",
+        "created_at": "2021-01-05T12:58:17.831Z",
+        "cooked": "<p>Indeed, I did reapply my charts and my agents were up. Finally succeed to get my restore working.</p>\n<p>Thanks for your help.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2021-01-05T12:58:17.831Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 34,
+        "readers_count": 33,
+        "score": 6.8,
+        "yours": false,
+        "topic_id": 2502,
+        "topic_slug": "trying-to-restore-a-backup-from-s3",
+        "display_username": "Carlito",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 872,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/trying-to-restore-a-backup-from-s3/2502/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      8912,
+      8913,
+      8924
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1757
+    ],
+    [
+      2,
+      1753
+    ],
+    [
+      3,
+      1750
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Trying to restore a backup from S3",
+  "id": 2502,
+  "title": "Trying to restore a backup from S3",
+  "posts_count": 3,
+  "created_at": "2020-12-29T14:02:35.489Z",
+  "views": 674,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-01-05T12:58:17.831Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "trying-to-restore-a-backup-from-s3",
+  "category_id": 7,
+  "word_count": 699,
+  "deleted_at": null,
+  "user_id": 872,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2502",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Backup /restore fdb",
+      "id": 1637,
+      "title": "Backup /restore fdb",
+      "slug": "backup-restore-fdb",
+      "posts_count": 22,
+      "reply_count": 17,
+      "highest_post_number": 22,
+      "image_url": null,
+      "created_at": "2019-09-19T17:04:18.878Z",
+      "last_posted_at": "2019-10-05T04:45:51.663Z",
+      "bumped": true,
+      "bumped_at": "2019-10-05T04:45:51.663Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2729,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationDB fdbbackup",
+      "id": 1460,
+      "title": "FoundationDB fdbbackup",
+      "slug": "foundationdb-fdbbackup",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-17T18:54:47.516Z",
+      "last_posted_at": "2019-10-09T03:07:15.974Z",
+      "bumped": true,
+      "bumped_at": "2019-10-09T03:07:15.974Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2461,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 579,
+            "username": "approachcp",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 581,
+            "username": "surprisetalk",
+            "name": "Taylor Sarrafian",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/surprisetalk/{size}/579_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "S3 fdbrestore: Missing properties object",
+      "id": 2594,
+      "title": "S3 fdbrestore: Missing properties object",
+      "slug": "s3-fdbrestore-missing-properties-object",
+      "posts_count": 10,
+      "reply_count": 2,
+      "highest_post_number": 10,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/9/94e546e32bc053df8e7656c8a3efde906c8244d1_2_1024x140.png",
+      "created_at": "2021-03-02T12:24:10.734Z",
+      "last_posted_at": "2022-06-07T17:18:02.187Z",
+      "bumped": true,
+      "bumped_at": "2022-06-07T17:18:02.187Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1199,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 653,
+            "username": "VibhutiD",
+            "name": "Vibhuti Dembi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vibhutid/{size}/668_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 837,
+            "username": "petr-tichy",
+            "name": "Petr Tich\u00fd",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/petr-tichy/{size}/1427_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 712,
+            "username": "rahul-nitkkr",
+            "name": "Rahul Roy",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rahul-nitkkr/{size}/754_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1104,
+            "username": "chetan_pg",
+            "name": "chetan",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "id": 1131,
+      "title": "Fdbbackup expire with blobstore returning error, not deleting from S3",
+      "slug": "fdbbackup-expire-with-blobstore-returning-error-not-deleting-from-s3",
+      "posts_count": 19,
+      "reply_count": 11,
+      "highest_post_number": 19,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/dc9b21297880928293b7194125f1889c26a4f70a_2_1024x579.png",
+      "created_at": "2019-02-12T22:55:17.346Z",
+      "last_posted_at": "2020-01-24T13:25:04.572Z",
+      "bumped": true,
+      "bumped_at": "2020-01-24T13:25:04.572Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 2227,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 7,
+            "username": "SteavedHams",
+            "name": "Steve Atherton",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 634,
+            "username": "somu",
+            "name": "somasundaram",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ce73a5/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdbrestore Errors",
+      "id": 4561,
+      "title": "Fdbrestore Errors",
+      "slug": "fdbrestore-errors",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2024-07-09T20:27:18.737Z",
+      "last_posted_at": "2024-07-09T20:27:18.789Z",
+      "bumped": true,
+      "bumped_at": "2024-07-09T20:55:21.059Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 56,
+      "category_id": 16,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1320,
+            "username": "stefanvasilic4",
+            "name": null,
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/a8b319/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 872,
+        "username": "COran",
+        "name": "Carlito",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 7,
+        "username": "SteavedHams",
+        "name": "Steve Atherton",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/steavedhams/{size}/18_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 872,
+      "username": "COran",
+      "name": "Carlito",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png"
+    },
+    "last_poster": {
+      "id": 872,
+      "username": "COran",
+      "name": "Carlito",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/coran/{size}/1006_2.png"
+    }
+  },
+  "bookmarks": []
+}

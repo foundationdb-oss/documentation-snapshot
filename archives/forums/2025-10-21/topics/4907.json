@@ -1,0 +1,672 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14927,
+        "name": "Aran",
+        "username": "aranw",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aranw/{size}/1964_2.png",
+        "created_at": "2025-05-13T19:45:11.171Z",
+        "cooked": "<p>I\u2019m trying to get started with foundationdb and looking to use Go and I\u2019ve tried to run the install command <code>./fdb-go-install.sh install --fdbver 7.4.1</code></p>\n<p>But when ever I run it I get the following error</p>\n<pre><code class=\"lang-auto\">\u276f ./fdb-go-install.sh install --fdbver 7.4.1\nDirectory /go/src/github.com/apple/foundationdb already exists ; checking out appropriate tag\ngit -C /go/src/github.com/apple/foundationdb fetch origin\ngit -C /go/src/github.com/apple/foundationdb checkout 7.4.1\nHEAD is now at 7381c4309 enable AVX and update version for 7.4.1 release\nBuilding generated files.\nmake -C /go/src/github.com/apple/foundationdb bindings/c/foundationdb/fdb_c_options.g.h\nmake: *** No rule to make target `bindings/c/foundationdb/fdb_c_options.g.h'.  Stop.\nCould not generate required c header\n</code></pre>\n<p>Any clues what I\u2019m doing wrong?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-05-13T19:45:11.171Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 7.4,
+        "yours": false,
+        "topic_id": 4907,
+        "topic_slug": "installing-go-bindings",
+        "display_username": "Aran",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1553,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/installing-go-bindings/4907/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14935,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2025-05-15T08:56:16.171Z",
+        "cooked": "<p>If you only want to use the go bindings as a user it\u2019s better to install the according client package from the releases: <a href=\"https://github.com/apple/foundationdb/releases\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Releases \u00b7 apple/foundationdb \u00b7 GitHub</a> and then make use of <code>github.com/apple/foundationdb &lt;version&gt;</code> in your go mod file.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-05-15T08:56:16.171Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 4907,
+        "topic_slug": "installing-go-bindings",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/releases",
+            "internal": false,
+            "reflection": false,
+            "title": "Releases \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/installing-go-bindings/4907/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14941,
+        "name": "Aran",
+        "username": "aranw",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aranw/{size}/1964_2.png",
+        "created_at": "2025-05-17T09:38:43.597Z",
+        "cooked": "<p>I eventually got it the Go bindings from Go modules working. Due to a misconfiguration on my end half of the APIs were not showing up properly which lead me down to trying to compile the bindings myself.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2025-05-17T09:38:43.597Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 8,
+        "readers_count": 7,
+        "score": 16.6,
+        "yours": false,
+        "topic_id": 4907,
+        "topic_slug": "installing-go-bindings",
+        "display_username": "Aran",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1553,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/installing-go-bindings/4907/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14927,
+      14935,
+      14941
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      161
+    ],
+    [
+      2,
+      160
+    ],
+    [
+      3,
+      158
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Installing Go Bindings",
+  "id": 4907,
+  "title": "Installing Go Bindings",
+  "posts_count": 3,
+  "created_at": "2025-05-13T19:45:11.119Z",
+  "views": 71,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2025-05-17T09:38:43.597Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "installing-go-bindings",
+  "category_id": 5,
+  "word_count": 227,
+  "deleted_at": null,
+  "user_id": 1553,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4907",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Go + FoundationDB - Straight Forward Steps",
+      "id": 1274,
+      "title": "Go + FoundationDB - Straight Forward Steps",
+      "slug": "go-foundationdb-straight-forward-steps",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-04-01T21:02:46.452Z",
+      "last_posted_at": "2019-04-09T06:37:50.005Z",
+      "bumped": true,
+      "bumped_at": "2019-04-09T06:37:50.005Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3046,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 170,
+            "username": "meln1k",
+            "name": "Nikita Melkozerov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meln1k/{size}/150_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Installing bindings with Go modules",
+      "id": 1182,
+      "title": "Installing bindings with Go modules",
+      "slug": "installing-bindings-with-go-modules",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-02-25T00:37:18.023Z",
+      "last_posted_at": "2019-03-31T11:02:02.036Z",
+      "bumped": true,
+      "bumped_at": "2019-03-31T11:30:36.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 3159,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 265,
+            "username": "brainfucker",
+            "name": "Illarionov Oleg",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brainfucker/{size}/237_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 552,
+            "username": "skyrocknroll",
+            "name": "Yuvaraj L",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/skyrocknroll/{size}/547_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB Bindings for GO - install problem",
+      "id": 1439,
+      "title": "FDB Bindings for GO - install problem",
+      "slug": "fdb-bindings-for-go-install-problem",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2019-06-10T19:24:24.394Z",
+      "last_posted_at": "2019-06-12T18:13:29.173Z",
+      "bumped": true,
+      "bumped_at": "2019-06-12T18:13:29.173Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 581,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 596,
+            "username": "JoeD",
+            "name": "Joe D",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/77aa72/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Errors building for Go",
+      "id": 3905,
+      "title": "Errors building for Go",
+      "slug": "errors-building-for-go",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2023-04-14T22:00:19.455Z",
+      "last_posted_at": "2023-04-15T12:22:25.406Z",
+      "bumped": true,
+      "bumped_at": "2023-04-15T12:22:25.406Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 333,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1237,
+            "username": "danthegoodman",
+            "name": "Dan Goodman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Golang Errors finding github.com/apple/foundationdb/bindings/go/src/fdb",
+      "id": 4133,
+      "title": "Golang Errors finding github.com/apple/foundationdb/bindings/go/src/fdb",
+      "slug": "golang-errors-finding-github-com-apple-foundationdb-bindings-go-src-fdb",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2023-08-26T10:50:46.052Z",
+      "last_posted_at": "2023-08-26T13:43:32.448Z",
+      "bumped": true,
+      "bumped_at": "2023-08-26T13:43:32.448Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 346,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1128,
+            "username": "manfontan",
+            "name": "Manuel Fontan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manfontan/{size}/1370_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1553,
+        "username": "aranw",
+        "name": "Aran",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/aranw/{size}/1964_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1553,
+      "username": "aranw",
+      "name": "Aran",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aranw/{size}/1964_2.png"
+    },
+    "last_poster": {
+      "id": 1553,
+      "username": "aranw",
+      "name": "Aran",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/aranw/{size}/1964_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/releases",
+        "title": "Releases \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

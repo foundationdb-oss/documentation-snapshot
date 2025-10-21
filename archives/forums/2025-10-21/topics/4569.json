@@ -1,0 +1,686 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14269,
+        "name": "Ella Costa",
+        "username": "ellacosta",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ellacosta/{size}/1828_2.png",
+        "created_at": "2024-07-18T12:21:03.453Z",
+        "cooked": "<p>Hey everyone,</p>\n<p>I\u2019m looking to deploy FoundationDB on AWS and could really use some guidance. I\u2019ve been digging through the docs and forums, but I\u2019d love to hear from anyone who has hands-on experience with this.</p>\n<p>Specifically, I\u2019m curious about to learn the following-</p>\n<p>Instance Types: What AWS instance types have you found to be the most effective for running FoundationDB? Is there a sweet spot between performance and cost?</p>\n<p>Cluster Setup:Any tips on the best way to set up the cluster? How many nodes should I be looking at for a moderately sized application?</p>\n<p>Networking: Are there any specific networking considerations I should be aware of when deploying on AWS? Any gotchas with VPCs, subnets, or security groups?</p>\n<p>Storage Options: What storage solutions are you using on AWS? Should I stick with EBS, or is there a better option out there for FoundationDB? I was checking about Storage options and came across these resources <a href=\"https://forums.foundationdb.org/t/aws-deployment-options/1472/7\" class=\"inline-onebox\">AWS Deployment Options - #7 by yennie</a> <a href=\"https://www.igmguru.com/blog/aws-devops-interview-questions-and-answers/\" rel=\"noopener nofollow ugc\">AWS devops interview questions</a> <a href=\"https://github.com/cpfriend1721994/foudationdb-deploy-aws\" rel=\"noopener nofollow ugc\">foudationdb deploy aws</a> and as per them I need to use NVMe ephemeral for storage, but I have no idea about it.</p>\n<p>Backup and Recovery: How are you handling backups and recovery in your AWS deployment? Any tools or scripts you\u2019d recommend?</p>\n<p>Monitoring: What are you using for monitoring and alerting? Any particular services or setups that integrate well with FoundationDB on AWS?</p>\n<p>Thanks in advance for any advice you can offer. Looking forward to hearing from you all!</p>\n<p>Cheers,<br>\nElla</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-07-18T12:22:16.275Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 195,
+        "reads": 36,
+        "readers_count": 35,
+        "score": 972.2,
+        "yours": false,
+        "topic_id": 4569,
+        "topic_slug": "need-guidance-on-deploying-foundationdb-on-aws",
+        "display_username": "Ella Costa",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/aws-deployment-options/1472/7",
+            "internal": true,
+            "reflection": false,
+            "title": "AWS Deployment Options",
+            "clicks": 9
+          },
+          {
+            "url": "https://github.com/cpfriend1721994/foudationdb-deploy-aws",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - cpfriend1721994/foudationdb-deploy-aws: Deploy FoundationDB on AWS using Terraform + Packer",
+            "clicks": 7
+          },
+          {
+            "url": "https://www.igmguru.com/blog/aws-devops-interview-questions-and-answers/",
+            "internal": false,
+            "reflection": false,
+            "title": "AWS DevOps Interview Questions and Answers",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1446,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/need-guidance-on-deploying-foundationdb-on-aws/4569/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14280,
+        "name": "Aravind",
+        "username": "arsriram",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/arsriram/{size}/1837_2.png",
+        "created_at": "2024-07-25T04:36:29.181Z",
+        "cooked": "<p>Hi Ella,</p>\n<p>At Adobe, we run FoundationDB clusters in both Azure &amp; AWS clouds. See my responses to your questions below -</p>\n<p>Storage options and instance types:</p>\n<ul>\n<li>We only use ephemeral storage since the read/write performance using managed disk doesn\u2019t meet our application requirements. One of the downsides of this choice is that storage and compute are aggregated  i.e. storage and compute cannot be scaled independently.</li>\n<li>i3 and i3en are the two instance types we evaluated on AWS. Both these instance types come with high-performance ephemeral local storage which can drive high throughput workloads. i3en instances have roughly 2.6 times more SSD storage than i3 instances. Depending on your ratio of storage vs throughput required, one might be a better option than the other.</li>\n</ul>\n<p>Cluster setup:</p>\n<ul>\n<li>Number of nodes will depend on a couple of factors. You will need to decide whether which replication/fault tolerance configuration you want to run in i.e. double, triple, three_data_hall or multi_region. I covered this topic in my <a href=\"https://youtu.be/oYiFTBO67uU?t=1350\" rel=\"noopener nofollow ugc\">FDB meetup talk</a>, you might find it useful. You can also join this <a href=\"https://www.meetup.com/foundationdb-meetup/\" rel=\"noopener nofollow ugc\">meetup group</a> to be notified of future meetup events.</li>\n<li>For example, if you want to store 2TB of data (say 1B x 2KB records) with replication factor 3, go with a 20 x i3 node cluster running in triple configuration. This will result in ~ 40-50% disk utilization (3x data replication with the redwood tree storage amplification ends up closer to 7.5x). Assume 5 nodes in the cluster will be non-storage (proxies, logs, stateless) and 15 will be storage-only. You can adjust the number of storage nodes depending on your storage and performance requirements.</li>\n<li>For production deployment, use 3_data_hall or multi_region configurations to have the cluster span multiple AZs and/or regions for resiliency. Note inter-AZ and inter-region network bandwidth is also a cost consideration.</li>\n<li>Also look into using compute-optimized instances (instead of i3s) for stateless nodes to save on cost.</li>\n</ul>\n<p>Backup and Recovery -</p>\n<ul>\n<li>FDB\u2019s backup/restore tool works well with the s3 backend. In Azure we ran into issues using Azure blob backend, so we use s3proxy as a workaround.</li>\n<li>We wrote a service that uses FDB tools to submit and monitor backup/restore jobs for various FDB clusters for operational convenience.</li>\n</ul>\n<p>Networking:</p>\n<ul>\n<li>FDB requires that FDB\u2019s clients be able to connect to all (or most) of the nodes of the FDB cluster. In AWS, we use VNet peering, transit gateway would be another option.</li>\n<li>Clients would also need the FDB cluster file to connect to the FDB cluster. You might have to build a service or registry for distributing the cluster file to clients.</li>\n</ul>\n<p>Monitoring: There are a couple projects that parse the fdb status in json and push metrics to prometheus. Check out <a href=\"https://github.com/tigrisdata/fdb-exporter\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">GitHub - tigrisdata/fdb-exporter: Expose fdb metrics in Prometheus format</a>.</p>\n<p>Kubernetes: I don\u2019t know if this is an option for you (and we don\u2019t use it for FDB in production), but there is a <a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator\" rel=\"noopener nofollow ugc\">kubernetes operator</a>. We completed a PoC recently and I can confirm that for read/write workloads and backup/restore, we see comparable performance as a VM based deployment.</p>\n<p>Hope some of this is helpful.</p>\n<p>Cheers!<br>\n-Aravind</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-07-25T04:36:29.181Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 27,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 231.4,
+        "yours": false,
+        "topic_id": 4569,
+        "topic_slug": "need-guidance-on-deploying-foundationdb-on-aws",
+        "display_username": "Aravind",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://youtu.be/oYiFTBO67uU?t=1350",
+            "internal": false,
+            "reflection": false,
+            "clicks": 20
+          },
+          {
+            "url": "https://github.com/tigrisdata/fdb-exporter",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - tigrisdata/fdb-exporter: Expose fdb metrics in Prometheus format",
+            "clicks": 13
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator",
+            "internal": false,
+            "reflection": false,
+            "title": "GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB",
+            "clicks": 9
+          },
+          {
+            "url": "https://www.meetup.com/foundationdb-meetup/",
+            "internal": false,
+            "reflection": false,
+            "title": "FoundationDB Meetup | Meetup",
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 4
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1213,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/need-guidance-on-deploying-foundationdb-on-aws/4569/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14269,
+      14280
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      460
+    ],
+    [
+      2,
+      454
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Need Guidance on Deploying FoundationDB on AWS",
+  "id": 4569,
+  "title": "Need Guidance on Deploying FoundationDB on AWS",
+  "posts_count": 2,
+  "created_at": "2024-07-18T12:21:03.391Z",
+  "views": 334,
+  "reply_count": 0,
+  "like_count": 5,
+  "last_posted_at": "2024-07-25T04:36:29.181Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "need-guidance-on-deploying-foundationdb-on-aws",
+  "category_id": 7,
+  "word_count": 827,
+  "deleted_at": null,
+  "user_id": 1446,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4569",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Scripts to spin up FoundationDB cluster on AWS",
+      "id": 395,
+      "title": "Scripts to spin up FoundationDB cluster on AWS",
+      "slug": "scripts-to-spin-up-foundationdb-cluster-on-aws",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-05-10T12:43:25.854Z",
+      "last_posted_at": "2018-11-01T02:09:32.154Z",
+      "bumped": true,
+      "bumped_at": "2018-11-01T02:09:32.154Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 1930,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 409,
+            "username": "TommyLike",
+            "name": "Hu Sheng",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tommylike/{size}/395_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "AWS Deployment Options",
+      "id": 1472,
+      "title": "AWS Deployment Options",
+      "slug": "aws-deployment-options",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-06-19T21:27:04.156Z",
+      "last_posted_at": "2019-06-20T15:44:28.570Z",
+      "bumped": true,
+      "bumped_at": "2019-06-24T17:47:10.317Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1679,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 611,
+            "username": "yennie",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/y/c68b51/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to spin up foundationdb cluster in aws",
+      "id": 1198,
+      "title": "How to spin up foundationdb cluster in aws",
+      "slug": "how-to-spin-up-foundationdb-cluster-in-aws",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-03-05T20:27:17.964Z",
+      "last_posted_at": "2019-03-05T20:55:11.895Z",
+      "bumped": true,
+      "bumped_at": "2019-03-05T20:55:11.895Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1042,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 525,
+            "username": "samir",
+            "name": "Samir",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/ea666f/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Operating FoundationDB in an elastic environment",
+      "id": 664,
+      "title": "Operating FoundationDB in an elastic environment",
+      "slug": "operating-foundationdb-in-an-elastic-environment",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-08-25T20:24:49.961Z",
+      "last_posted_at": "2018-08-27T03:45:42.742Z",
+      "bumped": true,
+      "bumped_at": "2018-08-27T03:45:42.742Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 1143,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 42,
+            "username": "ddunbar",
+            "name": "Daniel Dunbar",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ddunbar/{size}/368_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 26,
+            "username": "mrz",
+            "name": "matthew zeier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mrz/{size}/26_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can you please share production ready foundationdb.conf and fdb.cluster files?",
+      "id": 2702,
+      "title": "Can you please share production ready foundationdb.conf and fdb.cluster files?",
+      "slug": "can-you-please-share-production-ready-foundationdb-conf-and-fdb-cluster-files",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2021-05-15T14:41:58.966Z",
+      "last_posted_at": "2021-05-15T14:41:59.057Z",
+      "bumped": true,
+      "bumped_at": "2021-05-15T14:41:59.057Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings",
+        "performance",
+        "operator",
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 653,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 865,
+            "username": "manish-2014",
+            "name": "Manish Sharan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/manish-2014/{size}/1002_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1213,
+        "username": "arsriram",
+        "name": "Aravind",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/arsriram/{size}/1837_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1446,
+        "username": "ellacosta",
+        "name": "Ella Costa",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ellacosta/{size}/1828_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1446,
+      "username": "ellacosta",
+      "name": "Ella Costa",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ellacosta/{size}/1828_2.png"
+    },
+    "last_poster": {
+      "id": 1213,
+      "username": "arsriram",
+      "name": "Aravind",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/arsriram/{size}/1837_2.png"
+    },
+    "links": [
+      {
+        "url": "https://youtu.be/oYiFTBO67uU?t=1350",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 20,
+        "user_id": 1213,
+        "domain": "youtu.be",
+        "root_domain": "youtu.be"
+      },
+      {
+        "url": "https://github.com/tigrisdata/fdb-exporter",
+        "title": "GitHub - tigrisdata/fdb-exporter: Expose fdb metrics in Prometheus format",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 13,
+        "user_id": 1213,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator",
+        "title": "GitHub - FoundationDB/fdb-kubernetes-operator: A kubernetes operator for FoundationDB",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 1213,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://forums.foundationdb.org/t/aws-deployment-options/1472/7",
+        "title": "AWS Deployment Options",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 9,
+        "user_id": 1446,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://github.com/cpfriend1721994/foudationdb-deploy-aws",
+        "title": "GitHub - cpfriend1721994/foudationdb-deploy-aws: Deploy FoundationDB on AWS using Terraform + Packer",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 1446,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://www.meetup.com/foundationdb-meetup/",
+        "title": "FoundationDB Meetup | Meetup",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 1213,
+        "domain": "www.meetup.com",
+        "root_domain": "meetup.com"
+      },
+      {
+        "url": "https://www.igmguru.com/blog/aws-devops-interview-questions-and-answers/",
+        "title": "AWS DevOps Interview Questions and Answers",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 1446,
+        "domain": "www.igmguru.com",
+        "root_domain": "igmguru.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

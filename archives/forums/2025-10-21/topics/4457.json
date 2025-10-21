@@ -1,0 +1,652 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14018,
+        "name": "",
+        "username": "mrcode007",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/94ad74/{size}.png",
+        "created_at": "2024-05-04T16:24:03.346Z",
+        "cooked": "<p>Hi,</p>\n<p>I\u2019m evaluating using FDB in one of my projects and during learning of the API<br>\na couple of observations came up:</p>\n<ol>\n<li>When using FDBStreamingMode::FDB_STREAMING_MODE_WANT_ALL the first read returns 20 records and any subsequent read returns only 1 record at a time. Why?</li>\n<li>When using FDBStreamingMode::FDB_STREAMING_MODE_ITERATOR I always get 1 record at a time. Why?</li>\n<li>When retrieving key value pairs for my range (which has about 16,000 entries) I receive duplicates more than 50% of the time resulting in the abysmal performance. What am I doing wrong? My code and setup are explained below.</li>\n<li>The results don\u2019t arrive in sequential order. Is there a reason for this kind of behavior? Is this how FDB is supposed to work?</li>\n</ol>\n<p>My setup is a FDB running on macOS on an SSD with 2 processes running locally for evaluation purposes.</p>\n<p>My code is below.</p>\n<p>Please advise.</p>\n<pre><code class=\"lang-auto\">std::optional&lt;std::vector&lt;char&gt;&gt;\nstorage::getValue(FDBDatabase *db, const std::string&amp; key0)\n{\n    fdb_bool_t more = true;\n    vector&lt;char&gt; bytes;\n    auto key = std::format(\"{}:{:0&gt;8x}\", key0, 0);\n    auto endkey = std::format(\"{}:{:0&gt;8x}\", key0, std::numeric_limits&lt;uint32_t&gt;::max());\n    int chunk = 0;\n    unordered_map&lt;string, vector&lt;char&gt;&gt; chunks;\n\n    while (more) {\n        FDBTransaction *transaction = nullptr;\n        if (auto err = fdb_database_create_transaction(db, &amp;transaction)) {\n            println(\"error: {}\", fdb_get_error(err));\n            throw runtime_error(\"fdb error\");\n        }\n\n        auto future = fdb_transaction_get_range(transaction,\n          FDB_KEYSEL_FIRST_GREATER_OR_EQUAL(reinterpret_cast&lt;const uint8_t *&gt;(key.data()), key.size()),\n          FDB_KEYSEL_FIRST_GREATER_OR_EQUAL(reinterpret_cast&lt;const uint8_t *&gt;(endkey.data()), key.size()),\n          0 /* no limit */,\n          0 /* no byte limit */,\n          FDBStreamingMode::FDB_STREAMING_MODE_ITERATOR,\n          chunk+1, 0, 0);\n\n        if (auto err = fdb_future_block_until_ready(future)) {\n            println(\"error: {}\", fdb_get_error(err));\n            fdb_future_destroy(future);\n            fdb_transaction_destroy(transaction);\n            throw runtime_error(\"fdb error\");\n        }\n\n        if (auto err = fdb_future_get_error(future)) {\n            println(\"error: {}\", fdb_get_error(err));\n            fdb_future_destroy(future);\n            fdb_transaction_destroy(transaction);\n            throw runtime_error(\"fdb error\");\n        }\n\n        const FDBKeyValue *out = nullptr;\n        int count = 0;\n        if (auto err = fdb_future_get_keyvalue_array(future, &amp;out, &amp;count, &amp;more)) {\n            println(\"error: {}\", fdb_get_error(err));\n            fdb_future_destroy(future);\n            fdb_transaction_destroy(transaction);\n            throw runtime_error(\"fdb error\");\n        }\n\n        // stitch the chunks together\n        for (auto i : views::iota(0, count)) {\n            auto k = std::string{reinterpret_cast&lt;const char *&gt;(out[i].key),\n              static_cast&lt;size_t&gt;(out[i].key_length)};\n            println(\"received key: {}\", k);\n\n            vector&lt;char&gt; bvec;\n            bvec.insert(bvec.end(), out[i].value, out[i].value + out[i].value_length);\n            chunks.emplace(k, std::move(bvec));\n        }\n\n        // use the last key as the new first key\n        if (count &gt; 0) {\n            key.resize(out[count-1].key_length);\n            auto beg = &amp;out[count-1].key[0];\n            auto end = &amp;out[count-1].key[key.size()];\n            vector&lt;uint8_t&gt; intermediate(key.size());\n            std::copy(beg, end, intermediate.begin());\n            ++chunk;\n            key = std::format(\"{}:{:0&gt;8x}\", key0, chunk);\n        }\n\n        fdb_future_destroy(future);\n        fdb_transaction_destroy(transaction);\n    }\n\n    if (chunks.empty()) {\n        return std::nullopt;\n    }\n\n    vector&lt;string&gt; sortedKeys;\n    for (auto&amp; el : chunks | std::views::keys) {\n        sortedKeys.emplace_back(el);\n    }\n    std::ranges::sort(sortedKeys);\n\n    for (const auto&amp; k : sortedKeys) {\n        bytes.insert(bytes.end(), chunks[k].begin(), chunks[k].end());\n    }\n    return std::move(bytes);\n}\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2024-05-04T16:24:03.346Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 5,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 28.8,
+        "yours": false,
+        "topic_id": 4457,
+        "topic_slug": "fdb-c-api-and-range-retrieval-has-duplicates",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1414,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-c-api-and-range-retrieval-has-duplicates/4457/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14025,
+        "name": "Mike McMahon",
+        "username": "MMcM",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+        "created_at": "2024-05-06T21:37:19.882Z",
+        "cooked": "<p><code>chunk</code> is being used both as the <code>iteration</code> counter to <code>fdb_transaction_get_range</code> and as the starting key for range scans after the first. I would expect the latter to be derived from <code>intermediate</code>, along the lines of the comment.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2024-05-06T21:37:19.882Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 18.0,
+        "yours": false,
+        "topic_id": 4457,
+        "topic_slug": "fdb-c-api-and-range-retrieval-has-duplicates",
+        "display_username": "Mike McMahon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 219,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-c-api-and-range-retrieval-has-duplicates/4457/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14028,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2024-05-08T13:11:37.758Z",
+        "cooked": "<p>In addition, once the difference between using chunk vs the last key as the next iterations start key, there may be a problem with the first arg to <code>fdb_transaction_get_range</code> always using <code>FDB_KEYSEL_FIRST_GREATER_OR_EQUAL</code>. I believe it should be <code>FDB_KEYSEL_FIRST_GREATER</code> for all entries <em>except</em> for the first one. Otherwise, you\u2019ll end up receiving the last key in each chunk multiple times.</p>\n<p>You can see an example of our Python iterator for how the API expects to be called: <a href=\"https://github.com/apple/foundationdb/blob/4fd61dd9f661eb7c9446a5b70f0c7a13c718badf/bindings/python/fdb/impl.py#L432\" class=\"inline-onebox\">foundationdb/bindings/python/fdb/impl.py at 4fd61dd9f661eb7c9446a5b70f0c7a13c718badf \u00b7 apple/foundationdb \u00b7 GitHub</a> I wouldn\u2019t expect duplicates or out of order results. I\u2019d also add that FDB\u2019s byte ordering is lexicographic. It looks like your <code>{:0&gt;8x}</code> formatting suffix should keep things in order, assuming the chunk value never exceeds 65k.</p>\n<p>I\u2019m not sure that explains why each request would return results one record at a time, though. The <code>ITERATOR</code> streaming mode attempts to minimize time to first byte, and so it should return relatively few records in the first few chunks, but that should increase with each response. The <code>WANT_ALL</code> iterator mode should attempt to return 80 kB chunks with each response, so it shouldn\u2019t make a difference what the iteration value is.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2024-05-08T13:11:37.758Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 2.8,
+        "yours": false,
+        "topic_id": 4457,
+        "topic_slug": "fdb-c-api-and-range-retrieval-has-duplicates",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/4fd61dd9f661eb7c9446a5b70f0c7a13c718badf/bindings/python/fdb/impl.py#L432",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/bindings/python/fdb/impl.py at 4fd61dd9f661eb7c9446a5b70f0c7a13c718badf \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 219,
+          "username": "MMcM",
+          "name": "Mike McMahon",
+          "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/fdb-c-api-and-range-retrieval-has-duplicates/4457/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14018,
+      14025,
+      14028
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      535
+    ],
+    [
+      2,
+      533
+    ],
+    [
+      3,
+      531
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "FDB C API and range retrieval has duplicates?",
+  "id": 4457,
+  "title": "FDB C API and range retrieval has duplicates?",
+  "posts_count": 3,
+  "created_at": "2024-05-04T16:24:03.252Z",
+  "views": 156,
+  "reply_count": 1,
+  "like_count": 0,
+  "last_posted_at": "2024-05-08T13:11:37.758Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "fdb-c-api-and-range-retrieval-has-duplicates",
+  "category_id": 5,
+  "word_count": 705,
+  "deleted_at": null,
+  "user_id": 1414,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4457",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Why can I only range read 2857 keys?",
+      "id": 1517,
+      "title": "Why can I only range read 2857 keys?",
+      "slug": "why-can-i-only-range-read-2857-keys",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-13T06:06:58.493Z",
+      "last_posted_at": "2019-07-13T19:32:13.906Z",
+      "bumped": true,
+      "bumped_at": "2019-07-13T19:32:13.906Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 634,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to Fetch all stored key-values at once",
+      "id": 1285,
+      "title": "How to Fetch all stored key-values at once",
+      "slug": "how-to-fetch-all-stored-key-values-at-once",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-04-05T12:12:49.636Z",
+      "last_posted_at": "2019-04-10T20:48:57.581Z",
+      "bumped": true,
+      "bumped_at": "2019-04-10T20:48:57.581Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 5507,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Can&rsquo;t get last pair in FDBKeyValue array",
+      "id": 1252,
+      "title": "Can't get last pair in FDBKeyValue array",
+      "slug": "cant-get-last-pair-in-fdbkeyvalue-array",
+      "posts_count": 5,
+      "reply_count": 2,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-03-24T06:57:23.327Z",
+      "last_posted_at": "2019-03-25T21:53:28.346Z",
+      "bumped": true,
+      "bumped_at": "2019-03-25T22:09:28.671Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 886,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Is it possible to fetch two different keys using &ldquo;fdb_transaction_get_range&rdquo; API in C program",
+      "id": 1388,
+      "title": "Is it possible to fetch two different keys using \"fdb_transaction_get_range\" API in C program",
+      "slug": "is-it-possible-to-fetch-two-different-keys-using-fdb-transaction-get-range-api-in-c-program",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-23T08:14:07.379Z",
+      "last_posted_at": "2019-05-23T15:43:55.444Z",
+      "bumped": true,
+      "bumped_at": "2019-05-23T15:43:55.444Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 591,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Why can&rsquo;t get the key-value I need for using fdb_transaction_get_range",
+      "id": 3038,
+      "title": "Why can't get the key-value I need for using fdb_transaction_get_range",
+      "slug": "why-cant-get-the-key-value-i-need-for-using-fdb-transaction-get-range",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2021-11-25T09:15:15.954Z",
+      "last_posted_at": "2021-11-27T03:37:15.102Z",
+      "bumped": true,
+      "bumped_at": "2021-11-27T03:37:15.102Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 705,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1039,
+            "username": "JiangXiNJU",
+            "name": "Jiang Xi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jiangxinju/{size}/1247_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 219,
+        "username": "MMcM",
+        "name": "Mike McMahon",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/d07c76/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1414,
+        "username": "mrcode007",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/94ad74/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 1414,
+      "username": "mrcode007",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/94ad74/{size}.png"
+    },
+    "last_poster": {
+      "id": 8,
+      "username": "alloc",
+      "name": "Alec Grieser",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/4fd61dd9f661eb7c9446a5b70f0c7a13c718badf/bindings/python/fdb/impl.py#L432",
+        "title": "foundationdb/bindings/python/fdb/impl.py at 4fd61dd9f661eb7c9446a5b70f0c7a13c718badf \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 8,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

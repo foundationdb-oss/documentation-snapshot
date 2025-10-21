@@ -1,0 +1,569 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 8852,
+        "name": "",
+        "username": "drewrichardson",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/e79b87/{size}.png",
+        "created_at": "2020-12-08T16:57:21.495Z",
+        "cooked": "<p>Hello,</p>\n<p>I\u2019m getting a panic when calling <code>directory.CreateOrOpen</code> with <code>-race</code>, it appears the memory is 4 byte aligned when golang is expecting it to be 8 byte aligned. This code is a striped down version of class-scheduling-go.html</p>\n<p>main.go</p>\n<blockquote>\n<p>package main</p>\n<p>import (<br>\n// Omitted for having too many links<br>\n\u201clog\u201d<br>\n)</p>\n<p>func main() {<br>\nfdb.MustAPIVersion(620)<br>\ndb := fdb.MustOpenDefault()<br>\ndb.Options().SetTransactionTimeout(60000)  // 60,000 ms = 1 minute<br>\ndb.Options().SetTransactionRetryLimit(100)</p>\n<p>if _, err := directory.CreateOrOpen(db, <span class=\"chcklst-box fa fa-square-o fa-fw\"></span>string{\u201cscheduling\u201d}, nil); err != nil {<br>\nlog.Fatal(err)<br>\n}<br>\n}</p>\n</blockquote>\n<p>go.mod</p>\n<blockquote>\n<p>module fdbexperiment</p>\n<p>go 1.15</p>\n<p>// Version 6.2.28<br>\nrequire <a href=\"http://github.com/apple/foundationdb/bindings/go\" rel=\"noopener nofollow ugc\">github.com/apple/foundationdb/bindings/go</a> v0.0.0-20201114170605-569ab46bf638</p>\n</blockquote>\n<p>console output<br>\n$ go run -race main.go<br>\nfatal error: checkptr: misaligned pointer conversion</p>\n<pre><code>goroutine 1 [running]:\nruntime.throw(0x41d1054, 0x27)\n\t/usr/local/Cellar/go/1.15.5/libexec/src/runtime/panic.go:1116 +0x72 fp=0xc0000a6e00 sp=0xc0000a6dd0 pc=0x40363f2\nruntime.checkptrAlignment(0x55cf086, 0x419cbc0, 0x1)\n\t/usr/local/Cellar/go/1.15.5/libexec/src/runtime/checkptr.go:15 +0xe5 fp=0xc0000a6e30 sp=0xc0000a6e00 pc=0x4009c65\ngithub.com/apple/foundationdb/bindings/go/src/fdb.stringRefToSlice(0x55cf086, 0xc0000a6f88, 0x1, 0x1)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/futures.go:278 +0xf6 fp=0xc0000a6e98 sp=0xc0000a6e30 pc=0x4116496\ngithub.com/apple/foundationdb/bindings/go/src/fdb.(*futureKeyValueArray).Get(0xc000010020, 0x0, 0x0, 0x0, 0xc0000a7000, 0x0, 0x0)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/futures.go:301 +0x2ea fp=0xc0000a6fb8 sp=0xc0000a6e98 pc=0x411680a\ngithub.com/apple/foundationdb/bindings/go/src/fdb.(*RangeIterator).Advance(0xc0000a7118, 0x0)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/range.go:225 +0xbb fp=0xc0000a7048 sp=0xc0000a6fb8 pc=0x411743b\ngithub.com/apple/foundationdb/bindings/go/src/fdb.RangeResult.GetSliceWithError(0xc0000a02d0, 0x41f8300, 0xc00000e180, 0x41f8300, 0xc00000e1a0, 0x1, 0x0, 0x1, 0x1, 0xc000010020, ...)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/range.go:150 +0x239 fp=0xc0000a71b8 sp=0xc0000a7048 pc=0x41171b9\ngithub.com/apple/foundationdb/bindings/go/src/fdb/directory.highContentionAllocator.allocate(0x41f99e0, 0xc0000b8120, 0x41f99e0, 0xc0000b8140, 0xc0000a02d0, 0x41f99e0, 0xc0000b8080, 0x41f99e0, 0xc0000b8140, 0x41f99e0, ...)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/directory/allocator.go:68 +0xbf9 fp=0xc0000a7490 sp=0xc0000a71b8 pc=0x413c819\ngithub.com/apple/foundationdb/bindings/go/src/fdb/directory.directoryLayer.createOrOpen(0x41f99e0, 0xc0000b8060, 0x41f99e0, 0xc0000b8080, 0x0, 0x41f99e0, 0xc0000b8120, 0x41f99e0, 0xc0000b8140, 0x41f99e0, ...)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/directory/directoryLayer.go:123 +0xef6 fp=0xc0000a79a8 sp=0xc0000a7490 pc=0x413e836\ngithub.com/apple/foundationdb/bindings/go/src/fdb/directory.directoryLayer.CreateOrOpen.func1(0xc0000a02d0, 0x69637d0, 0x4006958, 0xc0000a02d0, 0x0)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/directory/directoryLayer.go:181 +0x14a fp=0xc0000a7b48 sp=0xc0000a79a8 pc=0x414816a\ngithub.com/apple/foundationdb/bindings/go/src/fdb.Database.Transact.func1(0x0, 0x0, 0x0, 0x0)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/database.go:134 +0xc5 fp=0xc0000a7be8 sp=0xc0000a7b48 pc=0x411a045\ngithub.com/apple/foundationdb/bindings/go/src/fdb.retryable(0xc0000a7ca8, 0xc0000a7c98, 0x0, 0x0, 0x42ce4e0, 0x0)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/database.go:85 +0x39 fp=0xc0000a7c38 sp=0xc0000a7be8 pc=0x4114219\ngithub.com/apple/foundationdb/bindings/go/src/fdb.Database.Transact(0xc0000c2058, 0xc0000cc000, 0xc000000180, 0x4d1f778, 0xc000000000, 0x400691b)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/database.go:143 +0x111 fp=0xc0000a7cd0 sp=0xc0000a7c38 pc=0x4114451\ngithub.com/apple/foundationdb/bindings/go/src/fdb/directory.directoryLayer.CreateOrOpen(0x41f99e0, 0xc0000b8060, 0x41f99e0, 0xc0000b8080, 0x0, 0x41f99e0, 0xc0000b8120, 0x41f99e0, 0xc0000b8140, 0x41f99e0, ...)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/directory/directoryLayer.go:180 +0x179 fp=0xc0000a7d50 sp=0xc0000a7cd0 pc=0x413f759\ngithub.com/apple/foundationdb/bindings/go/src/fdb/directory.(*directoryLayer).CreateOrOpen(0xc0000ca000, 0x41f87e0, 0xc0000c2058, 0xc0000a02c0, 0x1, 0x1, 0x0, 0x0, 0x0, 0xc000096010, ...)\n\t&lt;autogenerated&gt;:1 +0x152 fp=0xc0000a7ec8 sp=0xc0000a7d50 pc=0x414bdb2\ngithub.com/apple/foundationdb/bindings/go/src/fdb/directory.CreateOrOpen(...)\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/directory/directory.go:190\nmain.main()\n\t/Users/drew-richardson/fdbexperiment/main.go:15 +0x166 fp=0xc0000a7f88 sp=0xc0000a7ec8 pc=0x4151ba6\nruntime.main()\n\t/usr/local/Cellar/go/1.15.5/libexec/src/runtime/proc.go:204 +0x209 fp=0xc0000a7fe0 sp=0xc0000a7f88 pc=0x4038c69\nruntime.goexit()\n\t/usr/local/Cellar/go/1.15.5/libexec/src/runtime/asm_amd64.s:1374 +0x1 fp=0xc0000a7fe8 sp=0xc0000a7fe0 pc=0x40690a1\n\ngoroutine 21 [syscall]:\ngithub.com/apple/foundationdb/bindings/go/src/fdb._Cfunc_fdb_run_network(0x0)\n\t_cgo_gotypes.go:365 +0x67\ngithub.com/apple/foundationdb/bindings/go/src/fdb.startNetwork.func1()\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/fdb.go:209 +0x34\ncreated by github.com/apple/foundationdb/bindings/go/src/fdb.startNetwork\n\t/Users/drew-richardson/go/pkg/mod/github.com/apple/foundationdb/bindings/go@v0.0.0-20201114170605-569ab46bf638/src/fdb/fdb.go:208 +0x8e\nexit status 2\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2020-12-08T17:01:13.807Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 234,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 1172.0,
+        "yours": false,
+        "topic_id": 2474,
+        "topic_slug": "golang-misaligned-pointer-conversion",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "http://github.com/apple/foundationdb/bindings/go",
+            "internal": false,
+            "reflection": false,
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 861,
+        "hidden": false,
+        "trust_level": 0,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/golang-misaligned-pointer-conversion/2474/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      8852
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1778
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Golang misaligned pointer conversion",
+  "id": 2474,
+  "title": "Golang misaligned pointer conversion",
+  "posts_count": 1,
+  "created_at": "2020-12-08T16:57:21.407Z",
+  "views": 903,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2020-12-08T16:57:21.495Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "golang-misaligned-pointer-conversion",
+  "category_id": 7,
+  "word_count": 898,
+  "deleted_at": null,
+  "user_id": 861,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2474",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Golang client doesn&rsquo;t return from MustOpenDefault",
+      "id": 1676,
+      "title": "Golang client doesn't return from MustOpenDefault",
+      "slug": "golang-client-doesnt-return-from-mustopendefault",
+      "posts_count": 16,
+      "reply_count": 3,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-10-12T01:40:13.451Z",
+      "last_posted_at": "2020-09-11T18:41:28.499Z",
+      "bumped": true,
+      "bumped_at": "2020-09-11T18:57:23.891Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1142,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 662,
+            "username": "cloudmode",
+            "name": "Cloudmode",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d07c76/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 817,
+            "username": "fraleypaul",
+            "name": "Paul Fraley",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/ed655f/{size}.png",
+            "trust_level": 0
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Crashes every day go bindings",
+      "id": 1219,
+      "title": "Crashes every day go bindings",
+      "slug": "crashes-every-day-go-bindings",
+      "posts_count": 19,
+      "reply_count": 13,
+      "highest_post_number": 19,
+      "image_url": null,
+      "created_at": "2019-03-13T07:03:38.291Z",
+      "last_posted_at": "2019-07-05T15:14:02.982Z",
+      "bumped": true,
+      "bumped_at": "2019-07-05T15:14:02.982Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2317,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 562,
+            "username": "ddi",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ddi/{size}/721_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Go + FoundationDB - Straight Forward Steps",
+      "id": 1274,
+      "title": "Go + FoundationDB - Straight Forward Steps",
+      "slug": "go-foundationdb-straight-forward-steps",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-04-01T21:02:46.452Z",
+      "last_posted_at": "2019-04-09T06:37:50.005Z",
+      "bumped": true,
+      "bumped_at": "2019-04-09T06:37:50.005Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3046,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 170,
+            "username": "meln1k",
+            "name": "Nikita Melkozerov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meln1k/{size}/150_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Issue linking foundationDB with Go bindings : m2 chip",
+      "id": 3650,
+      "title": "Issue linking foundationDB with Go bindings : m2 chip",
+      "slug": "issue-linking-foundationdb-with-go-bindings-m2-chip",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/2X/e/eb88199670f7bdb72e52be121c1209821925dc39_2_1024x367.png",
+      "created_at": "2022-11-10T02:11:02.489Z",
+      "last_posted_at": "2022-11-10T02:11:02.553Z",
+      "bumped": true,
+      "bumped_at": "2022-11-10T02:11:02.553Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 267,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1173,
+            "username": "stephensweet",
+            "name": "Stephensweet",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/stephensweet/{size}/1446_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb seems keep reinitialising itself after client hang",
+      "id": 1437,
+      "title": "Foundationdb seems keep reinitialising itself after client hang",
+      "slug": "foundationdb-seems-keep-reinitialising-itself-after-client-hang",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-06-10T10:10:13.209Z",
+      "last_posted_at": "2019-06-26T18:08:03.629Z",
+      "bumped": true,
+      "bumped_at": "2019-06-26T18:08:03.629Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1222,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 602,
+            "username": "ppggff",
+            "name": "ppggff",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ppggff/{size}/855_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 861,
+        "username": "drewrichardson",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/e79b87/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 0
+      }
+    ],
+    "created_by": {
+      "id": 861,
+      "username": "drewrichardson",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/e79b87/{size}.png"
+    },
+    "last_poster": {
+      "id": 861,
+      "username": "drewrichardson",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/e79b87/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

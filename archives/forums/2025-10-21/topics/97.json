@@ -1,0 +1,812 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 150,
+        "name": "Brenton Partridge",
+        "username": "bpartridge",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/bpartridge/{size}/50_2.png",
+        "created_at": "2018-04-20T04:59:05.125Z",
+        "cooked": "<p>Hi all!</p>\n<p>What an exciting project! I\u2019m excited to see what people will come up with. Specifically, there are some really exciting things you could do with distributed graph databases that haven\u2019t really been possible with eventually consistent backends. (<a class=\"mention\" href=\"/u/wwilson\">@wwilson</a> - any chance of reviving <a href=\"https://github.com/wwilson/blueprints-foundationdb-graph\" rel=\"nofollow noopener\">https://github.com/wwilson/blueprints-foundationdb-graph</a><br>\nas linked at <a href=\"https://groups.google.com/forum/#!topic/gremlin-users/L6X0Wc2Sp2k\" rel=\"nofollow noopener\">https://groups.google.com/forum/#!topic/gremlin-users/L6X0Wc2Sp2k</a> ?)</p>\n<p>One thing that I haven\u2019t seen in the documentation is how one would go about creating an index like in <a href=\"https://apple.github.io/foundationdb/layer-concept.html#the-foundationdb-way\" rel=\"nofollow noopener\">https://apple.github.io/foundationdb/layer-concept.html#the-foundationdb-way</a> if data already exists.</p>\n<p>For instance, in that example, if Bob were added after the code was pushed to maintain an eye color index, people/bob/eye_color = blue would set eye_color/blue/bob = true in the same transaction, and all would be good. But what about Alice and Anne who were already in the database? We could run a transaction doing something like \u201cfor each person, set eye_color/$color/$person = true.\u201d</p>\n<p>But if there were a large number of people, or people had large values, it might not be feasible to do this in a single five-second transaction. (Particularly if you were building something like a full-text index!) Would you parallelize on boundaries? What if boundaries shifted mid-run? And if not boundaries, how would you determine how to break the range of people into correctly-sized chunks to parallelize?</p>\n<p>Or would you forget about parallelization, just build the index serially, streaming in keys, and committing a transaction when elapsed time gets close to 5 seconds, then starting again from that key? You might end up re-indexing Bob in this case, but if indexing is idempotent that shouldn\u2019t be a problem.</p>\n<p>Also, do we just trust the client library to batch our writes efficiently? We\u2019d be writing pretty randomly across the eye_color range as we reindex. Presumably the client node doesn\u2019t need to worry about this until we commit the transaction, so it would keep things in memory until that point?</p>\n<p>Many more questions to come, but thought this would be a good starting point for discussion!</p>\n<p>Cheers,</p>\n<p>Brenton</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-20T04:59:05.125Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 850,
+        "reads": 98,
+        "readers_count": 97,
+        "score": 4271.6,
+        "yours": false,
+        "topic_id": 97,
+        "topic_slug": "best-way-to-add-an-index-on-already-existing-data",
+        "display_username": "Brenton Partridge",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/layer-concept.html#the-foundationdb-way",
+            "internal": false,
+            "reflection": false,
+            "title": "Layer Concept \u2014 FoundationDB 5.1",
+            "clicks": 38
+          },
+          {
+            "url": "https://github.com/wwilson/blueprints-foundationdb-graph",
+            "internal": false,
+            "reflection": false,
+            "clicks": 33
+          },
+          {
+            "url": "https://groups.google.com/forum/#!topic/gremlin-users/L6X0Wc2Sp2k",
+            "internal": false,
+            "reflection": false,
+            "title": "Google Groups",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 67,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/best-way-to-add-an-index-on-already-existing-data/97/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 290,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2018-04-21T05:42:40.801Z",
+        "cooked": "<p>Interesting question. Building indexes from existing data (especially if you add the additional constraint that you want to do it from a live dataset while concurrently permitting reads and writes) can be somewhat tricky due to some of the constraints that you\u2019ve already mentioned, but it also ends up being a necessary primitive that many sufficiently-advanced layers will end up needing to support schema evolution. I can go through a sketch here of how that might be done.</p>\n<p>As you point out, sufficiently large data sets may take longer than five seconds to read, and additionally, a transaction can do at most <a href=\"https://apple.github.io/foundationdb/known-limitations.html#large-transactions\">10 MB</a> of writes (actually, probably best to keep them under 1 MB, if possible). And there is a further problem that this transaction will necessarily have a read conflict range that spans the entire data set, so any concurrent write will cause that index-building transaction to fail. (In theory, one could get around this by writing a key in FDB to \u201clock\u201d the data, i.e., you would enforce client-side that any write first check to see if the lock key is set and then fail the write in your application rather than submitting it to be committed.) So, it becomes essentially a necessity for any layer that implements some kind of index maintenance scheme to also implement a multi-transaction index builder.</p>\n<p>So, how do you do that? The simplest way would be (1) start a transaction, (2) read some number of keys starting from the beginning of the data range, (3) write the appropriate index keys for the keys read, (4) commit the result, (5) go back to (1), but if (4) succeeds read from the last key written rather than the beggining of the range. This will usually work, with a few caveats:</p>\n<ol>\n<li>There must be some mechanism to avoid using the unbuilt index to answer queries while simultaneously updating the index as data are inserted and deleted from the main data set. This usually necessitates being able to make indexes enter a \u201cwrite-only\u201d mode, and this state needs to be persisted somewhere, and then when the build completes, it can mark the index as readable by mutating that state.</li>\n<li>This will only do the right thing if index updates are idempotent. For <a href=\"https://apple.github.io/foundationdb/simple-indexes.html\">simple indexes</a>, that assumption holds, so the only issue is that index updates might end up duplicating work. (As in your example, we might write Bob\u2019s eye color twice.) You can imagine indexes where that won\u2019t work, though. For example, consider an index that counts how many times we see a value\u2013a histogram index. (You might do this efficiently using our <a href=\"https://apple.github.io/foundationdb/api-python.html#atomic-operations\">atomic mutation API</a>.)</li>\n<li>If whatever is building the index dies midway through, the entire index build must be restarted.</li>\n</ol>\n<p>To solve (2) and (3), you can be slightly more sophisticated by atomically writing a key with the your index updates that states how far through the index build you have gotten. That way, if the index building job dies part way through, it can be resumed from where it left off rather than the beginning. And then once that information is available, you can also use it to solve (2) by updating a non-idempotent write-only index if and only if the key being added is within the built range. If it\u2019s outside the built range, the index builder will pick it up. If it\u2019s within the range, then the initial write will index it. Either way, it is indexed exactly once.</p>\n<p>So, the final question is then how to implement parallelism. Well, to do that, you can actually extend technique above to write multiple keys instead of just one saying which <em>ranges</em> of the main dataset have been built. Then multiple index builders can work on different ranges at once and use those keys to avoid stepping on each other. The details are a little complicated, but that\u2019s the general idea. If you did know roughly the distribution of your data, you can pick boundaries to shard upon. We also offer an API that can be used to find the <a href=\"https://apple.github.io/foundationdb/api-python.html#fdb.locality.fdb.locality.get_boundary_keys\">boundary keys of the underlying shards</a>. Note that the boundaries are not required for correctness, just performance, so once you\u2019ve picked boundaries, you can just keep using the same ones for the entirely of the build (or even change them at will depending on how you keep track of the progress of each ranged), and things will just \u201cwork\u201d.</p>\n<p>As to your question about the client batching writes efficiently, note that all FDB writes are completely client-local until the transaction is committed, at which point all writes are batched together and submitted. Until then, all writes exist only in memory, so locality shouldn\u2019t matter too much. (This is another reason\u2013somewhat related to the 10 MB transaction size limit\u2013that rebuilding an entire index in one transaction might not be possible.) Once the transaction is submitted, your writes will have to be split apart again and might end up on a variety of different storage servers, but that usually isn\u2019t too bad.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-21T05:42:40.801Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 34,
+        "reads": 88,
+        "readers_count": 87,
+        "score": 204.6,
+        "yours": false,
+        "topic_id": 97,
+        "topic_slug": "best-way-to-add-an-index-on-already-existing-data",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-python.html#atomic-operations",
+            "internal": false,
+            "reflection": false,
+            "title": "Python API \u2014 FoundationDB 5.1",
+            "clicks": 14
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/api-python.html#fdb.locality.fdb.locality.get_boundary_keys",
+            "internal": false,
+            "reflection": false,
+            "title": "Python API \u2014 FoundationDB 5.1",
+            "clicks": 12
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/simple-indexes.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Simple Indexes \u2014 FoundationDB 5.1",
+            "clicks": 11
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/known-limitations.html#large-transactions",
+            "internal": false,
+            "reflection": false,
+            "title": "Known Limitations \u2014 FoundationDB 5.1",
+            "clicks": 6
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/fdb-zk-rough-cut-of-zookeeper-api-layer/1278/5",
+            "internal": true,
+            "reflection": true,
+            "title": "Fdb-zk: rough cut of Zookeeper API layer",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/best-way-to-add-an-index-on-already-existing-data/97/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 319,
+        "name": "Will Wilson",
+        "username": "wwilson",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+        "created_at": "2018-04-21T14:52:02.378Z",
+        "cooked": "<p>Hi Brenton,</p>\n<p>(1) The Blueprints-compatible FDB graph layer that you linked was more of a prototype/demo than a production-quality layer. IIRC, Mike McMahon was working on a FoundationDB storage engine for TitanDB at one point, and I believe got it to a higher level of maturity. I have no idea whether Titan is still a popular database or not, but either way I don\u2019t think it would be too hard to write a proper graph layer for FDB. I\u2019d be happy to help and/or advise on any such effort.</p>\n<p>(2) Your question about indexes, and Alec\u2019s thorough but slightly daunting answer, is one reason I\u2019d like to resurrect the document layer (as discussed <a href=\"https://forums.foundationdb.org/t/document-layer-plans/180\">here</a>). It had a pretty fast and sophisticated implementation of the procedure Alec describes, and one mostly decoupled from the details of Mongo compatibility, and even from the document data model (IIRC, the indexing system only cared about hierarchical \u201cfield\u201d or \u201cpaths\u201d, and had a pluggable type system).</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-21T14:52:02.378Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 118,
+        "reads": 79,
+        "readers_count": 78,
+        "score": 605.8,
+        "yours": false,
+        "topic_id": 97,
+        "topic_slug": "best-way-to-add-an-index-on-already-existing-data",
+        "display_username": "Will Wilson",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/document-layer-plans/180",
+            "internal": true,
+            "reflection": false,
+            "title": "Document layer plans?",
+            "clicks": 44
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 30,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/best-way-to-add-an-index-on-already-existing-data/97/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      150,
+      290,
+      319
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2742
+    ],
+    [
+      2,
+      2741
+    ],
+    [
+      3,
+      2740
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Best way to add an index on already-existing data?",
+  "id": 97,
+  "title": "Best way to add an index on already-existing data?",
+  "posts_count": 3,
+  "created_at": "2018-04-20T04:59:04.978Z",
+  "views": 3525,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2018-04-21T14:52:02.378Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "best-way-to-add-an-index-on-already-existing-data",
+  "category_id": 7,
+  "word_count": 1443,
+  "deleted_at": null,
+  "user_id": 67,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_97",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Create new index at runtime: How will the indexes for old objects be created?",
+      "id": 2789,
+      "title": "Create new index at runtime: How will the indexes for old objects be created?",
+      "slug": "create-new-index-at-runtime-how-will-the-indexes-for-old-objects-be-created",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2021-07-13T05:07:48.841Z",
+      "last_posted_at": "2021-07-13T09:45:16.617Z",
+      "bumped": true,
+      "bumped_at": "2021-07-13T09:45:16.617Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 322,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 964,
+            "username": "anuragvohraec",
+            "name": "Anurag Vohra",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/anuragvohraec/{size}/1132_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 711,
+            "username": "osamarin",
+            "name": "Oleg Samarin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/osamarin/{size}/905_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Secondary indexing approaches",
+      "id": 792,
+      "title": "Secondary indexing approaches",
+      "slug": "secondary-indexing-approaches",
+      "posts_count": 7,
+      "reply_count": 2,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2018-10-19T19:24:02.093Z",
+      "last_posted_at": "2018-10-20T15:08:09.001Z",
+      "bumped": true,
+      "bumped_at": "2018-10-20T15:08:09.001Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2905,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 391,
+            "username": "atombender",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/atombender/{size}/688_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Online Indexing on large databases",
+      "id": 2391,
+      "title": "Online Indexing on large databases",
+      "slug": "online-indexing-on-large-databases",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-10-15T06:03:44.650Z",
+      "last_posted_at": "2020-10-16T17:32:52.713Z",
+      "bumped": true,
+      "bumped_at": "2020-10-16T17:32:52.713Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1226,
+      "category_id": 12,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 653,
+            "username": "VibhutiD",
+            "name": "Vibhuti Dembi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/vibhutid/{size}/668_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "A few design-pattern + check-my-understanding questions",
+      "id": 1153,
+      "title": "A few design-pattern + check-my-understanding questions",
+      "slug": "a-few-design-pattern-check-my-understanding-questions",
+      "posts_count": 10,
+      "reply_count": 6,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-02-19T15:18:58.329Z",
+      "last_posted_at": "2019-02-21T19:51:53.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-21T19:51:53.686Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2273,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 519,
+            "username": "JamesThompson",
+            "name": "James Thompson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/c67d28/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deleting old indexes on updates",
+      "id": 1980,
+      "title": "Deleting old indexes on updates",
+      "slug": "deleting-old-indexes-on-updates",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2020-02-26T16:17:19.172Z",
+      "last_posted_at": "2020-02-26T23:23:31.117Z",
+      "bumped": true,
+      "bumped_at": "2020-02-26T23:23:31.117Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 419,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 734,
+            "username": "SnarkyPixel",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/c37758/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 30,
+        "username": "wwilson",
+        "name": "Will Wilson",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 67,
+        "username": "bpartridge",
+        "name": "Brenton Partridge",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/bpartridge/{size}/50_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 67,
+      "username": "bpartridge",
+      "name": "Brenton Partridge",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/bpartridge/{size}/50_2.png"
+    },
+    "last_poster": {
+      "id": 30,
+      "username": "wwilson",
+      "name": "Will Wilson",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/wwilson/{size}/88_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/document-layer-plans/180",
+        "title": "Document layer plans?",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 44,
+        "user_id": 30,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/layer-concept.html#the-foundationdb-way",
+        "title": "Layer Concept \u2014 FoundationDB 5.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 38,
+        "user_id": 67,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://github.com/wwilson/blueprints-foundationdb-graph",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 33,
+        "user_id": 67,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/api-python.html#atomic-operations",
+        "title": "Python API \u2014 FoundationDB 5.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 14,
+        "user_id": 8,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/api-python.html#fdb.locality.fdb.locality.get_boundary_keys",
+        "title": "Python API \u2014 FoundationDB 5.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 12,
+        "user_id": 8,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/simple-indexes.html",
+        "title": "Simple Indexes \u2014 FoundationDB 5.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 11,
+        "user_id": 8,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://groups.google.com/forum/#!topic/gremlin-users/L6X0Wc2Sp2k",
+        "title": "Google Groups",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 67,
+        "domain": "groups.google.com",
+        "root_domain": "google.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/known-limitations.html#large-transactions",
+        "title": "Known Limitations \u2014 FoundationDB 5.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 8,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,687 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 9389,
+        "name": "Manoj Ramakrishnan",
+        "username": "rmanoj",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/c5a1d2/{size}.png",
+        "created_at": "2021-05-07T00:11:25.991Z",
+        "cooked": "<p>Is there a command to find the installed server, client lib and server lib versions? Like I want to find this <a href=\"https://github.com/apple/foundationdb/pull/4339#issuecomment-832291416\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">multi-thread-client: Add test for Java bindings by vishesh \u00b7 Pull Request #4339 \u00b7 apple/foundationdb \u00b7 GitHub</a></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-05-07T00:11:25.991Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1016,
+        "reads": 53,
+        "readers_count": 52,
+        "score": 5090.6,
+        "yours": false,
+        "topic_id": 2691,
+        "topic_slug": "command-to-find-version",
+        "display_username": "Manoj Ramakrishnan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/pull/4339#issuecomment-832291416",
+            "internal": false,
+            "reflection": false,
+            "title": "multi-thread-client: Add test for Java bindings by vishesh \u00b7 Pull Request #4339 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 933,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/command-to-find-version/2691/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 9392,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2021-05-07T21:55:42.973Z",
+        "cooked": "<p>You can determine the versions of the executables (e.g. <code>fdbserver</code> and <code>fdbcli</code>) with the <code>-v</code> flag:</p>\n<pre><code class=\"lang-auto\">$ fdbcli -v\nFoundationDB CLI 6.2 (v6.2.27)\nsource version 87cdf2b331bfe91d0a4d0e0ac09f1adbe1f2e012\nprotocol fdb00b062010001\n</code></pre>\n<p>It should be noted that if you have any process that connects to the cluster and interacts with it (e.g. <code>fdbcli</code>), then you can know the major/minor release version and the protocol version because of the fact that different versions are incompatible with each other. So for example, if I use the above <code>fdbcli</code> to read a key from the database successfully, then I know that the cluster is version 6.2.x and has protocol version <code>fdb00b062010001</code>.</p>\n<p>If you are connected to the cluster, then you can also use that to determine the specific patch version of all server processes that are connected to the cluster by reading the <code>status json</code> output in <code>fdbcli</code>. This data is reported at <code>cluster.processes[$ID].version</code>. Client versions are also reported in status, though this data is aggregated and it\u2019s not always possible to tell the version of a specific client this way. You can see this data in <code>cluster.clients.supported_versions</code>, which is a list of objects with various data in it. See the full schema <a href=\"https://apple.github.io/foundationdb/mr-status.html\">here</a>.</p>\n<p>Finally, you can determine the version of client library using a tool that is available in the GitHub repository: <a href=\"https://github.com/apple/foundationdb/blob/master/contrib/monitoring/fdb_c_version.py\" class=\"inline-onebox\">foundationdb/fdb_c_version.py at master \u00b7 apple/foundationdb \u00b7 GitHub</a>. If you run this script and pass in the path to your library, it will print out version information about it. For example:</p>\n<pre><code class=\"lang-auto\">$ contrib/monitoring/fdb_c_version.py /usr/local/lib/libfdb_c.dylib\nFoundationDB Client 6.2 (v6.2.27)\nsource version 87cdf2b331bfe91d0a4d0e0ac09f1adbe1f2e012\nprotocol fdb00b062010001\n</code></pre>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2021-05-07T21:55:42.973Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 18,
+        "reads": 52,
+        "readers_count": 51,
+        "score": 100.4,
+        "yours": false,
+        "topic_id": 2691,
+        "topic_slug": "command-to-find-version",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/mr-status.html",
+            "internal": false,
+            "reflection": false,
+            "title": "Machine-Readable Status \u2014 FoundationDB 6.3",
+            "clicks": 4
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/master/contrib/monitoring/fdb_c_version.py",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdb_c_version.py at master \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/command-to-find-version/2691/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      9389,
+      9392
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1629
+    ],
+    [
+      2,
+      1628
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Command to find version",
+  "id": 2691,
+  "title": "Command to find version",
+  "posts_count": 2,
+  "created_at": "2021-05-07T00:11:25.931Z",
+  "views": 1770,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2021-05-07T21:55:42.973Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "command-to-find-version",
+  "category_id": 7,
+  "word_count": 322,
+  "deleted_at": null,
+  "user_id": 933,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_2691",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "id": 437,
+      "title": "New API to get the version of a running cluster without needing a matching libfdb_c library",
+      "slug": "new-api-to-get-the-version-of-a-running-cluster-without-needing-a-matching-libfdb-c-library",
+      "posts_count": 8,
+      "reply_count": 3,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-05-19T12:26:50.509Z",
+      "last_posted_at": "2018-05-21T19:33:34.145Z",
+      "bumped": true,
+      "bumped_at": "2018-05-21T19:33:34.145Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2729,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 260,
+            "username": "jared2501",
+            "name": "Jared2501",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jared2501/{size}/266_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Client library backwards compatibility issues",
+      "id": 919,
+      "title": "Client library backwards compatibility issues",
+      "slug": "client-library-backwards-compatibility-issues",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-30T16:17:55.490Z",
+      "last_posted_at": "2018-11-30T19:21:19.862Z",
+      "bumped": true,
+      "bumped_at": "2018-11-30T19:21:19.862Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1325,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 369,
+            "username": "ricky.saltzer",
+            "name": "Ricky Saltzer",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/f17d59/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 158,
+            "username": "aseipp",
+            "name": "Austin Seipp",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aseipp/{size}/124_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Updating 6.0 -&gt; 6.2",
+      "id": 1574,
+      "title": "Updating 6.0 -> 6.2",
+      "slug": "updating-6-0-6-2",
+      "posts_count": 15,
+      "reply_count": 10,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-08-08T09:23:53.694Z",
+      "last_posted_at": "2019-08-28T23:43:22.815Z",
+      "bumped": true,
+      "bumped_at": "2019-08-28T23:43:22.815Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1672,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Multiversion cluster",
+      "id": 1503,
+      "title": "Multiversion cluster",
+      "slug": "multiversion-cluster",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-03T18:05:21.031Z",
+      "last_posted_at": "2019-07-03T18:08:50.605Z",
+      "bumped": true,
+      "bumped_at": "2019-07-03T18:08:50.605Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 398,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How do bindings get an appropriate copy of `fdb_c`?",
+      "id": 311,
+      "title": "How do bindings get an appropriate copy of `fdb_c`?",
+      "slug": "how-do-bindings-get-an-appropriate-copy-of-fdb-c",
+      "posts_count": 9,
+      "reply_count": 6,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2018-04-30T08:29:35.925Z",
+      "last_posted_at": "2019-03-07T21:28:28.848Z",
+      "bumped": true,
+      "bumped_at": "2020-10-02T19:38:40.426Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 12,
+      "views": 2829,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 491,
+            "username": "iilyak",
+            "name": "Iilyak",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/iilyak/{size}/1073_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 933,
+        "username": "rmanoj",
+        "name": "Manoj Ramakrishnan",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/c5a1d2/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 933,
+      "username": "rmanoj",
+      "name": "Manoj Ramakrishnan",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/r/c5a1d2/{size}.png"
+    },
+    "last_poster": {
+      "id": 12,
+      "username": "ajbeamon",
+      "name": "A.J. Beamon",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/mr-status.html",
+        "title": "Machine-Readable Status \u2014 FoundationDB 6.3",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 12,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/master/contrib/monitoring/fdb_c_version.py",
+        "title": "foundationdb/fdb_c_version.py at master \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/pull/4339#issuecomment-832291416",
+        "title": "multi-thread-client: Add test for Java bindings by vishesh \u00b7 Pull Request #4339 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 933,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

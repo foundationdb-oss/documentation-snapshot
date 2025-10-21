@@ -1,0 +1,536 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12806,
+        "name": "BoLee",
+        "username": "libo-sober",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "created_at": "2023-05-05T09:19:34.453Z",
+        "cooked": "<p>We see  <a href=\"https://apple.github.io/foundationdb/configuration.html#configuration-choosing-redundancy-mode:~:text=it%20should%20only%20be%20used%20as%20a%20temporary%20measure%20to%20restore%20cluster%20health%20during%20a%20datacenter%20outage\" rel=\"noopener nofollow ugc\">here</a> that <code>_fallback</code> can used as a temporary measure to restore cluster health during a datacenter outage.<br>\nMy cluster is currently  in <code>three_datacenter</code> mode.</p>\n<pre><code class=\"lang-bash\">fdb&gt; status\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - three_datacenter\n  Storage engine         - ssd-2\n  Coordinators           - 1\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 9\n  Zones                  - 9\n  Machines               - 1\n  Memory availability    - 5.4 GB per process on machine with least available\n  Fault Tolerance        - 0 zones\n  Server time            - 05/05/23 16:32:32\n\nData:\n  Replication health     - Healthy\n  Moving data            - 0.000 GB\n  Sum of key-value sizes - 10 MB\n  Disk space used        - 1.192 GB\n\nOperating space:\n  Storage server         - 132.1 GB free on most full server\n  Log server             - 132.1 GB free on most full server\n\nWorkload:\n  Read rate              - 15 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 4 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nClient time: 05/05/23 16:32:32\n\n</code></pre>\n<p>When I execute <code>configure three_datacenter_fallback</code>, its <code>Replication health</code> remains in <code>(Re)initializing automatic data distribution</code>.<br>\nAfter a few hours, it\u2019s still like this.</p>\n<pre><code class=\"lang-bash\">fdb&gt; status details\n\nUsing cluster file `/etc/foundationdb/fdb.cluster'.\n\nConfiguration:\n  Redundancy mode        - three_datacenter_fallback\n  Storage engine         - ssd-2\n  Coordinators           - 1\n  Usable Regions         - 1\n\nCluster:\n  FoundationDB processes - 9 (less 0 excluded; 1 with errors)\n  Zones                  - 9\n  Machines               - 1\n  Memory availability    - 4.9 GB per process on machine with least available\n  Retransmissions rate   - 1 Hz\n  Fault Tolerance        - 0 zones\n  Server time            - 05/05/23 16:57:41\n\nData:\n  Replication health     - (Re)initializing automatic data distribution\n  Moving data            - unknown (initializing)\n  Sum of key-value sizes - unknown\n  Disk space used        - 980 MB\n\nOperating space:\n  Storage server         - 132.3 GB free on most full server\n  Log server             - 132.3 GB free on most full server\n\nWorkload:\n  Read rate              - 21 Hz\n  Write rate             - 0 Hz\n  Transactions started   - 7 Hz\n  Transactions committed - 0 Hz\n  Conflict rate          - 0 Hz\n\nBackup and DR:\n  Running backups        - 0\n  Running DRs            - 0\n\nProcess performance details:\n  xx.xxx.xxx.xxx:4500      (  2% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.3 GB / 4.9 GB RAM  )\n  xx.xxx.xxx.xxx:4501      (  1% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.2 GB / 4.9 GB RAM  )\n  xx.xxx.xxx.xxx:4502      (  1% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.3 GB / 4.9 GB RAM  )\n  xx.xxx.xxx.xxx:4510      (  4% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.1 GB / 4.9 GB RAM  )\n    Last logged error: DataDistribution: internal_error at Fri May  5 16:57:26 2023\n  xx.xxx.xxx.xxx:4511      (  1% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.2 GB / 4.9 GB RAM  )\n  xx.xxx.xxx.xxx:4512      (  1% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.2 GB / 4.9 GB RAM  )\n  xx.xxx.xxx.xxx:4520      (  0% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.1 GB / 4.9 GB RAM  )\n  xx.xxx.xxx.xxx:4521      (  1% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.3 GB / 4.9 GB RAM  )\n  xx.xxx.xxx.xxx:4522      (  2% cpu; 16% machine; 0.000 Gbps;  0% disk IO; 0.3 GB / 4.9 GB RAM  )\n\nCoordination servers:\n  xx.xxx.xxx.xxx:4500  (reachable)\n\nClient time: 05/05/23 16:57:41\n</code></pre>\n<p>The class of the 4510 process is stateless.<br>\n<code>fdbcli --exec \"kill; kill all\"</code> restarting all processes do not work.</p>\n<p>It seems that there was an error in the recruitment DD process\uff1a</p>\n<pre><code class=\"lang-bash\">&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"TeamCollectionInfo\" ID=\"02e621b904023a43\" Primary=\"1\" AddedTeams=\"0\" TeamsToBuild=\"0\" CurrentServerTeams=\"1\" DesiredTeams=\"25\" MaxTeams=\"125\" StorageTeamSize=\"4\" CurrentMachineTeams=\"1\" CurrentHealthyMachineTeams=\"1\" DesiredMachineTeams=\"25\" MaxMachineTeams=\"125\" TotalHealthyMachines=\"5\" MinTeamsOnServer=\"0\" MaxTeamsOnServer=\"1\" MinMachineTeamsOnMachine=\"0\" MaxMachineTeamsOnMachine=\"1\" DoBuildTeams=\"0\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"BuildTeams\" ID=\"02e621b904023a43\" ServerCount=\"5\" UniqueMachines=\"5\" Primary=\"1\" StorageTeamSize=\"4\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"BuildTeamsBegin\" ID=\"02e621b904023a43\" TeamsToBuild=\"24\" DesiredTeams=\"25\" MaxTeams=\"125\" BadServerTeams=\"0\" PerpetualWigglingTeams=\"0\" UniqueMachines=\"5\" TeamSize=\"4\" Servers=\"5\" HealthyServers=\"5\" CurrentTrackedServerTeams=\"1\" HealthyTeamCount=\"1\" TotalTeamCount=\"1\" MachineTeamCount=\"1\" MachineCount=\"5\" DesiredTeamsPerServer=\"5\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"ChosenMachine\" ID=\"0000000000000000\" MachineInfo=\"dc3-zone3\" LeaseUsedMachinesSize=\"1\" ForcedAttributesSize=\"1\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"40\" ErrorKind=\"BugDetected\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"InternalError\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" FailedAssertion=\"team.size() == configuration.storageTeamSize\" LeftValue=\"5\" RightValue=\"4\" File=\"/home/foundationdb_ci/src/oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOo/foundationdb/fdbserver/DDTeamCollection.actor.cpp\" Line=\"4175\" ThreadID=\"5379302038607344942\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x3753c3c 0x3752860 0x3752c4e 0x36a3d6f 0x13af6cc 0x138683f 0x138a01a 0x13db8f3 0x13dbf83 0x13dc06b 0x13e2eb5 0x11e8760 0x36ee806 0xa776e9 0x7f9459bd3555\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"40\" ErrorKind=\"Unset\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"SystemError\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x3753c3c 0x3752860 0x3752c4e 0x36a347c 0x36a3d81 0x13af6cc 0x138683f 0x138a01a 0x13db8f3 0x13dbf83 0x13dc06b 0x13e2eb5 0x11e8760 0x36ee806 0xa776e9 0x7f9459bd3555\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"BuildMachineTeams\" ID=\"0000000000000000\" Primary=\"1\" TotalMachines=\"5\" TotalHealthyMachine=\"5\" HealthyMachineTeamCount=\"1\" DesiredMachineTeams=\"25\" MaxMachineTeams=\"125\" TotalMachineTeams=\"1\" MachineTeamsToBuild=\"24\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"BgDDMountainChopper\" ID=\"02e621b904023a43\" SuppressedEventCount=\"0\" PollingInterval=\"10\" Enabled=\"1\" QueuedRelocations=\"0\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"40\" ErrorKind=\"Unset\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DataDistributionQueueError\" ID=\"02e621b904023a43\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x3753c3c 0x3752860 0x3752c4e 0x131b25e 0x131b35a 0xb03879 0xb03879 0x131d95e 0x131df37 0x131b79d 0x131b840 0x131bab2 0x1379e66 0x1379f4e 0xb03879 0x136a955 0xb03879 0x13adf9f 0xb03879 0x13dbff1 0x13dc06b 0x13e2eb5 0x11e8760 0x36ee806 0xa776e9 0x7f9459bd3555\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"BgDDValleyFiller\" ID=\"02e621b904023a43\" SuppressedEventCount=\"0\" PollingInterval=\"10\" Enabled=\"1\" QueuedRelocations=\"0\" Error=\"operation_cancelled\" ErrorDescription=\"Asynchronous operation cancelled\" ErrorCode=\"1101\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"40\" ErrorKind=\"Unset\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DDQueue\" ID=\"02e621b904023a43\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x3753c3c 0x3752860 0x3752c4e 0xff3e5b 0xff3f0e 0xb03879 0x131b279 0x131b35a 0xb03879 0xb03879 0x131d95e 0x131df37 0x131b79d 0x131b840 0x131bab2 0x1379e66 0x1379f4e 0xb03879 0x136a955 0xb03879 0x13adf9f 0xb03879 0x13dbff1 0x13dc06b 0x13e2eb5 0x11e8760 0x36ee806 0xa776e9 0x7f9459bd3555\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DataDistributorDestroyTeamCollections\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DDTeamCollectionDestructed\" ID=\"02e621b904023a43\" Primary=\"1\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"TeamTrackerStopping\" ID=\"02e621b904023a43\" ServerPrimary=\"1\" Team=\"TeamID 505953935a02c308; Size 4; 10.xxx.xxx.xxx:4511 1118f35c50ee9297, 10.xxx.xxx.xxx:4501 8c51d777f53a7f59, 10.xxx.xxx.xxx:4512 921bfa039101bd93, 10.xxx.xxx.xxx:4500 a546bdcc9c6236f1\" Priority=\"140\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"20\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"ZeroTeamsHealthySignalling\" ID=\"02e621b904023a43\" ServerPrimary=\"1\" SignallingServerTeam=\"TeamID 505953935a02c308; Size 4; 10.xxx.xxx.xxx:4511 1118f35c50ee9297, 10.xxx.xxx.xxx:4501 8c51d777f53a7f59, 10.xxx.xxx.xxx:4512 921bfa039101bd93, 10.xxx.xxx.xxx:4500 a546bdcc9c6236f1\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"StorageServerTrackerCancelled\" ID=\"02e621b904023a43\" Error=\"operation_cancelled\" ErrorDescription=\"Asynchronous operation cancelled\" ErrorCode=\"1101\" SuppressedEventCount=\"4\" Primary=\"1\" Server=\"1118f35c50ee9297\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DataDistributorTeamCollectionsDestroyed\" ID=\"0000000000000000\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"40\" ErrorKind=\"Unset\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DataDistribution\" ID=\"02e621b904023a43\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Backtrace=\"addr2line -e fdbserver.debug -p -C -f -i 0x3753c3c 0x3752860 0x3752c4e 0xff3e5b 0xff3f0e 0xb03879 0x12cf6bd 0x12cfea3 0x12cff89 0xb03879 0xb03879 0xff3e82 0xff3f0e 0xb03879 0x131b279 0x131b35a 0xb03879 0xb03879 0x131d95e 0x131df37 0x131b79d 0x131b840 0x131bab2 0x1379e66 0x1379f4e 0xb03879 0x136a955 0xb03879 0x13adf9f 0xb03879 0x13dbff1 0x13dc06b 0x13e2eb5 0x11e8760 0x36ee806 0xa776e9 0x7f9459bd3555\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DataDistributorError\" ID=\"02e621b904023a43\" Error=\"internal_error\" ErrorDescription=\"An internal error occurred\" ErrorCode=\"4100\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.091284\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"Role\" ID=\"02e621b904023a43\" Error=\"success\" ErrorDescription=\"Success\" ErrorCode=\"0\" Transition=\"End\" As=\"DataDistributor\" Reason=\"Error\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,DD,GP,MS,RK,RV\" TrackLatestType=\"Original\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.094667\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"ClusterControllerWorkerAlreadyRegistered\" ID=\"151acc620b0cfc95\" SuppressedEventCount=\"1\" WorkerId=\"09998554446e44cd\" ProcessId=\"2d1f24fe162db4191ec09f383fe640fa\" ZoneId=\"dc2-zone1\" DataHall=\"hall2\" PClass=\"stateless\" Workers=\"9\" Degraded=\"0\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.095160\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"EndpointNotFound\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" Address=\"10.xxx.xxx.xxx:4510\" Token=\"9c2f687727c1d5f3\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.095160\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"CCDataDistributorDied\" ID=\"151acc620b0cfc95\" DDID=\"02e621b904023a43\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.095160\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DBInfoStartBroadcast\" ID=\"151acc620b0cfc95\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.095654\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"GotServerDBInfoChange\" ID=\"0000000000000000\" ChangeID=\"57bd5665043a6efa\" InfoGeneration=\"28\" MasterID=\"98d45106b817cd79\" RatekeeperID=\"ab8c30f259c53708\" DataDistributorID=\"0000000000000000\" BlobManagerID=\"0000000000000000\" EncryptKeyProxyID=\"0000000000000000\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,GP,MS,RK,RV\" /&gt;\n&lt;Event Severity=\"10\" Time=\"1683277196.095654\" DateTime=\"2023-05-05T08:59:56Z\" Type=\"DataDistributorDied\" ID=\"57bd5665043a6efa\" ThreadID=\"5379302038607344942\" Machine=\"10.xxx.xxx.xxx:4510\" LogGroup=\"default\" Roles=\"CC,CP,GP,MS,RK,RV\" /&gt;\n</code></pre>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-05-05T09:53:12.308Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 61,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 304.8,
+        "yours": false,
+        "topic_id": 3943,
+        "topic_slug": "when-configure-three-datacenter-fallback-the-cluster-replication-health-remains-in-re-initializing-automatic-data-distribution",
+        "display_username": "BoLee",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/configuration.html#configuration-choosing-redundancy-mode:~:text=it%20should%20only%20be%20used%20as%20a%20temporary%20measure%20to%20restore%20cluster%20health%20during%20a%20datacenter%20outage",
+            "internal": false,
+            "reflection": false,
+            "title": "Configuration \u2014 FoundationDB 7.2",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1175,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/when-configure-three-datacenter-fallback-the-cluster-replication-health-remains-in-re-initializing-automatic-data-distribution/3943/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12806
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      901
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "When configure three_datacenter_fallback,the cluster Replication health remains in (Re)initializing automatic data distribution",
+  "id": 3943,
+  "title": "When configure three_datacenter_fallback,the cluster Replication health remains in (Re)initializing automatic data distribution",
+  "posts_count": 1,
+  "created_at": "2023-05-05T09:19:34.357Z",
+  "views": 348,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-05-05T09:19:34.453Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "when-configure-three-datacenter-fallback-the-cluster-replication-health-remains-in-re-initializing-automatic-data-distribution",
+  "category_id": 7,
+  "word_count": 2035,
+  "deleted_at": null,
+  "user_id": 1175,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3943",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "id": 1282,
+      "title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "slug": "6-0-18-reporting-incorrect-fault-tolerance-via-fdbcli-with-triple-redundancy-mode",
+      "posts_count": 15,
+      "reply_count": 8,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-04-04T19:04:42.341Z",
+      "last_posted_at": "2019-04-06T00:41:42.940Z",
+      "bumped": true,
+      "bumped_at": "2019-04-06T00:41:42.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1976,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "DD(data_distributor) process does not work in large clusters",
+      "id": 3810,
+      "title": "DD(data_distributor) process does not work in large clusters",
+      "slug": "dd-data-distributor-process-does-not-work-in-large-clusters",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2023-02-15T14:22:51.248Z",
+      "last_posted_at": "2023-05-05T10:30:40.203Z",
+      "bumped": true,
+      "bumped_at": "2023-05-05T10:30:40.203Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 422,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1209,
+            "username": "Felix-zhoux",
+            "name": "Felix-zhoux",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/8797f3/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 1175,
+            "username": "libo-sober",
+            "name": "BoLee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage server running out of space",
+      "id": 1655,
+      "title": "Storage server running out of space",
+      "slug": "storage-server-running-out-of-space",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-09-28T02:44:46.227Z",
+      "last_posted_at": "2019-10-02T20:48:03.731Z",
+      "bumped": true,
+      "bumped_at": "2019-10-02T20:48:03.731Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 4053,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 612,
+            "username": "fzhjon",
+            "name": "Jon Fu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Identifying shards associated with replica unavailability; shard selection when dropping redundancy levels",
+      "id": 2235,
+      "title": "Identifying shards associated with replica unavailability; shard selection when dropping redundancy levels",
+      "slug": "identifying-shards-associated-with-replica-unavailability-shard-selection-when-dropping-redundancy-levels",
+      "posts_count": 16,
+      "reply_count": 6,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2020-07-08T20:05:13.553Z",
+      "last_posted_at": "2021-12-11T04:23:58.585Z",
+      "bumped": true,
+      "bumped_at": "2021-12-11T04:23:58.585Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2127,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 484,
+            "username": "ksnavely",
+            "name": "Kyle Snavely",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ksnavely/{size}/483_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Fdb cluster is unavailable after delete a disk",
+      "id": 2232,
+      "title": "Fdb cluster is unavailable after delete a disk",
+      "slug": "fdb-cluster-is-unavailable-after-delete-a-disk",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-07-07T09:35:29.720Z",
+      "last_posted_at": "2020-07-09T08:38:11.028Z",
+      "bumped": true,
+      "bumped_at": "2020-07-09T09:28:06.173Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1154,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 585,
+            "username": "ssb",
+            "name": "Shunbo Shi",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ssb/{size}/656_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1175,
+        "username": "libo-sober",
+        "name": "BoLee",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1175,
+      "username": "libo-sober",
+      "name": "BoLee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png"
+    },
+    "last_poster": {
+      "id": 1175,
+      "username": "libo-sober",
+      "name": "BoLee",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/libo-sober/{size}/1447_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/configuration.html#configuration-choosing-redundancy-mode:~:text=it%20should%20only%20be%20used%20as%20a%20temporary%20measure%20to%20restore%20cluster%20health%20during%20a%20datacenter%20outage",
+        "title": "Configuration \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1175,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

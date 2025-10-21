@@ -1,0 +1,558 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 2336,
+        "name": "Christophe Chevalier",
+        "username": "KrzysFR",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "created_at": "2018-10-15T19:07:55.721Z",
+        "cooked": "<p>I was thinking about ways to simplify the manual deployment of multi-node clusters, using the existing setup and packages, and without having to fiddle with copying fdb.cluster files between host (not always practical in some virtualization environment with poor support for CTRL C / CTRL V) or having to delete all the files in the data folder and restart the service.</p>\n<p>One idea would be to add a new command to <code>fdbcli</code>, something like <code>join IP:PORT</code> where IP:PORT would be at least one of the coordinators of the target cluster, or maybe the path to a file somewhere on the disk.</p>\n<p>This command would <em>only</em> be supported by \u201csingle host\u201d clusters (ie: one where all the processes are on the same machine). It would fail with an error message if run on multi-host clusters (to prevent easy mistakes like joining <em>the cluster</em> to the new <em>empty</em> single node instead of the reverse! like swapping the arguments of <code>dd</code> <img src=\"https://emoji.discourse-cdn.com/twitter/slight_smile.png?v=6\" title=\":slight_smile:\" class=\"emoji\" alt=\":slight_smile:\"> )</p>\n<p>If run from the <em>fdbcli</em> prompt, it could maybe display the details of the target cluster (id, descr, list of coordinators?) and maybe a confirmation prompt \u201cAll local data on $CURRENT_HOST will be deleted! proceed? Y/N\u201d</p>\n<p>Logically, this command would run these steps:</p>\n<ul>\n<li>check with the current cluster if there is one and only one distinct machine_id</li>\n<li>connect to the specified IP:PORT, check if this is a compatible fdb version</li>\n<li>check if the target cluster is not already the same as our hosts</li>\n<li>ask for the complete fdb.cluster file of this cluster</li>\n<li>display the results in the prompt, and ask for confirmation y/n (optional)</li>\n<li>stop all <code>fdbserver</code> processes on the host</li>\n<li>remove all previous data files (or maybe rename them?)</li>\n<li>overwrite the local <code>fdb.cluster</code> file (the one used by fdbcli?)</li>\n<li>restart all <code>fdbserver</code> processes</li>\n</ul>\n<p>It would be also nice to have a way to pass an additional argument (<code>force</code> ?) to not display the prompt and not ask user confirmation, so that it can be used by a custom install script).</p>\n<p>Any opinion on this? There are for sure a ton of corner cases!</p>\n<p>Typical example on a single host cluster (right after running the setup/installing the packages)</p>\n<pre><code class=\"lang-nohighlight\">fdb&gt; join 123.4.5.6:4500\nYou are about to join cluster xyz:123456789 with the following list of coordinators:\n   123.4.5.6:4500\n   123.4.5.7:4501\n   ....\nAll local data on this host will be LOST. Proceed? [y/N]\n# 'y' + [ENTER]\nStopping all local process...\nRemoving previous data...\nJoining new cluster...\nRestart all process...\nDone!\nfdb&gt; \n</code></pre>\n<p>Example if running the command on a cluster with more than 1 machine (most probably a mistake!)</p>\n<pre><code class=\"lang-nohighlight\">fdb&gt; join 123.4.5.6:4500\nWARNING: the local cluster is already running on more than one machine!\nAre you sure you are running the command on the correct server?\nTo force join, re-issue with command using the 'force' argument!\nfdb&gt;\n</code></pre>\n<p>We could ask ourselves if we should allow a single-machine but multi-process cluster to join another? Example would be someone pre-configuring the <code>foundationdb.conf</code> file with the list of all process/classes, BEFORE joining the target cluster (and not after).</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-10-15T19:29:37.371Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 217,
+        "reads": 44,
+        "readers_count": 43,
+        "score": 1108.8,
+        "yours": false,
+        "topic_id": 770,
+        "topic_slug": "forcing-a-newly-installed-single-node-cluster-to-join-an-existing-cluster-from-fdbcli",
+        "display_username": "Christophe Chevalier",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 53,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/forcing-a-newly-installed-single-node-cluster-to-join-an-existing-cluster-from-fdbcli/770/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 2493,
+        "name": "Sam Pullara",
+        "username": "spullara",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+        "created_at": "2018-10-30T21:08:28.445Z",
+        "cooked": "<p>This would be awesome.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2018-10-30T21:08:28.445Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 33,
+        "readers_count": 32,
+        "score": 11.6,
+        "yours": false,
+        "topic_id": 770,
+        "topic_slug": "forcing-a-newly-installed-single-node-cluster-to-join-an-existing-cluster-from-fdbcli",
+        "display_username": "Sam Pullara",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 156,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/forcing-a-newly-installed-single-node-cluster-to-join-an-existing-cluster-from-fdbcli/770/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      2336,
+      2493
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2563
+    ],
+    [
+      2,
+      2548
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Forcing a newly installed single-node cluster to &ldquo;join&rdquo; an existing cluster from fdbcli",
+  "id": 770,
+  "title": "Forcing a newly installed single-node cluster to \"join\" an existing cluster from fdbcli",
+  "posts_count": 2,
+  "created_at": "2018-10-15T19:07:55.633Z",
+  "views": 954,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2018-10-30T21:08:28.445Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "forcing-a-newly-installed-single-node-cluster-to-join-an-existing-cluster-from-fdbcli",
+  "category_id": 7,
+  "word_count": 534,
+  "deleted_at": null,
+  "user_id": 53,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_770",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "How to remove a node from fdb cluster",
+      "id": 1731,
+      "title": "How to remove a node from fdb cluster",
+      "slug": "how-to-remove-a-node-from-fdb-cluster",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2019-11-13T19:43:40.774Z",
+      "last_posted_at": "2019-11-13T22:09:13.656Z",
+      "bumped": true,
+      "bumped_at": "2019-11-13T22:09:13.656Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1633,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 604,
+            "username": "Minaxi",
+            "name": "meenakshi subramanyam",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/2bfe46/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Doubts regarding fdb.cluster file",
+      "id": 1109,
+      "title": "Doubts regarding fdb.cluster file",
+      "slug": "doubts-regarding-fdb-cluster-file",
+      "posts_count": 4,
+      "reply_count": 2,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-02-02T16:02:47.335Z",
+      "last_posted_at": "2019-02-07T17:17:38.271Z",
+      "bumped": true,
+      "bumped_at": "2019-02-07T17:17:38.271Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2739,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Deployment with custom fdb.cluster file",
+      "id": 592,
+      "title": "Deployment with custom fdb.cluster file",
+      "slug": "deployment-with-custom-fdb-cluster-file",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2018-07-26T23:00:18.994Z",
+      "last_posted_at": "2018-07-27T23:44:31.722Z",
+      "bumped": true,
+      "bumped_at": "2018-07-27T23:44:31.722Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 4329,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to add a server container to a cluster",
+      "id": 394,
+      "title": "How to add a server container to a cluster",
+      "slug": "how-to-add-a-server-container-to-a-cluster",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2018-05-10T12:23:45.716Z",
+      "last_posted_at": "2018-05-11T19:37:00.210Z",
+      "bumped": true,
+      "bumped_at": "2018-05-11T19:37:00.210Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 2461,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 187,
+            "username": "hiroshi",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/hiroshi/{size}/147_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to create a foundation db",
+      "id": 1102,
+      "title": "How to create a foundation db",
+      "slug": "how-to-create-a-foundation-db",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-02-01T19:36:35.747Z",
+      "last_posted_at": "2019-02-01T20:10:56.364Z",
+      "bumped": true,
+      "bumped_at": "2019-02-01T20:10:56.364Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2930,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 503,
+            "username": "xiaoqin",
+            "name": "Qin Ma",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/x/f4b2a3/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 53,
+        "username": "KrzysFR",
+        "name": "Christophe Chevalier",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 156,
+        "username": "spullara",
+        "name": "Sam Pullara",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 53,
+      "username": "KrzysFR",
+      "name": "Christophe Chevalier",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png"
+    },
+    "last_poster": {
+      "id": 156,
+      "username": "spullara",
+      "name": "Sam Pullara",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png"
+    }
+  },
+  "bookmarks": []
+}

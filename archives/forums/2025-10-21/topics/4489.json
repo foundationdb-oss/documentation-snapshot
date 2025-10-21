@@ -1,0 +1,759 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14075,
+        "name": "Prashant Deva",
+        "username": "pdeva",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pdeva/{size}/1655_2.png",
+        "created_at": "2024-05-23T20:03:37.356Z",
+        "cooked": "<p>lets say the sequencer of fdb gets into a partial network partition. it then elects a new sequencer leader.<br>\nhowever, before it can pass the info of the new sequencer to all the nodes, some of the nodes still messages the old sequencer (maybe they are on the right side of the partition that can talk to sequencer).</p>\n<p>so now we have a situation new sequencer elected by coordinator nodes,  but before every node knows about it, some nodes can still talk to old sequencer.</p>\n<p>doesnt this cause a race condition?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-05-23T20:03:37.356Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 16,
+        "reads": 20,
+        "readers_count": 19,
+        "score": 89.0,
+        "yours": false,
+        "topic_id": 4489,
+        "topic_slug": "race-condition-for-sequencer-election",
+        "display_username": "Prashant Deva",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1322,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/race-condition-for-sequencer-election/4489/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14076,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2024-05-23T20:32:50.719Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"pdeva\" data-post=\"1\" data-topic=\"4489\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/pdeva/48/1655_2.png\" class=\"avatar\"> pdeva:</div>\n<blockquote>\n<p>doesnt this cause a race condition?</p>\n</blockquote>\n</aside>\n<p>Yes, but it doesn\u2019t matter. The problem you describe exists for commit, proxies, grv proxies, resolvers, sequencer\u2026 Basically for anything except coordinators and tlogs (talking to them requires a quorum).</p>\n<p>In order to understand why this isn\u2019t a problem you need to understand how transactions are started. When we go through a recovery (which is how we elect a new sequencer) we logically replace the whole transaction subsystem (everything except storage servers). We call this a new generation.</p>\n<p>First in-flight transactions: these are kind of easy: they might still be able to read (since they already have a valid version number) and that is ok. They might abort earlier than 5 seconds after they started since a recovery will advance the life version and storages will learn about this eventually, but successful reads will return the correct data.</p>\n<p>If such an in-flight transaction attempts a write, it will fail. Either because the commit proxy changed (and the client knows it needs to abort before it even attempts to commit), because it can\u2019t talk to the commit proxy (it might have died already), or because the commit proxy can\u2019t write to the tlog system (it needs to write to all tlogs \u2013 so if a new recovery started, at least some of them will be locked \u2013 this is what would have happened in the scenario you described).</p>\n<p>For new transactions it\u2019s not a problem either. If they talk to a grv proxy of the new generation the transaction will start normally (which is correct \u2013 so this case isn\u2019t interesting). The interesting case is what happens if it talks to a grv proxy of the old generation (which can happen due to timing and/or a network partition). This is how it gets a consistent read version (simplified):</p>\n<ol>\n<li>Ask the grv proxy for a read version</li>\n<li>The grv proxy asks the sequencer for the most recent version and in parallel sends a request to all tlogs.</li>\n<li>Only if the sequencer and a majority of tlogs reply will the grv proxy reply to the client</li>\n</ol>\n<p>(we have an optimization path here which we use in production where we ask the tlog only every 80ms \u2013 this works but is a bit complicated to explain in a short forum post).</p>\n<p>So if you look at the three steps above, even if the sequencer and the grv proxy are still alive and they don\u2019t know yet that the cluster went through a recovery, the grv proxy won\u2019t be able to complete the request. So it will hang forever (or rather until the client learns about the new generation in which case it will retry on the new generation of grv proxies).</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-05-23T20:32:50.719Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 3,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 69.2,
+        "yours": false,
+        "topic_id": 4489,
+        "topic_slug": "race-condition-for-sequencer-election",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 3
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/race-condition-for-sequencer-election/4489/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14078,
+        "name": "Prashant Deva",
+        "username": "pdeva",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pdeva/{size}/1655_2.png",
+        "created_at": "2024-05-24T14:15:44.700Z",
+        "cooked": "<p>thank you for the excellent, detailed answer.<br>\ni have another one if thats ok:</p>\n<p>how does the new sequencer know how to resume from where the previous one left off? does the previous sequencer checkpoint itself periodically? if you relied on just the wall clock as the starting point for each sequencer, that could cause trouble since wall clocks can go backward.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-05-24T14:15:44.700Z",
+        "reply_count": 1,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 16,
+        "readers_count": 15,
+        "score": 8.2,
+        "yours": false,
+        "topic_id": 4489,
+        "topic_slug": "race-condition-for-sequencer-election",
+        "display_username": "Prashant Deva",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 15,
+          "username": "markus.pilman",
+          "name": "Markus Pilman",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1322,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/race-condition-for-sequencer-election/4489/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 14079,
+        "name": "Markus Pilman",
+        "username": "markus.pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "created_at": "2024-05-24T20:17:29.069Z",
+        "cooked": "<p>The sequencer is stateless, so no, there\u2019s no checkpointing happening there.</p>\n<p>To understand how this part works we first have to establish the exact job of the sequencer. It needs to keep track of two versions: the most recently committed version (the grv proxies will get this version from the sequencer in order to reply to <code>GetReadVersion</code>-requests from clients). The other is the latest version they\u2019ve given to a commit proxy (when a commit proxy commits, it will batch multiple commit requests, get a new version from the sequencer and attempts to write at that version. This can fail early due to conflicts: it will send the read and write set of each transaction together with each read version and this new write version to the resolvers and they will reply with ack/fail for each commit request to let the commit proxy know whether it succeeded.</p>\n<p>Assuming a commit is ready to be written the commit proxy will execute these steps (and it has to execute them in this exact order \u2013 otherwise we could violate strict serializability):</p>\n<ol>\n<li>First it will send the mutations in the transactions to the tlog system and wait for an acknowledgment from all tlogs. The tlogs will only asnwer after they have written the data to disk and executed an <code>fsync</code>. So at this point we know that the commit is durable.</li>\n<li>Then the commit proxy will send a message to the sequencer letting it know that it successfully committed. At this point the commit proxy will increase the most recently committed version and all following GRV requests will at least get this version from the grv proxies.</li>\n<li>Finally the commit proxy will send an acknowledgment to the client.</li>\n</ol>\n<p>Btw: this is how you might get <code>commit_unknown_result</code> errors on the client: if the transaction subsystem fails before step 3 completes the client will eventually learn about the new grv and commit proxies but it won\u2019t know whether step 1 completed (it will never receive an answer from the old commit proxy and it knows that because there\u2019s now a new generation of the transaction subsystem). Only if step 1 fully completed (and there were no conflicts) is it guaranteed that the transaction committed. But there\u2019s no way for the client to know. If step 1 didn\u2019t even start, the commit obviously didn\u2019t make it. If it started but didn\u2019t complete, the transaction <em>might</em> have been committed. So it\u2019s not an easy error to handle.</p>\n<p>Anyways: so now how does a new sequencer know what the most recently committed version is? In the recovery step we\u2019ll execute the following steps:</p>\n<ol>\n<li>Find the tlogs and send them a lock request. This request will instruct them to not accept any new writes. The tlogs will reply with the most recently committed version. This has to succeed on some number of tlogs (the number depends on your configuration \u2013 if you have triple replication it will be total number of active tlogs in the last generation minus two). The tlogs will reply with the newest version they know about.</li>\n<li>Of all these versions we will take the oldest one. Since commits go to all tlogs, we know that everything that isn\u2019t present on all tlogs can be safely rolled back. Note that this means that the version number we chose depends on how many tlogs report back. This version we call the epoch end.</li>\n<li>Now we recruit a new set of tlogs (they can run on the same machine as the old ones) and we\u2019ll calculate the recovery version which is epoch end version plus at least 5 million (5 million because that\u2019s how many versions we generate in 5 seconds \u2013 we might decide to forward more than that in order to synchronize better with time). We let the old tlogs know that they should \u201cseal\u201d at the epoch end version (this is basically the rollback) and we let the new tlogs know what the recovery version is (this is the version of the first commit and they won\u2019t accept any writes until they\u2019ve seen this version).</li>\n<li>Finally we can send the recovery version to the sequencer. At this point the most recently committed version and the last given out write version will be both the same (the recovery version). The sequencer will never give out the recovery version though (in the recovery process we\u2019ll also create a recovery transaction which will committ at this version).</li>\n</ol>\n<p>At this point the recovery isn\u2019t done, but the new sequencer will be ready. The whole process is quite complex. You can even have situations where multiple of these recoveries happen at the same time. But only one recovery will succeed \u2013 the way we enforce this is by making sure that at the very last state, right before we let the clients know where to find the new grv and commit proxies, we write to the coordinators. The coordinators implement a paxos-like protocol to guarantee consistency. Without that we would run into trouble with network partitions.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2024-05-24T20:17:29.069Z",
+        "reply_count": 0,
+        "reply_to_post_number": 3,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 14,
+        "readers_count": 13,
+        "score": 52.8,
+        "yours": false,
+        "topic_id": 4489,
+        "topic_slug": "race-condition-for-sequencer-election",
+        "display_username": "Markus Pilman",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 1322,
+          "username": "pdeva",
+          "name": "Prashant Deva",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/pdeva/{size}/1655_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 15,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/race-condition-for-sequencer-election/4489/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14075,
+      14076,
+      14078,
+      14079
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      516
+    ],
+    [
+      3,
+      515
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Race condition for sequencer election?",
+  "id": 4489,
+  "title": "Race condition for sequencer election?",
+  "posts_count": 4,
+  "created_at": "2024-05-23T20:03:37.277Z",
+  "views": 155,
+  "reply_count": 2,
+  "like_count": 5,
+  "last_posted_at": "2024-05-24T20:17:29.069Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "race-condition-for-sequencer-election",
+  "category_id": 8,
+  "word_count": 1481,
+  "deleted_at": null,
+  "user_id": 1322,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4489",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Technical overview of the database",
+      "id": 135,
+      "title": "Technical overview of the database",
+      "slug": "technical-overview-of-the-database",
+      "posts_count": 27,
+      "reply_count": 15,
+      "highest_post_number": 27,
+      "image_url": null,
+      "created_at": "2018-04-20T15:30:31.788Z",
+      "last_posted_at": "2019-01-11T23:25:47.462Z",
+      "bumped": true,
+      "bumped_at": "2019-01-11T23:25:47.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 64,
+      "views": 12958,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 96,
+            "username": "idiot",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/f04885/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 443,
+            "username": "junius",
+            "name": "junius",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f08c70/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Understanding inter communication",
+      "id": 745,
+      "title": "Understanding inter communication",
+      "slug": "understanding-inter-communication",
+      "posts_count": 12,
+      "reply_count": 7,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2018-10-05T00:51:33.531Z",
+      "last_posted_at": "2018-10-11T17:16:52.613Z",
+      "bumped": true,
+      "bumped_at": "2018-10-11T17:16:52.613Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 10,
+      "views": 3588,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 384,
+            "username": "Chandru4u",
+            "name": "Chandrashekar",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/b487fb/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Transaction implement related doubt",
+      "id": 757,
+      "title": "Transaction implement related doubt",
+      "slug": "transaction-implement-related-doubt",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-10-09T11:25:07.598Z",
+      "last_posted_at": "2018-10-20T15:44:06.612Z",
+      "bumped": true,
+      "bumped_at": "2018-10-20T15:53:29.815Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1095,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 386,
+            "username": "zycHacker",
+            "name": "zycHacker",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/zychacker/{size}/385_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Maintain Read Availability in Partitioned Data Centers",
+      "id": 154,
+      "title": "Maintain Read Availability in Partitioned Data Centers",
+      "slug": "maintain-read-availability-in-partitioned-data-centers",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-04-20T21:42:28.824Z",
+      "last_posted_at": "2018-04-21T01:53:59.662Z",
+      "bumped": true,
+      "bumped_at": "2018-04-21T01:53:59.662Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1093,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Proxy all-to-all communication",
+      "id": 1540,
+      "title": "Proxy all-to-all communication",
+      "slug": "proxy-all-to-all-communication",
+      "posts_count": 11,
+      "reply_count": 7,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2019-07-28T14:41:39.604Z",
+      "last_posted_at": "2019-07-31T07:49:16.419Z",
+      "bumped": true,
+      "bumped_at": "2019-07-31T07:49:16.419Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 1474,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 562,
+            "username": "ddi",
+            "name": null,
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ddi/{size}/721_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 15,
+        "username": "markus.pilman",
+        "name": "Markus Pilman",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      },
+      {
+        "id": 1322,
+        "username": "pdeva",
+        "name": "Prashant Deva",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/pdeva/{size}/1655_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1322,
+      "username": "pdeva",
+      "name": "Prashant Deva",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/pdeva/{size}/1655_2.png"
+    },
+    "last_poster": {
+      "id": 15,
+      "username": "markus.pilman",
+      "name": "Markus Pilman",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png"
+    }
+  },
+  "bookmarks": []
+}

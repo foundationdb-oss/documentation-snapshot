@@ -1,0 +1,713 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 4680,
+        "name": "Vasiliy Popkov",
+        "username": "Vasilii",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+        "created_at": "2019-07-18T14:42:38.087Z",
+        "cooked": "<p>WARNING: A single process is both a transaction log and a storage server.<br>\nFor best performance use dedicated disks for the transaction logs by setting process classes.</p>\n<p>We have this warning and have some question</p>\n<p>we have<br>\n1 ssd for 2~3 process</p>\n<p>what we must change</p>\n<p>use 1 ssd for all process log<br>\nand other ssd for data</p>\n<p>[fdbserver.4500]<br>\ndatadir = /ssd1/data/foundationdb/data/$ID<br>\nlogdir = /ssdLOG/log/foundationdb<br>\n[fdbserver.4501]<br>\ndatadir = /ssd2/data/foundationdb/data/$ID<br>\nlogdir = /ssdLOG/log/foundationdb</p>\n<p>or<br>\nchange for process data in one ssd and log other ssd for all process</p>\n<p>[fdbserver.4500]<br>\ndatadir = /ssd1/data/foundationdb/data/$ID<br>\nlogdir = /ssd2/log/foundationdb<br>\n[fdbserver.4501]<br>\ndatadir = /ssd2/data/foundationdb/data/$ID<br>\nlogdir = /ssd3/log/foundationdb</p>\n<p>now we use</p>\n<p>[fdbserver.4500]<br>\ndatadir = /ssd1/data/foundationdb/data/$ID<br>\nlogdir = /ssd1/log/foundationdb<br>\n[fdbserver.4501]<br>\ndatadir = /ssd2/data/foundationdb/data/$ID<br>\nlogdir = /ssd2/log/foundationdb</p>\n<p>Configuration:<br>\nRedundancy mode        - triple<br>\nStorage engine         - ssd-2<br>\nCoordinators           - 5</p>\n<p>Cluster:<br>\nFoundationDB processes - 300<br>\nMachines               - 10<br>\nMemory availability    - 8.5 GB per process on machine with least available<br>\nRetransmissions rate   - 2 Hz<br>\nFault Tolerance        - 2 machines<br>\nServer time            - 07/18/19 17:31:54</p>\n<p>Data:<br>\nReplication health     - Healthy<br>\nMoving data            - 0.000 GB<br>\nSum of key-value sizes - 692 MB<br>\nDisk space used        - 35.854 GB</p>\n<p>Operating space:<br>\nStorage server         - 1696.9 GB free on most full server<br>\nLog server             - 1696.9 GB free on most full server</p>\n<p>Workload:<br>\nRead rate              - 51 Hz<br>\nWrite rate             - 0 Hz<br>\nTransactions started   - 12 Hz<br>\nTransactions committed - 0 Hz<br>\nConflict rate          - 0 Hz</p>\n<p>Backup and DR:<br>\nRunning backups        - 0<br>\nRunning DRs            - 0</p>\n<p>Client time: 07/18/19 17:31:35</p>\n<p>WARNING: A single process is both a transaction log and a storage server.<br>\nFor best performance use dedicated disks for the transaction logs by setting process classes.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-07-18T14:44:07.009Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 380,
+        "reads": 91,
+        "readers_count": 90,
+        "score": 1923.2,
+        "yours": false,
+        "topic_id": 1529,
+        "topic_slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+        "display_username": "Vasiliy Popkov",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 520,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/warning-a-single-process-is-both-a-transaction-log-and-a-storage-server/1529/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 4684,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2019-07-19T02:12:00.674Z",
+        "cooked": "<aside class=\"quote no-group\" data-username=\"Vasilii\" data-post=\"1\" data-topic=\"1529\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/v/258eb7/48.png\" class=\"avatar\"> Vasilii:</div>\n<blockquote>\n<p>For best performance use dedicated disks for the transaction logs <strong>by setting process classes</strong></p>\n</blockquote>\n</aside>\n<p><a href=\"https://apple.github.io/foundationdb/configuration.html#guidelines-for-setting-process-class\" class=\"inline-onebox\">Configuration \u2014 FoundationDB 7.1</a> is the official documentation on this subject, but there\u2019s also been a number of threads over time.  For example:</p>\n<aside class=\"quote quote-modified\" data-post=\"1\" data-topic=\"520\">\n  <div class=\"title\">\n    <div class=\"quote-controls\"></div>\n    <img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://sea1.discourse-cdn.com/foundationdb/user_avatar/forums.foundationdb.org/shamatar/48/315_2.png\" class=\"avatar\">\n    <a href=\"https://forums.foundationdb.org/t/cluster-tuning-cookbook/520\">Cluster tuning cookbook</a> <a class=\"badge-category__wrapper \" href=\"/c/using-foundationdb/7\"><span data-category-id=\"7\" data-drop-close=\"true\" class=\"badge-category \" title=\"Topics related to use of FoundationDB.\"><span class=\"badge-category__name\">Using FoundationDB</span></span></a>\n  </div>\n  <blockquote>\n    Hello everyone. \nI\u2019m try to properly configure a cluster and struggling with the following behavior: \n\nThere are 8 machines, each is 4 cores, 8GB of memory\nEach machine runs one FDB instance\nEngine is double ssd\n\nThere are 5 coordinators in total\n\nRight now the transaction speed is just a little above 11k per second. Each transaction is 4 reads and 2 writes (non-atomics), key is around 64 bytes, value is less than 100 bytes. Looks like it\u2019s quite underperforming and I\u2019d appreciate some advice wh\u2026\n  </blockquote>\n</aside>\n<aside class=\"quote quote-modified\" data-post=\"1\" data-topic=\"601\">\n  <div class=\"title\">\n    <div class=\"quote-controls\"></div>\n    <img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/48.png\" class=\"avatar\">\n    <a href=\"https://forums.foundationdb.org/t/production-optimizations/601\">Production optimizations</a> <a class=\"badge-category__wrapper \" href=\"/c/using-foundationdb/7\"><span data-category-id=\"7\" data-drop-close=\"true\" class=\"badge-category \" title=\"Topics related to use of FoundationDB.\"><span class=\"badge-category__name\">Using FoundationDB</span></span></a>\n  </div>\n  <blockquote>\n    Hi, \nFinally my cluster is up and running so I was able to do some significant testing. At this point, we\u2019re using it as a cache, with a very simple transaction logic \n_, err = db.Transact(func(tr fdb.Transaction) (ret interface{}, err error) {\n    future := tr.Get(sub.Pack(tuple.Tuple{\"cache\", ID}))\n    res := future.MustGet()\n\n    if len(res) == 0 {\n        tr.Set(sub.Pack(tuple.Tuple{\"cache\", ID}), []byte(strconv.FormatInt(time.Now().UnixNano(), 10)))\n\n        processChan &lt;- id\n    }\n\n    ret\u2026\n  </blockquote>\n</aside>\n<aside class=\"quote quote-modified\" data-post=\"1\" data-topic=\"640\">\n  <div class=\"title\">\n    <div class=\"quote-controls\"></div>\n    <img loading=\"lazy\" alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/48.png\" class=\"avatar\">\n    <a href=\"https://forums.foundationdb.org/t/why-doesnt-my-cluster-performance-scale-when-i-double-the-number-of-machines/640\">Why doesn't my cluster performance scale when I double the number of machines?</a> <a class=\"badge-category__wrapper \" href=\"/c/using-foundationdb/7\"><span data-category-id=\"7\" data-drop-close=\"true\" class=\"badge-category \" title=\"Topics related to use of FoundationDB.\"><span class=\"badge-category__name\">Using FoundationDB</span></span></a>\n  </div>\n  <blockquote>\n    Hello fellow FDB aficionado! <img width=\"20\" height=\"20\" src=\"https://emoji.discourse-cdn.com/twitter/grinning.png?v=12\" title=\"grinning\" alt=\"grinning\" class=\"emoji\"> \nI was wondering if you could help me identifying why I am not seeing any improvements after I scale my FDB cluster out. \nI have read the <a href=\"https://apple.github.io/foundationdb/performance.html\" rel=\"nofollow noopener\">performance page</a> and I know it is supposed to scale\u2026 I must be doing something incorrectly. \nExplanation: \nLet me be more specific with a benchmark I just run today using FDB 5.2 on linux on AWS/EC2. \nI started a cluster of 10 instances (i3.xlarge with NVME SSD 900GB high network throughput, 4vCPU). \nFor information I ha\u2026\n  </blockquote>\n</aside>\n",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-07-19T02:12:00.674Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 1,
+        "incoming_link_count": 9,
+        "reads": 85,
+        "readers_count": 84,
+        "score": 82.0,
+        "yours": false,
+        "topic_id": 1529,
+        "topic_slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/configuration.html#guidelines-for-setting-process-class",
+            "internal": false,
+            "reflection": false,
+            "title": "Configuration \u2014 FoundationDB 6.1",
+            "clicks": 84
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/cluster-tuning-cookbook/520",
+            "internal": true,
+            "reflection": false,
+            "title": "Cluster tuning cookbook",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/production-optimizations/601",
+            "internal": true,
+            "reflection": false,
+            "title": "Production optimizations",
+            "clicks": 0
+          },
+          {
+            "url": "https://forums.foundationdb.org/t/why-doesnt-my-cluster-performance-scale-when-i-double-the-number-of-machines/640",
+            "internal": true,
+            "reflection": false,
+            "title": "Why doesn't my cluster performance scale when I double the number of machines?",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/warning-a-single-process-is-both-a-transaction-log-and-a-storage-server/1529/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12319,
+        "name": "Rjerk",
+        "username": "Rjerk",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rjerk/{size}/1056_2.png",
+        "created_at": "2023-01-31T06:35:46.426Z",
+        "cooked": "<p>Hi <a class=\"mention\" href=\"/u/alexmiller\">@alexmiller</a></p>\n<p>If a process has class type \u2018log\u2019 but it has both a transaction log and a storage server.</p>\n<p>How to detach the storage role from the process?</p>\n<p>I already tried to restart the process but it\u2019s not working.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-01-31T06:36:33.413Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 11.2,
+        "yours": false,
+        "topic_id": 1529,
+        "topic_slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+        "display_username": "Rjerk",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 13,
+          "username": "alexmiller",
+          "name": "Alex Miller",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 919,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/warning-a-single-process-is-both-a-transaction-log-and-a-storage-server/1529/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      4680,
+      4684,
+      12319
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2287
+    ],
+    [
+      3,
+      995
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "WARNING A single process is both a transaction log and a storage server",
+  "id": 1529,
+  "title": "WARNING A single process is both a transaction log and a storage server",
+  "posts_count": 3,
+  "created_at": "2019-07-18T14:42:38.020Z",
+  "views": 1910,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2023-01-31T06:35:46.426Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+  "category_id": 7,
+  "word_count": 432,
+  "deleted_at": null,
+  "user_id": 520,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1529",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "WARNING: A single process is both a transaction log and a storage server",
+      "id": 1580,
+      "title": "WARNING: A single process is both a transaction log and a storage server",
+      "slug": "warning-a-single-process-is-both-a-transaction-log-and-a-storage-server",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-08-11T17:20:33.378Z",
+      "last_posted_at": "2019-08-13T20:43:59.991Z",
+      "bumped": true,
+      "bumped_at": "2019-08-13T20:43:59.991Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1783,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production Hardware",
+      "id": 868,
+      "title": "Production Hardware",
+      "slug": "production-hardware",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2018-11-14T03:22:43.738Z",
+      "last_posted_at": "2018-11-26T17:55:18.756Z",
+      "bumped": true,
+      "bumped_at": "2018-11-26T17:55:18.756Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1026,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 366,
+            "username": "tobad357",
+            "name": "Tobad357",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/49beb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "We have some machines and cpu and a little ssd",
+      "id": 1532,
+      "title": "We have some machines and cpu and a little ssd",
+      "slug": "we-have-some-machines-and-cpu-and-a-little-ssd",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-07-22T13:53:58.839Z",
+      "last_posted_at": "2019-07-23T18:05:38.232Z",
+      "bumped": true,
+      "bumped_at": "2019-07-23T18:05:38.232Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 778,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Questions about process classes, recruitment behavior and cluster configuration",
+      "id": 1177,
+      "title": "Questions about process classes, recruitment behavior and cluster configuration",
+      "slug": "questions-about-process-classes-recruitment-behavior-and-cluster-configuration",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-02-21T19:47:47.590Z",
+      "last_posted_at": "2019-06-15T13:16:26.887Z",
+      "bumped": true,
+      "bumped_at": "2019-06-15T13:16:26.887Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 2849,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 475,
+            "username": "monsiper",
+            "name": "mehmet onsiper",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/ba9def/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 170,
+            "username": "meln1k",
+            "name": "Nikita Melkozerov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meln1k/{size}/150_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 520,
+        "username": "Vasilii",
+        "name": "Vasiliy Popkov",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 919,
+        "username": "Rjerk",
+        "name": "Rjerk",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/rjerk/{size}/1056_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 520,
+      "username": "Vasilii",
+      "name": "Vasiliy Popkov",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png"
+    },
+    "last_poster": {
+      "id": 919,
+      "username": "Rjerk",
+      "name": "Rjerk",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/rjerk/{size}/1056_2.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/configuration.html#guidelines-for-setting-process-class",
+        "title": "Configuration \u2014 FoundationDB 6.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 84,
+        "user_id": 13,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

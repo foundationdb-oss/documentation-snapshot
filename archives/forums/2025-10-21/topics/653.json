@@ -1,0 +1,863 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 1955,
+        "name": "Jesse Bennett",
+        "username": "wolfspider",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "created_at": "2018-08-23T06:05:32.400Z",
+        "cooked": "<p>I\u2019m trying to track down where in fdbcli the memory available per process is being read from at the moment. It was showing up before but some things have changed a little and now see that this isn\u2019t being read in the cli. The memory totals are reading correctly in the logs as far as I can tell. I don\u2019t have too much experience knowing how the CLI is getting this data- where should I focus on finding the right place where it\u2019s getting this metric from the server?</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4.jpg\" title=\"memavailable.jpg\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_690x388.jpg\" alt=\"memavailable\" width=\"690\" height=\"388\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_690x388.jpg, https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_1035x582.jpg 1.5x, https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_1380x776.jpg 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">memavailable.jpg</span><span class=\"informations\">1920\u00d71080 808 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-23T06:05:32.400Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 46,
+        "reads": 40,
+        "readers_count": 39,
+        "score": 238.0,
+        "yours": false,
+        "topic_id": 653,
+        "topic_slug": "memory-available-in-fdbcli",
+        "display_username": "Jesse Bennett",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4.jpg",
+            "internal": false,
+            "reflection": false,
+            "title": "343ca3fa60e20facd0ce7b1490d3edf92afcb1a4.jpg",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 235,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/memory-available-in-fdbcli/653/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 1961,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2018-08-23T17:54:55.747Z",
+        "cooked": "<p>The cli is computing and logging this number starting here:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbcli/fdbcli.actor.cpp#L954\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbcli/fdbcli.actor.cpp#L954\" target=\"_blank\">apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbcli/fdbcli.actor.cpp#L954</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"944\" style=\"counter-reset: li-counter 943 ;\">\n<li>\t\t\t\t\tfor (auto mach : machinesMap.obj()) {</li>\n<li>\t\t\t\t\t\tStatusObjectReader machine(mach.second);</li>\n<li>\t\t\t\t\t\tif (machine.has(\"excluded\") &amp;&amp; machine.last().get_bool())</li>\n<li>\t\t\t\t\t\t\tmachineExclusions++;</li>\n<li>\t\t\t\t\t}</li>\n<li>\n</li>\n<li>\t\t\t\t\tif (machineExclusions){</li>\n<li>\t\t\t\t\t\toutputString += format(\" (less %d excluded)\", machineExclusions);</li>\n<li>\t\t\t\t\t}</li>\n<li>\n</li>\n<li class=\"selected\">\t\t\t\t\tint64_t minMemoryAvailable = std::numeric_limits&lt;int64_t&gt;::max();</li>\n<li>\t\t\t\t\tfor (auto proc : processesMap.obj()) {</li>\n<li>\t\t\t\t\t\tStatusObjectReader process(proc.second);</li>\n<li>\t\t\t\t\t\tint64_t availBytes;</li>\n<li>\t\t\t\t\t\tif (process.get(\"memory.available_bytes\", availBytes)) {</li>\n<li>\t\t\t\t\t\t\tminMemoryAvailable = std::min(minMemoryAvailable, availBytes);</li>\n<li>\t\t\t\t\t\t}</li>\n<li>\t\t\t\t\t}</li>\n<li>\n</li>\n<li>\t\t\t\t\tif (minMemoryAvailable &lt; std::numeric_limits&lt;int64_t&gt;::max()) {</li>\n<li>\t\t\t\t\t\tdouble worstServerGb = minMemoryAvailable / (1024.0 * 1024 * 1024);</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>It\u2019s using the status json document queried from the cluster to extract the \u2018cluster.processes.memory.available_bytes\u2019 metric. You can see that metric being put into the status document here:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbserver/Status.actor.cpp#L733\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbserver/Status.actor.cpp#L733\" target=\"_blank\">apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbserver/Status.actor.cpp#L733</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"723\" style=\"counter-reset: li-counter 722 ;\">\n<li>\n</li>\n<li>\t\t\t// if this process address is in the machine metrics</li>\n<li>\t\t\tif (mMetrics.count(address) &amp;&amp; mMetrics[address].size()){</li>\n<li>\t\t\t\tdouble availableMemory;</li>\n<li>\t\t\t\tavailableMemory = parseDouble(mMetrics[address].getValue(\"AvailableMemory\"));</li>\n<li>\n</li>\n<li>\t\t\t\tauto machineMemInfo = machineMemoryUsage[workerItr-&gt;first.locality.machineId()];</li>\n<li>\t\t\t\tif (machineMemInfo.valid()) {</li>\n<li>\t\t\t\t\tASSERT(machineMemInfo.numProcesses &gt; 0);</li>\n<li>\t\t\t\t\tint64_t memory = (availableMemory + machineMemInfo.memoryUsage) / machineMemInfo.numProcesses;</li>\n<li class=\"selected\">\t\t\t\t\tmemoryObj[\"available_bytes\"] = std::max&lt;int64_t&gt;(memory, 0);</li>\n<li>\t\t\t\t}</li>\n<li>\t\t\t}</li>\n<li>\n</li>\n<li>\t\t\tstatusObj[\"memory\"] = memoryObj;</li>\n<li>\n</li>\n<li>\t\t\tStatusArray messages;</li>\n<li>\n</li>\n<li>\t\t\tif (errors.count(address) &amp;&amp; errors[address].size()) {</li>\n<li>\t\t\t\t// returns status object with type and time of error</li>\n<li>\t\t\t\tmessages.push_back(getError(errors.at(address)));</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>To generate that metric, it\u2019s reading data that\u2019s being logged by two events, \u201cAvailableMemory\u201d from \u201cMachineMetrics\u201d:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L138\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L138\" target=\"_blank\">apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L138</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"128\" style=\"counter-reset: li-counter 127 ;\">\n<li>\n</li>\n<li>\t\t\tfor (int i = 0; i&lt;NetworkMetrics::SLOW_EVENT_BINS; i++)</li>\n<li>\t\t\t\tif (int c = g_network-&gt;networkMetrics.countSlowEvents[i] - statState-&gt;networkMetricsState.countSlowEvents[i])</li>\n<li>\t\t\t\t\tn.detail(format(\"SlowTask%dM\", 1 &lt;&lt; i).c_str(), c);</li>\n<li>\t\t\tfor (int i = 0; i&lt;NetworkMetrics::PRIORITY_BINS; i++)</li>\n<li>\t\t\t\tif (double x = g_network-&gt;networkMetrics.secSquaredPriorityBlocked[i] - statState-&gt;networkMetricsState.secSquaredPriorityBlocked[i])</li>\n<li>\t\t\t\t\tn.detail(format(\"S2Pri%d\", g_network-&gt;networkMetrics.priorityBins[i]).c_str(), x);</li>\n<li>\t\t}</li>\n<li>\n</li>\n<li>\t\tif(machineMetrics) {</li>\n<li class=\"selected\">\t\t\tTraceEvent(\"MachineMetrics\").detail(\"Elapsed\", currentStats.elapsed)</li>\n<li>\t\t\t\t.detail(\"MbpsSent\", currentStats.machineMegabitsSent / currentStats.elapsed)</li>\n<li>\t\t\t\t.detail(\"MbpsReceived\", currentStats.machineMegabitsReceived / currentStats.elapsed)</li>\n<li>\t\t\t\t.detail(\"OutSegs\", currentStats.machineOutSegs)</li>\n<li>\t\t\t\t.detail(\"RetransSegs\", currentStats.machineRetransSegs)</li>\n<li>\t\t\t\t.detail(\"CPUSeconds\", currentStats.machineCPUSeconds)</li>\n<li>\t\t\t\t.detail(\"TotalMemory\", currentStats.machineTotalRAM)</li>\n<li>\t\t\t\t.detail(\"CommittedMemory\", currentStats.machineCommittedRAM)</li>\n<li>\t\t\t\t.detail(\"AvailableMemory\", currentStats.machineAvailableRAM)</li>\n<li>\t\t\t\t.detailext(\"ZoneID\", machineState.zoneId)</li>\n<li>\t\t\t\t.detailext(\"MachineID\", machineState.machineId)</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>and \u201cMemory\u201d from \u201cProcessMetrics\u201d:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L55\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L55\" target=\"_blank\">apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L55</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"45\" style=\"counter-reset: li-counter 44 ;\">\n<li>#define DETAILALLOCATORMEMUSAGE( size ) detail(\"AllocatedMemory\"#size, FastAllocator&lt;size&gt;::getMemoryUsed()).detail(\"ApproximateUnusedMemory\"#size, FastAllocator&lt;size&gt;::getMemoryUnused())</li>\n<li>\n</li>\n<li>SystemStatistics customSystemMonitor(std::string eventName, StatisticsState *statState, bool machineMetrics) {</li>\n<li>\tSystemStatistics currentStats = getSystemStatistics(machineState.folder.present() ? machineState.folder.get() : \"\", </li>\n<li>\t\t\t\t\t\t\t\t\t\t\t\t\t\tmachineState.ip.present() ? machineState.ip.get() : 0, </li>\n<li>\t\t\t\t\t\t\t\t\t\t\t\t\t\t&amp;statState-&gt;systemState);</li>\n<li>\tNetworkData netData;</li>\n<li>\tnetData.init();</li>\n<li>\tif (!DEBUG_DETERMINISM &amp;&amp; currentStats.initialized) {</li>\n<li>\t\t{</li>\n<li class=\"selected\">\t\t\tTraceEvent e(eventName.c_str());</li>\n<li>\t\t\te</li>\n<li>\t\t\t\t.detail(\"Elapsed\", currentStats.elapsed)</li>\n<li>\t\t\t\t.detail(\"CPUSeconds\", currentStats.processCPUSeconds)</li>\n<li>\t\t\t\t.detail(\"MainThreadCPUSeconds\", currentStats.mainThreadCPUSeconds)</li>\n<li>\t\t\t\t.detail(\"UptimeSeconds\", now() - machineState.monitorStartTime)</li>\n<li>\t\t\t\t.detail(\"Memory\", currentStats.processMemory)</li>\n<li>\t\t\t\t.detail(\"ResidentMemory\", currentStats.processResidentMemory)</li>\n<li>\t\t\t\t.detail(\"UnusedAllocatedMemory\", getTotalUnusedAllocatedMemory())</li>\n<li>\t\t\t\t.detail(\"MbpsSent\", ((netData.bytesSent - statState-&gt;networkState.bytesSent) * 8e-6) / currentStats.elapsed)</li>\n<li>\t\t\t\t.detail(\"MbpsReceived\", ((netData.bytesReceived - statState-&gt;networkState.bytesReceived) * 8e-6) / currentStats.elapsed)</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n\n<p>The actual memory statistics (and others) are gathered in this function:</p>\n<aside class=\"onebox githubblob\">\n  <header class=\"source\">\n      <a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/Platform.cpp#L1076\" target=\"_blank\">github.com</a>\n  </header>\n  <article class=\"onebox-body\">\n    <h4><a href=\"https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/Platform.cpp#L1076\" target=\"_blank\">apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/Platform.cpp#L1076</a></h4>\n<pre class=\"onebox\"><code class=\"lang-cpp\"><ol class=\"start lines\" start=\"1066\" style=\"counter-reset: li-counter 1065 ;\">\n<li>\n</li>\n<li>\t\t\tif (state-&gt;pdhStrings.diskDevice.empty()) {</li>\n<li>\t\t\t\tTraceEvent(SevWarn, \"WinDiskStatsGetPathError\").detail(\"Path\", dataFolder);</li>\n<li>\t\t\t\treturn;</li>\n<li>\t\t\t}</li>\n<li>\t\t}</li>\n<li>\t}</li>\n<li>}</li>\n<li>#endif</li>\n<li>\n</li>\n<li class=\"selected\">SystemStatistics getSystemStatistics(std::string dataFolder, uint32_t ip, SystemStatisticsState **statState) {</li>\n<li>\tif( (*statState) == NULL )</li>\n<li>\t\t(*statState) = new SystemStatisticsState();</li>\n<li>\tSystemStatistics returnStats;</li>\n<li>\n</li>\n<li>\tdouble nowTime = timer();</li>\n<li>\tdouble nowClockProcess = getProcessorTimeProcess();</li>\n<li>\tdouble nowClockThread = getProcessorTimeThread();</li>\n<li>\treturnStats.elapsed = nowTime - (*statState)-&gt;lastTime;</li>\n<li>\n</li>\n<li>\treturnStats.initialized = (*statState)-&gt;lastTime != 0;</li>\n</ol></code></pre>\n\n\n  </article>\n  <div class=\"onebox-metadata\">\n    \n    \n  </div>\n  <div style=\"clear: both\"></div>\n</aside>\n",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-23T17:54:55.747Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 38,
+        "readers_count": 37,
+        "score": 47.6,
+        "yours": false,
+        "topic_id": 653,
+        "topic_slug": "memory-available-in-fdbcli",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L55",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/SystemMonitor.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 3
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/Platform.cpp#L1076",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/Platform.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbserver/Status.actor.cpp#L733",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/Status.actor.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbcli/fdbcli.actor.cpp#L954",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbcli.actor.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L138",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/SystemMonitor.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 2
+          }
+        ],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/memory-available-in-fdbcli/653/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1972,
+        "name": "Jesse Bennett",
+        "username": "wolfspider",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "created_at": "2018-08-25T00:40:51.308Z",
+        "cooked": "<p>Ok, Thanks! Yeah so far in the logs things look fine (where memory is concerned) from the last run I did these are the entries in the logs- I\u2019ll keep looking around but this will help a lot:</p>\n<pre><code>&lt;Event Severity=\"10\" Time=\"1535003807.959573\" Type=\"ProcessMetrics\" ID=\"0000000000000000\" Elapsed=\"5.00313\" CPUSeconds=\"0.143641\" MainThreadCPUSeconds=\"0.133873\" UptimeSeconds=\"4111.55\" Memory=\"17934\" ResidentMemory=\"4591\" UnusedAllocatedMemory=\"262144\" MbpsSent=\"0.000460512\" MbpsReceived=\"0.000307008\" DiskTotalBytes=\"7074238464\" DiskFreeBytes=\"3187154944\" DiskQueueDepth=\"0\" DiskIdleSeconds=\"5.00313\" DiskReads=\"0\" DiskWrites=\"91\" DiskReadsCount=\"8241\" DiskWritesCount=\"239116\" DiskWriteSectors=\"0\" DiskReadSectors=\"2032\" FileWrites=\"44\" FileReads=\"0\" CacheReadBytes=\"0\" CacheFinds=\"0\" CacheWritesBlocked=\"0\" CacheReadsBlocked=\"0\" CachePageReadsMerged=\"0\" CacheWrites=\"0\" CacheReads=\"0\" ZoneID=\"7d8f8d4d56c4c20b4d4bb28ff9697649\" MachineID=\"7d8f8d4d56c4c20b4d4bb28ff9697649\" AIOSubmitCount=\"0\" AIOCollectCount=\"0\" AIOSubmitLag=\"0\" AIODiskStall=\"0\" CurrentConnections=\"2\" ConnectionsEstablished=\"0\" ConnectionsClosed=\"0\" ConnectionErrors=\"0\" Machine=\"192.168.64.2:4689\" LogGroup=\"default\" TrackLatestType=\"Original\" /&gt;\n\n&lt;Event Severity=\"10\" Time=\"1535003807.959573\" Type=\"MachineMetrics\" ID=\"0000000000000000\" Elapsed=\"5.00313\" MbpsSent=\"0.103174\" MbpsReceived=\"0.139324\" OutSegs=\"428\" RetransSegs=\"0\" CPUSeconds=\"0.0634311\" TotalMemory=\"8117676\" CommittedMemory=\"1942728\" AvailableMemory=\"6174948\" ZoneID=\"7d8f8d4d56c4c20b4d4bb28ff9697649\" MachineID=\"7d8f8d4d56c4c20b4d4bb28ff9697649\" Machine=\"192.168.64.2:4689\" LogGroup=\"default\" TrackLatestType=\"Original\" /&gt;</code></pre>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-25T00:40:51.308Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 28,
+        "readers_count": 27,
+        "score": 5.6,
+        "yours": false,
+        "topic_id": 653,
+        "topic_slug": "memory-available-in-fdbcli",
+        "display_username": "Jesse Bennett",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 12,
+          "username": "ajbeamon",
+          "name": "A.J. Beamon",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 235,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/memory-available-in-fdbcli/653/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 1974,
+        "name": "Jesse Bennett",
+        "username": "wolfspider",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "created_at": "2018-08-25T03:34:01.847Z",
+        "cooked": "<p>Ok, I figured out what was wrong the memory <em>is</em> actually read in as bytes I made an edit recently to divide page size by 1024 so the memory totals looked right in the logs but it is expecting bytes for fdbcli after all. The json from status was showing everything too. I didn\u2019t know about that before that\u2019s pretty cool. So I tested fdbcli like this:</p>\n<pre><code>int64_t minMemoryAvailable = std::numeric_limits&lt;int64_t&gt;::max();\n\t\t\t\tfor (auto proc : processesMap.obj()) {\n\t\t\t\t\tStatusObjectReader process(proc.second);\n\t\t\t\t\tint64_t availBytes;\n\t\t\t\t\tif (process.get(\"memory.available_bytes\", availBytes)) {\n\t\t\t\t\t\tprintf(\"process get memory.available_bytes!\\n\");\n\t\t\t\t\t\tminMemoryAvailable = std::min(minMemoryAvailable, availBytes);\n\t\t\t\t\t\tprintf(\"minMemory:  %ju\\n\",minMemoryAvailable);\n\t\t\t\t\t}\n\t\t\t\t}\n</code></pre>\n<p>And the output was:</p>\n<pre><code>fdb&gt; status\n\nprocess get memory.available_bytes!\nminMemory:  6619982\n</code></pre>\n<p>Heh, I think when I saw bytes with an exclamation mark I was like wait hold on??<br>\nThe rest of the code calculates it as follows:</p>\n<pre><code>if (minMemoryAvailable &lt; std::numeric_limits&lt;int64_t&gt;::max()) {\ndouble worstServerGb = minMemoryAvailable / (1024.0 * 1024 * 1024);\noutputString += \"\\n  Memory availability    - \";\noutputString += format(\"%.1f GB per process on machine with least available\", worstServerGb);\noutputString += minMemoryAvailable &lt; 4294967296 ? \"\\n                           &gt;&gt;&gt;&gt;&gt; (WARNING: 4.0 GB recommended) &lt;&lt;&lt;&lt;&lt;\" : \"\";\n}\n</code></pre>\n<p>6619982 / (1024.0 * 1024 * 1024) is equal to 0.000616533\u2026</p>\n<p>So that was effectively zero, what I did was rollback that change and now I get the correct total again:</p>\n<p><div class=\"lightbox-wrapper\"><a class=\"lightbox\" href=\"https://global.discourse-cdn.com/foundationdb/original/1X/6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf.png\" title=\"memavailfix.png\" rel=\"nofollow noopener\"><img src=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf_2_690x437.png\" alt=\"memavailfix\" width=\"690\" height=\"437\" srcset=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf_2_690x437.png, https://global.discourse-cdn.com/foundationdb/original/1X/6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf.png 1.5x, https://global.discourse-cdn.com/foundationdb/original/1X/6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf.png 2x\" data-small-upload=\"https://global.discourse-cdn.com/foundationdb/optimized/1X/6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf_2_10x10.png\"><div class=\"meta\">\n<svg class=\"fa d-icon d-icon-far-image svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#far-image\"></use></svg><span class=\"filename\">memavailfix.png</span><span class=\"informations\">974\u00d7617 54.6 KB</span><svg class=\"fa d-icon d-icon-discourse-expand svg-icon\" aria-hidden=\"true\"><use xlink:href=\"#discourse-expand\"></use></svg>\n</div></a></div></p>\n<pre><code>int status;\n\nu_int page_size;\nu_int free_count;\nu_int active_count;\nu_int inactive_count;\nu_int wire_count;\n\nsize_t uint_size;\n\nuint_size = sizeof(page_size);\n\nstatus = sysctlbyname(\"vm.stats.vm.v_page_size\", &amp;page_size, &amp;uint_size, NULL, 0);\nif (status &lt; 0){\n    TraceEvent(SevError, \"GetMachineMemInfo\").GetLastError();\n    throw platform_error();\n} \n\nstatus = sysctlbyname(\"vm.stats.vm.v_free_count\", &amp;free_count, &amp;uint_size, NULL, 0);\nif (status &lt; 0){\n    TraceEvent(SevError, \"GetMachineMemInfo\").GetLastError();\n    throw platform_error();\n}\n\nstatus = sysctlbyname(\"vm.stats.vm.v_active_count\", &amp;active_count, &amp;uint_size, NULL, 0);\nif (status &lt; 0){\n    TraceEvent(SevError, \"GetMachineMemInfo\").GetLastError();\n    throw platform_error();\n}\n\nstatus = sysctlbyname(\"vm.stats.vm.v_inactive_count\", &amp;inactive_count, &amp;uint_size, NULL, 0);\n if (status &lt; 0){\n    TraceEvent(SevError, \"GetMachineMemInfo\").GetLastError();\n    throw platform_error();\n}\n\nstatus = sysctlbyname(\"vm.stats.vm.v_wire_count\", &amp;wire_count, &amp;uint_size, NULL, 0);\nif (status &lt; 0){\n    TraceEvent(SevError, \"GetMachineMemInfo\").GetLastError();\n    throw platform_error();\n}\n\nmemInfo.total = (int64_t)((free_count + active_count + inactive_count + wire_count) * (u_int64_t)(page_size));\nmemInfo.available = (int64_t)(free_count * (u_int64_t)(page_size));\nmemInfo.committed = memInfo.total - memInfo.available;\n</code></pre>\n<p>Alright, glad that one was easy to fix- thanks again!</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2018-08-25T05:24:46.201Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 36.0,
+        "yours": false,
+        "topic_id": 653,
+        "topic_slug": "memory-available-in-fdbcli",
+        "display_username": "Jesse Bennett",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://global.discourse-cdn.com/foundationdb/original/1X/6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf.png",
+            "internal": false,
+            "reflection": false,
+            "title": "6773ffa7a7b359b8a8b6c1b97b64c35e9df1d9cf.png",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 235,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/memory-available-in-fdbcli/653/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      1955,
+      1961,
+      1972,
+      1974
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2617
+    ],
+    [
+      2,
+      2616
+    ],
+    [
+      3,
+      2615
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Memory Available in FDBCLI",
+  "id": 653,
+  "title": "Memory Available in FDBCLI",
+  "posts_count": 4,
+  "created_at": "2018-08-23T06:05:32.307Z",
+  "views": 1047,
+  "reply_count": 1,
+  "like_count": 3,
+  "last_posted_at": "2018-08-25T03:34:01.847Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "memory-available-in-fdbcli",
+  "category_id": 5,
+  "word_count": 779,
+  "deleted_at": null,
+  "user_id": 235,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_1024x576.jpg",
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_653",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": [
+    {
+      "max_width": null,
+      "max_height": null,
+      "width": 1920,
+      "height": 1080,
+      "url": "https://global.discourse-cdn.com/foundationdb/original/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4.jpg"
+    },
+    {
+      "max_width": 1024,
+      "max_height": 1024,
+      "width": 1024,
+      "height": 576,
+      "url": "https://global.discourse-cdn.com/foundationdb/optimized/1X/343ca3fa60e20facd0ce7b1490d3edf92afcb1a4_2_1024x576.jpg"
+    }
+  ],
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Few queries on status json",
+      "id": 684,
+      "title": "Few queries on status json",
+      "slug": "few-queries-on-status-json",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-09-08T13:43:35.838Z",
+      "last_posted_at": "2018-12-07T20:20:54.448Z",
+      "bumped": true,
+      "bumped_at": "2018-12-07T20:20:54.448Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1237,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Help me understand this status output",
+      "id": 742,
+      "title": "Help me understand this status output",
+      "slug": "help-me-understand-this-status-output",
+      "posts_count": 13,
+      "reply_count": 8,
+      "highest_post_number": 13,
+      "image_url": null,
+      "created_at": "2018-10-04T01:03:25.785Z",
+      "last_posted_at": "2021-06-15T15:32:08.437Z",
+      "bumped": true,
+      "bumped_at": "2021-06-15T15:32:08.437Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3594,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 44,
+            "username": "cespare",
+            "name": "Caleb Spare",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/cespare/{size}/36_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 949,
+            "username": "DenisBY",
+            "name": "Denis",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/denisby/{size}/1104_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "id": 2080,
+      "title": "Foundationdb 6.2 - fdbserver going out of memory",
+      "slug": "foundationdb-6-2-fdbserver-going-out-of-memory",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2020-04-20T14:55:39.274Z",
+      "last_posted_at": "2020-04-23T04:34:49.858Z",
+      "bumped": true,
+      "bumped_at": "2020-04-23T04:34:49.858Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1037,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 714,
+            "username": "tuk",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/b5ac83/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FDB out of memory",
+      "id": 3460,
+      "title": "FDB out of memory",
+      "slug": "fdb-out-of-memory",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2022-07-20T03:12:58.094Z",
+      "last_posted_at": "2022-07-22T12:33:26.077Z",
+      "bumped": true,
+      "bumped_at": "2022-07-22T12:54:40.104Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 962,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1126,
+            "username": "CodingSuen",
+            "name": "CodingSuen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/codingsuen/{size}/1367_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 164,
+            "username": "Imperatorx",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How are &lsquo;contributing_workers&rsquo; computed?",
+      "id": 360,
+      "title": "How are 'contributing_workers' computed?",
+      "slug": "how-are-contributing-workers-computed",
+      "posts_count": 20,
+      "reply_count": 13,
+      "highest_post_number": 20,
+      "image_url": null,
+      "created_at": "2018-05-07T00:53:18.538Z",
+      "last_posted_at": "2018-05-12T07:19:34.562Z",
+      "bumped": true,
+      "bumped_at": "2018-05-12T07:19:34.562Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1986,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 236,
+            "username": "marctrem",
+            "name": "Marc-Andr\u00e9 Tremblay",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/marctrem/{size}/208_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 156,
+            "username": "spullara",
+            "name": "Sam Pullara",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/spullara/{size}/125_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 247,
+            "username": "Chr1st0ph",
+            "name": "Chr1st0ph",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/chr1st0ph/{size}/353_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 118,
+            "username": "abdullin",
+            "name": "Rinat Abdullin",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/abdullin/{size}/83_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 235,
+        "username": "wolfspider",
+        "name": "Jesse Bennett",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+        "post_count": 3,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 235,
+      "username": "wolfspider",
+      "name": "Jesse Bennett",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png"
+    },
+    "last_poster": {
+      "id": 235,
+      "username": "wolfspider",
+      "name": "Jesse Bennett",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/SystemMonitor.cpp#L55",
+        "title": "foundationdb/SystemMonitor.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/fdbserver/Status.actor.cpp#L733",
+        "title": "foundationdb/Status.actor.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/365fe992b46b3f8f8be47e3cc373b6ea9b9133b6/flow/Platform.cpp#L1076",
+        "title": "foundationdb/Platform.cpp at 365fe992b46b3f8f8be47e3cc373b6ea9b9133b6 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 12,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

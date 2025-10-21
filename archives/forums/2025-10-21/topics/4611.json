@@ -1,0 +1,556 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 14349,
+        "name": "gyming",
+        "username": "gyming1849",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gyming1849/{size}/1846_2.png",
+        "created_at": "2024-09-12T08:16:23.726Z",
+        "cooked": "<p>Hi all~</p>\n<p>I\u2019m curious about what happens in FoundationDB when a server crashes and it is the last source for some shards. In the document <code>design/tlog-spilling.md.html</code>, it states:</p>\n<blockquote>\n<p>\u201cHowever, in the presence of failures, the transaction log can be required to buffer significantly more data. Most notably, when a storage server fails, its tag isn\u2019t popped until data distribution is able to re-replicate all of the shards that storage server was responsible for to other storage servers. Before that happens, mutations will accumulate on the TLog destined for the failed storage server, in case it comes back and is able to rejoin the cluster.\u201d</p>\n</blockquote>\n<p>Additionally, in the comments for the <code>removeKeysFromFailedServer</code> function in <code>MoveKeys.actor.cpp</code>, it says:</p>\n<blockquote>\n<p>\u201c// If (failed) serverID is the last source server for a shard, the shard will be erased, and then be assigned to teamForDroppedRange.<br>\n// Assign the shard to the new team as an empty range. Note, there could be data loss.\u201d</p>\n</blockquote>\n<p>My question is: if a shard has already been assigned as an empty range, and the failed server comes back online, will the system still try to recover that shard from the failed server? Moreover, I\u2019m curious if the system would try to replay the TLog from the beginning to restore the lost shard?</p>\n<p>I noticed there was a previous discussion on this question: <a href=\"https://forums.foundationdb.org/t/behavior-when-all-replicas-of-some-shards-are-missing/1686\">Behavior when all replicas of some shards are missing?</a>. In that discussion, it was mentioned:</p>\n<blockquote>\n<p>Writes to missing shards will be possible, but will buffer indefinitely on TLogs, potentially eventually filling up their disk space. Reads from missing shards will hang indefinitely.</p>\n</blockquote>\n<p>However, I believe this is not how the system works nowadays.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-09-12T08:16:23.726Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 44,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 218.0,
+        "yours": false,
+        "topic_id": 4611,
+        "topic_slug": "what-happens-when-a-server-crash-and-it-is-the-last-source-for-a-shard",
+        "display_username": "gyming",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/behavior-when-all-replicas-of-some-shards-are-missing/1686",
+            "internal": true,
+            "reflection": false,
+            "title": "Behavior when all replicas of some shards are missing?",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1459,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-happens-when-a-server-crash-and-it-is-the-last-source-for-a-shard/4611/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 14352,
+        "name": "Jingyu Zhou",
+        "username": "jzhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "created_at": "2024-09-13T04:38:52.565Z",
+        "cooked": "<p>The documentation is mostly correct, but doesn\u2019t explain all possible scenarios. After a storage server (SS) failed, before Data Distributor (DD) removing the failed SS. The mutations destined to the SS will be sent to SS\u2019s buddy TLog, but will not be peeked and thus not popped the TLog. As a result, it\u2019s possible for TLog to buffer mutations and consuming more and more disk space.</p>\n<p>However, DD continuously monitors all SSes in the system and will notice the SS has failed (after certain interval). Then DD will issue data movement to copy shards (key ranges) on the failed SS to a different team. After the data movement finishes, all key ranges on the failed SS has been reassigned to new teams, thus no data remaining. Then DD actually removes the SS from the cluster. The side effect of this removal will clear buffered mutations on its buddy tlog, thus freeing up disk space.</p>\n<p>In the case the last SS has the shard replica failed, because data movement is blocked, DD can\u2019t remove the SS because there are still key ranges being assigned to it. As a result, TLog disk space will continue decreasing. Operational alert should be set up to warn problems of low available disk space for TLogs so that operators are notified. Then the operator should try to bring the failed SS back (after identifying the underlying issue why SS failed), which will solve the problem. If the underlying issue can\u2019t be fixed, then the operator has to accept data loss. In this scenario, the operator can use <code>exclude failed</code> to mark the SS as permanently failed, which will re-assign the lost shard to a team as an empty range. Even if the SS comes back later, the cluster wouldn\u2019t accept the SS, because <code>exclude failed</code> has removed the SS information (its interfaces) from the system metadata. As a result, the data this SS possesses is just ignored. I don\u2019t recall if we delete the data on this SS or not, after it tries to rejoin the cluster.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 2,
+        "updated_at": "2024-09-13T04:41:31.566Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 4611,
+        "topic_slug": "what-happens-when-a-server-crash-and-it-is-the-last-source-for-a-shard",
+        "display_username": "Jingyu Zhou",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": true,
+        "admin": true,
+        "staff": true,
+        "user_id": 454,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-happens-when-a-server-crash-and-it-is-the-last-source-for-a-shard/4611/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      14349,
+      14352
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      405
+    ],
+    [
+      2,
+      404
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "What Happens When a Server Crash and It is the Last Source for a Shard?",
+  "id": 4611,
+  "title": "What Happens When a Server Crash and It is the Last Source for a Shard?",
+  "posts_count": 2,
+  "created_at": "2024-09-12T08:16:23.661Z",
+  "views": 62,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2024-09-13T04:38:52.565Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "what-happens-when-a-server-crash-and-it-is-the-last-source-for-a-shard",
+  "category_id": 7,
+  "word_count": 646,
+  "deleted_at": null,
+  "user_id": 1459,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4611",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 2,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Behavior when all replicas of some shards are missing?",
+      "id": 1686,
+      "title": "Behavior when all replicas of some shards are missing?",
+      "slug": "behavior-when-all-replicas-of-some-shards-are-missing",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2019-10-19T04:08:54.766Z",
+      "last_posted_at": "2019-11-15T18:00:50.818Z",
+      "bumped": true,
+      "bumped_at": "2019-11-15T18:00:50.818Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 697,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "SS / tLog kick-out and rejoin",
+      "id": 1395,
+      "title": "SS / tLog kick-out and rejoin",
+      "slug": "ss-tlog-kick-out-and-rejoin",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-27T15:44:27.081Z",
+      "last_posted_at": "2019-05-28T16:11:48.110Z",
+      "bumped": true,
+      "bumped_at": "2019-05-28T16:11:48.110Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 488,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "R/w performance impact and replicas consistency while moving data",
+      "id": 567,
+      "title": "R/w performance impact and replicas consistency while moving data",
+      "slug": "r-w-performance-impact-and-replicas-consistency-while-moving-data",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-07-13T06:23:02.381Z",
+      "last_posted_at": "2018-07-13T06:23:02.474Z",
+      "bumped": true,
+      "bumped_at": "2018-07-13T06:23:02.474Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 499,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 327,
+            "username": "zhanghuan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/z/5fc32e/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "About storage server&rsquo;s recovery",
+      "id": 495,
+      "title": "About storage server's recovery",
+      "slug": "about-storage-servers-recovery",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": "https://global.discourse-cdn.com/foundationdb/original/1X/6253b6c7154b1a487afacf3fa14ab31ad5ba66ae.png",
+      "created_at": "2018-06-07T10:59:00.241Z",
+      "last_posted_at": "2018-06-08T06:44:22.055Z",
+      "bumped": true,
+      "bumped_at": "2018-06-08T06:44:22.055Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 787,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 124,
+            "username": "coder0718",
+            "name": "Coder0718",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/coder0718/{size}/87_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Identifying shards associated with replica unavailability; shard selection when dropping redundancy levels",
+      "id": 2235,
+      "title": "Identifying shards associated with replica unavailability; shard selection when dropping redundancy levels",
+      "slug": "identifying-shards-associated-with-replica-unavailability-shard-selection-when-dropping-redundancy-levels",
+      "posts_count": 16,
+      "reply_count": 6,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2020-07-08T20:05:13.553Z",
+      "last_posted_at": "2021-12-11T04:23:58.585Z",
+      "bumped": true,
+      "bumped_at": "2021-12-11T04:23:58.585Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2127,
+      "category_id": 17,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 484,
+            "username": "ksnavely",
+            "name": "Kyle Snavely",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ksnavely/{size}/483_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 454,
+        "username": "jzhou",
+        "name": "Jingyu Zhou",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "moderator": true,
+        "trust_level": 2
+      },
+      {
+        "id": 1459,
+        "username": "gyming1849",
+        "name": "gyming",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/gyming1849/{size}/1846_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1459,
+      "username": "gyming1849",
+      "name": "gyming",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/gyming1849/{size}/1846_2.png"
+    },
+    "last_poster": {
+      "id": 454,
+      "username": "jzhou",
+      "name": "Jingyu Zhou",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png"
+    },
+    "links": [
+      {
+        "url": "https://forums.foundationdb.org/t/behavior-when-all-replicas-of-some-shards-are-missing/1686",
+        "title": "Behavior when all replicas of some shards are missing?",
+        "internal": true,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1459,
+        "domain": "forums.foundationdb.org",
+        "root_domain": "foundationdb.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

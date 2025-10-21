@@ -1,0 +1,645 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 3156,
+        "name": "Chris Donati",
+        "username": "cdonati",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/cdonati/{size}/515_2.png",
+        "created_at": "2019-01-28T20:39:08.670Z",
+        "cooked": "<p>I\u2019m using the Python API within a Tornado server. In order to prevent blocking the server\u2019s IO loop, I\u2019ve been adding a callback to futures in order to set the result on a coroutine-friendly future. For example,</p>\n<pre><code>tornado_future = TornadoFuture()\ncallback = lambda fdb_future: handle_result(fdb_future, tornado_future)\ncommit_future = tr.commit()\ncommit_future.on_ready(callback)\nyield tornado_future\n</code></pre>\n<p>This seems to work well for gets and commits, but I don\u2019t see a way with the public API to get a future for a range query operation. The <code>_get_range</code> method that <code>get_range</code> uses seems to be the kind of thing I\u2019m looking for, but I\u2019m hesitant to use an undocumented method that could change later.</p>\n<p>Am I missing a more appropriate method that would work for my use case? If not, would it be reasonable to expose something like what <code>_get_range</code> does as a public API method?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-01-28T20:39:08.670Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 28,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 146.2,
+        "yours": false,
+        "topic_id": 1075,
+        "topic_slug": "callback-for-range-queries-python",
+        "display_username": "Chris Donati",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 489,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/callback-for-range-queries-python/1075/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 3383,
+        "name": "A.J. Beamon",
+        "username": "ajbeamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "created_at": "2019-02-14T23:15:12.357Z",
+        "cooked": "<p>I think this is a reasonable feature request, if you wanted to file a GitHub issue for it. Another possible alternative would be to create a new event model (see <code>fdb.init</code>) designed to work with <code>TornadoFutures</code>, if that could be made to do what you want. There\u2019s not really any documentation on writing an event model and I have limited experience with it, but it may be a more generic solution if there are other functions in the API that have similar problems.</p>\n<p>Is reading ranges your only obstacle to getting it working for you?</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-02-14T23:15:12.357Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 23,
+        "readers_count": 22,
+        "score": 4.6,
+        "yours": false,
+        "topic_id": 1075,
+        "topic_slug": "callback-for-range-queries-python",
+        "display_username": "A.J. Beamon",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": true,
+        "staff": true,
+        "user_id": 12,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/callback-for-range-queries-python/1075/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 3401,
+        "name": "Chris Donati",
+        "username": "cdonati",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/cdonati/{size}/515_2.png",
+        "created_at": "2019-02-17T21:14:01.449Z",
+        "cooked": "<p>Reading ranges is the main one, and it\u2019s not really preventing me from making progress since I can use <code>_get_range</code> for now.</p>\n<p>The <code>create_or_open</code> and <code>list</code> methods of the directory layer also seem to be blocking methods that don\u2019t have a way to assign callbacks to them. However, the server I\u2019m working on caches directories, so the first method happens infrequently enough that blocking is acceptable. It looks like the second method can be accomplished with <code>_get_range</code> operations, so that is not really a problem either.</p>\n<p>I\u2019m reluctant to add a new event model specifically for Tornado. Tornado itself now uses the event loop and futures from asyncio when it is available, so I think the number of people that could benefit from a Tornado-specific event model is small and will continue to diminish.</p>\n<p>It seems the use of futures in the default event model is intended to encourage the client to make concurrent requests rather than facilitate the use of callbacks for all blocking operations. I\u2019d rather not impact the clarity of the codebase or the API for this edge case. Moving to the asyncio event model seems like a better long-term solution.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2019-02-17T21:14:01.449Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 21,
+        "readers_count": 20,
+        "score": 9.2,
+        "yours": false,
+        "topic_id": 1075,
+        "topic_slug": "callback-for-range-queries-python",
+        "display_username": "Chris Donati",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 489,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/callback-for-range-queries-python/1075/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      3156,
+      3383,
+      3401
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2458
+    ],
+    [
+      2,
+      2441
+    ],
+    [
+      3,
+      2438
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Callback for range queries (Python)",
+  "id": 1075,
+  "title": "Callback for range queries (Python)",
+  "posts_count": 3,
+  "created_at": "2019-01-28T20:39:08.539Z",
+  "views": 697,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-02-17T21:14:01.449Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "callback-for-range-queries-python",
+  "category_id": 7,
+  "word_count": 446,
+  "deleted_at": null,
+  "user_id": 489,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1075",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Why can I only range read 2857 keys?",
+      "id": 1517,
+      "title": "Why can I only range read 2857 keys?",
+      "slug": "why-can-i-only-range-read-2857-keys",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-07-13T06:06:58.493Z",
+      "last_posted_at": "2019-07-13T19:32:13.906Z",
+      "bumped": true,
+      "bumped_at": "2019-07-13T19:32:13.906Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 634,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 542,
+            "username": "jonahwest",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/90db22/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How does FDB execute multiple getRange requests in parallel?",
+      "id": 1316,
+      "title": "How does FDB execute multiple getRange requests in parallel?",
+      "slug": "how-does-fdb-execute-multiple-getrange-requests-in-parallel",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-04-18T01:34:17.414Z",
+      "last_posted_at": "2019-04-21T04:35:24.749Z",
+      "bumped": true,
+      "bumped_at": "2019-04-21T04:35:24.749Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1690,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 567,
+            "username": "kunren",
+            "name": "Kun Ren",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/k/f475e1/{size}.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to Fetch all stored key-values at once",
+      "id": 1285,
+      "title": "How to Fetch all stored key-values at once",
+      "slug": "how-to-fetch-all-stored-key-values-at-once",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-04-05T12:12:49.636Z",
+      "last_posted_at": "2019-04-10T20:48:57.581Z",
+      "bumped": true,
+      "bumped_at": "2019-04-10T20:48:57.581Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "fdbsummit"
+      ],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 5507,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 337,
+            "username": "mengxu",
+            "name": "Meng Xu",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mengxu/{size}/893_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "rangeRead future throws interruptException on get",
+      "id": 1870,
+      "title": "rangeRead future throws interruptException on get",
+      "slug": "rangeread-future-throws-interruptexception-on-get",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2020-01-08T17:51:42.524Z",
+      "last_posted_at": "2020-01-13T00:51:25.429Z",
+      "bumped": true,
+      "bumped_at": "2020-01-13T00:51:25.429Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 727,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 695,
+            "username": "nischalkumar",
+            "name": "nischal kumar",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/nischalkumar/{size}/933_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Is it possible to fetch two different keys using &ldquo;fdb_transaction_get_range&rdquo; API in C program",
+      "id": 1388,
+      "title": "Is it possible to fetch two different keys using \"fdb_transaction_get_range\" API in C program",
+      "slug": "is-it-possible-to-fetch-two-different-keys-using-fdb-transaction-get-range-api-in-c-program",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2019-05-23T08:14:07.379Z",
+      "last_posted_at": "2019-05-23T15:43:55.444Z",
+      "bumped": true,
+      "bumped_at": "2019-05-23T15:43:55.444Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 591,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 489,
+        "username": "cdonati",
+        "name": "Chris Donati",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/cdonati/{size}/515_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 12,
+        "username": "ajbeamon",
+        "name": "A.J. Beamon",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "admin": true,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 489,
+      "username": "cdonati",
+      "name": "Chris Donati",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/cdonati/{size}/515_2.png"
+    },
+    "last_poster": {
+      "id": 489,
+      "username": "cdonati",
+      "name": "Chris Donati",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/cdonati/{size}/515_2.png"
+    }
+  },
+  "bookmarks": []
+}

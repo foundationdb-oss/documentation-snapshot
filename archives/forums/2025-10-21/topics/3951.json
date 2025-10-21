@@ -1,0 +1,686 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12826,
+        "name": "Aukira",
+        "username": "Lixinran1826",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/lixinran1826/{size}/1581_2.png",
+        "created_at": "2023-05-09T03:13:44.670Z",
+        "cooked": "<p>I\u2019m using the FoundationDB Python API version 7.2.5, and my FoundationDB C library version is FoundationDB CLI 6.3 (v6.3.12). I get a runtime error while using <code>fdb.api_version(630)</code> which indicates that the FoundationDB C library version can\u2019t support the API version:</p>\n<pre><code class=\"lang-auto\">RuntimeError: This version of the FoundationDB Python binding is not supported by the installed FoundationDB C library. The binding requires a library that supports API version 720, but the installed library supports a maximum version of 630.\n</code></pre>\n<p>So I have to degrade the Python API version to 6.3.18. I wonder is there any way to use version 7.2.5?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-05-09T03:16:58.738Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 344,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 1721.0,
+        "yours": false,
+        "topic_id": 3951,
+        "topic_slug": "the-latest-python-api-version-doesnt-match-the-latest-foundationdb-c-library-version",
+        "display_username": "Aukira",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1252,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/the-latest-python-api-version-doesnt-match-the-latest-foundationdb-c-library-version/3951/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 12829,
+        "name": "Johannes Scheuermann",
+        "username": "johscheuer",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "created_at": "2023-05-10T07:12:47.865Z",
+        "cooked": "<p>I would always recommend to use the oldest version of the bindings that you want to support. That\u2019s the reason the FoundationDB operator currently uses the go bindings for 6.2, as this is the oldest still supported version (<a href=\"https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/go.mod#L6\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdb-kubernetes-operator/go.mod at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub</a>).</p>\n<p>I believe there were some changes in 7.1/7.2 that are not available in 6.3, so that\u2019s why you see this error. Also you wouldn\u2019t be able to use any new RPCs that were added on newer versions than 6.3.</p>\n<p>To make your setup work, you probably have to use the multi-version setup: <a href=\"https://apple.github.io/foundationdb/api-general.html#multi-version-client\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Using FoundationDB Clients \u2014 FoundationDB 7.2</a>.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-05-10T07:12:47.865Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 9,
+        "reads": 30,
+        "readers_count": 29,
+        "score": 51.0,
+        "yours": false,
+        "topic_id": 3951,
+        "topic_slug": "the-latest-python-api-version-doesnt-match-the-latest-foundationdb-c-library-version",
+        "display_username": "Johannes Scheuermann",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/api-general.html#multi-version-client",
+            "internal": false,
+            "reflection": false,
+            "title": "Using FoundationDB Clients \u2014 FoundationDB 7.2",
+            "clicks": 36
+          },
+          {
+            "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/go.mod#L6",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb-kubernetes-operator/go.mod at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+            "clicks": 5
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 849,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/the-latest-python-api-version-doesnt-match-the-latest-foundationdb-c-library-version/3951/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12845,
+        "name": "chetan",
+        "username": "chetan_pg",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png",
+        "created_at": "2023-05-12T20:37:45.358Z",
+        "cooked": "<p>I used go and always try to keep FDB server version and FDB client version and Go package all matching along with version setting in application which is 620.</p>\n<pre><code> FDB_URL: https://github.com/apple/foundationdb/releases/download/6.2.30/foundationdb-clients-6.2.30-1.el7.x86_64.rpm\nFDB_VERSION: foundationdb-clients-6.2.30-1.el7.x86_64.rpm\nFDB_API_VERSION: \"6.2.7\"\nFDB_API_BASE: \"620\"\n</code></pre>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2023-05-12T20:37:45.358Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 27,
+        "readers_count": 26,
+        "score": 25.4,
+        "yours": false,
+        "topic_id": 3951,
+        "topic_slug": "the-latest-python-api-version-doesnt-match-the-latest-foundationdb-c-library-version",
+        "display_username": "chetan",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1104,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/the-latest-python-api-version-doesnt-match-the-latest-foundationdb-c-library-version/3951/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      12826,
+      12829,
+      12845
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      897
+    ],
+    [
+      2,
+      896
+    ],
+    [
+      3,
+      893
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "The latest Python API version doesn&rsquo;t match the latest FoundationDB C library version",
+  "id": 3951,
+  "title": "The latest Python API version doesn't match the latest FoundationDB C library version",
+  "posts_count": 3,
+  "created_at": "2023-05-09T03:13:44.601Z",
+  "views": 729,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-05-12T20:37:45.358Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "the-latest-python-api-version-doesnt-match-the-latest-foundationdb-c-library-version",
+  "category_id": 7,
+  "word_count": 299,
+  "deleted_at": null,
+  "user_id": 1252,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3951",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Facing issue with FDB API version",
+      "id": 1301,
+      "title": "Facing issue with FDB API version",
+      "slug": "facing-issue-with-fdb-api-version",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-04-11T10:53:04.631Z",
+      "last_posted_at": "2019-04-16T06:53:11.032Z",
+      "bumped": true,
+      "bumped_at": "2019-04-16T06:53:11.032Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1196,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 511,
+            "username": "sakthivelpvs",
+            "name": "Sakthivel",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/s/9dc877/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Foundationdb FDB_API_VERSION version from bindings",
+      "id": 2867,
+      "title": "Foundationdb FDB_API_VERSION version from bindings",
+      "slug": "foundationdb-fdb-api-version-version-from-bindings",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2021-08-28T02:17:49.770Z",
+      "last_posted_at": "2021-11-03T01:12:32.537Z",
+      "bumped": true,
+      "bumped_at": "2021-11-03T01:12:32.537Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 848,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Make the fdb.api_version(nnn) specification optional",
+      "id": 271,
+      "title": "Make the fdb.api_version(nnn) specification optional",
+      "slug": "make-the-fdb-api-version-nnn-specification-optional",
+      "posts_count": 3,
+      "reply_count": 1,
+      "highest_post_number": 3,
+      "image_url": null,
+      "created_at": "2018-04-25T22:17:56.847Z",
+      "last_posted_at": "2018-04-25T23:16:06.029Z",
+      "bumped": true,
+      "bumped_at": "2018-04-25T23:16:06.029Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 600,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 31,
+            "username": "dicklacara",
+            "name": "Richard Applebaum",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8797f3/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Header version in bindings",
+      "id": 1113,
+      "title": "Header version in bindings",
+      "slug": "header-version-in-bindings",
+      "posts_count": 7,
+      "reply_count": 4,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-02-04T23:31:41.897Z",
+      "last_posted_at": "2019-02-05T20:57:20.686Z",
+      "bumped": true,
+      "bumped_at": "2019-02-05T21:03:35.324Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1399,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Discovering max API version when building out-of-tree bindings",
+      "id": 2972,
+      "title": "Discovering max API version when building out-of-tree bindings",
+      "slug": "discovering-max-api-version-when-building-out-of-tree-bindings",
+      "posts_count": 6,
+      "reply_count": 1,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2021-10-29T01:47:53.714Z",
+      "last_posted_at": "2021-11-03T18:18:51.649Z",
+      "bumped": true,
+      "bumped_at": "2021-11-03T18:18:51.649Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 471,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 423,
+            "username": "kocolosk",
+            "name": "Adam Kocoloski",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/kocolosk/{size}/412_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 849,
+        "username": "johscheuer",
+        "name": "Johannes Scheuermann",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1104,
+        "username": "chetan_pg",
+        "name": "chetan",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 1252,
+        "username": "Lixinran1826",
+        "name": "Aukira",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/lixinran1826/{size}/1581_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1252,
+      "username": "Lixinran1826",
+      "name": "Aukira",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/lixinran1826/{size}/1581_2.png"
+    },
+    "last_poster": {
+      "id": 1104,
+      "username": "chetan_pg",
+      "name": "chetan",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/c/d6d6ee/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://apple.github.io/foundationdb/api-general.html#multi-version-client",
+        "title": "Using FoundationDB Clients \u2014 FoundationDB 7.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 36,
+        "user_id": 849,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/go.mod#L6",
+        "title": "fdb-kubernetes-operator/go.mod at main \u00b7 FoundationDB/fdb-kubernetes-operator \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 849,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

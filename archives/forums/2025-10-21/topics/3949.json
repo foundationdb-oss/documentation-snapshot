@@ -1,0 +1,520 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 12823,
+        "name": "",
+        "username": "Imperatorx",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+        "created_at": "2023-05-08T12:56:26.918Z",
+        "cooked": "<p>If watches are cancelled on timeout, the NativeFuture.cancel() gets called, but the future itself is not disposed, so after 10000 watch cancellations, this will cause the connection to fail creating watches.</p>\n<p>Sample code:</p>\n<pre><code class=\"lang-java\">public static void main(String[] args) throws Exception {\n        var db = FDB.selectAPIVersion(710)\n                .open();\n\n        AtomicLong c = new AtomicLong();\n\n        while (true) {\n            var watch = db.run(tr -&gt; {\n                return tr.watch(\"foo\".getBytes());\n            });\n\n            watch.orTimeout(1, TimeUnit.MILLISECONDS)\n                    .exceptionally(e -&gt; {\n                        if(e instanceof TimeoutException) {\n                            return null;\n                        }\n\n                        throw new RuntimeException(e);\n                    })\n                    .get();\n\n            // ((AutoCloseable) watch).close(); // &lt;- without this line, this will fail after 10k loops.\n\n            System.out.println(\"Watch no \" + c.incrementAndGet());\n        }\n    }\n</code></pre>\n<p>Shouldn\u2019t the NativeFuture.cancel also call <code>Future_dispose(ptr);</code> ? Now the only way is to cast the CompletableFuture to an AutoClosable and manually call close() on cancel.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-05-08T12:56:26.918Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 13,
+        "reads": 13,
+        "readers_count": 12,
+        "score": 67.6,
+        "yours": false,
+        "topic_id": 3949,
+        "topic_slug": "java-binding-for-watches-does-not-properly-clean-up-on-nativefuture-cancel",
+        "display_username": "",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 164,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/java-binding-for-watches-does-not-properly-clean-up-on-nativefuture-cancel/3949/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      12823
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      897
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Java binding for watches does not properly clean up on NativeFuture.cancel()",
+  "id": 3949,
+  "title": "Java binding for watches does not properly clean up on NativeFuture.cancel()",
+  "posts_count": 1,
+  "created_at": "2023-05-08T12:56:26.849Z",
+  "views": 282,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-05-08T12:56:26.918Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "java-binding-for-watches-does-not-properly-clean-up-on-nativefuture-cancel",
+  "category_id": 7,
+  "word_count": 129,
+  "deleted_at": null,
+  "user_id": 164,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3949",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Question regarding WATCH future",
+      "id": 3062,
+      "title": "Question regarding WATCH future",
+      "slug": "question-regarding-watch-future",
+      "posts_count": 8,
+      "reply_count": 6,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2021-12-07T14:34:46.115Z",
+      "last_posted_at": "2021-12-10T01:10:12.437Z",
+      "bumped": true,
+      "bumped_at": "2021-12-10T01:10:12.437Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 480,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 946,
+            "username": "rajivr",
+            "name": "Rajiv M Ranganath",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rajivr/{size}/1100_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Watch semantics",
+      "id": 1480,
+      "title": "Watch semantics",
+      "slug": "watch-semantics",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2019-06-23T00:08:14.360Z",
+      "last_posted_at": "2019-06-23T00:08:14.445Z",
+      "bumped": true,
+      "bumped_at": "2019-06-23T00:08:14.445Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 378,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Understanding &ldquo;Watches&rdquo;",
+      "id": 903,
+      "title": "Understanding \"Watches\"",
+      "slug": "understanding-watches",
+      "posts_count": 10,
+      "reply_count": 4,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-11-26T17:28:09.202Z",
+      "last_posted_at": "2018-11-27T17:28:33.763Z",
+      "bumped": true,
+      "bumped_at": "2018-11-27T17:28:33.763Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3295,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 437,
+            "username": "MansurAshraf",
+            "name": "Mansur Ashraf",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 435,
+            "username": "ArchDev",
+            "name": "Arthur Kushka",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/archdev/{size}/425_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "id": 516,
+      "title": "What is the life time of key, value and other arguments passed to fdb_transaction_*",
+      "slug": "what-is-the-life-time-of-key-value-and-other-arguments-passed-to-fdb-transaction",
+      "posts_count": 11,
+      "reply_count": 4,
+      "highest_post_number": 11,
+      "image_url": null,
+      "created_at": "2018-06-18T18:28:57.904Z",
+      "last_posted_at": "2018-07-17T16:11:21.242Z",
+      "bumped": true,
+      "bumped_at": "2018-07-17T16:11:21.242Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2608,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Destroying futures after &lsquo;fdb_transaction_on_error()&rsquo;",
+      "id": 1307,
+      "title": "Destroying futures after 'fdb_transaction_on_error()'",
+      "slug": "destroying-futures-after-fdb-transaction-on-error",
+      "posts_count": 9,
+      "reply_count": 1,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-04-16T13:33:52.150Z",
+      "last_posted_at": "2019-04-24T18:38:45.358Z",
+      "bumped": true,
+      "bumped_at": "2019-04-24T18:38:45.358Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1428,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 164,
+        "username": "Imperatorx",
+        "name": "",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 164,
+      "username": "Imperatorx",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png"
+    },
+    "last_poster": {
+      "id": 164,
+      "username": "Imperatorx",
+      "name": "",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/i/d2c977/{size}.png"
+    }
+  },
+  "bookmarks": []
+}

@@ -1,0 +1,729 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11995,
+        "name": "liyyue",
+        "username": "liyyue",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+        "created_at": "2022-11-10T13:06:36.891Z",
+        "cooked": "<p>Hi, Experts</p>\n<p>Now I am drafting a golang application to access fdb, initially it access fdb 6.2, and in the go.mod is as following:</p>\n<pre><code class=\"lang-auto\">...\nrequire (\n        github.com/apple/foundationdb/bindings/go v0.0.0-20200112054404-407dc0907f4f\n...\n</code></pre>\n<p>But when it is upgraded to fdb 6.3, in the app the line \u201cfdb.MustAPIVersion(630)\u201d popup \u201cversion not support\u201d error.</p>\n<p>So I tried to change the go binding version in go.mod, but I can only found 7.x binding version from <code>https://pkg.go.dev/github.com/apple/foundationdb/bindings/go/src/fdb?tab=versions</code></p>\n<p>If I use latest version \u201cv0.0.0-20221110120141-0160570c2a46\u201d in go.mod which is for 7.x, it popup the error message:</p>\n<pre><code class=\"lang-auto\">....\n Requested API version requires a newer version of this header\n...\n</code></pre>\n<p>So I wonder for fdb 6.3 what is the binding version in go.mod? Thanks!</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-11-10T13:06:36.891Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 29,
+        "reads": 12,
+        "readers_count": 11,
+        "score": 147.4,
+        "yours": false,
+        "topic_id": 3654,
+        "topic_slug": "what-is-the-go-binding-version-in-go-mod-for-fdb-6-3-24",
+        "display_username": "liyyue",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://forums.foundationdb.org/t/go-binding-for-6-3-23/3908",
+            "internal": true,
+            "reflection": true,
+            "title": "Go binding for 6.3.23",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1022,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-is-the-go-binding-version-in-go-mod-for-fdb-6-3-24/3654/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11996,
+        "name": "Hari B",
+        "username": "harikb",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+        "created_at": "2022-11-11T06:09:23.838Z",
+        "cooked": "<p>In my projects, I always do this.</p>\n<p>Step <span class=\"hashtag\">#1:</span> go get <a href=\"http://github.com/apple/foundationdb/bindings/go/src/fdb@7.1.23\" rel=\"noopener nofollow ugc\">github.com/apple/foundationdb/bindings/go/src/fdb@7.1.23</a></p>\n<p>Replace 7.1.23 with the version that matches the fdb-client you have.</p>\n<p>Step <span class=\"hashtag\">#2:</span> Save the \u201cgo.mod\u201d and don\u2019t ever upgrade the binding using any other <code>go mod</code> command other than the explicit one mentioned above.</p>\n<p>I have filed a related ticket here <a href=\"https://github.com/apple/foundationdb/issues/4431\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">Changing the version tag format or consider an additional tag for each release \u00b7 Issue #4431 \u00b7 apple/foundationdb \u00b7 GitHub</a> - but I haven\u2019t had time to investigate why the version numbers shows as v0.0.0 - and whether the proposed solution of adding <em>v</em> prefix will fix the issue.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-11-11T06:14:24.987Z",
+        "reply_count": 1,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 22.0,
+        "yours": false,
+        "topic_id": 3654,
+        "topic_slug": "what-is-the-go-binding-version-in-go-mod-for-fdb-6-3-24",
+        "display_username": "Hari B",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/issues/4431",
+            "internal": false,
+            "reflection": false,
+            "title": "Changing the version tag format or consider an additional tag for each release \u00b7 Issue #4431 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 6
+          },
+          {
+            "url": "http://github.com/apple/foundationdb/bindings/go/src/fdb@7.1.23",
+            "internal": false,
+            "reflection": false,
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 405,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-is-the-go-binding-version-in-go-mod-for-fdb-6-3-24/3654/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 12000,
+        "name": "liyyue",
+        "username": "liyyue",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+        "created_at": "2022-11-11T09:18:16.412Z",
+        "cooked": "<p><a class=\"mention\" href=\"/u/harikb\">@harikb</a>  Thanks a lot for your help!</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2022-11-11T09:18:16.412Z",
+        "reply_count": 0,
+        "reply_to_post_number": 2,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 10,
+        "readers_count": 9,
+        "score": 2.0,
+        "yours": false,
+        "topic_id": 3654,
+        "topic_slug": "what-is-the-go-binding-version-in-go-mod-for-fdb-6-3-24",
+        "display_username": "liyyue",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "reply_to_user": {
+          "id": 405,
+          "username": "harikb",
+          "name": "Hari B",
+          "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png"
+        },
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1022,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/what-is-the-go-binding-version-in-go-mod-for-fdb-6-3-24/3654/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11995,
+      11996,
+      12000
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1076
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings",
+    "operator"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "What is the go binding version in go.mod for fdb 6.3.24?",
+  "id": 3654,
+  "title": "What is the go binding version in go.mod for fdb 6.3.24?",
+  "posts_count": 3,
+  "created_at": "2022-11-10T13:06:36.819Z",
+  "views": 416,
+  "reply_count": 1,
+  "like_count": 1,
+  "last_posted_at": "2022-11-11T09:18:16.412Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "what-is-the-go-binding-version-in-go-mod-for-fdb-6-3-24",
+  "category_id": 5,
+  "word_count": 258,
+  "deleted_at": null,
+  "user_id": 1022,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3654",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Installing bindings with Go modules",
+      "id": 1182,
+      "title": "Installing bindings with Go modules",
+      "slug": "installing-bindings-with-go-modules",
+      "posts_count": 6,
+      "reply_count": 2,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-02-25T00:37:18.023Z",
+      "last_posted_at": "2019-03-31T11:02:02.036Z",
+      "bumped": true,
+      "bumped_at": "2019-03-31T11:30:36.462Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 4,
+      "views": 3159,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 120,
+            "username": "josephg",
+            "name": "Seph Gentle",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/josephg/{size}/84_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 265,
+            "username": "brainfucker",
+            "name": "Illarionov Oleg",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/brainfucker/{size}/237_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 552,
+            "username": "skyrocknroll",
+            "name": "Yuvaraj L",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/skyrocknroll/{size}/547_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Encounter error Requested API version requires a newer version of this header",
+      "id": 3111,
+      "title": "Encounter error Requested API version requires a newer version of this header",
+      "slug": "encounter-error-requested-api-version-requires-a-newer-version-of-this-header",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2022-01-14T20:13:20.334Z",
+      "last_posted_at": "2022-01-17T11:12:34.591Z",
+      "bumped": true,
+      "bumped_at": "2022-01-17T11:12:34.591Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1265,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1022,
+            "username": "liyyue",
+            "name": "liyyue",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 534,
+            "username": "PierreZ",
+            "name": "Pierre Zemb",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/pierrez/{size}/866_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Go binding for 6.3.23",
+      "id": 3908,
+      "title": "Go binding for 6.3.23",
+      "slug": "go-binding-for-6-3-23",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2023-04-16T18:07:25.771Z",
+      "last_posted_at": "2023-04-16T18:07:25.860Z",
+      "bumped": true,
+      "bumped_at": "2023-04-16T18:15:26.182Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 490,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1242,
+            "username": "mAdkins23",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/m/7993a0/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Go + FoundationDB - Straight Forward Steps",
+      "id": 1274,
+      "title": "Go + FoundationDB - Straight Forward Steps",
+      "slug": "go-foundationdb-straight-forward-steps",
+      "posts_count": 9,
+      "reply_count": 5,
+      "highest_post_number": 9,
+      "image_url": null,
+      "created_at": "2019-04-01T21:02:46.452Z",
+      "last_posted_at": "2019-04-09T06:37:50.005Z",
+      "bumped": true,
+      "bumped_at": "2019-04-09T06:37:50.005Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3046,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 538,
+            "username": "ravilution",
+            "name": "Ravilution",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 170,
+            "username": "meln1k",
+            "name": "Nikita Melkozerov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/meln1k/{size}/150_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Support for Golang in latest version?",
+      "id": 4351,
+      "title": "Support for Golang in latest version?",
+      "slug": "support-for-golang-in-latest-version",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2024-02-07T13:28:23.604Z",
+      "last_posted_at": "2024-03-10T13:04:31.414Z",
+      "bumped": true,
+      "bumped_at": "2024-03-10T13:04:31.414Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 389,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 1237,
+            "username": "danthegoodman",
+            "name": "Dan Goodman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/danthegoodman/{size}/1567_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 1342,
+            "username": "newhook",
+            "name": "Matthew Newhook",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/newhook/{size}/1684_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 849,
+            "username": "johscheuer",
+            "name": "Johannes Scheuermann",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/j/f475e1/{size}.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1022,
+        "username": "liyyue",
+        "name": "liyyue",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 405,
+        "username": "harikb",
+        "name": "Hari B",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/harikb/{size}/1033_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1022,
+      "username": "liyyue",
+      "name": "liyyue",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png"
+    },
+    "last_poster": {
+      "id": 1022,
+      "username": "liyyue",
+      "name": "liyyue",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/l/54ee81/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/issues/4431",
+        "title": "Changing the version tag format or consider an additional tag for each release \u00b7 Issue #4431 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 405,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "http://github.com/apple/foundationdb/bindings/go/src/fdb@7.1.23",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 405,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}

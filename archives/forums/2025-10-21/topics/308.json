@@ -1,0 +1,781 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 722,
+        "name": "Van L",
+        "username": "Ooogwayduh_Rock",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ooogwayduh_rock/{size}/46_2.png",
+        "created_at": "2018-04-30T03:01:35.973Z",
+        "cooked": "<p>Is there a style guide for source code and comments?</p>\n<p>For example, how could the following comment be made better? or what is the thinking here?</p>\n<blockquote>\n<p>// The reason for getting a pointer to DatabaseContext instead of a reference counted object is because reference counting will increment reference count for<br>\n// DatabaseContext which holds the future of this actor. This creates a cyclic reference and hence this actor and Database object will not be destroyed at all.</p>\n</blockquote>\n<ul>\n<li>Source: <a href=\"https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L346\" rel=\"noopener nofollow ugc\">Line 346 of NativeAPI.actor.cpp</a></li>\n</ul>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-30T03:01:35.973Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 33,
+        "reads": 41,
+        "readers_count": 40,
+        "score": 175.2,
+        "yours": false,
+        "topic_id": 308,
+        "topic_slug": "source-code-style-guide",
+        "display_username": "Van L",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L346",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/NativeAPI.actor.cpp at 9043911f2b1d09cae06fd4245fa90f61e16c566f \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 6
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 61,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/source-code-style-guide/308/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 723,
+        "name": "Alex Miller",
+        "username": "alexmiller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "created_at": "2018-04-30T04:37:29.986Z",
+        "cooked": "<p>There is a .clang-format file that was very recently added to the repository, which is the closest we have to a coding style now.  Formerly, there wasn\u2019t a defined coding style, and the feel of the code was largely influenced by its author\u2019s opinions.</p>\n<p>The comment is describing that <a href=\"https://github.com/apple/foundationdb/blob/cadb4692e27e63286e99f2946ca78b80f5bb0203/fdbclient/NativeAPI.actor.cpp#L482\" rel=\"nofollow noopener\">DatabaseContext holds the result of calling clientStatusUpdateActor</a>, so having clientStatusUpdateActor hold a reference to the DatabaseContext would cause a cycle of reference counts.  Naive reference counting can\u2019t handle cycles, so using reference would cause a memory leak.  I\u2019m open to better ways for it to be phrased, but nothing leaps out at me.</p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-04-30T04:37:29.986Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 41,
+        "readers_count": 40,
+        "score": 8.2,
+        "yours": false,
+        "topic_id": 308,
+        "topic_slug": "source-code-style-guide",
+        "display_username": "Alex Miller",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/cadb4692e27e63286e99f2946ca78b80f5bb0203/fdbclient/NativeAPI.actor.cpp#L482",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/NativeAPI.actor.cpp at cadb4692e27e63286e99f2946ca78b80f5bb0203 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 13,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/source-code-style-guide/308/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 744,
+        "name": "Van L",
+        "username": "Ooogwayduh_Rock",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ooogwayduh_rock/{size}/46_2.png",
+        "created_at": "2018-05-01T09:08:02.368Z",
+        "cooked": "<p>Here, a line length exceeding 104 columns causes line wrap.</p>\n<p>Should the style guide recommend 80 column width for comments?</p>\n<p>There should be a process to collect suggestions, polish them through<br>\ndiscussion on chat platforms, forums, emailing lists and then throw<br>\nthem out or keep them in a style guide.</p>\n<p>I\u2019ve created a <code>##FoundationDB</code> channel on <code>freenode</code> for chat and can<br>\nhand ownership to somebody official here. It has been linked to the<br>\n<code>##apple</code> channel.</p>\n<p>In the code block that follows, lines <a href=\"https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L430\" rel=\"noopener nofollow ugc\">430</a> and <a href=\"https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L441\" rel=\"noopener nofollow ugc\">441</a> are comment<br>\nduplicates the style guide could reject for reasons collected and then<br>\npoint to a wiki for better ways than doing that.</p>\n<p>Ideally, comments would read as smoothly as follows in 80 columns or less :-</p>\n<blockquote>\n<p>// It is almost always clear from context what people mean.<br>\n// When dealing with computer programs, however, it is important<br>\n// to keep the distinction in mind, since the computer is not as<br>\n// smart as a person.</p>\n</blockquote>\n<ul>\n<li>Source: This is an Introduction to Programming in Emacs Lisp,  <a href=\"https://www.gnu.org/software/emacs/manual/html_node/eintr/Buffer-Names.html#Buffer-Names\" rel=\"noopener nofollow ugc\">for people who are not programmers.</a></li>\n</ul>\n<p>Would a tech journo be able to phrase what is going on there without cartwheeling the terms in the one sentence, one sentence?</p>\n<p>The C++ section of the style guide has pointers to :-</p>\n<ul>\n<li><a href=\"https://isocpp.org\" rel=\"noopener nofollow ugc\">https://isocpp.org</a></li>\n<li><a href=\"https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">C++ Core Guidelines</a></li>\n</ul>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 3,
+        "updated_at": "2018-05-02T05:42:11.835Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 35,
+        "readers_count": 34,
+        "score": 12.0,
+        "yours": false,
+        "topic_id": 308,
+        "topic_slug": "source-code-style-guide",
+        "display_username": "Van L",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+            "internal": false,
+            "reflection": false,
+            "title": "C++ Core Guidelines",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L430",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/NativeAPI.actor.cpp at 9043911f2b1d09cae06fd4245fa90f61e16c566f \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L441",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/NativeAPI.actor.cpp at 9043911f2b1d09cae06fd4245fa90f61e16c566f \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 1
+          },
+          {
+            "url": "https://www.gnu.org/software/emacs/manual/html_node/eintr/Buffer-Names.html#Buffer-Names",
+            "internal": false,
+            "reflection": false,
+            "clicks": 1
+          },
+          {
+            "url": "https://isocpp.org",
+            "internal": false,
+            "reflection": false,
+            "title": "Standard C++",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": "",
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 61,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/source-code-style-guide/308/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      722,
+      723,
+      744
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2732
+    ],
+    [
+      3,
+      2731
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "Source Code Style Guide",
+  "id": 308,
+  "title": "Source Code Style Guide",
+  "posts_count": 3,
+  "created_at": "2018-04-30T03:01:35.897Z",
+  "views": 745,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2018-05-01T09:08:02.368Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "source-code-style-guide",
+  "category_id": 5,
+  "word_count": 466,
+  "deleted_at": null,
+  "user_id": 61,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_308",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 3,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "CMake and better IDE support",
+      "id": 334,
+      "title": "CMake and better IDE support",
+      "slug": "cmake-and-better-ide-support",
+      "posts_count": 10,
+      "reply_count": 5,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-05-03T23:09:33.328Z",
+      "last_posted_at": "2018-08-11T00:35:30.260Z",
+      "bumped": true,
+      "bumped_at": "2018-08-11T00:35:30.260Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 1711,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 22,
+            "username": "dave",
+            "name": "David Scherer",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dave/{size}/89_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Getting warnings using Go bindings on Mac &ldquo;cgo-gcc-export-header-prolog:45:1: warning: &lsquo;/*&rsquo; within block comment [-Wcomment]&rdquo;",
+      "id": 1244,
+      "title": "Getting warnings using Go bindings on Mac \"cgo-gcc-export-header-prolog:45:1: warning: '/*' within block comment [-Wcomment]\"",
+      "slug": "getting-warnings-using-go-bindings-on-mac-cgo-gcc-export-header-prolog1-warning-within-block-comment-wcomment",
+      "posts_count": 4,
+      "reply_count": 1,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2019-03-21T18:18:21.551Z",
+      "last_posted_at": "2019-05-20T18:24:21.379Z",
+      "bumped": true,
+      "bumped_at": "2019-05-20T18:24:21.379Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "unicode_title": "Getting warnings using Go bindings on Mac \"cgo-gcc-export-header-prolog:45:1: warning: '/*' within block comment [-Wcomment]\"",
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1479,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 527,
+            "username": "johne",
+            "name": "John E",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/johne/{size}/527_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 528,
+            "username": "bryagd",
+            "name": "Gregory Bryant",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bryagd/{size}/576_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Memory leak in client profiling code",
+      "id": 2108,
+      "title": "Memory leak in client profiling code",
+      "slug": "memory-leak-in-client-profiling-code",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2020-05-07T20:05:59.143Z",
+      "last_posted_at": "2020-05-08T23:21:40.526Z",
+      "bumped": true,
+      "bumped_at": "2020-05-08T23:21:40.526Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 726,
+      "category_id": 8,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 14,
+            "username": "andrew.noyes",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/andrew.noyes/{size}/443_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Building on Windows",
+      "id": 404,
+      "title": "Building on Windows",
+      "slug": "building-on-windows",
+      "posts_count": 10,
+      "reply_count": 4,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-05-12T13:32:26.654Z",
+      "last_posted_at": "2019-10-13T20:08:10.927Z",
+      "bumped": true,
+      "bumped_at": "2019-10-13T20:08:10.927Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 3367,
+      "category_id": 5,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 235,
+            "username": "wolfspider",
+            "name": "Jesse Bennett",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfspider/{size}/206_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 545,
+            "username": "rishabh",
+            "name": "Rishabh",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rishabh/{size}/540_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Welcome to the FoundationDB Community",
+      "id": 39,
+      "title": "Welcome to the FoundationDB Community",
+      "slug": "welcome-to-the-foundationdb-community",
+      "posts_count": 3,
+      "reply_count": 0,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-04-19T15:24:29.191Z",
+      "last_posted_at": "2018-04-19T15:31:19.581Z",
+      "bumped": true,
+      "bumped_at": "2018-04-19T15:24:29.409Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": true,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 7,
+      "views": 1614,
+      "category_id": 3,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 4,
+            "username": "bbc",
+            "name": "Ben Collins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/bbc/{size}/4_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 61,
+        "username": "Ooogwayduh_Rock",
+        "name": "Van L",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ooogwayduh_rock/{size}/46_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      },
+      {
+        "id": 13,
+        "username": "alexmiller",
+        "name": "Alex Miller",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      }
+    ],
+    "created_by": {
+      "id": 61,
+      "username": "Ooogwayduh_Rock",
+      "name": "Van L",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ooogwayduh_rock/{size}/46_2.png"
+    },
+    "last_poster": {
+      "id": 61,
+      "username": "Ooogwayduh_Rock",
+      "name": "Van L",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ooogwayduh_rock/{size}/46_2.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L346",
+        "title": "foundationdb/NativeAPI.actor.cpp at 9043911f2b1d09cae06fd4245fa90f61e16c566f \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 6,
+        "user_id": 61,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/cadb4692e27e63286e99f2946ca78b80f5bb0203/fdbclient/NativeAPI.actor.cpp#L482",
+        "title": "foundationdb/NativeAPI.actor.cpp at cadb4692e27e63286e99f2946ca78b80f5bb0203 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 13,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L430",
+        "title": "foundationdb/NativeAPI.actor.cpp at 9043911f2b1d09cae06fd4245fa90f61e16c566f \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 61,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://github.com/apple/foundationdb/blob/9043911f2b1d09cae06fd4245fa90f61e16c566f/fdbclient/NativeAPI.actor.cpp#L441",
+        "title": "foundationdb/NativeAPI.actor.cpp at 9043911f2b1d09cae06fd4245fa90f61e16c566f \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 61,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      },
+      {
+        "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+        "title": "C++ Core Guidelines",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 61,
+        "domain": "isocpp.github.io",
+        "root_domain": "isocpp.github.io"
+      },
+      {
+        "url": "https://www.gnu.org/software/emacs/manual/html_node/eintr/Buffer-Names.html#Buffer-Names",
+        "title": null,
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 61,
+        "domain": "www.gnu.org",
+        "root_domain": "gnu.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

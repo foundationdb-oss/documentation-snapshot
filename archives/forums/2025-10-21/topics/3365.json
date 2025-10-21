@@ -1,0 +1,788 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 11229,
+        "name": "Damien Leroux",
+        "username": "damienleroux",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/damienleroux/{size}/1212_2.png",
+        "created_at": "2022-06-09T12:57:12.887Z",
+        "cooked": "<p>Hello <img src=\"https://emoji.discourse-cdn.com/twitter/wave.png?v=12\" title=\":wave:\" class=\"emoji\" alt=\":wave:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<p><strong>Context:</strong></p>\n<p>I plan to change the redundancy of an in-production 6.3.23 FDB database from <code>single</code> on one machine to <code>double</code> with 3 machines <img src=\"https://emoji.discourse-cdn.com/twitter/rocket.png?v=12\" title=\":rocket:\" class=\"emoji\" alt=\":rocket:\" loading=\"lazy\" width=\"20\" height=\"20\">.</p>\n<p>I did some tests locally with docker containers and everything worked fine so far <img src=\"https://emoji.discourse-cdn.com/twitter/+1.png?v=12\" title=\":+1:\" class=\"emoji\" alt=\":+1:\" loading=\"lazy\" width=\"20\" height=\"20\"></p>\n<p>Still, I have concerns regarding the <a href=\"https://apple.github.io/foundationdb/configuration.html#changing-redundancy-mode\" rel=\"noopener nofollow ugc\">changing of redundancy</a>.</p>\n<p><strong>Problem:</strong></p>\n<p>First, I have to add additional machines to the cluster before changing the redundant mode.</p>\n<p>Indeed, if running <code>fdbcli --exec \"configure double\"</code> without adding 2 machines, an error <code>Not enough processes exist to support the specified configuration</code> is raised.</p>\n<p>As a result, I must add these machines first. But the consequence of adding additional machines when a database is in a <code>single</code> redundant mode is that FDB should start partitioning the data across these machines <img src=\"https://emoji.discourse-cdn.com/twitter/face_with_raised_eyebrow.png?v=12\" title=\":face_with_raised_eyebrow:\" class=\"emoji\" alt=\":face_with_raised_eyebrow:\" loading=\"lazy\" width=\"20\" height=\"20\">:</p>\n<blockquote>\n<p><code>single</code> mode <em>will</em> work with clusters of two or more computers and will partition data for increased performance but the cluster will not tolerate the loss of any machines.</p>\n</blockquote>\n<p>In my opinion, it is unnecessary because I intend to change the redundant mode to <code>double</code>.</p>\n<p>Also, I don\u2019t know how FDB reacts to <code>fdbcli --exec \"configure double\"</code> while already partitioning a large database <img src=\"https://emoji.discourse-cdn.com/twitter/grimacing.png?v=12\" title=\":grimacing:\" class=\"emoji\" alt=\":grimacing:\" loading=\"lazy\" width=\"20\" height=\"20\">.</p>\n<p><strong>Questions:</strong></p>\n<p>1/ Is there a way to avoid the partitioning of the database between the addition of extra machines and the redundancy configuration change?</p>\n<p>2/ What are the risks of changing the redundancy configuration when FDB is partitioning the data through the just added extra machines?</p>\n<p>Thanks to all of you who take the time to help <img src=\"https://emoji.discourse-cdn.com/twitter/pray.png?v=12\" title=\":pray:\" class=\"emoji\" alt=\":pray:\" loading=\"lazy\" width=\"20\" height=\"20\">.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2022-06-09T12:57:34.253Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 59,
+        "reads": 36,
+        "readers_count": 35,
+        "score": 302.2,
+        "yours": false,
+        "topic_id": 3365,
+        "topic_slug": "how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines",
+        "display_username": "Damien Leroux",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/configuration.html#changing-redundancy-mode",
+            "internal": false,
+            "reflection": false,
+            "title": "Configuration \u2014 FoundationDB 7.1",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1020,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines/3365/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 11240,
+        "name": "Xiaoxi Wang",
+        "username": "sfc-gh-xwang",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/sfc-gh-xwang/{size}/1070_2.png",
+        "created_at": "2022-06-10T21:25:32.578Z",
+        "cooked": "<p>I think the solution is to use a hidden command to disable the data distributor<br>\n<code>datadistribution off</code>. Then enable datadistribution after you add 2 machines.</p>\n<p>Code reference: <a href=\"https://sourcegraph.com/github.com/apple/foundationdb@6.3.23/-/blob/fdbcli/fdbcli.actor.cpp?L4191:30\" class=\"inline-onebox\" rel=\"noopener nofollow ugc\">fdbcli.actor.cpp - apple/foundationdb - Sourcegraph</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2022-06-10T21:25:32.578Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 3,
+        "reads": 32,
+        "readers_count": 31,
+        "score": 36.4,
+        "yours": false,
+        "topic_id": 3365,
+        "topic_slug": "how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines",
+        "display_username": "Xiaoxi Wang",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://sourcegraph.com/github.com/apple/foundationdb@6.3.23/-/blob/fdbcli/fdbcli.actor.cpp?L4191:30",
+            "internal": false,
+            "reflection": false,
+            "title": "fdbcli.actor.cpp - apple/foundationdb - Sourcegraph",
+            "clicks": 7
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [
+          {
+            "id": 2,
+            "count": 1
+          }
+        ],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 785,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines/3365/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11241,
+        "name": "Xiaoxi Wang",
+        "username": "sfc-gh-xwang",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/sfc-gh-xwang/{size}/1070_2.png",
+        "created_at": "2022-06-10T21:38:31.749Z",
+        "cooked": "<p>And for the second question, \u201cWhat are the risks of changing the redundancy configuration when FDB is partitioning the data through the just added extra machines?\u201d.<br>\nI think the risk you\u2019ll have is to waste some read/write bandwidth on the src/dest machine. The data distributor itself has a limited quota to do data movement, if you can pay for extra 600Mb/s (&gt;50*100M, here 50 is the parallelism limit and 100M is the max shard size) moving for a while, I think it\u2019s fine.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2022-06-10T21:45:04.430Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 4,
+        "reads": 31,
+        "readers_count": 30,
+        "score": 26.2,
+        "yours": false,
+        "topic_id": 3365,
+        "topic_slug": "how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines",
+        "display_username": "Xiaoxi Wang",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 785,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines/3365/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 11289,
+        "name": "Damien Leroux",
+        "username": "damienleroux",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/damienleroux/{size}/1212_2.png",
+        "created_at": "2022-06-21T16:46:29.490Z",
+        "cooked": "<p><a class=\"mention\" href=\"/u/sfc-gh-xwang\">@sfc-gh-xwang</a> Thank you for your detailed answer <img src=\"https://emoji.discourse-cdn.com/twitter/+1.png?v=12\" title=\":+1:\" class=\"emoji\" alt=\":+1:\" loading=\"lazy\" width=\"20\" height=\"20\"><img src=\"https://emoji.discourse-cdn.com/twitter/pray.png?v=12\" title=\":pray:\" class=\"emoji\" alt=\":pray:\" loading=\"lazy\" width=\"20\" height=\"20\">.</p>\n<p>I finally had the time to give it a try <img src=\"https://emoji.discourse-cdn.com/twitter/sweat_smile.png?v=12\" title=\":sweat_smile:\" class=\"emoji\" alt=\":sweat_smile:\" loading=\"lazy\" width=\"20\" height=\"20\">, and indeed <code>fdbcli --exec \"datadistribution off\"</code> works like a charm.</p>\n<p>I run it before the 2 machines join my cluster. Then, as soon as I update the redundancy and the include additional coordinators, I run `fdbcli --exec \u201cdatadistribution on\u201d.</p>\n<p>Thank you for your second comment too! knowing that I\u2019ll add the nodes when there is low traffic on our platform, and considering less than 100Go of data, I think it could be negligible indeed.</p>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2022-06-21T16:46:29.490Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 0,
+        "reads": 24,
+        "readers_count": 23,
+        "score": 4.8,
+        "yours": false,
+        "topic_id": 3365,
+        "topic_slug": "how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines",
+        "display_username": "Damien Leroux",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1020,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines/3365/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      11229,
+      11240,
+      11241,
+      11289
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      1230
+    ],
+    [
+      2,
+      1229
+    ],
+    [
+      4,
+      1218
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "How to avoid database partionning while changing redundancy mode from single/1 machine to double/3 machines",
+  "id": 3365,
+  "title": "How to avoid database partionning while changing redundancy mode from single/1 machine to double/3 machines",
+  "posts_count": 4,
+  "created_at": "2022-06-09T12:57:12.811Z",
+  "views": 501,
+  "reply_count": 0,
+  "like_count": 1,
+  "last_posted_at": "2022-06-21T16:46:29.490Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "how-to-avoid-database-partionning-while-changing-redundancy-mode-from-single-1-machine-to-double-3-machines",
+  "category_id": 17,
+  "word_count": 484,
+  "deleted_at": null,
+  "user_id": 1020,
+  "featured_link": "https://apple.github.io/foundationdb/configuration.html#changing-redundancy-mode",
+  "featured_link_root_domain": "apple.github.io",
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_3365",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 2,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Trying out redundancy mode &lsquo;double&rsquo; on a single macOS machine",
+      "id": 376,
+      "title": "Trying out redundancy mode 'double' on a single macOS machine",
+      "slug": "trying-out-redundancy-mode-double-on-a-single-macos-machine",
+      "posts_count": 6,
+      "reply_count": 3,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2018-05-08T07:37:40.052Z",
+      "last_posted_at": "2018-05-08T19:05:18.144Z",
+      "bumped": true,
+      "bumped_at": "2018-05-08T19:05:18.144Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1203,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 243,
+            "username": "brb",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Setting up a cluster with 5 servers",
+      "id": 769,
+      "title": "Setting up a cluster with 5 servers",
+      "slug": "setting-up-a-cluster-with-5-servers",
+      "posts_count": 5,
+      "reply_count": 3,
+      "highest_post_number": 5,
+      "image_url": null,
+      "created_at": "2018-10-15T15:44:11.291Z",
+      "last_posted_at": "2018-10-15T19:20:58.342Z",
+      "bumped": true,
+      "bumped_at": "2018-10-15T19:20:58.342Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2223,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 264,
+            "username": "dkoston",
+            "name": "Dave Koston",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/dkoston/{size}/264_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "id": 1282,
+      "title": "6.0.18 Reporting incorrect Fault Tolerance via fdbcli with triple redundancy mode?",
+      "slug": "6-0-18-reporting-incorrect-fault-tolerance-via-fdbcli-with-triple-redundancy-mode",
+      "posts_count": 15,
+      "reply_count": 8,
+      "highest_post_number": 16,
+      "image_url": null,
+      "created_at": "2019-04-04T19:04:42.341Z",
+      "last_posted_at": "2019-04-06T00:41:42.940Z",
+      "bumped": true,
+      "bumped_at": "2019-04-06T00:41:42.940Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 1976,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 490,
+            "username": "rjenkins",
+            "name": "Ray Jenkins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rjenkins/{size}/487_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Storage server running out of space",
+      "id": 1655,
+      "title": "Storage server running out of space",
+      "slug": "storage-server-running-out-of-space",
+      "posts_count": 17,
+      "reply_count": 14,
+      "highest_post_number": 17,
+      "image_url": null,
+      "created_at": "2019-09-28T02:44:46.227Z",
+      "last_posted_at": "2019-10-02T20:48:03.731Z",
+      "bumped": true,
+      "bumped_at": "2019-10-02T20:48:03.731Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 3,
+      "views": 4053,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 612,
+            "username": "fzhjon",
+            "name": "Jon Fu",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/f/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cross Datacenter/Region?",
+      "id": 186,
+      "title": "Cross Datacenter/Region?",
+      "slug": "cross-datacenter-region",
+      "posts_count": 10,
+      "reply_count": 3,
+      "highest_post_number": 10,
+      "image_url": null,
+      "created_at": "2018-04-21T18:09:15.229Z",
+      "last_posted_at": "2018-06-14T19:55:13.933Z",
+      "bumped": true,
+      "bumped_at": "2018-06-14T19:55:13.933Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3406,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 130,
+            "username": "aphistic",
+            "name": "Erik Davidson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/aphistic/{size}/90_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 183,
+            "username": "tylerchr",
+            "name": "Tyler",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/tylerchr/{size}/143_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 54,
+            "username": "Evan",
+            "name": "Evan Tschannen",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/evan/{size}/104_2.png",
+            "moderator": true,
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 785,
+        "username": "sfc-gh-xwang",
+        "name": "Xiaoxi Wang",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/sfc-gh-xwang/{size}/1070_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 1020,
+        "username": "damienleroux",
+        "name": "Damien Leroux",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/damienleroux/{size}/1212_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1020,
+      "username": "damienleroux",
+      "name": "Damien Leroux",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/damienleroux/{size}/1212_2.png"
+    },
+    "last_poster": {
+      "id": 1020,
+      "username": "damienleroux",
+      "name": "Damien Leroux",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/damienleroux/{size}/1212_2.png"
+    },
+    "links": [
+      {
+        "url": "https://sourcegraph.com/github.com/apple/foundationdb@6.3.23/-/blob/fdbcli/fdbcli.actor.cpp?L4191:30",
+        "title": "fdbcli.actor.cpp - apple/foundationdb - Sourcegraph",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 785,
+        "domain": "sourcegraph.com",
+        "root_domain": "sourcegraph.com"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/configuration.html#changing-redundancy-mode",
+        "title": "Configuration \u2014 FoundationDB 7.1",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 1020,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      }
+    ]
+  },
+  "bookmarks": []
+}

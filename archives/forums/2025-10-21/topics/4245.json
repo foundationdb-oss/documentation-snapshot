@@ -1,0 +1,553 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13524,
+        "name": "Alexey Shcherbakov",
+        "username": "fuCtor",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/fuctor/{size}/1599_2.png",
+        "created_at": "2023-11-20T07:25:52.311Z",
+        "cooked": "<p>Hi, maybe some body can suggest how scale cluster.<br>\nI have cluster with config:</p>\n<ul>\n<li>14 VM with 2 CPU, 10GB RAM, 200Gb (limits 5.5K IOPS 100Mb/s per VCPU)</li>\n<li>4 VM with transaction + stateless</li>\n<li>10 VM with storage + stateless, by 5VM each zone</li>\n<li>redundancy mode = double</li>\n<li>5 coordinators, 1 GRV, 3 commit proxy</li>\n</ul>\n<p>For performance I lauch test like this:</p>\n<pre><code class=\"lang-auto\">; This file is used by the Atlas Load Generator\n    testTitle=RandomReadWriteTest\n    testName=ReadWrite\n    testDuration=300.0\n    allowedLatency=0.025\n    transactionsPerSecond=20000\n    writesPerTransactionA=0\n    readsPerTransactionA=5\n    writesPerTransactionB=1\n    readsPerTransactionB=1\n    ; Fraction of transactions that will be of type B\n    alpha=1\n    nodeCount=10000000\n    valueBytes=3800\n    minValueBytes=3400\n    discardEdgeMeasurements=false\n    warmingDelay=20.0\n    timeout=300000.0\n    databasePingDelay=300000.0\n</code></pre>\n<p>I receive result with 12K TPS. When run test all log &amp; storages have 98% disk IO. But they used only 3 from 4 log instances. By monitoring logs and storage are used all quote for CPU.</p>\n<p>How can I improve write performance? Maybe I can add transaction instances for sharding write workload?</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-11-20T09:28:19.084Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 24,
+        "reads": 25,
+        "readers_count": 24,
+        "score": 125.0,
+        "yours": false,
+        "topic_id": 4245,
+        "topic_slug": "cluster-scaling",
+        "display_username": "Alexey Shcherbakov",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1267,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/cluster-scaling/4245/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      13524
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      702
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "performance"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Cluster scaling",
+  "id": 4245,
+  "title": "Cluster scaling",
+  "posts_count": 1,
+  "created_at": "2023-11-20T07:25:52.252Z",
+  "views": 274,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-11-20T07:25:52.311Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "cluster-scaling",
+  "category_id": 7,
+  "word_count": 170,
+  "deleted_at": null,
+  "user_id": 1267,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4245",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "Why doesn&rsquo;t my cluster performance scale when I double the number of machines?",
+      "id": 640,
+      "title": "Why doesn't my cluster performance scale when I double the number of machines?",
+      "slug": "why-doesnt-my-cluster-performance-scale-when-i-double-the-number-of-machines",
+      "posts_count": 21,
+      "reply_count": 16,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-08-15T09:26:47.588Z",
+      "last_posted_at": "2018-08-17T07:32:00.164Z",
+      "bumped": true,
+      "bumped_at": "2018-08-17T07:32:00.164Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 2,
+      "views": 3323,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 68,
+            "username": "daverosenthal",
+            "name": "Dave Rosenthal",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/daverosenthal/{size}/51_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 321,
+            "username": "poma",
+            "name": "Roman Semenov",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/poma/{size}/325_2.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Production optimizations",
+      "id": 601,
+      "title": "Production optimizations",
+      "slug": "production-optimizations",
+      "posts_count": 21,
+      "reply_count": 14,
+      "highest_post_number": 21,
+      "image_url": null,
+      "created_at": "2018-07-30T21:18:56.894Z",
+      "last_posted_at": "2018-08-15T04:47:23.743Z",
+      "bumped": true,
+      "bumped_at": "2018-08-15T04:47:23.743Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 6473,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "We have some machines and cpu and a little ssd",
+      "id": 1532,
+      "title": "We have some machines and cpu and a little ssd",
+      "slug": "we-have-some-machines-and-cpu-and-a-little-ssd",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-07-22T13:53:58.839Z",
+      "last_posted_at": "2019-07-23T18:05:38.232Z",
+      "bumped": true,
+      "bumped_at": "2019-07-23T18:05:38.232Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 778,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 520,
+            "username": "Vasilii",
+            "name": "Vasiliy Popkov",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/v/258eb7/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "FoundationdDB Cluster Performance Issues",
+      "id": 2105,
+      "title": "FoundationdDB Cluster Performance Issues",
+      "slug": "foundationddb-cluster-performance-issues",
+      "posts_count": 12,
+      "reply_count": 6,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-05-06T16:01:40.124Z",
+      "last_posted_at": "2020-10-21T15:20:11.071Z",
+      "bumped": true,
+      "bumped_at": "2020-10-21T15:20:11.071Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance",
+        "operator"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 1317,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 744,
+            "username": "v-pap",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/v-pap/{size}/936_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 765,
+            "username": "rbtcollins",
+            "name": "Robert Collins",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/rbtcollins/{size}/941_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 3,
+            "username": "john_brownlee",
+            "name": "John Brownlee",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/john_brownlee/{size}/22_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Scalability performance benchmark",
+      "id": 1261,
+      "title": "Scalability performance benchmark",
+      "slug": "scalability-performance-benchmark",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-03-26T15:55:52.863Z",
+      "last_posted_at": "2019-03-27T00:44:37.163Z",
+      "bumped": true,
+      "bumped_at": "2019-03-27T00:44:37.163Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 6,
+      "views": 2633,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 549,
+            "username": "nitins64",
+            "name": "Nitin Sharma",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/n/7993a0/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1267,
+        "username": "fuCtor",
+        "name": "Alexey Shcherbakov",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/fuctor/{size}/1599_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      }
+    ],
+    "created_by": {
+      "id": 1267,
+      "username": "fuCtor",
+      "name": "Alexey Shcherbakov",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/fuctor/{size}/1599_2.png"
+    },
+    "last_poster": {
+      "id": 1267,
+      "username": "fuCtor",
+      "name": "Alexey Shcherbakov",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/fuctor/{size}/1599_2.png"
+    }
+  },
+  "bookmarks": []
+}

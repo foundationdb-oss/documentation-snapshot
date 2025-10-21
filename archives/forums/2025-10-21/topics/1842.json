@@ -1,0 +1,878 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 5825,
+        "name": "Ravilution",
+        "username": "ravilution",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+        "created_at": "2019-12-16T07:17:17.252Z",
+        "cooked": "<p>I have a <code>counterKey</code> with value <code>0</code>. A function will read it, process it and at the end increment the value. Even when the function is concurrently executed several million times, each time when the <code>counterKey</code> is read the value must be unique. In other words, only after successful completion of one instance of the function, the second concurrent call of the function must execute. I see, it is not wise to only rely on <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Database.Transact\" rel=\"nofollow noopener\">func (d Database) Transact(f func(Transaction) (interface{}, error)) (interface{}, error)</a> for this and I have to use <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.AddReadConflictKey\" rel=\"nofollow noopener\">func (t Transaction) AddReadConflictKey(key KeyConvertible) error</a> and <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.AddWriteConflictKey\" rel=\"nofollow noopener\">func (t Transaction) AddWriteConflictKey(key KeyConvertible) error</a>. However, I am unable to understand how the <code>Read and Write Conflict Key</code> works. Can you please explain it to me on layman terms with a <code>Go Lang</code> example?</p>\n<p>Tagging few great minds, who have helped me in the past. <a class=\"mention\" href=\"/u/gaurav\">@gaurav</a> <a class=\"mention\" href=\"/u/alexmiller\">@alexmiller</a> <a class=\"mention\" href=\"/u/thomasj\">@ThomasJ</a> <a class=\"mention\" href=\"/u/alloc\">@alloc</a></p>\n<p>_/\\_Thanks in advance.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-12-16T21:10:41.022Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 105,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 529.4,
+        "yours": false,
+        "topic_id": 1842,
+        "topic_slug": "go-lang-addreadconflictkey-addwriteconflictkey",
+        "display_username": "Ravilution",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.AddWriteConflictKey",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 7
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Database.Transact",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 3
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.AddReadConflictKey",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 3
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 538,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-lang-addreadconflictkey-addwriteconflictkey/1842/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      },
+      {
+        "id": 5829,
+        "name": "gaurav",
+        "username": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "created_at": "2019-12-16T11:44:22.052Z",
+        "cooked": "<p>In order to <code>read-modify-update</code> a counter, the <code>transact</code> method (transaction retry loop) that you\u2019ve linked will work without needing explicit <code>read</code> and <code>write</code> conflicts. However, as you are concurrently updating a single key concurrently from multiple transactions, there could be lot of conflicts between transactions.</p>\n<p><code>Conflict Ranges</code> (read/write conflicts) are used to determine if a transaction conflicts with another concurrent transaction - and guarantee serializable isolation. When one reads a key or key-range in a transaction, these keys/key-ranges get implicitly added to the transaction as <code>read-conflicts</code>; similarly, when a transaction mutates a key, it gets implicitly added to the transaction as <code>write conflict</code>.</p>\n<p>(this behavior can be changed using <a href=\"https://apple.github.io/foundationdb/developer-guide.html#snapshot-reads\">snapshot</a> transactions, and other transaction options)</p>\n<p>At the time of commit, fdb (proxy and resolver) verifies that none of the <code>read conflicts</code> of the committing transaction overlap with 'write conflicts` from another transaction that committed after the start of the given transaction.</p>\n<p>You can read a bit more about this concept <a href=\"https://apple.github.io/foundationdb/developer-guide.html#conflict-ranges\">here</a> and <a href=\"https://apple.github.io/foundationdb/developer-guide.html#minimizing-conflicts\">here</a></p>",
+        "post_number": 2,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-12-16T13:43:12.744Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 7,
+        "reads": 22,
+        "readers_count": 21,
+        "score": 39.4,
+        "yours": false,
+        "topic_id": 1842,
+        "topic_slug": "go-lang-addreadconflictkey-addwriteconflictkey",
+        "display_username": "gaurav",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 2,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#conflict-ranges",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB 6.2",
+            "clicks": 5
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#minimizing-conflicts",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB 6.2",
+            "clicks": 3
+          },
+          {
+            "url": "https://apple.github.io/foundationdb/developer-guide.html#snapshot-reads",
+            "internal": false,
+            "reflection": false,
+            "title": "Developer Guide \u2014 FoundationDB 6.2",
+            "clicks": 2
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 166,
+        "hidden": false,
+        "trust_level": 3,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-lang-addreadconflictkey-addwriteconflictkey/1842/2",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 5841,
+        "name": "Alec Grieser",
+        "username": "alloc",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "created_at": "2019-12-16T17:18:46.922Z",
+        "cooked": "<p>Hm, the right solution to this kind of depends on the semantics you want from this key.</p>\n<p>There\u2019s more on how to use read and write conflicts in <a class=\"mention\" href=\"/u/gaurav\">@gaurav</a>\u2019s answer, but I think it might be worth considering the requirements here and seeing if there\u2019s a better way.</p>\n<p>Unfortunately, there\u2019s not a great way to get <em>exactly</em> what you want from FDB if you require a key that produces a (1) unique value you can read during the course of the transaction that (2) monotonically increases by 1 each time it is written and (3) is scalable (i.e., supports concurrent operations). I think you can get any 2 of those 3. (I think you actually can get all three if you try really hard, but it requires maybe more write-amp then you\u2019d like and more specialized logic.)</p>\n<p>If you want (1) and (2), you can just read the key, increment its value by one, and then write it back to the database. Then when the transaction commits, the resolver checks that no one else has written that key since that transaction read it (unless one uses snapshot isolation level), so as long as your transaction commits, it is guaranteed that you got a unique value (and if it doesn\u2019t commit, then it\u2019s like it never happened). However, by its very nature, this means that no two transactions can operate at the same time, as they will conflict on this key.</p>\n<p>If you want (2) and (3), you can use the atomic ADD operation: <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.Add\">https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.Add</a> When the transaction commits, it will increment whatever value is currently stored in the database at the given key by the passed parameter (so, you could pass it 1). Then the value of the key will essentially be equal to the number of times it\u2019s been written to. However, the write is entirely blind, and you don\u2019t have access to the value of that key before the update (and after the update, it might have been updated by other transactions). The Record Layer uses this to maintain, for example, and index of how many records are in a database, and it works well for that, but it doesn\u2019t work if you need the value back.</p>\n<p>If you want (1) and (3), you can use versionstamp operations. See: <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.SetVersionstampedKey\">https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.SetVersionstampedKey</a> and <a href=\"https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.SetVersionstampedValue\">https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.SetVersionstampedValue</a> Those operations let you write the database\u2019s commit version (with some other disambiguating bytes) into the database. This value is guaranteed to be unique for each transaction, and it is monotonically increasing (though not by 1 each time; it can go up essentially an arbitrary amount between transactions), and though you can\u2019t inspect this value while the transaction is ongoing, you can get the value after the transaction completes, and you can use those two methods to write the value of the versionstamp into database keys and values.</p>\n<p>There is, kind of, a way you could make this work by combining a few of these methods. For example, one can do something like with each operation, write a value (using a version stamped key) that essentially writes an item into a queue. This produces a universally agreed upon ordering. Then, one reads the value of some global counter key, and then assign a counter value to each transaction based on its order in that queue. However, this is probably more work than its worth, and it leads to a fair amount of overhead maintaining this queue.</p>",
+        "post_number": 3,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-12-16T17:18:46.922Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 2,
+        "reads": 19,
+        "readers_count": 18,
+        "score": 13.8,
+        "yours": false,
+        "topic_id": 1842,
+        "topic_slug": "go-lang-addreadconflictkey-addwriteconflictkey",
+        "display_username": "Alec Grieser",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.SetVersionstampedKey",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 1
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.Add",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 0
+          },
+          {
+            "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.SetVersionstampedValue",
+            "internal": false,
+            "reflection": false,
+            "title": "fdb - GoDoc",
+            "clicks": 0
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 8,
+        "hidden": false,
+        "trust_level": 4,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-lang-addreadconflictkey-addwriteconflictkey/1842/3",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      },
+      {
+        "id": 5844,
+        "name": "Ravilution",
+        "username": "ravilution",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+        "created_at": "2019-12-16T21:07:59.763Z",
+        "cooked": "<p>_ /\\ _ thank you for the quick response. You guys are the best. I cannot reveal the entire logic. However, below is the gist of what I want to achieve.</p>\n<pre><code class=\"lang-go\">\n// idempotent\n// user total will be zero if this function has never run\n// this function must only run once for every user\nuserTotal := util.BytesToInt64(tr.Get(userTotalKey).MustGet())\nif userTotal &gt; 0 {\n  return\n}\n\n// read\nglobalTotal := util.BytesToInt64(tr.Get(globalTotalKey).MustGet())\n\n// set the new value\nfor i := 1; i &lt;= 100; i++ {\n  tr.Set(userSS.Pack(tuple.Tuple{userID, globalTotal + i}), []byte(\"\"))\n}\n\n// atomically increment read value\nplusHundred := util.ToBytes(int64(100))\ntr.Add(globalTotalKey, plusHundred)\n\n// atomically increment idempotent value\ntr.Add(userTotalKey, plusHundred)\n\n</code></pre>",
+        "post_number": 4,
+        "post_type": 1,
+        "posts_count": 4,
+        "updated_at": "2019-12-16T21:10:18.039Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 1,
+        "reads": 18,
+        "readers_count": 17,
+        "score": 8.6,
+        "yours": false,
+        "topic_id": 1842,
+        "topic_slug": "go-lang-addreadconflictkey-addwriteconflictkey",
+        "display_username": "Ravilution",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 1,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 538,
+        "hidden": false,
+        "trust_level": 2,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/go-lang-addreadconflictkey-addwriteconflictkey/1842/4",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null
+      }
+    ],
+    "stream": [
+      5825,
+      5829,
+      5841,
+      5844
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      2137
+    ],
+    [
+      2,
+      2136
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [
+    "bindings"
+  ],
+  "tags_descriptions": {},
+  "fancy_title": "Go lang AddReadConflictKey AddWriteConflictKey",
+  "id": 1842,
+  "title": "Go lang AddReadConflictKey AddWriteConflictKey",
+  "posts_count": 4,
+  "created_at": "2019-12-16T07:17:17.187Z",
+  "views": 851,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2019-12-16T21:07:59.763Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "go-lang-addreadconflictkey-addwriteconflictkey",
+  "category_id": 5,
+  "word_count": 1127,
+  "deleted_at": null,
+  "user_id": 538,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_1842",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 4,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 3,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "ReadConflict vs WriteConflict for locking a range?",
+      "id": 1070,
+      "title": "ReadConflict vs WriteConflict for locking a range?",
+      "slug": "readconflict-vs-writeconflict-for-locking-a-range",
+      "posts_count": 7,
+      "reply_count": 3,
+      "highest_post_number": 7,
+      "image_url": null,
+      "created_at": "2019-01-26T13:26:56.674Z",
+      "last_posted_at": "2019-02-02T05:07:53.900Z",
+      "bumped": true,
+      "bumped_at": "2019-02-02T05:07:53.900Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 1354,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 308,
+            "username": "ananthakumaran",
+            "name": "Anantha Kumaran",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ananthakumaran/{size}/526_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "How to minimize transaction conflicts on atomic operations?",
+      "id": 1051,
+      "title": "How to minimize transaction conflicts on atomic operations?",
+      "slug": "how-to-minimize-transaction-conflicts-on-atomic-operations",
+      "posts_count": 8,
+      "reply_count": 4,
+      "highest_post_number": 8,
+      "image_url": null,
+      "created_at": "2019-01-24T15:30:28.527Z",
+      "last_posted_at": "2019-01-25T16:01:20.698Z",
+      "bumped": true,
+      "bumped_at": "2019-01-25T16:01:20.698Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 5,
+      "views": 2181,
+      "category_id": 9,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 323,
+            "username": "WolfDan",
+            "name": "Wolf Dan",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/wolfdan/{size}/806_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 53,
+            "username": "KrzysFR",
+            "name": "Christophe Chevalier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/krzysfr/{size}/43_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 81,
+            "username": "ryanworl",
+            "name": "Ryan Worl",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ryanworl/{size}/440_2.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Inducing a Read Conflict",
+      "id": 1850,
+      "title": "Inducing a Read Conflict",
+      "slug": "inducing-a-read-conflict",
+      "posts_count": 6,
+      "reply_count": 4,
+      "highest_post_number": 6,
+      "image_url": null,
+      "created_at": "2019-12-17T20:19:47.478Z",
+      "last_posted_at": "2019-12-19T20:29:26.296Z",
+      "bumped": true,
+      "bumped_at": "2019-12-19T20:29:26.296Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 875,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 517,
+            "username": "janderland",
+            "name": "Jon Anderson",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/janderland/{size}/517_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Optimizing a single large transaction ( 10,000 keys)",
+      "id": 1961,
+      "title": "Optimizing a single large transaction ( 10,000 keys)",
+      "slug": "optimizing-a-single-large-transaction-10-000-keys",
+      "posts_count": 12,
+      "reply_count": 10,
+      "highest_post_number": 12,
+      "image_url": null,
+      "created_at": "2020-02-17T13:36:55.355Z",
+      "last_posted_at": "2020-02-24T11:30:42.854Z",
+      "bumped": true,
+      "bumped_at": "2020-02-24T11:30:42.854Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "performance"
+      ],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 2373,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 645,
+            "username": "subramaniamr",
+            "name": "Subramaniam R",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/subramaniamr/{size}/658_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 8,
+            "username": "alloc",
+            "name": "Alec Grieser",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 166,
+            "username": "gaurav",
+            "name": "gaurav",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+            "trust_level": 3
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "What&rsquo;s the simplest solution to my use case?",
+      "id": 3086,
+      "title": "What's the simplest solution to my use case?",
+      "slug": "whats-the-simplest-solution-to-my-use-case",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2021-12-17T10:31:54.599Z",
+      "last_posted_at": "2021-12-20T19:03:38.952Z",
+      "bumped": true,
+      "bumped_at": "2021-12-20T19:03:38.952Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [
+        "bindings"
+      ],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 579,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1053,
+            "username": "Djoak",
+            "name": "Djoak",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/djoak/{size}/1260_2.png",
+            "trust_level": 0
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 173,
+            "username": "jkominek",
+            "name": "Jay Kominek",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jkominek/{size}/140_2.png",
+            "trust_level": 2
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 538,
+        "username": "ravilution",
+        "name": "Ravilution",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png",
+        "post_count": 2,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 2
+      },
+      {
+        "id": 8,
+        "username": "alloc",
+        "name": "Alec Grieser",
+        "avatar_template": "/user_avatar/forums.foundationdb.org/alloc/{size}/9_2.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 4
+      },
+      {
+        "id": 166,
+        "username": "gaurav",
+        "name": "gaurav",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/g/b487fb/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 3
+      }
+    ],
+    "created_by": {
+      "id": 538,
+      "username": "ravilution",
+      "name": "Ravilution",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png"
+    },
+    "last_poster": {
+      "id": 538,
+      "username": "ravilution",
+      "name": "Ravilution",
+      "avatar_template": "/user_avatar/forums.foundationdb.org/ravilution/{size}/728_2.png"
+    },
+    "links": [
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.AddWriteConflictKey",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 7,
+        "user_id": 538,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/developer-guide.html#conflict-ranges",
+        "title": "Developer Guide \u2014 FoundationDB 6.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 5,
+        "user_id": 166,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.AddReadConflictKey",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 538,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Database.Transact",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 538,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/developer-guide.html#minimizing-conflicts",
+        "title": "Developer Guide \u2014 FoundationDB 6.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 3,
+        "user_id": 166,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://apple.github.io/foundationdb/developer-guide.html#snapshot-reads",
+        "title": "Developer Guide \u2014 FoundationDB 6.2",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 2,
+        "user_id": 166,
+        "domain": "apple.github.io",
+        "root_domain": "apple.github.io"
+      },
+      {
+        "url": "https://godoc.org/github.com/apple/foundationdb/bindings/go/src/fdb#Transaction.SetVersionstampedKey",
+        "title": "fdb - GoDoc",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 1,
+        "user_id": 8,
+        "domain": "godoc.org",
+        "root_domain": "godoc.org"
+      }
+    ]
+  },
+  "bookmarks": []
+}

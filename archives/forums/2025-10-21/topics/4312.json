@@ -1,0 +1,526 @@
+{
+  "post_stream": {
+    "posts": [
+      {
+        "id": 13652,
+        "name": "heyjeong",
+        "username": "hyejeong",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png",
+        "created_at": "2023-12-27T01:50:05.550Z",
+        "cooked": "<p>Hi. I have FDB Cluster(verison: 6.2.26) with total 6 machines with three_data_hall. In each region, there are 2 machines.<br>\nI found that FDB cluster recovery getting stuck when a machine(with wrong firewall settings) denied all incoming packet and allowed all outgoing packet.</p>\n<pre><code class=\"lang-auto\">....\n\"messages\" : [\n            {\n                \"description\" : \"Unable to read database configuration.\",\n                \"name\" : \"unreadable_configuration\"\n            }\n        ],\n....\n\"recovery_state\" : {\n            \"active_generations\" : 1,\n            \"description\" : \"Initializing new transaction servers and recovering transaction logs.\",\n            \"name\" : \"initializing_transaction_servers\"\n        }\n</code></pre>\n<p>From master process logs, I found that <a href=\"https://github.com/apple/foundationdb/blob/04b169b8712c6ffa3a7bb04eccb3260ce0565716/fdbrpc/FlowTransport.actor.cpp#L446C1-L446C1\" rel=\"noopener nofollow ugc\">connectionKeeper</a> continue to attempt to connection to an unreachable machine even after <code>TooManyConnectionsClosed</code>. As the machine allows all outgoing packet, it leads the machine reports itself as healthy to the CC. I believe this is the reason why Master process keeps trying to connect that machine.<br>\nBut, I wonder if there is no limit on the connection retry attempt (or workaround to resolve this issue) Unless I stop that machine manually, the master continue to try to connect and fails, causing the entire cluster to get stuck.</p>\n<pre><code class=\"lang-auto\">&lt;Event Severity=\"10\" Time=\"16:32:49:817357000\" Type=\"ConnectingTo\" ID=\"0000000000000000\" SuppressedEventCount=\"1\" PeerAddr=\"172.16.1.17:20000\" Machine=\"172.18.1.16:20002\" LogGroup=\"default\" Roles=\"MS\" /&gt;\n&lt;Event Severity=\"10\" Time=\"16:32:50:830088000\" Type=\"ConnectionTimedOut\" ID=\"0000000000000000\" SuppressedEventCount=\"2\" PeerAddr=\"172.16.1.17:20000\" Machine=\"172.18.1.16:20002\" LogGroup=\"default\" Roles=\"MS\" /&gt;\n&lt;Event Severity=\"10\" Time=\"16:32:50:830088000\" Type=\"ConnectionClosed\" ID=\"0000000000000000\" Error=\"connection_failed\" ErrorDescription=\"Network connection failed\" ErrorCode=\"1026\" SuppressedEventCount=\"2\" PeerAddr=\"172.16.1.17:20000\" Machine=\"172.18.1.16:20002\" LogGroup=\"default\" Roles=\"MS\" /&gt;\n&lt;Event Severity=\"30\" Time=\"16:32:50:830088000\" Type=\"TooManyConnectionsClosed\" ID=\"0000000000000000\" SuppressedEventCount=\"0\" PeerAddr=\"172.16.1.17:20000\" Machine=\"172.18.1.16:20002\" LogGroup=\"default\" Roles=\"MS\" /&gt;\n&lt;Event Severity=\"10\" Time=\"16:32:50:841474000\" Type=\"ConnectingTo\" ID=\"0000000000000000\" SuppressedEventCount=\"2\" PeerAddr=\"172.16.1.17:20000\" Machine=\"172.18.1.16:20002\" LogGroup=\"default\" Roles=\"MS\" /&gt;\n&lt;Event Severity=\"10\" Time=\"16:32:51:851511000\" Type=\"ConnectionTimedOut\" ID=\"0000000000000000\" SuppressedEventCount=\"1\" PeerAddr=\"172.16.1.17:20000\" Machine=\"172.18.1.16:20002\" LogGroup=\"default\" Roles=\"MS\" /&gt;\n</code></pre>\n<p>Thank you.</p>",
+        "post_number": 1,
+        "post_type": 1,
+        "posts_count": 1,
+        "updated_at": "2023-12-27T01:58:25.887Z",
+        "reply_count": 0,
+        "reply_to_post_number": null,
+        "quote_count": 0,
+        "incoming_link_count": 11,
+        "reads": 15,
+        "readers_count": 14,
+        "score": 58.0,
+        "yours": false,
+        "topic_id": 4312,
+        "topic_slug": "connectionkeeper-constantly-try-to-connect-an-unreachable-machine",
+        "display_username": "heyjeong",
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_bg_color": null,
+        "flair_color": null,
+        "flair_group_id": null,
+        "badges_granted": [],
+        "version": 3,
+        "can_edit": false,
+        "can_delete": false,
+        "can_recover": false,
+        "can_see_hidden_post": false,
+        "can_wiki": false,
+        "link_counts": [
+          {
+            "url": "https://github.com/apple/foundationdb/blob/04b169b8712c6ffa3a7bb04eccb3260ce0565716/fdbrpc/FlowTransport.actor.cpp#L446C1-L446C1",
+            "internal": false,
+            "reflection": false,
+            "title": "foundationdb/fdbrpc/FlowTransport.actor.cpp at 04b169b8712c6ffa3a7bb04eccb3260ce0565716 \u00b7 apple/foundationdb \u00b7 GitHub",
+            "clicks": 4
+          }
+        ],
+        "read": true,
+        "user_title": null,
+        "bookmarked": false,
+        "actions_summary": [],
+        "moderator": false,
+        "admin": false,
+        "staff": false,
+        "user_id": 1311,
+        "hidden": false,
+        "trust_level": 1,
+        "deleted_at": null,
+        "user_deleted": false,
+        "edit_reason": null,
+        "can_view_edit_history": true,
+        "wiki": false,
+        "post_url": "/t/connectionkeeper-constantly-try-to-connect-an-unreachable-machine/4312/1",
+        "can_accept_answer": false,
+        "can_unaccept_answer": false,
+        "accepted_answer": false,
+        "topic_accepted_answer": null,
+        "can_vote": false
+      }
+    ],
+    "stream": [
+      13652
+    ]
+  },
+  "timeline_lookup": [
+    [
+      1,
+      665
+    ]
+  ],
+  "suggested_topics": [],
+  "tags": [],
+  "tags_descriptions": {},
+  "fancy_title": "connectionKeeper constantly try to connect an unreachable machine",
+  "id": 4312,
+  "title": "connectionKeeper constantly try to connect an unreachable machine",
+  "posts_count": 1,
+  "created_at": "2023-12-27T01:50:05.494Z",
+  "views": 148,
+  "reply_count": 0,
+  "like_count": 0,
+  "last_posted_at": "2023-12-27T01:50:05.550Z",
+  "visible": true,
+  "closed": false,
+  "archived": false,
+  "has_summary": false,
+  "archetype": "regular",
+  "slug": "connectionkeeper-constantly-try-to-connect-an-unreachable-machine",
+  "category_id": 7,
+  "word_count": 366,
+  "deleted_at": null,
+  "user_id": 1311,
+  "featured_link": null,
+  "pinned_globally": false,
+  "pinned_at": null,
+  "pinned_until": null,
+  "image_url": null,
+  "slow_mode_seconds": 0,
+  "draft": null,
+  "draft_key": "topic_4312",
+  "draft_sequence": null,
+  "unpinned": null,
+  "pinned": false,
+  "current_post_number": 1,
+  "highest_post_number": 1,
+  "deleted_by": null,
+  "actions_summary": [
+    {
+      "id": 4,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 8,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 10,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    },
+    {
+      "id": 7,
+      "count": 0,
+      "hidden": false,
+      "can_act": false
+    }
+  ],
+  "chunk_size": 20,
+  "bookmarked": false,
+  "topic_timer": null,
+  "message_bus_last_id": 0,
+  "participant_count": 1,
+  "show_read_indicator": false,
+  "thumbnails": null,
+  "slow_mode_enabled_until": null,
+  "tags_disable_ads": false,
+  "related_topics": [
+    {
+      "fancy_title": "All Coordinators Crashed At Same Time",
+      "id": 1537,
+      "title": "All Coordinators Crashed At Same Time",
+      "slug": "all-coordinators-crashed-at-same-time",
+      "posts_count": 15,
+      "reply_count": 10,
+      "highest_post_number": 15,
+      "image_url": null,
+      "created_at": "2019-07-25T21:19:54.522Z",
+      "last_posted_at": "2019-09-09T23:32:55.551Z",
+      "bumped": true,
+      "bumped_at": "2019-09-09T23:32:55.551Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 2138,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 627,
+            "username": "Dan",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/eada6e/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 26,
+            "username": "mrz",
+            "name": "matthew zeier",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/mrz/{size}/26_2.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Cluster stuck in recovery after crash of one node",
+      "id": 3216,
+      "title": "Cluster stuck in recovery after crash of one node",
+      "slug": "cluster-stuck-in-recovery-after-crash-of-one-node",
+      "posts_count": 2,
+      "reply_count": 0,
+      "highest_post_number": 2,
+      "image_url": null,
+      "created_at": "2022-03-17T11:59:52.372Z",
+      "last_posted_at": "2022-03-18T03:45:59.162Z",
+      "bumped": true,
+      "bumped_at": "2022-03-18T03:45:59.162Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 1,
+      "views": 560,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": null,
+          "description": "Original Poster",
+          "user": {
+            "id": 1079,
+            "username": "xozzslip",
+            "name": "",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/xozzslip/{size}/1298_2.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": "latest",
+          "description": "Most Recent Poster",
+          "user": {
+            "id": 454,
+            "username": "jzhou",
+            "name": "Jingyu Zhou",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/jzhou/{size}/445_2.png",
+            "admin": true,
+            "moderator": true,
+            "trust_level": 2
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Connection management among fdb processes",
+      "id": 398,
+      "title": "Connection management among fdb processes",
+      "slug": "connection-management-among-fdb-processes",
+      "posts_count": 1,
+      "reply_count": 0,
+      "highest_post_number": 1,
+      "image_url": null,
+      "created_at": "2018-05-10T21:17:26.147Z",
+      "last_posted_at": "2018-05-10T21:17:26.231Z",
+      "bumped": true,
+      "bumped_at": "2018-05-10T21:17:26.231Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 519,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest single",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 243,
+            "username": "brb",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/b/9d8465/{size}.png",
+            "trust_level": 1
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Troubles scaling up the cluster",
+      "id": 751,
+      "title": "Troubles scaling up the cluster",
+      "slug": "troubles-scaling-up-the-cluster",
+      "posts_count": 32,
+      "reply_count": 26,
+      "highest_post_number": 32,
+      "image_url": null,
+      "created_at": "2018-10-08T03:24:54.004Z",
+      "last_posted_at": "2018-11-01T16:26:01.527Z",
+      "bumped": true,
+      "bumped_at": "2018-11-01T16:26:01.527Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 3747,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 311,
+            "username": "ThomasJ",
+            "name": "Thomas Johson",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/t/6f9a4e/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 255,
+            "username": "aqua",
+            "name": "Matt Lohier",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/a/b9bd4f/{size}.png",
+            "trust_level": 1
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 13,
+            "username": "alexmiller",
+            "name": "Alex Miller",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/alexmiller/{size}/326_2.png",
+            "trust_level": 4
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 12,
+            "username": "ajbeamon",
+            "name": "A.J. Beamon",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/ajbeamon/{size}/13_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    },
+    {
+      "fancy_title": "Recover &lsquo;unreachable&rsquo;",
+      "id": 2512,
+      "title": "Recover 'unreachable'",
+      "slug": "recover-unreachable",
+      "posts_count": 4,
+      "reply_count": 0,
+      "highest_post_number": 4,
+      "image_url": null,
+      "created_at": "2021-01-15T16:13:16.260Z",
+      "last_posted_at": "2021-01-15T19:00:45.997Z",
+      "bumped": true,
+      "bumped_at": "2021-01-15T19:00:45.997Z",
+      "archetype": "regular",
+      "unseen": false,
+      "pinned": false,
+      "unpinned": null,
+      "visible": true,
+      "closed": false,
+      "archived": false,
+      "bookmarked": null,
+      "liked": null,
+      "tags": [],
+      "tags_descriptions": {},
+      "like_count": 0,
+      "views": 883,
+      "category_id": 7,
+      "featured_link": null,
+      "has_accepted_answer": false,
+      "posters": [
+        {
+          "extras": "latest",
+          "description": "Original Poster, Most Recent Poster",
+          "user": {
+            "id": 419,
+            "username": "doublemax",
+            "name": "",
+            "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/d/8e7dd6/{size}.png",
+            "trust_level": 2
+          }
+        },
+        {
+          "extras": null,
+          "description": "Frequent Poster",
+          "user": {
+            "id": 15,
+            "username": "markus.pilman",
+            "name": "Markus Pilman",
+            "avatar_template": "/user_avatar/forums.foundationdb.org/markus.pilman/{size}/379_2.png",
+            "admin": true,
+            "trust_level": 4
+          }
+        }
+      ]
+    }
+  ],
+  "summarizable": false,
+  "can_vote": false,
+  "vote_count": 0,
+  "user_voted": false,
+  "discourse_zendesk_plugin_zendesk_id": null,
+  "discourse_zendesk_plugin_zendesk_url": "https://your-url.zendesk.com/agent/tickets/",
+  "details": {
+    "can_edit": false,
+    "notification_level": 1,
+    "participants": [
+      {
+        "id": 1311,
+        "username": "hyejeong",
+        "name": "heyjeong",
+        "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png",
+        "post_count": 1,
+        "primary_group_name": null,
+        "flair_name": null,
+        "flair_url": null,
+        "flair_color": null,
+        "flair_bg_color": null,
+        "flair_group_id": null,
+        "trust_level": 1
+      }
+    ],
+    "created_by": {
+      "id": 1311,
+      "username": "hyejeong",
+      "name": "heyjeong",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png"
+    },
+    "last_poster": {
+      "id": 1311,
+      "username": "hyejeong",
+      "name": "heyjeong",
+      "avatar_template": "https://avatars.discourse-cdn.com/v4/letter/h/ecb155/{size}.png"
+    },
+    "links": [
+      {
+        "url": "https://github.com/apple/foundationdb/blob/04b169b8712c6ffa3a7bb04eccb3260ce0565716/fdbrpc/FlowTransport.actor.cpp#L446C1-L446C1",
+        "title": "foundationdb/fdbrpc/FlowTransport.actor.cpp at 04b169b8712c6ffa3a7bb04eccb3260ce0565716 \u00b7 apple/foundationdb \u00b7 GitHub",
+        "internal": false,
+        "attachment": false,
+        "reflection": false,
+        "clicks": 4,
+        "user_id": 1311,
+        "domain": "github.com",
+        "root_domain": "github.com"
+      }
+    ]
+  },
+  "bookmarks": []
+}
