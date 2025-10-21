@@ -1,0 +1,9731 @@
+{
+  "language_code": "eng",
+  "language_probability": 0.9547302722930908,
+  "text": "All right. So this is the last talk of the day. My mandate is to be quick. I promise I will be. So, Metadata Management for Machine Learning Pipelines. My name is Steven Pimentel and I work at Apple. I would normally give a 40-minute version of this presentation. This is my first attempt at compressing it to five minutes. I'm calling this the haiku version, and I hope it isn't more like a koan. I'm going to talk about a FoundationDB layer called EntityStore that I wrote for an internal system at Apple. We use it to store and manage metadata for machine learning pipelines. EntityStore exposes a data model for versioned entities with fine-grained authorization and lineage. That summary on this slide isn't very complete, but it is a haiku. (laughs) (laughs) So why does metadata matter for machine learning? Say you're running machine learning pipelines on a cloud platform for lots of users. The number of users is large and they span a diverse range of use cases and teams. Pipelines start with datasets. The datasets are many, varied, and usually raw. There are often requirements around who is allowed to see which parts of which datasets. Raw datasets are transformed to produce datasets suitable for training. Then we must track what raw datasets were used, two or more can be joined or otherwise used in combination, what transforms were applied using what code and what languages, with what versions of what libraries. Training produces models. We must now track what architectures were used, what learning algorithms, what frameworks, TensorFlow, PyTorch, with what libraries and what versions of these libraries. And this is before we even get to hyperparameters. We can also use one or more pretrained models in case of transfer learning or fine-tuning. In an experimentation framework, you often iterate through a number of models, varying architectures and algorithms, but all trained for the same task or use case. Now metadata must be tracked per run. In addition to the previous types of metadata, we have additional run-specific types. Finally, we may want to serve a model in production, but as with any production system, a model will go through versions as it is updated and improved. You may have canary deployments or roll back to a previous version or deploy multiple versions for A/B testing. We wanna store and manage this metadata in a unified framework that tracks provenance for each version of each entity. This is what EntityStore does. So EntityStore is a FoundationDB layer that implements a data model for versioned entities with fine-grained authorization and lineage. It's implemented as a Python library exposing its own API above the FoundationDB Python bindings. Read and write authorizations are separately recorded at the level of individual fields, also known as cell-based security. Versioning of entities is automatic with modifications to immutable fields resulting in a new version rather than a mutation. Each version has a unique ID, like a Git commit ID, formed from the SHA-1 hash of its primary key, immutable fields, parent's version, and authorization groups. Versions form a parentage tree and can be explicitly selected for use, also like Git. Each entity is modeled as a collection of objects that represent its distinct versions along with a core object for mutable non-versioned fields. Provenance or lineage is a record of data's origin and the transforms that have been applied to it. EntityStore stores, um, records, records lineage via label-directed multigraphs. The graph for va- version parentage is constructed by the versioning mechanism. Other forms of provenance, such as derivation of training datasets from raw datasets, are represented by different labels for graph edges. Objects are schemaless and consist of any number of fields with values. Fields can be single-valued or set-valued, and either case can optionally be indexed. And fields can also have large blob values. This rich data model is mapped to the key-value store. Versioning, authorization, and lineage are incorporated directly into the data model layer so clients get them for free. Transactions allow multiple clients to concurrently access entities without fear of inconsistent results or data corruption. And thank you very much. (clapping)",
+  "words": [
+    {
+      "text": "All",
+      "start": 0.46,
+      "end": 0.55,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 0.55,
+      "end": 0.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "right.",
+      "start": 0.62,
+      "end": 2.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 2.24,
+      "end": 2.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "So",
+      "start": 2.3,
+      "end": 2.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 2.4,
+      "end": 2.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "this",
+      "start": 2.44,
+      "end": 2.55,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 2.55,
+      "end": 2.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 2.6,
+      "end": 2.65,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 2.65,
+      "end": 2.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 2.7,
+      "end": 2.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 2.8,
+      "end": 2.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "last",
+      "start": 2.86,
+      "end": 3.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 3.2,
+      "end": 3.21,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "talk",
+      "start": 3.21,
+      "end": 3.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 3.52,
+      "end": 3.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 3.56,
+      "end": 3.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 3.64,
+      "end": 3.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 3.68,
+      "end": 3.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 3.78,
+      "end": 3.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "day.",
+      "start": 3.82,
+      "end": 4.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 4.48,
+      "end": 4.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "My",
+      "start": 4.52,
+      "end": 4.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 4.66,
+      "end": 4.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "mandate",
+      "start": 4.72,
+      "end": 5.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 5.26,
+      "end": 5.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 5.34,
+      "end": 5.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 5.5,
+      "end": 5.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 5.54,
+      "end": 5.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 5.66,
+      "end": 5.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "be",
+      "start": 5.7,
+      "end": 5.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 5.84,
+      "end": 5.899,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "quick.",
+      "start": 5.9,
+      "end": 6.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 6.9,
+      "end": 7.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I",
+      "start": 7.06,
+      "end": 7.07,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 7.07,
+      "end": 7.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "promise",
+      "start": 7.1,
+      "end": 7.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 7.44,
+      "end": 7.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I",
+      "start": 7.6,
+      "end": 7.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 7.64,
+      "end": 7.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "will",
+      "start": 7.68,
+      "end": 7.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 7.84,
+      "end": 7.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "be.",
+      "start": 7.86,
+      "end": 9.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 9.76,
+      "end": 9.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "So,",
+      "start": 9.78,
+      "end": 9.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 9.9,
+      "end": 9.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Metadata",
+      "start": 9.94,
+      "end": 10.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 10.3,
+      "end": 10.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Management",
+      "start": 10.42,
+      "end": 10.77,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 10.77,
+      "end": 10.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 10.84,
+      "end": 10.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 10.92,
+      "end": 10.959,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Machine",
+      "start": 10.96,
+      "end": 11.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 11.26,
+      "end": 11.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Learning",
+      "start": 11.32,
+      "end": 11.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 11.58,
+      "end": 11.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Pipelines.",
+      "start": 11.88,
+      "end": 13.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 13.08,
+      "end": 13.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "My",
+      "start": 13.12,
+      "end": 13.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 13.24,
+      "end": 13.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "name",
+      "start": 13.3,
+      "end": 13.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 13.44,
+      "end": 13.479,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 13.48,
+      "end": 13.59,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 13.59,
+      "end": 13.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Steven",
+      "start": 13.66,
+      "end": 14.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 14.0,
+      "end": 14.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Pimentel",
+      "start": 14.02,
+      "end": 14.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 14.46,
+      "end": 14.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 14.48,
+      "end": 14.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 14.56,
+      "end": 14.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I",
+      "start": 14.66,
+      "end": 14.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 14.7,
+      "end": 14.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "work",
+      "start": 14.74,
+      "end": 14.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 14.86,
+      "end": 14.899,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "at",
+      "start": 14.9,
+      "end": 15.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 15.0,
+      "end": 15.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Apple.",
+      "start": 15.1,
+      "end": 16.32,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 16.32,
+      "end": 16.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I",
+      "start": 16.36,
+      "end": 16.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 16.4,
+      "end": 16.419,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "would",
+      "start": 16.42,
+      "end": 16.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 16.54,
+      "end": 16.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "normally",
+      "start": 16.58,
+      "end": 16.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 16.9,
+      "end": 16.919,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "give",
+      "start": 16.92,
+      "end": 17.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 17.02,
+      "end": 17.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 17.06,
+      "end": 17.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 17.2,
+      "end": 17.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "40-minute",
+      "start": 17.34,
+      "end": 17.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 17.78,
+      "end": 17.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version",
+      "start": 17.82,
+      "end": 18.09,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 18.09,
+      "end": 18.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 18.12,
+      "end": 18.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 18.18,
+      "end": 18.22,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "this",
+      "start": 18.22,
+      "end": 18.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 18.36,
+      "end": 18.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "presentation.",
+      "start": 18.38,
+      "end": 19.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 19.22,
+      "end": 19.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "This",
+      "start": 19.24,
+      "end": 19.34,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 19.34,
+      "end": 19.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 19.4,
+      "end": 19.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 19.5,
+      "end": 19.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "my",
+      "start": 19.54,
+      "end": 19.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 19.74,
+      "end": 19.75,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "first",
+      "start": 19.75,
+      "end": 20.03,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 20.03,
+      "end": 20.03,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "attempt",
+      "start": 20.03,
+      "end": 20.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 20.44,
+      "end": 20.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "at",
+      "start": 20.48,
+      "end": 20.53,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 20.53,
+      "end": 20.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "compressing",
+      "start": 20.62,
+      "end": 21.11,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 21.11,
+      "end": 21.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "it",
+      "start": 21.14,
+      "end": 21.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 21.24,
+      "end": 21.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 21.3,
+      "end": 21.62,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 21.62,
+      "end": 21.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "five",
+      "start": 21.66,
+      "end": 22.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 22.0,
+      "end": 22.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "minutes.",
+      "start": 22.06,
+      "end": 23.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 23.12,
+      "end": 23.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I'm",
+      "start": 23.16,
+      "end": 23.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 23.3,
+      "end": 23.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "calling",
+      "start": 23.34,
+      "end": 23.61,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 23.61,
+      "end": 23.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "this",
+      "start": 23.66,
+      "end": 23.83,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 23.83,
+      "end": 23.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 23.86,
+      "end": 23.96,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 23.96,
+      "end": 24.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "haiku",
+      "start": 24.0,
+      "end": 24.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 24.52,
+      "end": 24.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version,",
+      "start": 24.64,
+      "end": 25.63,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 25.63,
+      "end": 25.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 25.66,
+      "end": 25.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 25.74,
+      "end": 25.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I",
+      "start": 25.88,
+      "end": 25.89,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 25.89,
+      "end": 25.939,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "hope",
+      "start": 25.94,
+      "end": 26.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 26.08,
+      "end": 26.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "it",
+      "start": 26.1,
+      "end": 26.15,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 26.15,
+      "end": 26.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "isn't",
+      "start": 26.2,
+      "end": 26.55,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 26.55,
+      "end": 26.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "more",
+      "start": 26.56,
+      "end": 26.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 26.72,
+      "end": 26.779,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "like",
+      "start": 26.78,
+      "end": 26.99,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 26.99,
+      "end": 27.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 27.12,
+      "end": 27.16,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 27.16,
+      "end": 27.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "koan.",
+      "start": 27.24,
+      "end": 29.01,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 29.01,
+      "end": 29.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I'm",
+      "start": 29.04,
+      "end": 29.16,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 29.16,
+      "end": 29.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "going",
+      "start": 29.18,
+      "end": 29.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 29.26,
+      "end": 29.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 29.28,
+      "end": 29.31,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 29.31,
+      "end": 29.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "talk",
+      "start": 29.4,
+      "end": 29.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 29.56,
+      "end": 29.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "about",
+      "start": 29.64,
+      "end": 30.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 30.02,
+      "end": 30.03,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 30.03,
+      "end": 30.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 30.14,
+      "end": 30.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "FoundationDB",
+      "start": 30.18,
+      "end": 31.16,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 31.16,
+      "end": 31.17,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "layer",
+      "start": 31.17,
+      "end": 31.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 31.5,
+      "end": 31.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "called",
+      "start": 31.54,
+      "end": 31.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 31.84,
+      "end": 31.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "EntityStore",
+      "start": 31.88,
+      "end": 32.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 32.84,
+      "end": 32.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "that",
+      "start": 32.88,
+      "end": 32.97,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 32.97,
+      "end": 33.08,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "I",
+      "start": 33.08,
+      "end": 33.089,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 33.089,
+      "end": 33.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "wrote",
+      "start": 33.16,
+      "end": 33.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 33.36,
+      "end": 33.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 33.4,
+      "end": 33.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 33.48,
+      "end": 33.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "an",
+      "start": 33.5,
+      "end": 33.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 33.6,
+      "end": 33.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "internal",
+      "start": 33.66,
+      "end": 34.269,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 34.269,
+      "end": 34.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "system",
+      "start": 34.3,
+      "end": 34.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 34.58,
+      "end": 34.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "at",
+      "start": 34.6,
+      "end": 34.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 34.72,
+      "end": 34.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Apple.",
+      "start": 34.8,
+      "end": 35.81,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 35.81,
+      "end": 35.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "We",
+      "start": 35.82,
+      "end": 35.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 35.92,
+      "end": 35.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "use",
+      "start": 35.96,
+      "end": 36.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 36.06,
+      "end": 36.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "it",
+      "start": 36.1,
+      "end": 36.19,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 36.19,
+      "end": 36.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 36.2,
+      "end": 36.35,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 36.35,
+      "end": 36.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "store",
+      "start": 36.44,
+      "end": 36.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 36.64,
+      "end": 36.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 36.66,
+      "end": 36.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 36.78,
+      "end": 36.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "manage",
+      "start": 36.8,
+      "end": 37.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 37.1,
+      "end": 37.22,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "metadata",
+      "start": 37.22,
+      "end": 37.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 37.76,
+      "end": 37.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 37.78,
+      "end": 37.88,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 37.88,
+      "end": 37.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "machine",
+      "start": 37.9,
+      "end": 38.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 38.18,
+      "end": 38.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "learning",
+      "start": 38.2,
+      "end": 38.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 38.46,
+      "end": 38.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "pipelines.",
+      "start": 38.48,
+      "end": 40.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 40.06,
+      "end": 40.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "EntityStore",
+      "start": 40.14,
+      "end": 40.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 40.68,
+      "end": 40.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "exposes",
+      "start": 40.72,
+      "end": 41.34,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 41.34,
+      "end": 41.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 41.5,
+      "end": 41.51,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 41.51,
+      "end": 41.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "data",
+      "start": 41.54,
+      "end": 41.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 41.78,
+      "end": 41.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "model",
+      "start": 41.82,
+      "end": 42.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 42.18,
+      "end": 42.22,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 42.22,
+      "end": 42.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 42.3,
+      "end": 42.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versioned",
+      "start": 42.44,
+      "end": 42.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 42.94,
+      "end": 42.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "entities",
+      "start": 42.98,
+      "end": 43.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 43.42,
+      "end": 43.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 43.46,
+      "end": 43.62,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 43.62,
+      "end": 43.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fine-grained",
+      "start": 43.66,
+      "end": 44.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 44.66,
+      "end": 44.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "authorization",
+      "start": 44.72,
+      "end": 45.57,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 45.57,
+      "end": 45.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 45.58,
+      "end": 45.67,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 45.67,
+      "end": 45.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "lineage.",
+      "start": 45.76,
+      "end": 47.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 47.0,
+      "end": 47.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "That",
+      "start": 47.06,
+      "end": 47.23,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 47.23,
+      "end": 47.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "summary",
+      "start": 47.26,
+      "end": 47.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 47.56,
+      "end": 47.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "on",
+      "start": 47.64,
+      "end": 47.73,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 47.73,
+      "end": 47.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "this",
+      "start": 47.76,
+      "end": 47.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 47.92,
+      "end": 47.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "slide",
+      "start": 47.94,
+      "end": 48.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 48.28,
+      "end": 48.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "isn't",
+      "start": 48.54,
+      "end": 48.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 48.76,
+      "end": 48.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "very",
+      "start": 48.78,
+      "end": 49.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 49.0,
+      "end": 49.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "complete,",
+      "start": 49.1,
+      "end": 49.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 49.86,
+      "end": 49.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "but",
+      "start": 49.94,
+      "end": 50.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 50.04,
+      "end": 50.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "it",
+      "start": 50.06,
+      "end": 50.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 50.2,
+      "end": 50.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 50.3,
+      "end": 50.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 50.42,
+      "end": 50.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 50.52,
+      "end": 50.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 50.56,
+      "end": 50.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "haiku.",
+      "start": 50.58,
+      "end": 52.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 52.12,
+      "end": 52.13,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "(laughs)",
+      "start": 52.13,
+      "end": 53.089,
+      "type": "audio_event",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 53.089,
+      "end": 53.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "(laughs)",
+      "start": 53.1,
+      "end": 53.11,
+      "type": "audio_event",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 53.11,
+      "end": 53.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "So",
+      "start": 53.14,
+      "end": 53.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 53.28,
+      "end": 53.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "why",
+      "start": 53.5,
+      "end": 53.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 53.74,
+      "end": 53.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "does",
+      "start": 53.82,
+      "end": 53.99,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 53.99,
+      "end": 54.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "metadata",
+      "start": 54.06,
+      "end": 54.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 54.52,
+      "end": 55.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "matter",
+      "start": 55.1,
+      "end": 55.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 55.48,
+      "end": 55.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 55.62,
+      "end": 55.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 55.74,
+      "end": 55.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "machine",
+      "start": 55.82,
+      "end": 56.379,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 56.38,
+      "end": 56.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "learning?",
+      "start": 56.44,
+      "end": 57.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 57.22,
+      "end": 57.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Say",
+      "start": 57.3,
+      "end": 57.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 57.44,
+      "end": 57.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "you're",
+      "start": 57.48,
+      "end": 57.62,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 57.62,
+      "end": 57.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "running",
+      "start": 57.64,
+      "end": 57.85,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 57.85,
+      "end": 57.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "machine",
+      "start": 57.9,
+      "end": 58.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 58.22,
+      "end": 58.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "learning",
+      "start": 58.34,
+      "end": 58.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 58.58,
+      "end": 58.589,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "pipelines",
+      "start": 58.589,
+      "end": 59.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 59.12,
+      "end": 59.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "on",
+      "start": 59.18,
+      "end": 59.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 59.24,
+      "end": 59.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 59.34,
+      "end": 59.35,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 59.35,
+      "end": 59.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "cloud",
+      "start": 59.38,
+      "end": 59.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 59.66,
+      "end": 59.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "platform",
+      "start": 59.74,
+      "end": 60.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 60.28,
+      "end": 60.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 60.32,
+      "end": 60.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 60.42,
+      "end": 60.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "lots",
+      "start": 60.52,
+      "end": 60.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 60.78,
+      "end": 60.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 60.84,
+      "end": 60.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 60.94,
+      "end": 61.019,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "users.",
+      "start": 61.02,
+      "end": 62.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 62.04,
+      "end": 62.08,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "The",
+      "start": 62.08,
+      "end": 62.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 62.18,
+      "end": 62.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "number",
+      "start": 62.24,
+      "end": 62.43,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 62.43,
+      "end": 62.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 62.46,
+      "end": 62.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 62.54,
+      "end": 62.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "users",
+      "start": 62.62,
+      "end": 62.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 62.92,
+      "end": 62.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 62.98,
+      "end": 63.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 63.14,
+      "end": 63.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "large",
+      "start": 63.2,
+      "end": 63.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 63.7,
+      "end": 63.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 63.74,
+      "end": 63.81,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 63.81,
+      "end": 63.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "they",
+      "start": 63.84,
+      "end": 63.97,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 63.97,
+      "end": 64.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "span",
+      "start": 64.06,
+      "end": 64.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 64.22,
+      "end": 64.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 64.26,
+      "end": 64.319,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 64.319,
+      "end": 64.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "diverse",
+      "start": 64.34,
+      "end": 64.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 64.92,
+      "end": 64.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "range",
+      "start": 64.98,
+      "end": 65.239,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 65.239,
+      "end": 65.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 65.3,
+      "end": 65.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 65.4,
+      "end": 65.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "use",
+      "start": 65.48,
+      "end": 65.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 65.6,
+      "end": 65.699,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "cases",
+      "start": 65.7,
+      "end": 66.21,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 66.21,
+      "end": 66.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 66.24,
+      "end": 66.41,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 66.41,
+      "end": 66.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "teams.",
+      "start": 66.5,
+      "end": 67.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 67.94,
+      "end": 68.039,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Pipelines",
+      "start": 68.52,
+      "end": 69.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 69.0,
+      "end": 69.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "start",
+      "start": 69.02,
+      "end": 69.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 69.3,
+      "end": 69.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 69.32,
+      "end": 69.41,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 69.41,
+      "end": 69.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets.",
+      "start": 69.46,
+      "end": 70.77,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 70.77,
+      "end": 70.77,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "The",
+      "start": 70.77,
+      "end": 70.88,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 70.88,
+      "end": 70.899,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets",
+      "start": 70.9,
+      "end": 71.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 71.36,
+      "end": 71.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "are",
+      "start": 71.4,
+      "end": 71.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 71.52,
+      "end": 71.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "many,",
+      "start": 71.58,
+      "end": 72.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 72.14,
+      "end": 72.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "varied,",
+      "start": 72.28,
+      "end": 72.96,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 72.96,
+      "end": 73.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 73.0,
+      "end": 73.13,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 73.13,
+      "end": 73.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "usually",
+      "start": 73.2,
+      "end": 73.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 73.6,
+      "end": 73.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "raw.",
+      "start": 73.72,
+      "end": 74.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 74.82,
+      "end": 74.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "There",
+      "start": 74.86,
+      "end": 74.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 74.98,
+      "end": 75.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "are",
+      "start": 75.02,
+      "end": 75.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 75.28,
+      "end": 75.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "often",
+      "start": 75.36,
+      "end": 75.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 75.54,
+      "end": 75.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "requirements",
+      "start": 75.6,
+      "end": 76.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 76.22,
+      "end": 76.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "around",
+      "start": 76.28,
+      "end": 76.62,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 76.62,
+      "end": 76.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "who",
+      "start": 76.72,
+      "end": 76.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 76.86,
+      "end": 76.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 76.9,
+      "end": 76.99,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 76.99,
+      "end": 77.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "allowed",
+      "start": 77.04,
+      "end": 77.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 77.4,
+      "end": 77.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 77.44,
+      "end": 77.49,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 77.49,
+      "end": 77.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "see",
+      "start": 77.66,
+      "end": 77.899,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 77.96,
+      "end": 78.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "which",
+      "start": 78.0,
+      "end": 78.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 78.28,
+      "end": 78.29,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "parts",
+      "start": 78.29,
+      "end": 78.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 78.64,
+      "end": 78.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 78.7,
+      "end": 78.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 78.8,
+      "end": 78.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "which",
+      "start": 78.84,
+      "end": 78.99,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 78.99,
+      "end": 79.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets.",
+      "start": 79.1,
+      "end": 80.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 80.98,
+      "end": 81.08,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Raw",
+      "start": 81.08,
+      "end": 81.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 81.3,
+      "end": 81.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets",
+      "start": 81.32,
+      "end": 82.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 82.44,
+      "end": 82.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "are",
+      "start": 82.48,
+      "end": 82.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 82.64,
+      "end": 82.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "transformed",
+      "start": 82.72,
+      "end": 83.63,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 83.63,
+      "end": 83.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 83.66,
+      "end": 83.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 83.8,
+      "end": 83.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "produce",
+      "start": 83.82,
+      "end": 84.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 84.4,
+      "end": 84.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets",
+      "start": 84.42,
+      "end": 84.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 84.86,
+      "end": 84.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "suitable",
+      "start": 84.88,
+      "end": 85.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 85.26,
+      "end": 85.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 85.28,
+      "end": 85.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 85.42,
+      "end": 85.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "training.",
+      "start": 85.46,
+      "end": 86.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 86.98,
+      "end": 87.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Then",
+      "start": 87.02,
+      "end": 87.15,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 87.15,
+      "end": 87.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "we",
+      "start": 87.18,
+      "end": 87.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 87.26,
+      "end": 87.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "must",
+      "start": 87.28,
+      "end": 87.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 87.46,
+      "end": 87.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "track",
+      "start": 87.52,
+      "end": 87.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 87.8,
+      "end": 88.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 88.5,
+      "end": 88.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 88.68,
+      "end": 88.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "raw",
+      "start": 88.7,
+      "end": 88.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 88.92,
+      "end": 88.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets",
+      "start": 88.94,
+      "end": 89.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 89.4,
+      "end": 89.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "were",
+      "start": 89.42,
+      "end": 89.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 89.54,
+      "end": 89.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "used,",
+      "start": 89.68,
+      "end": 90.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 90.0,
+      "end": 90.08,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "two",
+      "start": 90.08,
+      "end": 90.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 90.22,
+      "end": 90.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 90.26,
+      "end": 90.32,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 90.32,
+      "end": 90.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "more",
+      "start": 90.42,
+      "end": 90.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 90.64,
+      "end": 90.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "can",
+      "start": 90.72,
+      "end": 90.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 90.86,
+      "end": 90.92,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "be",
+      "start": 90.92,
+      "end": 91.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 91.24,
+      "end": 91.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "joined",
+      "start": 91.32,
+      "end": 91.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 91.76,
+      "end": 91.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 91.8,
+      "end": 91.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 91.86,
+      "end": 91.92,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "otherwise",
+      "start": 91.92,
+      "end": 92.34,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 92.34,
+      "end": 92.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "used",
+      "start": 92.4,
+      "end": 92.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 92.56,
+      "end": 92.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "in",
+      "start": 92.58,
+      "end": 92.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 92.66,
+      "end": 92.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "combination,",
+      "start": 92.7,
+      "end": 94.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 94.24,
+      "end": 94.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 94.3,
+      "end": 94.47,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 94.47,
+      "end": 94.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "transforms",
+      "start": 94.52,
+      "end": 95.16,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 95.16,
+      "end": 95.179,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "were",
+      "start": 95.18,
+      "end": 95.27,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 95.27,
+      "end": 95.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "applied",
+      "start": 95.3,
+      "end": 95.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 95.78,
+      "end": 96.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "using",
+      "start": 96.4,
+      "end": 96.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 96.66,
+      "end": 96.679,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 96.68,
+      "end": 96.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 96.86,
+      "end": 96.92,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "code",
+      "start": 96.92,
+      "end": 97.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 97.18,
+      "end": 97.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 97.2,
+      "end": 97.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 97.3,
+      "end": 97.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 97.34,
+      "end": 97.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 97.44,
+      "end": 97.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "languages,",
+      "start": 97.46,
+      "end": 98.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 98.74,
+      "end": 98.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 98.8,
+      "end": 98.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 98.94,
+      "end": 98.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 98.98,
+      "end": 99.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 99.12,
+      "end": 99.22,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versions",
+      "start": 99.22,
+      "end": 99.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 99.72,
+      "end": 99.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 99.8,
+      "end": 99.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 99.9,
+      "end": 99.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 99.96,
+      "end": 100.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 100.1,
+      "end": 100.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "libraries.",
+      "start": 100.18,
+      "end": 101.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 101.7,
+      "end": 102.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Training",
+      "start": 102.98,
+      "end": 103.34,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 103.34,
+      "end": 103.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "produces",
+      "start": 103.42,
+      "end": 103.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 103.8,
+      "end": 103.899,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "models.",
+      "start": 103.9,
+      "end": 105.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 105.12,
+      "end": 105.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "We",
+      "start": 105.16,
+      "end": 105.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 105.26,
+      "end": 105.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "must",
+      "start": 105.28,
+      "end": 105.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 105.46,
+      "end": 105.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "now",
+      "start": 105.52,
+      "end": 105.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 105.72,
+      "end": 105.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "track",
+      "start": 105.8,
+      "end": 106.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 106.2,
+      "end": 106.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 106.36,
+      "end": 106.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 106.6,
+      "end": 106.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "architectures",
+      "start": 106.66,
+      "end": 107.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 107.48,
+      "end": 107.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "were",
+      "start": 107.52,
+      "end": 107.63,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 107.63,
+      "end": 107.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "used,",
+      "start": 107.82,
+      "end": 108.15,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 108.15,
+      "end": 108.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 108.18,
+      "end": 108.35,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 108.35,
+      "end": 108.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "learning",
+      "start": 108.4,
+      "end": 108.73,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 108.73,
+      "end": 108.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "algorithms,",
+      "start": 108.84,
+      "end": 109.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 109.48,
+      "end": 109.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 109.52,
+      "end": 109.69,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 109.69,
+      "end": 109.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "frameworks,",
+      "start": 109.72,
+      "end": 110.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 110.36,
+      "end": 110.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "TensorFlow,",
+      "start": 110.4,
+      "end": 111.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 111.22,
+      "end": 111.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "PyTorch,",
+      "start": 111.26,
+      "end": 112.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 112.58,
+      "end": 112.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 112.64,
+      "end": 112.79,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 112.79,
+      "end": 112.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 112.82,
+      "end": 112.97,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 112.97,
+      "end": 113.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "libraries",
+      "start": 113.02,
+      "end": 113.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 113.64,
+      "end": 113.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 113.7,
+      "end": 113.85,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 113.85,
+      "end": 113.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 113.88,
+      "end": 114.07,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 114.07,
+      "end": 114.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versions",
+      "start": 114.1,
+      "end": 114.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 114.54,
+      "end": 114.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 114.58,
+      "end": 114.67,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 114.67,
+      "end": 114.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "these",
+      "start": 114.7,
+      "end": 114.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 114.86,
+      "end": 114.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "libraries.",
+      "start": 114.9,
+      "end": 115.71,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 115.71,
+      "end": 115.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "And",
+      "start": 115.74,
+      "end": 115.83,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 115.83,
+      "end": 115.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "this",
+      "start": 115.84,
+      "end": 115.95,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 115.95,
+      "end": 116.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 116.02,
+      "end": 116.13,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 116.13,
+      "end": 116.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "before",
+      "start": 116.18,
+      "end": 116.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 116.52,
+      "end": 116.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "we",
+      "start": 116.56,
+      "end": 116.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 116.7,
+      "end": 116.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "even",
+      "start": 116.76,
+      "end": 117.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 117.0,
+      "end": 117.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "get",
+      "start": 117.02,
+      "end": 117.15,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 117.15,
+      "end": 117.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 117.28,
+      "end": 117.29,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 117.29,
+      "end": 117.29,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "hyperparameters.",
+      "start": 117.29,
+      "end": 119.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 119.3,
+      "end": 119.31,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "We",
+      "start": 119.31,
+      "end": 119.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 119.42,
+      "end": 119.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "can",
+      "start": 119.44,
+      "end": 119.55,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 119.55,
+      "end": 119.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "also",
+      "start": 119.58,
+      "end": 119.85,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 119.85,
+      "end": 119.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "use",
+      "start": 119.9,
+      "end": 120.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 120.06,
+      "end": 120.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "one",
+      "start": 120.1,
+      "end": 120.21,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 120.21,
+      "end": 120.22,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 120.22,
+      "end": 120.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 120.28,
+      "end": 120.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "more",
+      "start": 120.32,
+      "end": 120.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 120.56,
+      "end": 120.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "pretrained",
+      "start": 120.6,
+      "end": 121.33,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 121.33,
+      "end": 121.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "models",
+      "start": 121.42,
+      "end": 122.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 122.08,
+      "end": 122.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "in",
+      "start": 122.12,
+      "end": 122.23,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 122.23,
+      "end": 122.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "case",
+      "start": 122.38,
+      "end": 122.62,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 122.62,
+      "end": 122.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 122.68,
+      "end": 122.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 122.8,
+      "end": 122.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "transfer",
+      "start": 122.86,
+      "end": 123.34,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 123.34,
+      "end": 123.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "learning",
+      "start": 123.42,
+      "end": 123.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 123.82,
+      "end": 123.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 123.84,
+      "end": 124.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 124.0,
+      "end": 124.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fine-tuning.",
+      "start": 124.04,
+      "end": 126.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 126.82,
+      "end": 126.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "In",
+      "start": 126.88,
+      "end": 126.93,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 126.93,
+      "end": 126.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "an",
+      "start": 126.96,
+      "end": 127.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 127.02,
+      "end": 127.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "experimentation",
+      "start": 127.06,
+      "end": 128.038,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 128.038,
+      "end": 128.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "framework,",
+      "start": 128.12,
+      "end": 128.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 128.66,
+      "end": 128.699,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "you",
+      "start": 128.699,
+      "end": 128.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 128.8,
+      "end": 128.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "often",
+      "start": 128.88,
+      "end": 129.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 129.1,
+      "end": 129.258,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "iterate",
+      "start": 129.258,
+      "end": 129.639,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 129.639,
+      "end": 129.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "through",
+      "start": 129.68,
+      "end": 129.88,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 129.88,
+      "end": 129.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 129.94,
+      "end": 130.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 130.02,
+      "end": 130.08,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "number",
+      "start": 130.08,
+      "end": 130.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 130.36,
+      "end": 130.419,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 130.419,
+      "end": 130.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 130.52,
+      "end": 130.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "models,",
+      "start": 130.58,
+      "end": 131.16,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 131.16,
+      "end": 131.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "varying",
+      "start": 131.24,
+      "end": 131.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 131.72,
+      "end": 131.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "architectures",
+      "start": 131.78,
+      "end": 132.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 132.48,
+      "end": 132.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 132.5,
+      "end": 132.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 132.58,
+      "end": 132.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "algorithms,",
+      "start": 132.7,
+      "end": 133.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 133.7,
+      "end": 133.739,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "but",
+      "start": 133.74,
+      "end": 133.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 133.82,
+      "end": 133.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "all",
+      "start": 133.88,
+      "end": 134.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 134.04,
+      "end": 134.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "trained",
+      "start": 134.12,
+      "end": 134.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 134.44,
+      "end": 134.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 134.46,
+      "end": 134.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 134.56,
+      "end": 134.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 134.6,
+      "end": 134.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 134.72,
+      "end": 134.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "same",
+      "start": 134.8,
+      "end": 135.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 135.04,
+      "end": 135.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "task",
+      "start": 135.2,
+      "end": 135.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 135.6,
+      "end": 135.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 135.64,
+      "end": 135.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 135.74,
+      "end": 135.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "use",
+      "start": 135.8,
+      "end": 136.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 136.0,
+      "end": 136.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "case.",
+      "start": 136.04,
+      "end": 136.39,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 136.39,
+      "end": 137.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Now",
+      "start": 137.24,
+      "end": 137.549,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 137.549,
+      "end": 137.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "metadata",
+      "start": 137.62,
+      "end": 138.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 138.14,
+      "end": 138.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "must",
+      "start": 138.2,
+      "end": 138.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 138.38,
+      "end": 138.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "be",
+      "start": 138.4,
+      "end": 138.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 138.58,
+      "end": 138.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "tracked",
+      "start": 138.64,
+      "end": 139.16,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 139.16,
+      "end": 139.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "per",
+      "start": 139.24,
+      "end": 139.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 139.56,
+      "end": 139.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "run.",
+      "start": 139.74,
+      "end": 140.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 140.82,
+      "end": 140.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "In",
+      "start": 140.86,
+      "end": 140.93,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 140.93,
+      "end": 140.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "addition",
+      "start": 140.98,
+      "end": 141.32,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 141.32,
+      "end": 141.359,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 141.36,
+      "end": 141.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 141.44,
+      "end": 141.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 141.48,
+      "end": 141.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 141.6,
+      "end": 141.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "previous",
+      "start": 141.64,
+      "end": 142.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 142.06,
+      "end": 142.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "types",
+      "start": 142.1,
+      "end": 142.34,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 142.34,
+      "end": 142.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 142.38,
+      "end": 142.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 142.46,
+      "end": 142.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "metadata,",
+      "start": 142.52,
+      "end": 143.07,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 143.07,
+      "end": 143.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "we",
+      "start": 143.1,
+      "end": 143.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 143.2,
+      "end": 143.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "have",
+      "start": 143.28,
+      "end": 143.37,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 143.37,
+      "end": 143.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "additional",
+      "start": 143.42,
+      "end": 143.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 143.98,
+      "end": 144.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "run-specific",
+      "start": 144.0,
+      "end": 144.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 144.76,
+      "end": 144.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "types.",
+      "start": 144.78,
+      "end": 145.19,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 145.19,
+      "end": 146.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Finally,",
+      "start": 147.0,
+      "end": 147.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 147.8,
+      "end": 147.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "we",
+      "start": 147.84,
+      "end": 147.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 147.92,
+      "end": 147.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "may",
+      "start": 147.96,
+      "end": 148.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 148.06,
+      "end": 148.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "want",
+      "start": 148.1,
+      "end": 148.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 148.22,
+      "end": 148.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 148.24,
+      "end": 148.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 148.4,
+      "end": 148.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "serve",
+      "start": 148.48,
+      "end": 148.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 148.72,
+      "end": 148.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 148.76,
+      "end": 148.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 148.82,
+      "end": 148.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "model",
+      "start": 148.86,
+      "end": 149.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 149.14,
+      "end": 149.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "in",
+      "start": 149.16,
+      "end": 149.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 149.26,
+      "end": 149.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "production,",
+      "start": 149.28,
+      "end": 150.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 150.58,
+      "end": 150.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "but",
+      "start": 150.6,
+      "end": 150.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 150.68,
+      "end": 150.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "as",
+      "start": 150.78,
+      "end": 150.89,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 150.89,
+      "end": 150.92,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 150.92,
+      "end": 151.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 151.08,
+      "end": 151.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "any",
+      "start": 151.12,
+      "end": 151.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 151.3,
+      "end": 151.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "production",
+      "start": 151.32,
+      "end": 151.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 151.8,
+      "end": 151.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "system,",
+      "start": 151.82,
+      "end": 152.17,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 152.17,
+      "end": 152.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 152.2,
+      "end": 152.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 152.26,
+      "end": 152.299,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "model",
+      "start": 152.3,
+      "end": 152.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 152.52,
+      "end": 152.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "will",
+      "start": 152.56,
+      "end": 152.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 152.66,
+      "end": 152.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "go",
+      "start": 152.7,
+      "end": 152.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 152.8,
+      "end": 152.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "through",
+      "start": 152.9,
+      "end": 153.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 153.14,
+      "end": 153.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versions",
+      "start": 153.18,
+      "end": 153.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 153.78,
+      "end": 153.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "as",
+      "start": 153.86,
+      "end": 153.95,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 153.95,
+      "end": 154.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "it",
+      "start": 154.0,
+      "end": 154.049,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 154.049,
+      "end": 154.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 154.1,
+      "end": 154.25,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 154.25,
+      "end": 154.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "updated",
+      "start": 154.28,
+      "end": 154.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 154.76,
+      "end": 154.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 154.78,
+      "end": 154.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 154.84,
+      "end": 154.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "improved.",
+      "start": 154.88,
+      "end": 156.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 156.28,
+      "end": 156.29,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "You",
+      "start": 156.29,
+      "end": 156.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 156.4,
+      "end": 156.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "may",
+      "start": 156.44,
+      "end": 156.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 156.56,
+      "end": 156.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "have",
+      "start": 156.62,
+      "end": 156.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 156.82,
+      "end": 156.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "canary",
+      "start": 156.86,
+      "end": 157.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 157.28,
+      "end": 157.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "deployments",
+      "start": 157.36,
+      "end": 158.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 158.02,
+      "end": 158.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 158.2,
+      "end": 158.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 158.46,
+      "end": 158.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "roll",
+      "start": 158.52,
+      "end": 158.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 158.72,
+      "end": 158.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "back",
+      "start": 158.9,
+      "end": 159.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 159.1,
+      "end": 159.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 159.14,
+      "end": 159.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 159.24,
+      "end": 159.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 159.26,
+      "end": 159.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 159.36,
+      "end": 159.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "previous",
+      "start": 159.4,
+      "end": 159.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 159.9,
+      "end": 159.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version",
+      "start": 159.94,
+      "end": 160.39,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 160.39,
+      "end": 160.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 160.56,
+      "end": 160.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 160.9,
+      "end": 160.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "deploy",
+      "start": 160.94,
+      "end": 161.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 161.42,
+      "end": 161.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "multiple",
+      "start": 161.58,
+      "end": 162.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 162.08,
+      "end": 162.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versions",
+      "start": 162.12,
+      "end": 162.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 162.5,
+      "end": 162.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 162.54,
+      "end": 162.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 162.66,
+      "end": 162.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "A/B",
+      "start": 162.72,
+      "end": 163.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 163.02,
+      "end": 163.08,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "testing.",
+      "start": 163.08,
+      "end": 165.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 165.7,
+      "end": 165.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "We",
+      "start": 165.74,
+      "end": 165.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 165.82,
+      "end": 165.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "wanna",
+      "start": 165.86,
+      "end": 166.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 166.0,
+      "end": 166.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "store",
+      "start": 166.12,
+      "end": 166.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 166.4,
+      "end": 166.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 166.44,
+      "end": 166.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 166.54,
+      "end": 166.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "manage",
+      "start": 166.6,
+      "end": 166.88,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 166.88,
+      "end": 166.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "this",
+      "start": 166.94,
+      "end": 167.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 167.38,
+      "end": 167.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "metadata",
+      "start": 167.44,
+      "end": 168.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 168.02,
+      "end": 168.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "in",
+      "start": 168.06,
+      "end": 168.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 168.1,
+      "end": 168.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 168.18,
+      "end": 168.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 168.22,
+      "end": 168.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "unified",
+      "start": 168.28,
+      "end": 168.71,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 168.71,
+      "end": 168.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "framework",
+      "start": 168.82,
+      "end": 169.32,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 169.32,
+      "end": 169.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "that",
+      "start": 169.36,
+      "end": 169.51,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 169.51,
+      "end": 169.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "tracks",
+      "start": 169.58,
+      "end": 169.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 169.92,
+      "end": 170.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "provenance",
+      "start": 170.0,
+      "end": 170.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 170.78,
+      "end": 170.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 170.82,
+      "end": 171.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 171.0,
+      "end": 171.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "each",
+      "start": 171.04,
+      "end": 171.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 171.24,
+      "end": 171.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version",
+      "start": 171.3,
+      "end": 171.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 171.98,
+      "end": 172.019,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 172.02,
+      "end": 172.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 172.12,
+      "end": 172.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "each",
+      "start": 172.16,
+      "end": 172.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 172.36,
+      "end": 172.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "entity.",
+      "start": 172.42,
+      "end": 173.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 173.6,
+      "end": 173.609,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "This",
+      "start": 173.609,
+      "end": 173.769,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 173.769,
+      "end": 173.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 173.82,
+      "end": 173.93,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 173.93,
+      "end": 173.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "what",
+      "start": 173.98,
+      "end": 174.269,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 174.269,
+      "end": 174.299,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "EntityStore",
+      "start": 174.3,
+      "end": 174.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 174.94,
+      "end": 175.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "does.",
+      "start": 175.06,
+      "end": 175.47,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 175.47,
+      "end": 176.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "So",
+      "start": 176.78,
+      "end": 176.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 176.86,
+      "end": 176.92,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "EntityStore",
+      "start": 176.92,
+      "end": 177.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 177.46,
+      "end": 177.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 177.48,
+      "end": 177.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 177.56,
+      "end": 177.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 177.6,
+      "end": 177.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 177.64,
+      "end": 177.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "FoundationDB",
+      "start": 177.74,
+      "end": 178.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 178.54,
+      "end": 178.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "layer",
+      "start": 178.6,
+      "end": 178.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 178.86,
+      "end": 179.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "that",
+      "start": 179.36,
+      "end": 179.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 179.48,
+      "end": 179.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "implements",
+      "start": 179.54,
+      "end": 179.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 179.92,
+      "end": 179.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 179.98,
+      "end": 180.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 180.0,
+      "end": 180.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "data",
+      "start": 180.16,
+      "end": 180.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 180.36,
+      "end": 180.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "model",
+      "start": 180.48,
+      "end": 180.88,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 180.88,
+      "end": 180.92,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 180.92,
+      "end": 181.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 181.04,
+      "end": 181.22,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versioned",
+      "start": 181.22,
+      "end": 181.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 181.72,
+      "end": 181.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "entities",
+      "start": 181.78,
+      "end": 182.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 182.44,
+      "end": 182.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 182.5,
+      "end": 182.62,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 182.62,
+      "end": 182.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fine-grained",
+      "start": 182.76,
+      "end": 183.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 183.5,
+      "end": 183.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "authorization",
+      "start": 183.66,
+      "end": 184.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 184.7,
+      "end": 184.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 184.72,
+      "end": 184.829,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 184.829,
+      "end": 184.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "lineage.",
+      "start": 184.94,
+      "end": 185.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 185.48,
+      "end": 186.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "It's",
+      "start": 186.16,
+      "end": 186.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 186.28,
+      "end": 186.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "implemented",
+      "start": 186.32,
+      "end": 186.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 186.7,
+      "end": 186.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "as",
+      "start": 186.74,
+      "end": 186.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 186.82,
+      "end": 186.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 186.88,
+      "end": 186.96,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 186.96,
+      "end": 187.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Python",
+      "start": 187.0,
+      "end": 187.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 187.46,
+      "end": 187.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "library",
+      "start": 187.54,
+      "end": 187.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 187.98,
+      "end": 188.019,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "exposing",
+      "start": 188.02,
+      "end": 188.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 188.48,
+      "end": 188.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "its",
+      "start": 188.5,
+      "end": 188.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 188.72,
+      "end": 188.82,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "own",
+      "start": 188.82,
+      "end": 189.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 189.08,
+      "end": 189.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "API",
+      "start": 189.16,
+      "end": 189.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 189.86,
+      "end": 189.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "above",
+      "start": 189.94,
+      "end": 190.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 190.12,
+      "end": 190.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 190.14,
+      "end": 190.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 190.24,
+      "end": 190.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "FoundationDB",
+      "start": 190.28,
+      "end": 191.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 191.06,
+      "end": 191.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Python",
+      "start": 191.12,
+      "end": 191.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 191.48,
+      "end": 191.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "bindings.",
+      "start": 191.54,
+      "end": 192.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 192.68,
+      "end": 194.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Read",
+      "start": 194.7,
+      "end": 194.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 194.98,
+      "end": 195.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 195.0,
+      "end": 195.09,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 195.09,
+      "end": 195.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "write",
+      "start": 195.18,
+      "end": 195.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 195.4,
+      "end": 195.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "authorizations",
+      "start": 195.54,
+      "end": 196.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 196.44,
+      "end": 196.45,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "are",
+      "start": 196.45,
+      "end": 196.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 196.58,
+      "end": 196.59,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "separately",
+      "start": 196.59,
+      "end": 197.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 197.02,
+      "end": 197.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "recorded",
+      "start": 197.06,
+      "end": 197.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 197.58,
+      "end": 197.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "at",
+      "start": 197.6,
+      "end": 197.69,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 197.69,
+      "end": 197.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 197.72,
+      "end": 197.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 197.82,
+      "end": 197.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "level",
+      "start": 197.88,
+      "end": 198.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 198.08,
+      "end": 198.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 198.14,
+      "end": 198.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 198.26,
+      "end": 198.299,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "individual",
+      "start": 198.3,
+      "end": 198.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 198.94,
+      "end": 199.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fields,",
+      "start": 199.0,
+      "end": 200.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 200.0,
+      "end": 200.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "also",
+      "start": 200.1,
+      "end": 200.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 200.36,
+      "end": 200.4,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "known",
+      "start": 200.4,
+      "end": 200.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 200.54,
+      "end": 200.579,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "as",
+      "start": 200.58,
+      "end": 200.75,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 200.75,
+      "end": 200.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "cell-based",
+      "start": 200.8,
+      "end": 201.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 201.5,
+      "end": 201.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "security.",
+      "start": 201.54,
+      "end": 204.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 204.24,
+      "end": 204.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Versioning",
+      "start": 204.32,
+      "end": 204.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 204.82,
+      "end": 204.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 204.86,
+      "end": 205.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 205.06,
+      "end": 205.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "entities",
+      "start": 205.1,
+      "end": 205.56,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 205.56,
+      "end": 205.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 205.58,
+      "end": 205.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 205.7,
+      "end": 205.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "automatic",
+      "start": 205.72,
+      "end": 206.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 206.38,
+      "end": 206.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 206.68,
+      "end": 206.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 206.84,
+      "end": 206.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "modifications",
+      "start": 206.86,
+      "end": 207.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 207.74,
+      "end": 207.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 207.78,
+      "end": 207.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 207.84,
+      "end": 207.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "immutable",
+      "start": 207.88,
+      "end": 208.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 208.26,
+      "end": 208.399,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fields",
+      "start": 208.4,
+      "end": 208.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 208.86,
+      "end": 209.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "resulting",
+      "start": 209.0,
+      "end": 209.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 209.58,
+      "end": 209.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "in",
+      "start": 209.64,
+      "end": 209.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 209.7,
+      "end": 209.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 209.78,
+      "end": 209.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 209.9,
+      "end": 210.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "new",
+      "start": 210.0,
+      "end": 210.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 210.28,
+      "end": 210.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version",
+      "start": 210.32,
+      "end": 211.32,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 211.32,
+      "end": 211.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "rather",
+      "start": 211.44,
+      "end": 211.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 211.72,
+      "end": 211.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "than",
+      "start": 211.76,
+      "end": 211.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 211.84,
+      "end": 211.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 211.88,
+      "end": 211.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 211.9,
+      "end": 211.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "mutation.",
+      "start": 211.94,
+      "end": 213.26,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 213.26,
+      "end": 213.299,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Each",
+      "start": 213.3,
+      "end": 213.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 213.52,
+      "end": 213.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version",
+      "start": 213.56,
+      "end": 213.93,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 213.93,
+      "end": 214.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "has",
+      "start": 214.0,
+      "end": 214.15,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 214.15,
+      "end": 214.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 214.18,
+      "end": 214.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 214.22,
+      "end": 214.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "unique",
+      "start": 214.28,
+      "end": 214.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 214.58,
+      "end": 214.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "ID,",
+      "start": 214.66,
+      "end": 215.25,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 215.25,
+      "end": 215.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "like",
+      "start": 215.28,
+      "end": 215.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 215.4,
+      "end": 215.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 215.46,
+      "end": 215.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 215.64,
+      "end": 215.65,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Git",
+      "start": 215.65,
+      "end": 215.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 215.82,
+      "end": 215.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "commit",
+      "start": 215.86,
+      "end": 216.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 216.14,
+      "end": 216.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "ID,",
+      "start": 216.3,
+      "end": 217.22,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 217.22,
+      "end": 217.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "formed",
+      "start": 217.3,
+      "end": 217.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 217.5,
+      "end": 217.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "from",
+      "start": 217.54,
+      "end": 217.65,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 217.65,
+      "end": 217.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 217.7,
+      "end": 217.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 217.8,
+      "end": 217.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "SHA-1",
+      "start": 217.84,
+      "end": 218.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 218.38,
+      "end": 218.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "hash",
+      "start": 218.44,
+      "end": 218.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 218.76,
+      "end": 218.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 218.84,
+      "end": 218.91,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 218.91,
+      "end": 218.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "its",
+      "start": 218.94,
+      "end": 219.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 219.12,
+      "end": 219.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "primary",
+      "start": 219.16,
+      "end": 219.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 219.72,
+      "end": 219.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "key,",
+      "start": 219.78,
+      "end": 220.29,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 220.29,
+      "end": 220.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "immutable",
+      "start": 220.32,
+      "end": 220.73,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 220.73,
+      "end": 220.859,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fields,",
+      "start": 220.86,
+      "end": 221.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 221.54,
+      "end": 221.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "parent's",
+      "start": 221.62,
+      "end": 221.99,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 221.99,
+      "end": 222.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version,",
+      "start": 222.14,
+      "end": 223.13,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 223.13,
+      "end": 223.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 223.14,
+      "end": 223.25,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 223.25,
+      "end": 223.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "authorization",
+      "start": 223.32,
+      "end": 224.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 224.04,
+      "end": 224.079,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "groups.",
+      "start": 224.08,
+      "end": 225.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 225.24,
+      "end": 225.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Versions",
+      "start": 225.34,
+      "end": 225.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 225.8,
+      "end": 225.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "form",
+      "start": 225.9,
+      "end": 226.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 226.14,
+      "end": 226.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 226.18,
+      "end": 226.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 226.3,
+      "end": 226.34,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "parentage",
+      "start": 226.34,
+      "end": 226.96,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 226.96,
+      "end": 227.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "tree",
+      "start": 227.14,
+      "end": 227.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 227.52,
+      "end": 227.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 227.68,
+      "end": 227.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 227.8,
+      "end": 227.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "can",
+      "start": 227.88,
+      "end": 227.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 227.98,
+      "end": 228.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "be",
+      "start": 228.04,
+      "end": 228.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 228.12,
+      "end": 228.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "explicitly",
+      "start": 228.14,
+      "end": 228.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 228.82,
+      "end": 228.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "selected",
+      "start": 228.9,
+      "end": 229.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 229.28,
+      "end": 229.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 229.36,
+      "end": 229.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 229.5,
+      "end": 229.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "use,",
+      "start": 229.62,
+      "end": 229.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 229.92,
+      "end": 230.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "also",
+      "start": 230.0,
+      "end": 230.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 230.24,
+      "end": 230.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "like",
+      "start": 230.3,
+      "end": 230.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 230.48,
+      "end": 230.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Git.",
+      "start": 230.56,
+      "end": 231.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 231.46,
+      "end": 233.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Each",
+      "start": 233.14,
+      "end": 233.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 233.36,
+      "end": 233.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "entity",
+      "start": 233.42,
+      "end": 233.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 233.8,
+      "end": 233.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 233.84,
+      "end": 233.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 233.98,
+      "end": 234.02,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "modeled",
+      "start": 234.02,
+      "end": 234.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 234.42,
+      "end": 234.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "as",
+      "start": 234.52,
+      "end": 234.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 234.58,
+      "end": 234.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 234.64,
+      "end": 234.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 234.66,
+      "end": 234.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "collection",
+      "start": 234.72,
+      "end": 235.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 235.2,
+      "end": 235.22,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 235.22,
+      "end": 235.32,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 235.32,
+      "end": 235.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "objects",
+      "start": 235.44,
+      "end": 236.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 236.4,
+      "end": 236.41,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "that",
+      "start": 236.41,
+      "end": 236.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 236.68,
+      "end": 236.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "represent",
+      "start": 236.74,
+      "end": 237.4,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 237.4,
+      "end": 237.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "its",
+      "start": 237.44,
+      "end": 237.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 237.6,
+      "end": 237.64,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "distinct",
+      "start": 237.64,
+      "end": 238.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 238.08,
+      "end": 238.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versions",
+      "start": 238.12,
+      "end": 239.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 239.2,
+      "end": 239.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "along",
+      "start": 239.26,
+      "end": 239.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 239.52,
+      "end": 239.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 239.56,
+      "end": 239.65,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 239.65,
+      "end": 239.65,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 239.65,
+      "end": 239.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 239.82,
+      "end": 239.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "core",
+      "start": 239.94,
+      "end": 240.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 240.3,
+      "end": 240.5,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "object",
+      "start": 240.5,
+      "end": 240.92,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 240.92,
+      "end": 240.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 240.96,
+      "end": 241.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 241.1,
+      "end": 241.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "mutable",
+      "start": 241.14,
+      "end": 241.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 241.72,
+      "end": 241.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "non-versioned",
+      "start": 241.8,
+      "end": 242.51,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 242.51,
+      "end": 242.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fields.",
+      "start": 242.62,
+      "end": 245.52,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 245.52,
+      "end": 245.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Provenance",
+      "start": 245.58,
+      "end": 246.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 246.24,
+      "end": 246.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 246.48,
+      "end": 246.59,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 246.59,
+      "end": 246.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "lineage",
+      "start": 246.72,
+      "end": 247.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 247.78,
+      "end": 247.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 247.86,
+      "end": 247.95,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 247.95,
+      "end": 248.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "a",
+      "start": 248.06,
+      "end": 248.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 248.12,
+      "end": 248.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "record",
+      "start": 248.16,
+      "end": 248.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 248.46,
+      "end": 248.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 248.52,
+      "end": 248.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 248.64,
+      "end": 248.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "data's",
+      "start": 248.66,
+      "end": 249.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 249.08,
+      "end": 249.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "origin",
+      "start": 249.16,
+      "end": 249.82,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 249.82,
+      "end": 249.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 249.84,
+      "end": 249.95,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 249.95,
+      "end": 249.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 249.98,
+      "end": 250.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 250.08,
+      "end": 250.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "transforms",
+      "start": 250.18,
+      "end": 251.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 251.0,
+      "end": 251.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "that",
+      "start": 251.04,
+      "end": 251.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 251.1,
+      "end": 251.12,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "have",
+      "start": 251.12,
+      "end": 251.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 251.18,
+      "end": 251.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "been",
+      "start": 251.2,
+      "end": 251.29,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 251.29,
+      "end": 251.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "applied",
+      "start": 251.32,
+      "end": 251.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 251.76,
+      "end": 251.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 251.8,
+      "end": 251.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 251.9,
+      "end": 251.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "it.",
+      "start": 251.94,
+      "end": 252.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 252.94,
+      "end": 252.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "EntityStore",
+      "start": 252.98,
+      "end": 254.02,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 254.02,
+      "end": 254.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "stores,",
+      "start": 254.16,
+      "end": 254.75,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 254.75,
+      "end": 254.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "um,",
+      "start": 254.84,
+      "end": 255.29,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 255.29,
+      "end": 255.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "records,",
+      "start": 255.32,
+      "end": 255.96,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 256.019,
+      "end": 256.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "records",
+      "start": 256.04,
+      "end": 256.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 256.42,
+      "end": 256.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "lineage",
+      "start": 256.48,
+      "end": 257.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 257.04,
+      "end": 257.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "via",
+      "start": 257.1,
+      "end": 257.339,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 257.339,
+      "end": 257.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "label-directed",
+      "start": 257.42,
+      "end": 258.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 258.24,
+      "end": 258.32,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "multigraphs.",
+      "start": 258.32,
+      "end": 260.019,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 260.019,
+      "end": 260.06,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "The",
+      "start": 260.06,
+      "end": 260.13,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 260.13,
+      "end": 260.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "graph",
+      "start": 260.26,
+      "end": 260.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 260.72,
+      "end": 260.899,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 260.899,
+      "end": 261.0,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 261.0,
+      "end": 261.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "va-",
+      "start": 261.14,
+      "end": 261.399,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 261.399,
+      "end": 261.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "version",
+      "start": 261.44,
+      "end": 261.779,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 261.779,
+      "end": 261.88,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "parentage",
+      "start": 261.88,
+      "end": 262.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 262.48,
+      "end": 262.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 262.56,
+      "end": 262.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 262.68,
+      "end": 262.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "constructed",
+      "start": 262.7,
+      "end": 263.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 263.24,
+      "end": 263.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "by",
+      "start": 263.28,
+      "end": 263.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 263.38,
+      "end": 263.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 263.42,
+      "end": 263.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 263.5,
+      "end": 263.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "versioning",
+      "start": 263.54,
+      "end": 263.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 263.9,
+      "end": 263.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "mechanism.",
+      "start": 263.96,
+      "end": 265.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 265.2,
+      "end": 265.28,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Other",
+      "start": 265.28,
+      "end": 265.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 265.5,
+      "end": 265.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "forms",
+      "start": 265.54,
+      "end": 265.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 265.84,
+      "end": 265.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 265.86,
+      "end": 265.96,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 265.96,
+      "end": 265.969,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "provenance,",
+      "start": 265.969,
+      "end": 266.49,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 266.49,
+      "end": 266.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "such",
+      "start": 266.52,
+      "end": 266.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 266.68,
+      "end": 266.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "as",
+      "start": 266.74,
+      "end": 266.95,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 266.95,
+      "end": 266.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "derivation",
+      "start": 266.98,
+      "end": 267.55,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 267.55,
+      "end": 267.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 267.58,
+      "end": 267.63,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 267.63,
+      "end": 267.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "training",
+      "start": 267.78,
+      "end": 268.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 268.12,
+      "end": 268.16,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets",
+      "start": 268.16,
+      "end": 268.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 268.76,
+      "end": 268.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "from",
+      "start": 268.8,
+      "end": 269.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 269.06,
+      "end": 269.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "raw",
+      "start": 269.1,
+      "end": 269.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 269.28,
+      "end": 269.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "datasets,",
+      "start": 269.38,
+      "end": 270.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 270.46,
+      "end": 270.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "are",
+      "start": 270.52,
+      "end": 270.62,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 270.62,
+      "end": 270.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "represented",
+      "start": 270.66,
+      "end": 271.16,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 271.16,
+      "end": 271.2,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "by",
+      "start": 271.2,
+      "end": 271.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 271.42,
+      "end": 271.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "different",
+      "start": 271.46,
+      "end": 271.89,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 271.89,
+      "end": 271.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "labels",
+      "start": 271.96,
+      "end": 272.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 272.44,
+      "end": 272.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 272.46,
+      "end": 272.6,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 272.6,
+      "end": 272.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "graph",
+      "start": 272.62,
+      "end": 272.88,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 272.88,
+      "end": 272.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "edges.",
+      "start": 272.96,
+      "end": 275.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 275.24,
+      "end": 275.94,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Objects",
+      "start": 276.0,
+      "end": 276.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 276.46,
+      "end": 276.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "are",
+      "start": 276.48,
+      "end": 276.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 276.58,
+      "end": 276.66,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "schemaless",
+      "start": 276.66,
+      "end": 277.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 277.38,
+      "end": 277.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 277.56,
+      "end": 277.67,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 277.67,
+      "end": 277.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "consist",
+      "start": 277.74,
+      "end": 278.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 278.14,
+      "end": 278.18,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 278.18,
+      "end": 278.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 278.3,
+      "end": 278.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "any",
+      "start": 278.36,
+      "end": 278.49,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 278.49,
+      "end": 278.56,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "number",
+      "start": 278.56,
+      "end": 278.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 278.8,
+      "end": 278.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 278.86,
+      "end": 278.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 278.98,
+      "end": 279.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fields",
+      "start": 279.04,
+      "end": 279.44,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 279.44,
+      "end": 279.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "with",
+      "start": 279.48,
+      "end": 279.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 279.58,
+      "end": 279.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "values.",
+      "start": 279.68,
+      "end": 280.98,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 280.98,
+      "end": 281.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Fields",
+      "start": 281.04,
+      "end": 281.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 281.36,
+      "end": 281.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "can",
+      "start": 281.38,
+      "end": 281.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 281.46,
+      "end": 281.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "be",
+      "start": 281.52,
+      "end": 281.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 281.64,
+      "end": 281.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "single-valued",
+      "start": 281.7,
+      "end": 282.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 282.36,
+      "end": 282.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 282.38,
+      "end": 282.46,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 282.46,
+      "end": 282.539,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "set-valued,",
+      "start": 282.54,
+      "end": 283.28,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 283.28,
+      "end": 283.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 283.3,
+      "end": 283.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 283.38,
+      "end": 283.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "either",
+      "start": 283.48,
+      "end": 283.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 283.64,
+      "end": 283.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "case",
+      "start": 283.76,
+      "end": 283.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 283.94,
+      "end": 284.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "can",
+      "start": 284.0,
+      "end": 284.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 284.18,
+      "end": 284.26,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "optionally",
+      "start": 284.26,
+      "end": 284.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 284.7,
+      "end": 284.76,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "be",
+      "start": 284.76,
+      "end": 284.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 284.86,
+      "end": 284.96,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "indexed.",
+      "start": 284.96,
+      "end": 285.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 285.94,
+      "end": 285.95,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "And",
+      "start": 285.95,
+      "end": 286.06,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 286.06,
+      "end": 286.1,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fields",
+      "start": 286.1,
+      "end": 286.36,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 286.36,
+      "end": 286.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "can",
+      "start": 286.38,
+      "end": 286.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 286.48,
+      "end": 286.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "also",
+      "start": 286.54,
+      "end": 286.74,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 286.74,
+      "end": 286.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "have",
+      "start": 286.78,
+      "end": 286.94,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 286.94,
+      "end": 287.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "large",
+      "start": 287.0,
+      "end": 287.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 287.24,
+      "end": 287.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "blob",
+      "start": 287.38,
+      "end": 287.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 287.66,
+      "end": 287.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "values.",
+      "start": 287.72,
+      "end": 289.18,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 289.18,
+      "end": 290.98,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "This",
+      "start": 290.98,
+      "end": 291.23,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 291.23,
+      "end": 291.46,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "rich",
+      "start": 291.46,
+      "end": 291.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 291.64,
+      "end": 291.719,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "data",
+      "start": 291.72,
+      "end": 291.9,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 291.9,
+      "end": 292.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "model",
+      "start": 292.0,
+      "end": 292.3,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 292.3,
+      "end": 292.36,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "is",
+      "start": 292.36,
+      "end": 292.5,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 292.5,
+      "end": 292.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "mapped",
+      "start": 292.54,
+      "end": 292.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 292.76,
+      "end": 292.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 292.78,
+      "end": 292.86,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 292.86,
+      "end": 292.9,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 292.9,
+      "end": 292.93,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 292.93,
+      "end": 293.04,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "key-value",
+      "start": 293.04,
+      "end": 293.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 293.54,
+      "end": 293.68,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "store.",
+      "start": 293.68,
+      "end": 294.54,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 294.54,
+      "end": 294.6,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Versioning,",
+      "start": 294.6,
+      "end": 295.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 295.34,
+      "end": 295.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "authorization,",
+      "start": 295.48,
+      "end": 296.57,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 296.57,
+      "end": 296.58,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "and",
+      "start": 296.58,
+      "end": 296.7,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 296.7,
+      "end": 296.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "lineage",
+      "start": 296.8,
+      "end": 297.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 297.38,
+      "end": 297.39,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "are",
+      "start": 297.39,
+      "end": 297.51,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 297.51,
+      "end": 297.54,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "incorporated",
+      "start": 297.54,
+      "end": 298.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 298.24,
+      "end": 298.25,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "directly",
+      "start": 298.25,
+      "end": 298.71,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 298.71,
+      "end": 298.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "into",
+      "start": 298.74,
+      "end": 298.969,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 298.969,
+      "end": 299.0,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "the",
+      "start": 299.0,
+      "end": 299.12,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 299.12,
+      "end": 299.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "data",
+      "start": 299.14,
+      "end": 299.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 299.38,
+      "end": 299.42,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "model",
+      "start": 299.42,
+      "end": 299.68,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 299.68,
+      "end": 299.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "layer",
+      "start": 299.74,
+      "end": 299.969,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 299.969,
+      "end": 300.539,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "so",
+      "start": 300.54,
+      "end": 300.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 300.66,
+      "end": 300.72,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "clients",
+      "start": 300.72,
+      "end": 301.1,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 301.1,
+      "end": 301.14,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "get",
+      "start": 301.14,
+      "end": 301.29,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 301.29,
+      "end": 301.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "them",
+      "start": 301.3,
+      "end": 301.45,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 301.45,
+      "end": 301.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "for",
+      "start": 301.48,
+      "end": 301.66,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 301.66,
+      "end": 301.7,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "free.",
+      "start": 301.7,
+      "end": 302.69,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 302.69,
+      "end": 302.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "Transactions",
+      "start": 302.74,
+      "end": 303.42,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 303.42,
+      "end": 303.48,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "allow",
+      "start": 303.48,
+      "end": 303.76,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 303.76,
+      "end": 303.8,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "multiple",
+      "start": 303.8,
+      "end": 304.2,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 304.2,
+      "end": 304.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "clients",
+      "start": 304.24,
+      "end": 304.64,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 304.64,
+      "end": 304.659,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "to",
+      "start": 304.66,
+      "end": 304.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 304.72,
+      "end": 304.78,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "concurrently",
+      "start": 304.84,
+      "end": 305.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 305.38,
+      "end": 305.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "access",
+      "start": 305.44,
+      "end": 305.84,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 305.84,
+      "end": 305.92,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "entities",
+      "start": 305.92,
+      "end": 306.38,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 306.38,
+      "end": 306.44,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "without",
+      "start": 306.44,
+      "end": 306.71,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 306.71,
+      "end": 306.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "fear",
+      "start": 306.84,
+      "end": 307.04,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 307.04,
+      "end": 307.08,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "of",
+      "start": 307.08,
+      "end": 307.15,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 307.15,
+      "end": 307.24,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "inconsistent",
+      "start": 307.24,
+      "end": 307.78,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 307.78,
+      "end": 307.86,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "results",
+      "start": 307.86,
+      "end": 308.34,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 308.34,
+      "end": 308.38,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "or",
+      "start": 308.38,
+      "end": 308.45,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 308.45,
+      "end": 308.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "data",
+      "start": 308.52,
+      "end": 308.72,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 308.72,
+      "end": 308.74,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "corruption.",
+      "start": 308.74,
+      "end": 311.08,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 311.08,
+      "end": 311.099,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "And",
+      "start": 311.1,
+      "end": 311.24,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 311.24,
+      "end": 311.3,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "thank",
+      "start": 311.3,
+      "end": 311.48,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 311.48,
+      "end": 311.52,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "you",
+      "start": 311.52,
+      "end": 311.58,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 311.58,
+      "end": 311.62,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "very",
+      "start": 311.62,
+      "end": 311.8,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 311.8,
+      "end": 311.84,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "much.",
+      "start": 311.84,
+      "end": 314.14,
+      "type": "word",
+      "logprob": 0.0
+    },
+    {
+      "text": " ",
+      "start": 314.14,
+      "end": 314.15,
+      "type": "spacing",
+      "logprob": 0.0
+    },
+    {
+      "text": "(clapping)",
+      "start": 314.15,
+      "end": 315.26,
+      "type": "audio_event",
+      "logprob": 0.0
+    }
+  ],
+  "transcription_id": "2dFmxOcyUsqXVeWqsoGD"
+}
