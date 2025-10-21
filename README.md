@@ -12,7 +12,7 @@ This repository preserves publicly available FoundationDB documentation, design 
 | Official Docs | Python API Reference | `apple.github.io/foundationdb/api-python.html` | HTML snapshot (`sources/apple/2025/api-python.html`) | 2025-10-21 | Checksum `4a47ada0…ae10`; metadata in `sources/apple/2025/api-python.json`. |
 | Community & News | FoundationDB Blog | `foundationdb.org/blog` | Track new posts | — | Official announcements, summit recaps, and ecosystem updates. |
 | Community & News | Community Forums | `forums.foundationdb.org` | Monitor active threads | — | Primary venue for support discussions and community announcements. |
-| Community & News | Meetup Series Announcements | `forums.foundationdb.org/t/foundationdb-meetup-in-san-jose/4448` | Collect recordings | — | Monthly agendas and links to recorded talks from 2024 onward. |
+| Community & News | Meetup Series Announcements | `forums.foundationdb.org/t/foundationdb-meetup-in-san-jose/4448` | Links catalogued (`sources/youtube/meetups/san-jose-2024.json`) | 2025-10-21 | Monthly agendas plus seven recording links (see tracker below). |
 | GitHub Repos | Core Repository | `github.com/apple/foundationdb` | Mirrored (`mirrors/apple/foundationdb.git`) | 2025-10-21 | Bare repo plus issues (`archives/apple/foundationdb-issues.ndjson`) and release notes (`archives/apple/foundationdb-releases.ndjson`). |
 | GitHub Repos | Docs Source (`documentation/sphinx/source/`) | `github.com/apple/foundationdb/tree/main/documentation/sphinx/source` | Snapshot (`sources/github/apple/foundationdb/documentation/sphinx/`) | 2025-10-21 | SHA-256 manifest + metadata (`metadata.json`) covering 152 files; archive checksum `acc65b59…dbd1`. |
 | GitHub Repos | Design Docs (`design/`) | `github.com/apple/foundationdb/tree/main/design` | Snapshot (`sources/github/apple/foundationdb/design/`) | 2025-10-21 | SHA-256 manifest + metadata (`design-metadata.json`) covering 39 files; archive checksum `64c3f22c…846a`. |
@@ -23,3 +23,7 @@ This repository preserves publicly available FoundationDB documentation, design 
 | Talks & Events | Summit 2018 Video Roundup | `foundationdb.org/blog/foundationdb-summit-2018-video-roundup` | Audio captured (MP3 + metadata + transcripts) | 2025-10-21 | Assets plus JSON transcripts live under `sources/youtube/foundationdb-summit-2018/`. |
 | Talks & Events | CMU Systems Talk (Markus Pilman) | `w4118.github.io/2020/10/20/foundationdb/` | Download video | — | Detailed presentation on deterministic testing and Snowflake usage. |
 | Talks & Events | QCon SF Architecture Talk | `infoq.com/presentations/foundationdb-architecture/` | Download slides/video | — | Conference session covering architecture and failure handling. |
+
+## Meetup Recordings Tracker
+
+- **San Jose Series (2024–present)** — YouTube playlist links captured on 2025-10-21 from the community forum thread; see `sources/youtube/meetups/san-jose-2024.json` for the current list of seven recordings.
