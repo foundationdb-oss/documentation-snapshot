@@ -6,7 +6,7 @@ This repository preserves publicly available FoundationDB documentation, design 
 
 | Category | Resource | Location | Capture Status | Last Capture | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Official Docs | FoundationDB Documentation Portal | `apple.github.io/foundationdb` | Pending capture | — | Central portal for architecture guides, tutorials, and API docs. |
+| Official Docs | FoundationDB Documentation Portal | `apple.github.io/foundationdb` | HTML snapshot (`sources/apple/2025/index.html`) | 2025-10-21 | Checksum `e344a9b…e7e8`; metadata in `sources/apple/2025/index.json`. |
 | Official Docs | Developer Guide | `apple.github.io/foundationdb/developer-guide.html` | HTML snapshot (`sources/apple/2025/developer-guide.html`) | 2025-10-21 | Checksum `65a63aa4…0490`; metadata in `sources/apple/2025/developer-guide.json`. |
 | Official Docs | Release Notes Archive | `apple.github.io/foundationdb/release-notes.html` | HTML snapshot (`sources/apple/2025/release-notes.html`) | 2025-10-21 | Checksum `fa316a00…bd25`; metadata in `sources/apple/2025/release-notes.json`. |
 | Official Docs | Python API Reference | `apple.github.io/foundationdb/api-python.html` | HTML snapshot (`sources/apple/2025/api-python.html`) | 2025-10-21 | Checksum `4a47ada0…ae10`; metadata in `sources/apple/2025/api-python.json`. |
