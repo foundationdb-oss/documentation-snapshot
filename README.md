@@ -27,3 +27,4 @@ This repository preserves publicly available FoundationDB documentation, design 
 ## Meetup Recordings Tracker
 
 - **San Jose Series (2024–present)** — YouTube playlist links captured on 2025-10-21 from the community forum thread; see `sources/youtube/meetups/san-jose-2024.json` for the current list of seven recordings.
+- **Segment Meetup (November 2019)** — Full audio, metadata, and ElevenLabs transcripts stored under `sources/youtube/foundationdb-meetup-2019/` with manifest and video URL list captured on 2025-10-21.
