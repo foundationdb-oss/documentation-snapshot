@@ -21,8 +21,8 @@ This repository preserves publicly available FoundationDB documentation, design 
 | Papers & Research | FoundationDB SIGMOD 2021 Paper | `dl.acm.org/doi/10.1145/3448016.3457559` | PDF archived (`sources/papers/2021/foundationdb-sigmod-2021.pdf`) | 2025-10-21 | Checksum `ed3d6bfd…b784`; metadata in `sources/papers/2021/foundationdb-sigmod-2021.json`. |
 | Papers & Research | Record Layer arXiv Paper | `arxiv.org/abs/1901.04452` | PDF archived (`sources/papers/2019/record-layer-2019.pdf`) | 2025-10-21 | Checksum `ad055b5c…bb4c`; metadata in `sources/papers/2019/record-layer-2019.json`. |
 | Talks & Events | Summit 2018 Video Roundup | `foundationdb.org/blog/foundationdb-summit-2018-video-roundup` | Audio captured (MP3 + metadata + transcripts) | 2025-10-21 | Assets plus JSON transcripts live under `sources/youtube/foundationdb-summit-2018/`. |
-| Talks & Events | CMU Systems Talk (Markus Pilman) | `w4118.github.io/2020/10/20/foundationdb/` | Download video | — | Detailed presentation on deterministic testing and Snowflake usage. |
-| Talks & Events | QCon SF Architecture Talk | `infoq.com/presentations/foundationdb-architecture/` | Download slides/video | — | Conference session covering architecture and failure handling. |
+| Talks & Events | CMU Systems Talk (Markus Pilman) | `w4118.github.io/2020/10/20/foundationdb/` | Audio + transcript (`sources/youtube/cmu-systems-foundationdb/`) | 2025-10-21 | MP3, metadata, ElevenLabs transcript, manifest captured from YouTube (id `OJb8A6h9jQQ`). |
+| Talks & Events | QCon SF Architecture Talk | `infoq.com/presentations/foundationdb-architecture/` | Audio + transcript (`sources/youtube/qcon-foundationdb-architecture/`) | 2025-10-21 | MP3, metadata, ElevenLabs transcript, manifest captured from YouTube (id `EMwhsGsxfPU`). |
 
 ## Meetup Recordings Tracker
 
