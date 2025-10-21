@@ -7,7 +7,7 @@ This repository preserves publicly available FoundationDB documentation, design 
 | Category | Resource | Location | Capture Status | Last Capture | Notes |
 | --- | --- | --- | --- | --- | --- |
 | Official Docs | FoundationDB Documentation Portal | `apple.github.io/foundationdb` | Pending capture | — | Central portal for architecture guides, tutorials, and API docs. |
-| Official Docs | Developer Guide | `apple.github.io/foundationdb/developer-guide.html` | Pending capture | — | Hands-on installation, deployment, and operations guidance. |
+| Official Docs | Developer Guide | `apple.github.io/foundationdb/developer-guide.html` | HTML snapshot (`sources/apple/2025/developer-guide.html`) | 2025-10-21 | Checksum `65a63aa4…0490`; metadata in `sources/apple/2025/developer-guide.json`. |
 | Official Docs | Release Notes Archive | `apple.github.io/foundationdb/release-notes.html` | Monitor quarterly updates | — | Summaries of feature changes, upgrades, and compatibility notices. |
 | Official Docs | Python API Reference | `apple.github.io/foundationdb/api-python.html` | Pending capture | — | Language binding semantics, examples, and error codes. |
 | Community & News | FoundationDB Blog | `foundationdb.org/blog` | Track new posts | — | Official announcements, summit recaps, and ecosystem updates. |
